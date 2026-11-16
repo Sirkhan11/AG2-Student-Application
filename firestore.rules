@@ -1,0 +1,47 @@
+rules_version = '2';
+// Nothing deploys this file automatically: after changing it, paste it into
+// Firebase console > Firestore > Rules and publish.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Students can only read and change their own record
+    match /students/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // The public part of a mentor's profile: only what matching needs.
+    // Logged-in users can only see approved mentors (mentors can always see themselves).
+    // Mentors can create and edit their own, but can't approve themselves, and can't add
+    // any other fields, so private details (like an email) can't end up here.
+    match /mentors/{userId} {
+      allow read: if request.auth != null
+        && (resource.data.approved == true || request.auth.uid == userId);
+      allow create: if request.auth != null && request.auth.uid == userId
+        && onlyPublicMentorFields()
+        && request.resource.data.approved == false;
+      // After an edit, approved can only be true if it was true before AND nothing the
+      // coordinator checked has changed. So mentors can't approve themselves, and changing
+      // their display name or vectors sends them back to the coordinator (approved: false).
+      allow update: if request.auth != null && request.auth.uid == userId
+        && onlyPublicMentorFields()
+        && request.resource.data.approved == (resource.data.approved && !checkedFieldsChanged());
+      allow delete: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // The private part: name, course, availability, written answers and so on.
+    // Only the mentor can read or change it. The coordinator uses the Firebase console.
+    match /mentorDetails/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // True when the mentor document being written has no fields beyond these four.
+    function onlyPublicMentorFields() {
+      return request.resource.data.keys().hasOnly(['displayName', 'vectors', 'approved', 'maxStudents']);
+    }
+
+    // True when an edit changes something the coordinator checked before approving.
+    function checkedFieldsChanged() {
+      return request.resource.data.diff(resource.data).affectedKeys().hasAny(['displayName', 'vectors']);
+    }
+  }
+}
