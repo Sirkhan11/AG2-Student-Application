@@ -1,10 +1,20 @@
 // @ts-nocheck - service worker code, the editor doesn't know these types
-import { build, files, prerendered, version } from '$service-worker';
+import { self } from '$app/service-worker';
+import { version } from '$app/env';
+import { immutable, assets } from '$app/manifest';
+import { resolve } from '$app/paths';
 
+// new name each time we update, so old copies don't get mixed up
 const CACHE = `cache-${version}`;
-const ASSETS = [...build, ...files, ...prerendered];
 
-// first time the app opens, save a copy of the pages and files on the phone
+// list of everything to save: the app's code, the static files, and the need help page
+const ASSETS = [
+  ...immutable.map((file) => resolve(file.path)),
+  ...assets.map((file) => resolve(file.path)),
+  '/need-help'
+];
+
+// first time the app opens, save a copy of all of it on the phone
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(ASSETS)));
 });
@@ -19,7 +29,7 @@ self.addEventListener('activate', (event) => {
 });
 
 // try the internet first, if there's no signal show the saved copy instead
-// if that page wasn't saved, just fall back to the need help page so the student still gets help
+// if that page wasn't saved, fall back to the need help page so the student still gets help
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
   event.respondWith(
