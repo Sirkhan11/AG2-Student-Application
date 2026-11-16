@@ -7,3 +7,13 @@ export const questions = [
   'What matters most to you about uni life?',
   'What would make a mentor feel like a good fit for you?'
 ];
+
+/** The mentor wording. Questions 1 and 6 are asked from the mentor's side. */
+export const mentorQuestions = [
+  'What could you help a first-year with most?',
+  questions[1],
+  questions[2],
+  questions[3],
+  questions[4],
+  'What kind of mentor do you want to be?'
+];
