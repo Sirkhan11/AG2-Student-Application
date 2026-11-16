@@ -1,16 +1,12 @@
 <script>
   import { questions } from '#lib/matching/questions.js';
-  import { loadApprovedMentors, watchSignedIn } from '#lib/matching/mentors.js';
-  import { embedAnswers, rankMentors, needsCoordinator } from '#lib/matching/match.js';
+  import { watchSignedIn } from '#lib/matching/mentors.js';
+  import { matchStudent } from '#lib/matching/find-match.js';
 
   let answers = $state(questions.map(() => ''));
-  let ranked = $state(
-    /** @type {{ id: string, name: string, score: number, perQuestion: number[] }[]} */ ([])
-  );
+  let result = $state(/** @type {import('#lib/matching/find-match.js').MatchResult | null} */ (null));
   let loading = $state(false);
   let error = $state('');
-  // How many approved mentors the last search compared against (null until the first search).
-  let mentorCount = $state(/** @type {number | null} */ (null));
   // null while Firebase is still checking for a saved login, so "not logged in" doesn't flash up first.
   let signedIn = $state(/** @type {boolean | null} */ (null));
 
@@ -25,12 +21,9 @@
   async function findMatches() {
     loading = true;
     error = '';
+    result = null;
     try {
-      // Load the mentors and embed the student's answers at the same time.
-      // Only the student is embedded: the mentors' vectors come ready-made from Firestore.
-      const [mentors, studentVectors] = await Promise.all([loadApprovedMentors(), embedAnswers(answers)]);
-      mentorCount = mentors.length;
-      ranked = rankMentors(studentVectors, mentors);
+      result = await matchStudent(answers);
     } catch (err) {
       console.error(err);
       const code = /** @type {{ code?: string }} */ (err).code;
@@ -42,6 +35,11 @@
       // Runs even if something fails, so the button can't get stuck on "Matching…".
       loading = false;
     }
+  }
+
+  /** A score to 2 places, or a dash for a question that couldn't be compared. @param {number | null} score */
+  function show(score) {
+    return score === null ? '–' : score.toFixed(2);
   }
 </script>
 
@@ -68,21 +66,35 @@
   <p role="alert">{error}</p>
 {/if}
 
-{#if mentorCount === 0}
-  <p>There are no approved mentors to match with yet.</p>
-{:else if ranked.length}
-  <p>Compared with {mentorCount} approved {mentorCount === 1 ? 'mentor' : 'mentors'}.</p>
-  {#if needsCoordinator(ranked)}
-    <p>Weak or close match, so this would go to the coordinator.</p>
-  {/if}
+{#if result && result.status === 'summarise-failed'}
+  <p role="alert">
+    Gemini couldn’t summarise these answers, so this would be passed to the coordinator. Nothing was
+    matched on the raw answers.
+  </p>
+{:else if result && result.status === 'ranked'}
+  <p>What Gemini picked out of each answer:</p>
   <ol>
-    {#each ranked as mentor}
-      <li>
-        {mentor.name}: {mentor.score.toFixed(3)}
-        (per question: {mentor.perQuestion.map((s) => s.toFixed(2)).join(', ')})
-      </li>
+    {#each result.studentSummaries as items, i (i)}
+      <li>{items.length ? items.join(', ') : '(nothing to compare, so this question is skipped)'}</li>
     {/each}
   </ol>
+
+  {#if result.mentorCount === 0}
+    <p>There are no approved mentors to match with yet.</p>
+  {:else}
+    <p>Compared with {result.mentorCount} approved {result.mentorCount === 1 ? 'mentor' : 'mentors'}.</p>
+    {#if result.passToCoordinator}
+      <p>Weak or close match, or too few questions compared, so this would go to the coordinator.</p>
+    {/if}
+    <ol>
+      {#each result.ranked as mentor (mentor.id)}
+        <li>
+          {mentor.name}: {show(mentor.score)} from {mentor.questionsCompared} of {questions.length} questions
+          (per question: {mentor.perQuestion.map(show).join(', ')})
+        </li>
+      {/each}
+    </ol>
+  {/if}
 {/if}
 
 <style>

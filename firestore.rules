@@ -18,12 +18,14 @@ service cloud.firestore {
         && (resource.data.approved == true || request.auth.uid == userId);
       allow create: if request.auth != null && request.auth.uid == userId
         && onlyPublicMentorFields()
+        && validItemVectors(request.resource.data.itemVectors)
         && request.resource.data.approved == false;
       // After an edit, approved can only be true if it was true before AND nothing the
       // coordinator checked has changed. So mentors can't approve themselves, and changing
-      // their display name or vectors sends them back to the coordinator (approved: false).
+      // their display name or item vectors sends them back to the coordinator (approved: false).
       allow update: if request.auth != null && request.auth.uid == userId
         && onlyPublicMentorFields()
+        && validItemVectors(request.resource.data.itemVectors)
         && request.resource.data.approved == (resource.data.approved && !checkedFieldsChanged());
       allow delete: if request.auth != null && request.auth.uid == userId;
     }
@@ -36,12 +38,32 @@ service cloud.firestore {
 
     // True when the mentor document being written has no fields beyond these four.
     function onlyPublicMentorFields() {
-      return request.resource.data.keys().hasOnly(['displayName', 'vectors', 'approved', 'maxStudents']);
+      return request.resource.data.keys().hasOnly(['displayName', 'itemVectors', 'approved', 'maxStudents']);
+    }
+
+    // itemVectors must have exactly q1 to q6, one per question. Firestore can't store a list of
+    // lists, so each question holds its phrase vectors back to back in one flat list of numbers
+    // (see mentors.js). Missing itemVectors fails too, so every mentor profile must have them.
+    function validItemVectors(itemVectors) {
+      return itemVectors is map
+        && itemVectors.keys().hasAll(['q1', 'q2', 'q3', 'q4', 'q5', 'q6'])
+        && itemVectors.keys().hasOnly(['q1', 'q2', 'q3', 'q4', 'q5', 'q6'])
+        && wholeVectors(itemVectors.q1) && wholeVectors(itemVectors.q2)
+        && wholeVectors(itemVectors.q3) && wholeVectors(itemVectors.q4)
+        && wholeVectors(itemVectors.q5) && wholeVectors(itemVectors.q6);
+    }
+
+    // A whole number of 384-number vectors, and at most 5 of them (Gemini's 5-phrase cap), so
+    // 0 to 1920 numbers. This enforces the cap on the server: a mentor can't store extra phrases
+    // to match more students. (Rules can't loop, so each number isn't checked; the app skips
+    // any profile with non-numbers when it loads mentors.)
+    function wholeVectors(numbers) {
+      return numbers is list && numbers.size() % 384 == 0 && numbers.size() <= 1920;
     }
 
     // True when an edit changes something the coordinator checked before approving.
     function checkedFieldsChanged() {
-      return request.resource.data.diff(resource.data).affectedKeys().hasAny(['displayName', 'vectors']);
+      return request.resource.data.diff(resource.data).affectedKeys().hasAny(['displayName', 'itemVectors']);
     }
   }
 }

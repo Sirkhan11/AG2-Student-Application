@@ -1,6 +1,7 @@
 <script>
   import { mentorQuestions } from '#lib/matching/questions.js';
-  import { findBlankAnswer, registerMentor } from '#lib/matching/mentors.js';
+  import { findBlankAnswer, registerMentor, NOTHING_TO_MATCH } from '#lib/matching/mentors.js';
+  import { SUMMARISE_FAILED } from '#lib/matching/summarise.js';
 
   let name = $state('');
   let displayName = $state('');
@@ -42,10 +43,16 @@
       done = true;
     } catch (err) {
       const code = /** @type {{ code?: string }} */ (err).code;
-      error =
-        code === 'auth/email-already-in-use'
-          ? "We couldn't create an account with that email. If you already have one, log in instead."
-          : 'Something went wrong. Please try again.';
+      // Gemini runs before the account is made, so for its errors nothing has been saved yet.
+      if (code === 'auth/email-already-in-use') {
+        error = "We couldn't create an account with that email. If you already have one, log in instead.";
+      } else if (code === SUMMARISE_FAILED) {
+        error = "We couldn't process your answers just now, so your account hasn't been created. Please try again in a minute.";
+      } else if (code === NOTHING_TO_MATCH) {
+        error = "We couldn't find anything to match you on. Please say a bit more about what you enjoy or could help with.";
+      } else {
+        error = 'Something went wrong. Please try again.';
+      }
     } finally {
       status = '';
     }
@@ -60,9 +67,9 @@
   {:else}
     <h1>Become a mentor</h1>
     <p class="muted">
-      Your answers are only used to match you with students who'd get on with you. Students will
-      see the name you choose to show them, not your answers or other details, and the coordinator
-      checks every profile first.
+      Your answers are only used to match you with students who'd get on with you. Google's Gemini
+      AI summarises them to find a match. Students will see the name you choose to show them, not
+      your answers or other details, and the coordinator checks every profile first.
     </p>
 
     <form onsubmit={(event) => {
