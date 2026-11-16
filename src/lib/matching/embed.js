@@ -1,11 +1,17 @@
+/** The model, once it's loading or loaded, so every call shares one download. */
 /** @type {Promise<any> | undefined} */
 let extractorPromise;
 
 function getExtractor() {
   if (!extractorPromise) {
-    extractorPromise = import('@huggingface/transformers').then(({ pipeline }) =>
-      pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2')
-    );
+    extractorPromise = import('@huggingface/transformers')
+      .then(({ pipeline }) => pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2'))
+      .catch((err) => {
+        // A failed promise stays failed, so forget it: the next call then starts a fresh download
+        // instead of getting this same failure back until the page is reloaded.
+        extractorPromise = undefined;
+        throw err;
+      });
   }
   return extractorPromise;
 }
