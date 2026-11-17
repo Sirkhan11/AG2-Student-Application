@@ -177,7 +177,7 @@ export function describeForGemini({ match, tasks, checklistSaved = true, profile
   } else if (match === null && mentorNote === 'no-mentors') {
     lines.push('Mentor: they asked in this chat, but there are no mentors available yet, so don’t offer again in this chat.');
   } else if (match === null) {
-    lines.push('Mentor: they haven’t got one yet. You can offer to find them one here in the chat ({{mentor}}).');
+    lines.push('Mentor: they haven’t got one yet. If they want one, you can find them one here in the chat (see Finding them a student mentor).');
     if (mentorNote === 'declined') lines.push('They said not now to finding a mentor in this chat: don’t offer it again unless they ask for a mentor. If they do, offer it as usual, with {{mentor}}.');
     if (mentorNote === 'stopped') lines.push('They started finding a mentor in this chat and stopped: don’t offer it again unless they ask for a mentor. If they do, offer it as usual, with {{mentor}}.');
   } else {

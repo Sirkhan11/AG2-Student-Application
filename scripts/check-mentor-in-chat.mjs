@@ -273,27 +273,30 @@ const checks = [
   }],
   ['The chat’s instructions: it does things itself; "Things you can do in the chat" comes from one list; pages only for what it can’t do; no [[Find a mentor]]', () => {
     const t = chatInstructions('(about)', ['(opener)']);
-    assert.match(t, /The chat is the main way students use AG2\. When the app can do something here in the chat \(see Things you can do in the chat below\), offer to do it here rather than sending them to a page\. Pages are only for things the chat can't do yet\./);
+    assert.match(t, /The chat is the main way students use AG2\. When they want something the app can do here in the chat \(see Things you can do in the chat below\), offer to do it here rather than sending them to a page\. Pages are only for things the chat can't do yet\./);
     assert.match(t, /Things you can do in the chat:\n- You only ever offer one of these, by writing its marker in your reply, after a short sentence for the student\. The marker is what shows them the card: if you say you can do something here, its marker must be in that same reply\. Nothing starts or is saved until they tap the card/);
     assert.match(t, /Never ask the app's questions yourself, never collect the answers, and never say it's done or that it will be/);
-    assert.match(t, /- Offer one thing at a time\./);
+    assert.match(t, /- Offer one thing at a time, and never instead of helping with what they asked\./);
+    assert.match(t, /Don't bring it up otherwise: when they ask about something else \(societies, sport, keeping fit, the NHS and so on\), help with that, and never offer a mentor instead\./);
     for (const action of CHAT_ACTIONS) {
       assert.ok(t.includes(`${action.title} (${action.marker}):`), action.id);
       for (const rule of action.rules) assert.ok(t.includes(`- ${rule}`), `${action.id}: ${rule.slice(0, 40)}`);
     }
-    assert.match(t, /Offer it when they ask for a mentor, want someone to help them settle in or organise their work, or say yes to the mentor offer in your first messages/);
+    assert.match(t, /Offer it only when they ask for a mentor, ask for someone to help them settle in or organise their work, say yes to the mentor offer in your first messages, or talk about their mentor when they haven’t got one yet/);
     assert.doesNotMatch(t, /\[\[Find a mentor\]\]/);
     assert.equal(findPage('Find a mentor'), null);
     assert.deepEqual(APP_PAGES.map((page) => page.name), ['Checklist', 'NHS Guide', 'GP Finder', 'Your Mentor', 'Need Help Now']);
     assert.match(t, /If they ask about changing their mentor, tell them they can ask the mentoring coordinator for a different one on the \[\[Your Mentor\]\] page/, 'changing mentor stays as it was');
     assert.match(t, /call 999 if they're in danger now, NHS 111 for urgent help, Samaritans free on 116 123 at any time, and \[\[Need Help Now\]\]/, 'every safety rule');
     assert.match(t, /Keep replies short: one to three sentences\./);
+    assert.match(t, /Suggesting societies, Northumbria Sport clubs and NSU services \(the app shows them as cards\) is part of what the chat does/);
+    assert.match(t, /If they haven't been matched yet \(the coordinator is finding them one, or they haven't got one\), say so plainly: never make up a match or reasons\./);
     assert.match(t, /Ask at most one question at a time\./);
   }],
   ['What Gemini is told: a mentor account isn’t offered one; no mentor yet: it can offer here; Not now, Stop and the outcome stop it offering again', () => {
     const base = { tasks: null };
     assert.match(describeForGemini({ ...base, match: null, isMentor: true }), /Mentor: they’re a mentor themselves \(they signed up as one\), so don’t offer to find them one\./);
-    assert.match(describeForGemini({ ...base, match: null }), /Mentor: they haven’t got one yet\. You can offer to find them one here in the chat \(\{\{mentor\}\}\)\./);
+    assert.match(describeForGemini({ ...base, match: null }), /Mentor: they haven’t got one yet\. If they want one, you can find them one here in the chat \(see Finding them a student mentor\)\./);
     assert.doesNotMatch(describeForGemini({ ...base, match: null }), /Find a mentor page/);
     assert.match(describeForGemini({ ...base, match: null, mentorNote: 'declined' }), /They said not now to finding a mentor in this chat: don’t offer it again unless they ask for a mentor\. If they do, offer it as usual, with \{\{mentor\}\}\./);
     assert.match(describeForGemini({ ...base, match: null, mentorNote: 'stopped' }), /They started finding a mentor in this chat and stopped: don’t offer it again unless they ask for a mentor\. If they do, offer it as usual, with \{\{mentor\}\}\./);

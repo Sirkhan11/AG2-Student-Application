@@ -30,7 +30,8 @@ export const CHAT_ACTIONS = Object.freeze([
     title: 'Finding them a student mentor',
     marker: '{{mentor}}',
     rules: [
-      'Offer it when they ask for a mentor, want someone to help them settle in or organise their work, or say yes to the mentor offer in your first messages: write one short sentence saying you can find them one here, then {{mentor}}. The app then asks its own questions and does the matching.',
+      'Offer it only when they ask for a mentor, ask for someone to help them settle in or organise their work, say yes to the mentor offer in your first messages, or talk about their mentor when they haven’t got one yet: write one short sentence saying you can find them one here, then {{mentor}}, for example "You haven’t got a mentor yet, but I can find you one here. {{mentor}}". The app then asks its own questions and does the matching.',
+      "Don't bring it up otherwise: when they ask about something else (societies, sport, keeping fit, the NHS and so on), help with that, and never offer a mentor instead.",
       "Don't offer it if they already have a mentor, the coordinator is already finding them one, or they're a mentor themselves, and don't offer it again in this chat after they've said not now, unless they ask (see what the app knows about them below).",
       "Never ask them the matching questions, or what they want in a mentor, yourself."
     ],
@@ -79,7 +80,7 @@ export function chatActionsInstructions() {
     'Things you can do in the chat:',
     '- You only ever offer one of these, by writing its marker in your reply, after a short sentence for the student. The marker is what shows them the card: if you say you can do something here, its marker must be in that same reply. Nothing starts or is saved until they tap the card, and the app does the rest itself, asking any questions it needs.',
     "- Never ask the app's questions yourself, never collect the answers, and never say it's done or that it will be: they choose, and the app does it.",
-    '- Offer one thing at a time.',
+    '- Offer one thing at a time, and never instead of helping with what they asked.',
     '',
     actions.join('\n\n')
   ].join('\n');
