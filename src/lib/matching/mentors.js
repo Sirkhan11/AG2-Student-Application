@@ -1,6 +1,10 @@
-import { createUserWithEmailAndPassword, deleteUser } from 'firebase/auth';
-import { collection, doc, getDoc, getDocs, query, serverTimestamp, where, writeBatch } from 'firebase/firestore';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { collection, doc, getDoc, getDocs, query, where } from 'firebase/firestore';
 import { db, getFirebaseAuth } from '#lib/firebase/client.js';
+import { sendVerification } from '#lib/firebase/verify.js';
+import { saveMentor } from '#lib/signup/finish.js';
+import { waitingSignUp } from '#lib/signup/waiting.js';
+import { isUniEmail, notUniEmail } from '#lib/uni-email.js';
 import { questions } from '#lib/matching/questions.js';
 import { MAX_WANTS, summariseAnswers } from '#lib/matching/summarise.js';
 import { summaryToSave } from '#lib/matching/summary-prompt.js';
@@ -88,25 +92,67 @@ function unpackItems(list) {
 }
 
 /**
- * Signs up a new mentor: summarises and embeds their answers, creates their login, then saves their
- * profile in two parts:
+ * A mentor's two documents, as they're saved (saveMentor in signup/finish.js adds createdAt):
  * - mentors/{uid} is public: only what matching needs (display name, item vectors, approval, capacity).
  *   Signed-in users can read it once the mentor is approved.
  * - mentorDetails/{uid} is private: only the mentor can read it (the coordinator uses the Firebase console).
  *   It keeps the written answers and Gemini's summaries, for explaining matches later.
- * The email isn't saved in either, because Firebase Auth already has it.
+ * The email isn't saved in either, because Firebase Auth already has it. Every field is named one by
+ * one (no ...profile), so nothing lands in the public document by accident.
+ * @param {MentorProfile} profile
+ * @param {string[]} answers trimmed
+ * @param {Awaited<ReturnType<typeof summariseAnswers>>} summary
+ * @param {number[][][]} itemVectors
+ */
+export function mentorDocuments(profile, answers, summary, itemVectors) {
+  return {
+    profile: {
+      displayName: profile.displayName.trim(),
+      itemVectors: byQuestion(itemVectors.map(packItems)),
+      approved: false,
+      maxStudents: profile.maxStudents,
+      // How many of their places are taken. Only a student taking a place can add to it (see
+      // matches.js and firestore.rules); the coordinator corrects it in the console if a match ends.
+      studentCount: 0
+    },
+    details: {
+      name: profile.name.trim(),
+      course: profile.course.trim(),
+      answers,
+      // What Gemini picked out: likes (in the same order as the vectors), avoids and styles. Private
+      // for now: students only see a summary once the mentor has agreed to it (not built yet).
+      summaries: summaryToSave(summary),
+      meetingFrequency: profile.meetingFrequency,
+      availability: profile.availability.trim()
+    }
+  };
+}
+
+/**
+ * Signs up a mentor: summarises and embeds their answers, then
+ * - with a login (a new account): makes the account, which signs them in, and sends the email that
+ *   verifies their address. firestore.rules only let a verified Northumbria account write anything,
+ *   so the profile waits in this tab (signup/waiting.js) until they've clicked the link, and
+ *   finishSignUp then saves it. The address must be a Northumbria one, checked before Gemini runs.
+ * - without one (login null): saves the profile to the signed-in, verified account straight away.
+ *   That's for a mentor whose waiting profile was lost (they closed the tab before verifying).
  *
  * Gemini and the embedding model both run before the account exists, because they're the steps most
  * likely to fail (rate limits, the first model download). If either fails, there's no account to tidy
- * up and the mentor can simply try again. If saving fails after the account is made, the account is
- * deleted again. New mentors start unapproved, so the coordinator can check them before they're matched.
+ * up and the mentor can simply try again. New mentors start unapproved, so the coordinator can check
+ * them before they're matched.
  *
- * Errors to expect: code SUMMARISE_FAILED (from summarise.js) if Gemini fails, NOTHING_TO_MATCH if
- * Gemini found nothing in any answer, and Firebase Auth codes such as 'auth/email-already-in-use'.
+ * Errors to expect: code NOT_UNI_EMAIL (uni-email.js) for another address, SUMMARISE_FAILED (from
+ * summarise.js) if Gemini fails, NOTHING_TO_MATCH if Gemini found nothing in any answer, and Firebase
+ * Auth codes such as 'auth/email-already-in-use'.
  * @param {MentorProfile} profile
- * @param {{ email: string, password: string }} login kept apart from the profile, so it can't be saved by mistake
+ * @param {{ email: string, password: string } | null} login kept apart from the profile, so it can't
+ *   be saved by mistake; null to use the signed-in account
+ * @param {import('#lib/signup/waiting.js').WaitingStore} [waiting]
+ * @returns {Promise<'verify-email' | 'saved'>} what happens next: check their inbox, or nothing (saved)
  */
-export async function registerMentor(profile, login) {
+export async function registerMentor(profile, login, waiting = waitingSignUp()) {
+  if (login && !isUniEmail(login.email)) throw notUniEmail();
   const answers = profile.answers.map((answer) => answer.trim());
   // Safety nets: the page checks these first, but bad values must never be saved, whoever calls this.
   if (findBlankAnswer(answers) !== -1) throw new Error('Every answer needs some text.');
@@ -117,45 +163,21 @@ export async function registerMentor(profile, login) {
   if (summary.likes.every((items) => items.length === 0)) {
     throw Object.assign(new Error('Gemini found nothing to match on in any answer.'), { code: NOTHING_TO_MATCH });
   }
-  // Only likes are embedded. Avoids and styles are saved below but never turned into vectors.
+  // Only likes are embedded. Avoids and styles are saved but never turned into vectors.
   const itemVectors = await embedSummaries(summary.likes);
+  const mentor = mentorDocuments(profile, answers, summary, itemVectors);
 
-  const { user } = await createUserWithEmailAndPassword(getFirebaseAuth(), login.email, login.password);
-
-  // A batch saves both documents together: either both are written or neither is.
-  // Every field is named one by one (no ...profile), so nothing lands in the public document by accident.
-  const batch = writeBatch(db);
-  batch.set(doc(db, 'mentors', user.uid), {
-    displayName: profile.displayName.trim(),
-    itemVectors: byQuestion(itemVectors.map(packItems)),
-    approved: false,
-    maxStudents: profile.maxStudents,
-    // How many of their places are taken. Only a student taking a place can add to it (see
-    // matches.js and firestore.rules); the coordinator corrects it in the console if a match ends.
-    studentCount: 0
-  });
-  batch.set(doc(db, 'mentorDetails', user.uid), {
-    name: profile.name.trim(),
-    course: profile.course.trim(),
-    answers,
-    // What Gemini picked out: likes (in the same order as the vectors), avoids and styles. Private
-    // for now: students only see a summary once the mentor has agreed to it (not built yet).
-    summaries: summaryToSave(summary),
-    meetingFrequency: profile.meetingFrequency,
-    availability: profile.availability.trim(),
-    createdAt: serverTimestamp()
-  });
-
-  try {
-    await batch.commit();
-  } catch (err) {
-    // The account exists but its profile doesn't, so remove the account and let the mentor start again.
-    // Deleting also signs them out. If the delete fails too, log that, but still report the original problem.
-    await deleteUser(user).catch((deleteErr) =>
-      console.error('Could not remove the account after the profile failed to save:', deleteErr)
-    );
-    throw err;
+  if (!login) {
+    const user = getFirebaseAuth().currentUser;
+    if (!user?.emailVerified) throw new Error('Log in with your verified Northumbria account first.');
+    await saveMentor(db, user.uid, mentor);
+    return 'saved';
   }
+  const { user } = await createUserWithEmailAndPassword(getFirebaseAuth(), login.email.trim(), login.password);
+  waiting.save({ uid: user.uid, mentor });
+  // If the email can't be sent, the check-your-inbox screen has Resend.
+  await sendVerification(user).catch((err) => console.error('Sending the verification email failed:', err?.code ?? err));
+  return 'verify-email';
 }
 
 /**

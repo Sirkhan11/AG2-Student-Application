@@ -3,6 +3,7 @@
   import { signOut } from 'firebase/auth';
   import { getFirebaseAuth } from '#lib/firebase/client';
   import { disconnectBlackboard } from '#lib/blackboard/api.js';
+  import { waitingSignUp } from '#lib/signup/waiting.js';
 
   let loading = $state(false);
   let errorMessage = $state('');
@@ -14,6 +15,8 @@
     try {
       // Forget the Blackboard connection on this device first, so a shared computer keeps nothing.
       await disconnectBlackboard().catch((err) => console.error('Blackboard disconnect on logout failed:', err?.message));
+      // And a sign-up still waiting for its email to be verified.
+      waitingSignUp().clear();
       await signOut(getFirebaseAuth());
       await goto('/');
     } catch (err) {

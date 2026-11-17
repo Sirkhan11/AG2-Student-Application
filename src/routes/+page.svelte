@@ -4,6 +4,7 @@
   import { page } from '$app/state';
   import { safeNextPath } from '#lib/next-path.js';
   import { logIn } from '#lib/firebase/auth.js';
+  import { isUniEmail, UNI_EMAIL_MESSAGE } from '#lib/uni-email.js';
 
   let email = $state('');
   let password = $state('');
@@ -17,6 +18,11 @@
     }
 
     error = '';
+    // AG2 is for Northumbria students: other addresses are turned away before anything is sent.
+    if (!isUniEmail(email)) {
+      error = UNI_EMAIL_MESSAGE;
+      return;
+    }
     loggingIn = true;
     try {
       // A real Firebase login, so pages that need a signed-in user (like /find-mentor) work.
@@ -45,7 +51,7 @@
     event.preventDefault();
     handleLogin();
   }}>
-    <label for="email">Email address</label>
+    <label for="email">Northumbria email address</label>
     <input
       id="email"
       class="field"

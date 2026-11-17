@@ -1,7 +1,9 @@
 <script>
   import { goto } from '$app/navigation';
-  import { getFirebaseAuth, db } from '#lib/firebase/client';
+  import { getFirebaseAuth } from '#lib/firebase/client.js';
   import { signUpStudent } from '#lib/students/signup.js';
+  import { waitingSignUp } from '#lib/signup/waiting.js';
+  import { isUniEmail, NOT_UNI_EMAIL, UNI_EMAIL_MESSAGE } from '#lib/uni-email.js';
 
   let name = $state('');
   let email = $state('');
@@ -14,18 +16,30 @@
 
   async function register() {
     error = '';
+    // AG2 is for Northumbria students: other addresses are turned away before an account is made.
+    if (!isUniEmail(email)) {
+      error = UNI_EMAIL_MESSAGE;
+      return;
+    }
     loading = true;
 
     try {
-      // The account and the students/{uid} record (see signup.js, which test scripts use too).
+      // Makes the account and sends the verification email. The record waits in this tab until the
+      // link is clicked (see signup.js); meanwhile the app shows the check-your-inbox screen.
       await signUpStudent(
-        { auth: getFirebaseAuth(), db },
+        { auth: getFirebaseAuth(), waiting: waitingSignUp() },
         { name, email, password, course, interests, arrivalDate }
       );
 
       await goto('/home');
     } catch (err) {
-      error = err.message;
+      const { code, message } = /** @type {{ code?: string, message?: string }} */ (err);
+      error =
+        code === NOT_UNI_EMAIL
+          ? UNI_EMAIL_MESSAGE
+          : code === 'auth/email-already-in-use'
+            ? 'There’s already an account with that email. Log in instead.'
+            : (message ?? 'Something went wrong. Please try again.');
     } finally {
       loading = false;
     }
@@ -47,8 +61,9 @@
     <input id="name" class="field"
       bind:value={name} required />
 
-    <label for="email">Email</label>
+    <label for="email">Northumbria email address</label>
     <input id="email" class="field" type="email"
+      placeholder="ending @northumbria.ac.uk"
       bind:value={email} required />
 
     <label for="password">Password</label>

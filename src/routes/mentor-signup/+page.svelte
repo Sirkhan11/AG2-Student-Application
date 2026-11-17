@@ -1,7 +1,11 @@
 <script>
+  import { onMount } from 'svelte';
+  import { page } from '$app/state';
   import { mentorQuestions } from '#lib/matching/questions.js';
   import { findBlankAnswer, registerMentor, NOTHING_TO_MATCH } from '#lib/matching/mentors.js';
   import { SUMMARISE_FAILED } from '#lib/matching/summarise.js';
+  import { watchAccount } from '#lib/firebase/auth.js';
+  import { isUniEmail, NOT_UNI_EMAIL, UNI_EMAIL_MESSAGE } from '#lib/uni-email.js';
 
   let name = $state('');
   let displayName = $state('');
@@ -17,6 +21,12 @@
   let status = $state('');
   let error = $state('');
   let done = $state(false);
+  // Already signed in with a verified Northumbria account (their waiting profile was lost, say, by
+  // closing the tab before verifying): the profile goes on that account, with no new login.
+  let signedIn = $state(false);
+  onMount(() => watchAccount((account) => (signedIn = account?.verified === true)));
+  // The app comes back here with ?done once the profile that waited for verification is saved.
+  let thanks = $derived(done || page.url.searchParams.has('done'));
 
   async function register() {
     error = '';
@@ -24,6 +34,11 @@
     const blank = findBlankAnswer(answers);
     if (blank !== -1) {
       error = `Please write an answer for question ${blank + 1}.`;
+      return;
+    }
+    // AG2 is for Northumbria students: checked before Gemini runs, so nothing is spent on it.
+    if (!signedIn && !isUniEmail(email)) {
+      error = UNI_EMAIL_MESSAGE;
       return;
     }
     try {
@@ -38,13 +53,17 @@
           availability,
           maxStudents: Number(maxStudents)
         },
-        { email, password }
+        signedIn ? null : { email, password }
       );
-      done = true;
+      // A new account sees the check-your-inbox screen now (the app shows it); this page shows the
+      // thanks once the profile is saved, straight away when they were already signed in.
+      done = signedIn;
     } catch (err) {
       const code = /** @type {{ code?: string }} */ (err).code;
       // Gemini runs before the account is made, so for its errors nothing has been saved yet.
-      if (code === 'auth/email-already-in-use') {
+      if (code === NOT_UNI_EMAIL) {
+        error = UNI_EMAIL_MESSAGE;
+      } else if (code === 'auth/email-already-in-use') {
         error = "We couldn't create an account with that email. If you already have one, log in instead.";
       } else if (code === SUMMARISE_FAILED && /** @type {{ outOfCredit?: boolean }} */ (err).outOfCredit) {
         // Gemini's credit has run out: trying again won't help until it's topped up.
@@ -63,10 +82,10 @@
 </script>
 
 <main class="page">
-  {#if done}
+  {#if thanks}
     <h1>Thanks for signing up</h1>
     <p>The mentoring coordinator will check your profile, and we'll match you with students once it's approved.</p>
-    <p><a href="/">Back to log in</a></p>
+    <p><a href="/home">Go to Home</a></p>
   {:else}
     <p><a href="/">← Back to log in</a></p>
     <h1>Become a mentor</h1>
@@ -87,11 +106,15 @@
       <label for="displayName">Name to show students (for example, your first name)</label>
       <input id="displayName" class="field" bind:value={displayName} required />
 
-      <label for="email">Email</label>
-      <input id="email" class="field" type="email" bind:value={email} required />
+      {#if signedIn}
+        <p class="muted">You’re logged in, so your mentor profile will be added to this account.</p>
+      {:else}
+        <label for="email">Northumbria email address</label>
+        <input id="email" class="field" type="email" placeholder="ending @northumbria.ac.uk" bind:value={email} required />
 
-      <label for="password">Password</label>
-      <input id="password" class="field" type="password" minlength="8" bind:value={password} required />
+        <label for="password">Password</label>
+        <input id="password" class="field" type="password" minlength="8" bind:value={password} required />
+      {/if}
 
       <label for="course">Course</label>
       <input id="course" class="field" bind:value={course} required />

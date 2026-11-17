@@ -1,6 +1,7 @@
 <script>
   import { sendPasswordResetEmail } from 'firebase/auth';
   import { getFirebaseAuth } from '#lib/firebase/client';
+  import { isUniEmail, UNI_EMAIL_MESSAGE } from '#lib/uni-email.js';
 
   let email = $state('');
   let message = $state('');
@@ -9,6 +10,11 @@
   async function resetPassword(event) {
     event.preventDefault();
     message = '';
+    // Only Northumbria accounts can use AG2, so only their addresses are sent a reset link.
+    if (!isUniEmail(email)) {
+      message = UNI_EMAIL_MESSAGE;
+      return;
+    }
     loading = true;
 
     try {
@@ -38,7 +44,7 @@
   </p>
 
   <form onsubmit={resetPassword}>
-    <label for="email">Email address</label>
+    <label for="email">Northumbria email address</label>
 
     <input
       id="email"
