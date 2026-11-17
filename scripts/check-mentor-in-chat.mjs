@@ -230,7 +230,7 @@ const checks = [
     await t2.flow.tryAgain();
     assert.deepEqual([t2.calls.prepare, t2.calls.save], [1, 2]);
     const finder = createFinder({ prepareStudent: async () => ({}), matchAndSave: async () => ({ outcome: 'no-mentors' }), askCoordinator: async () => ({ outcome: 'coordinator' }) });
-    assert.deepEqual(await finder.find(ANSWERS, { meetingFrequency: 'weekly', availability: 'x' }), { status: 'saved', outcome: { outcome: 'no-mentors' } });
+    assert.deepEqual(await finder.find(ANSWERS, { meetingFrequency: 'weekly', availability: 'x' }), { status: 'saved', outcome: { outcome: 'no-mentors' }, summary: null });
     assert.equal(outcomeText({ outcome: 'no-mentors' }), `${SAYS.noMentors} ${SAYS.nothingSaved}`);
   }],
   ['It can’t be stopped or restarted while saving, and its old cards stop working', async () => {
@@ -323,7 +323,7 @@ const checks = [
     assert.match(page, /onclick=\{\(\) => chatFlow\(\)\?\.stop\(\)\}>Stop<\/button>/);
     assert.match(page, /if \(question\) \/\*\* @type \{HTMLInputElement \| null\} \*\/ \(document\.getElementById\('chat-message'\)\)\?\.focus\(\);/);
     assert.match(page, /<div class="messages" aria-live="polite"/);
-    assert.match(page.replace(/\s+/g, ' '), /If you find a mentor here, your answers are saved when you choose Find my mentor, as on the Find a mentor page; they’re never sent to Gemini as chat messages, though it’s told the short summary\./, 'the note at the top stays true');
+    assert.match(page.replace(/\s+/g, ' '), /If you find a mentor here, your answers are saved when you choose Find my mentor, as on the Find a mentor page; they’re never sent to Gemini as chat messages, though it’s told the short summary, and straight after, it suggests a few things that might suit you\./, 'the note at the top stays true');
     assert.match(page, /\{#if link\.action\}[\s\S]*onclick=\{\(\) => startAction\(/, 'the first message’s button starts it here');
     assert.match(page, /offer: reply\.offers\?\.\[0\] \? \{ action: reply\.offers\[0\], state: 'offered' \} : undefined/);
     for (const file of ['src/lib/checkin/mentor-flow.js', 'src/lib/matching/find-mentor-steps.js']) {

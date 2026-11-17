@@ -14,8 +14,9 @@ export { MAX_AVAILABILITY_LENGTH, MEETING_FREQUENCIES, questions };
 /** The note before the questions, about how the answers are used. */
 export const ANSWERS_NOTE =
   'Google’s Gemini AI summarises your answers to find your match. Your mentor won’t see them. ' +
-  'A short summary (what you’re into, what you’d rather avoid and how you like to do things) is also kept for the check-in chat, ' +
-  'so it can suggest things that suit you, and you can see it on What the chat knows about you. ' +
+  'A short summary (what you’re into, what you’d rather avoid and how you like to do things) is also kept for the check-in chat: ' +
+  'straight after matching, it uses it to suggest clubs, societies or services that might suit you, and it can use it later too. ' +
+  'You can see it on What the chat knows about you. ' +
   'If we can’t find a good match automatically, the mentoring coordinator may read your answers to match you themselves.';
 
 /**
@@ -97,9 +98,11 @@ export function outcomeText(outcome) {
  */
 
 /**
- * How a step went: saved (with the outcome), Gemini failed (try again or ask the coordinator), Gemini's
+ * How a step went: saved (with the outcome, and Gemini's summary of their answers if there is one,
+ * for the chat's message straight after), Gemini failed (try again or ask the coordinator), Gemini's
  * credit has run out (the coordinator only), or something else failed (try that step again).
- * @typedef {{ status: 'saved', outcome: import('#lib/matching/find-match.js').SaveOutcome }
+ * @typedef {{ status: 'saved', outcome: import('#lib/matching/find-match.js').SaveOutcome,
+ *     summary: import('#lib/matching/summary-prompt.js').Summary | null }
  *   | { status: 'gemini-failed' } | { status: 'gemini-unavailable' }
  *   | { status: 'error', step: 'prepare' | 'save' | 'coordinator', message: string, error: unknown }} FindResult
  */
@@ -117,7 +120,7 @@ export function createFinder(steps) {
   /** @param {{ meetingFrequency: string, availability: string }} preferences @returns {Promise<FindResult>} */
   async function save(preferences) {
     try {
-      return { status: 'saved', outcome: await steps.matchAndSave(prepared, preferences) };
+      return { status: 'saved', outcome: await steps.matchAndSave(prepared, preferences), summary: prepared?.summary ?? null };
     } catch (error) {
       return { status: 'error', step: 'save', message: 'We couldn’t save your match.', error };
     }
@@ -153,7 +156,7 @@ export function createFinder(steps) {
      */
     async askCoordinator(answers, preferences) {
       try {
-        return { status: 'saved', outcome: await steps.askCoordinator(answers.map((answer) => answer.trim()), preferences) };
+        return { status: 'saved', outcome: await steps.askCoordinator(answers.map((answer) => answer.trim()), preferences), summary: null };
       } catch (error) {
         return { status: 'error', step: 'coordinator', message: 'We couldn’t send your request to the coordinator.', error };
       }

@@ -160,7 +160,7 @@ const offline = [
     const findMatch = source('src/lib/matching/find-match.js');
     assert.match(findMatch, /await takePlace\([^)]*\);\s*\/\/[^\n]*\n\s*await keepMatchingSummary\(prepared\.summary\)\.catch/);
     assert.match(source('src/lib/matching/matches.js'), /\.\.\.\(request\.summary \? \{ matchingSummary: summaryForChat\(request\.summary\) \} : \{\}\)/);
-    assert.match(ANSWERS_NOTE, /A short summary \(what you’re into, what you’d rather avoid and how you like to do things\) is also kept for the check-in chat/);
+    assert.match(ANSWERS_NOTE, /A short summary \(what you’re into, what you’d rather avoid and how you like to do things\) is also kept for the check-in chat:/);
     assert.doesNotMatch(ANSWERS_NOTE, /only used for matching/);
   }]
 ];

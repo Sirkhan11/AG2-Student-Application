@@ -48,10 +48,12 @@ import {
  */
 
 /**
- * How it ended, for the page to tell Gemini (so it doesn't offer again): what happened, and the match
- * or what was saved, where there is one.
+ * How it ended, for the page to tell Gemini (so it doesn't offer again): what happened, the match or
+ * what was saved, where there is one, and Gemini's summary of their answers when they were matched
+ * or passed to the coordinator with one (for the chat's message straight after).
  * @typedef {{ outcome: 'matched' | 'coordinator' | 'already-saved' | 'no-mentors' | 'is-mentor' | 'has-record' | 'stopped',
- *   saved?: import('#lib/matching/find-match.js').SaveOutcome, match?: import('#lib/matching/matches.js').Match }} FlowResult
+ *   saved?: import('#lib/matching/find-match.js').SaveOutcome, match?: import('#lib/matching/matches.js').Match,
+ *   summary?: import('#lib/matching/summary-prompt.js').Summary | null }} FlowResult
  */
 
 /** What the student types to stop. */
@@ -142,7 +144,7 @@ export function createMentorFlow({ check, steps, post, changed, finished }) {
       const saved = result.outcome;
       const matched = saved.outcome === 'matched' || (saved.outcome === 'already-saved' && saved.match.status === 'matched');
       say({ text: outcomeText(saved), card: saved.outcome === 'no-mentors' ? undefined : { kind: 'link', label: matched ? 'Your mentor' : 'See your mentor page', href: '/mentor' } });
-      end({ outcome: saved.outcome, saved, match: saved.outcome === 'already-saved' ? saved.match : undefined });
+      end({ outcome: saved.outcome, saved, match: saved.outcome === 'already-saved' ? saved.match : undefined, summary: result.summary });
     } else if (result.status === 'gemini-failed') {
       set({ step: 'gemini-failed' });
       say({ text: `${SAYS.geminiFailed} ${SAYS.geminiFailedNote}`, card: { kind: 'gemini-failed' } });

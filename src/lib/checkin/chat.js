@@ -14,6 +14,7 @@ export function startCheckinChat(about, opener) {
   const chat = chatWith(modelFor(about));
   return {
     send: chat.send,
+    sendFromApp: chat.sendFromApp,
     /**
      * Tells Gemini what the app knows now (for example after finding a mentor in the chat), keeping
      * the conversation so far.

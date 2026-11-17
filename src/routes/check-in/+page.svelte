@@ -9,6 +9,7 @@
   import { loadMyMatch } from '#lib/matching/matches.js';
   import { buildOpener, describeForGemini } from '#lib/checkin/opener.js';
   import { startCheckinChat } from '#lib/checkin/chat.js';
+  import { afterMentorNote } from '#lib/checkin/chat-prompt.js';
   import {
     chatFlow,
     chatSession,
@@ -16,6 +17,7 @@
     clearChatOnSignOut,
     geminiChat,
     notesChanged,
+    chatFacts,
     setChatFacts,
     setChatFlow,
     setGeminiChat,
@@ -112,6 +114,10 @@
       )
     );
     chatSession.started = true;
+
+    // Straight from finding a mentor on the Find a mentor page: Gemini writes the next message itself.
+    const outcome = match?.status;
+    if (justSignedUp && record?.matchingSummary && (outcome === 'matched' || outcome === 'coordinator')) await followUpAfterMentor(outcome);
   }
 
   // ---------- The chat's own actions (chat-actions.js): for now, finding a mentor ----------
@@ -145,7 +151,14 @@
           // So Gemini knows how it ended, and doesn't offer it again.
           if (result.outcome === 'stopped' || result.outcome === 'no-mentors') tellGemini({ mentorNote: result.outcome });
           else if (result.outcome === 'is-mentor') tellGemini({ isMentor: true });
-          else tellGemini({ match: result.match ?? (await loadMyMatch().catch(() => undefined)), mentorNote: null });
+          else {
+            // Matched, or with the coordinator: Gemini is told, with the summary of their answers, and
+            // then writes the next message itself (followUpAfterMentor).
+            const match = result.match ?? (await loadMyMatch().catch(() => undefined));
+            const profile = chatFacts()?.profile;
+            tellGemini({ match, mentorNote: null, ...(result.summary ? { profile: { ...profile, matchingSummary: result.summary } } : {}) });
+            if (result.summary && (result.outcome === 'matched' || result.outcome === 'coordinator')) await followUpAfterMentor(result.outcome);
+          }
         }
       });
       setChatFlow(flow);
@@ -199,10 +212,22 @@
     const reply = await chat.send(text);
     // Logged out while waiting: the reply belongs to a conversation that's gone.
     if (chatSession.conversation !== conversation) return;
+    showReply(reply);
+    // Gemini's credit has run out: the message box is switched off, as trying again won't help.
+    if (reply.kind === 'unavailable') chatSession.unavailable = true;
+    chatSession.waiting = false;
+    await showLatest();
+  }
+
+  /**
+   * Shows one of Gemini's replies (or the fixed support, error or unavailable message) with its cards.
+   * @param {import('#lib/checkin/chat-turns.js').ChatReply} reply
+   */
+  function showReply(reply) {
     chatSession.messages.push({
       role: 'assistant',
       text: reply.text,
-      kind: reply.kind === 'reply' ? undefined : reply.kind,
+      kind: reply.kind === 'reply' || reply.kind === 'skip' ? undefined : reply.kind,
       links:
         reply.kind === 'safety' || reply.kind === 'unavailable'
           ? [{ label: 'Need help now', href: '/need-help' }]
@@ -215,8 +240,25 @@
       // Something it offered to remember: a card with Remember and Not now. Nothing is saved without a tap.
       note: reply.notes?.[0] ? { text: reply.notes[0], state: 'offered' } : undefined
     });
-    // Gemini's credit has run out: the message box is switched off, as trying again won't help.
-    if (reply.kind === 'unavailable') chatSession.unavailable = true;
+  }
+
+  /**
+   * Straight after they find a mentor (here in the chat, or on the Find a mentor page), Gemini writes
+   * the next message itself: up to 3 clubs, societies or services from the summary of their answers,
+   * and one gentle question ("After they find a mentor" in chat-prompt.js). Not after the support
+   * message has been shown in this conversation, or when the chat isn't available; and Gemini says
+   * nothing ({{skip}}) if they've seemed worried or upset. If it fails, nothing is shown: it's extra.
+   * @param {'matched' | 'coordinator'} outcome
+   */
+  async function followUpAfterMentor(outcome) {
+    const chat = geminiChat();
+    if (!chat || chatSession.unavailable || chatSession.messages.some((message) => message.kind === 'safety')) return;
+    const conversation = chatSession.conversation;
+    chatSession.waiting = true;
+    await showLatest();
+    const reply = await chat.sendFromApp(afterMentorNote(outcome));
+    if (chatSession.conversation !== conversation) return;
+    if (reply.kind === 'reply' || reply.kind === 'safety') showReply(reply);
     chatSession.waiting = false;
     await showLatest();
   }
@@ -258,7 +300,8 @@
       that task is saved to your checklist, and if it offers to remember something and you tap
       Remember, that’s kept for later chats until you delete it. If you find a mentor here, your answers
       are saved when you choose Find my mentor, as on the Find a mentor page; they’re never sent to
-      Gemini as chat messages, though it’s told the short summary. Google doesn’t use the chat to improve its
+      Gemini as chat messages, though it’s told the short summary, and straight after, it suggests a few
+      things that might suit you. Google doesn’t use the chat to improve its
       products, but keeps messages for a limited time, only to detect misuse, keep its services safe
       and secure, and meet legal requirements, and they may be stored or cached in any country
       (<a
