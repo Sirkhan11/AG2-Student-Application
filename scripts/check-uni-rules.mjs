@@ -23,7 +23,7 @@ import { ALWAYS_OPEN, gateFor } from '#lib/account-gate.js';
 import { checkVerified, sendVerification } from '#lib/firebase/verify.js';
 import { finishSignUp } from '#lib/signup/finish.js';
 import { waitingSignUp } from '#lib/signup/waiting.js';
-import { signUpStudent } from '#lib/students/signup.js';
+import { loadDetailsNeeded, needsDetails, saveStudentDetails, signUpStudent } from '#lib/students/signup.js';
 import { isUniEmail, NOT_UNI_EMAIL, UNI_EMAIL_MESSAGE } from '#lib/uni-email.js';
 
 const RULES = readFileSync('firestore.rules', 'utf8');
@@ -96,6 +96,21 @@ const offline = [
     assert.match(layout, /<VerifyEmail email=\{account\.email\} \/>/);
     const verify = readFileSync('src/lib/components/VerifyEmail.svelte', 'utf8');
     for (const words of ['Check your uni inbox', 'Junk', 'I’ve clicked it', 'Resend the email', 'href="/need-help"']) assert.ok(verify.includes(words), words);
+  }],
+  ['Home asks for lost sign-up details (no name or course), never a mentor; the sign-up page then saves them to the logged-in account', () => {
+    assert.equal(needsDetails(undefined, false), true, 'no record');
+    assert.equal(needsDetails({ checklist: [] }, false), true, 'only a checklist');
+    assert.equal(needsDetails({ name: 'Sam', course: '' }, false), true, 'no course');
+    assert.equal(needsDetails({ name: 'Sam', course: 'Law' }, false), false);
+    assert.equal(needsDetails(undefined, true), false, 'a mentor');
+    assert.match(readFileSync('src/routes/home/+page.svelte', 'utf8'), /<FinishDetailsCard \/>/);
+    const card = readFileSync('src/lib/components/FinishDetailsCard.svelte', 'utf8');
+    assert.match(card, /href="\/signup">Add my details<\/a>/);
+    assert.match(card, /onclick=\{notNow\}>Not now<\/button>/);
+    assert.match(card, /sessionStorage/, '"Not now" lasts until the tab closes');
+    const signup = readFileSync('src/routes/signup/+page.svelte', 'utf8');
+    assert.match(signup, /if \(account\) \{\s*loading = true;\s*try \{\s*await saveStudentDetails\(db, account\.uid, account\.email, \{ name, course, interests, arrivalDate \}\);/);
+    assert.match(signup, /\{#if !account\}\s*<label for="email">/, 'no email or password boxes when logged in');
   }],
   ['firestore.rules: every rule needs isNorthumbria() (a verified @northumbria.ac.uk address) or is "if false"; the exception is three test uids', () => {
     const allows = [...RULES.matchAll(/allow ([a-z, ]+): if ([^\n]+)/g)].map((m) => m[2]);
@@ -202,6 +217,18 @@ const emulated = [
     assert.equal((await getDoc(doc(db, 'students', uid))).exists(), false, 'no record, and reading it is allowed');
     await setDoc(doc(db, 'students', uid), { checklist: [{ id: 'gp', title: 'Register with a GP', done: true }] }, { merge: true });
     assert.deepEqual(Object.keys((await ownerRead(`students/${uid}`))?.fields ?? {}), ['checklist'], 'the first save makes the record');
+  }],
+  ['Lost details: a student with only a checklist is asked, saving keeps the checklist, and then they aren’t asked; a mentor never is', async () => {
+    const uid = 'uni-lost-details';
+    const db = firestoreAs(token(uid, 'lost.details2@northumbria.ac.uk', true));
+    await setDoc(doc(db, 'students', uid), { checklist: [{ id: 'gp', title: 'Register with a GP', done: true }] }, { merge: true });
+    assert.equal(await loadDetailsNeeded(db, uid), true, 'asked (reading their own missing mentor profile is allowed)');
+    await saveStudentDetails(db, uid, 'lost.details2@northumbria.ac.uk', { name: 'Sam Student', course: 'BSc Law', interests: 'chess, gigs', arrivalDate: '' });
+    const saved = (await ownerRead(`students/${uid}`))?.fields ?? {};
+    assert.deepEqual(Object.keys(saved).sort(), ['arrivalDate', 'checklist', 'course', 'email', 'interests', 'name', 'role'], 'the checklist is kept');
+    assert.equal(await loadDetailsNeeded(db, uid), false, 'not asked again');
+    await seed('mentors/uni-mentor', { approved: false, displayName: 'Alex' });
+    assert.equal(await loadDetailsNeeded(firestoreAs(token('uni-mentor', 'alex.mentor@northumbria.ac.uk', true)), 'uni-mentor'), false, 'a mentor');
   }],
   ['Signing up as a student: the account and email, nothing saved until the link is clicked, then the record', async () => {
     const app = initializeApp({ projectId: PROJECT, apiKey: 'demo-key', authDomain: `${PROJECT}.firebaseapp.com` }, 'student-signup');

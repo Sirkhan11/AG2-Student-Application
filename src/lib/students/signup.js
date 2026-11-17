@@ -1,12 +1,15 @@
 import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { sendVerification } from '#lib/firebase/verify.js';
 import { isUniEmail, notUniEmail } from '#lib/uni-email.js';
 
 // A new student's account and record, as the sign-up page (/signup) makes them. Only a Northumbria
 // address is accepted, and the record waits until the address is verified (firestore.rules only let a
-// verified Northumbria account write anything): see signup/waiting.js and signup/finish.js. Firebase
-// Auth and the waiting store are passed in rather than taken from client.js (which only works in the
-// browser), so the checks can run it against the Auth emulator.
+// verified Northumbria account write anything): see signup/waiting.js and signup/finish.js. If the
+// details were lost (the tab closed before verifying), Home asks for them again and the sign-up page
+// saves them to the signed-in account (needsDetails, saveStudentDetails). Firebase is passed in rather
+// than taken from client.js (which only works in the browser), so the checks can run it against the
+// emulators.
 
 /**
  * What a student types on the sign-up page. interests is the box's text: a comma list, as typed.
@@ -48,4 +51,38 @@ export async function signUpStudent({ auth, waiting }, { password, ...details })
   waiting.save({ uid: user.uid, student: studentRecord({ ...details, email }) });
   await sendVerification(user).catch((err) => console.error('Sending the verification email failed:', err?.code ?? err));
   return user;
+}
+
+/**
+ * True when a signed-in student's record is missing the details they give at sign-up (their name or
+ * course), so Home asks for them. Never for a mentor: they sign up on the mentor page instead.
+ * @param {Record<string, unknown> | undefined} record students/{uid}, or undefined if there's none
+ * @param {boolean} isMentor whether they have a mentor profile (mentors/{uid})
+ */
+export function needsDetails(record, isMentor) {
+  if (isMentor) return false;
+  const filled = (/** @type {unknown} */ value) => typeof value === 'string' && value.trim() !== '';
+  return !filled(record?.name) || !filled(record?.course);
+}
+
+/**
+ * Whether the signed-in account needs to give its details again (see needsDetails).
+ * @param {import('firebase/firestore').Firestore} db
+ * @param {string} uid
+ */
+export async function loadDetailsNeeded(db, uid) {
+  const [student, mentor] = await Promise.all([getDoc(doc(db, 'students', uid)), getDoc(doc(db, 'mentors', uid))]);
+  return needsDetails(student.data(), mentor.exists());
+}
+
+/**
+ * Saves a signed-in student's details as sign-up would have (studentRecord), merged into their
+ * record, so a checklist they've saved meanwhile is kept. The email is their account's, not typed.
+ * @param {import('firebase/firestore').Firestore} db
+ * @param {string} uid
+ * @param {string} email
+ * @param {Omit<StudentDetails, 'email'>} details
+ */
+export async function saveStudentDetails(db, uid, email, details) {
+  await setDoc(doc(db, 'students', uid), studentRecord({ ...details, email }), { merge: true });
 }

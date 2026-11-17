@@ -1,6 +1,7 @@
 <script>
   import BottomNav from '#lib/components/BottomNav.svelte';
   import LogoutButton from '#lib/components/LogoutButton.svelte';
+  import FinishDetailsCard from '#lib/components/FinishDetailsCard.svelte';
 
   const features = [
     { title: 'Checklist', icon: '☑', href: '/checklist' },
@@ -18,6 +19,9 @@
     <h1>Hi Sam</h1>
     <p class="muted">How can we help you today?</p>
   </header>
+
+  <!-- Only if their sign-up details were lost before they verified their email. -->
+  <FinishDetailsCard />
 
   <a class="search" href="/check-in">
     Ask anything...
