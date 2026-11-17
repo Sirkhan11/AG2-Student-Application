@@ -8,7 +8,10 @@
 import assert from 'node:assert/strict';
 import { buildOpener, describeForGemini } from '#lib/checkin/opener.js';
 import { isCrisis } from '#lib/checkin/safety.js';
-import { SOCIETY_LIST } from '#lib/checkin/chat-prompt.js';
+import { SERVICE_LIST, SOCIETY_LIST } from '#lib/checkin/chat-prompt.js';
+import { linksInReply, MAX_LINKS } from '#lib/checkin/reply-links.js';
+import { SERVICES } from '#lib/nsu/services.js';
+import { SOCIETIES } from '#lib/societies/societies.js';
 
 /** The five default tasks (see src/lib/checkin/saved-checklist.js), with the given ids ticked. @param {string[]} [done] */
 const tasks = (done = []) =>
@@ -96,6 +99,41 @@ const checks = [
     assert.ok(lines.includes('Christian Union (Faith and Belief; for Christians)'));
     assert.ok(!SOCIETY_LIST.includes('Girls Who Run') && !SOCIETY_LIST.includes('Women in Business'));
     assert.ok(!SOCIETY_LIST.includes('Nigerian (International and Cultural; for the Nigerian community)\nNigerian'), 'London societies are left out');
+  }],
+  ['Gemini\'s services list: groups and summaries, the Advice Centre\'s topics, and no Freshers Week wristband', () => {
+    const lines = SERVICE_LIST.split('\n');
+    assert.equal(lines.length, 20, 'the 21 services minus the wristband');
+    assert.ok(lines.some((line) => line.startsWith('Food Pantry (Money and food): ')));
+    assert.ok(lines.some((line) => line.startsWith('Advice Centre (Help and advice): ') && line.includes('Topics: ') && line.includes('Academic misconduct')));
+    assert.ok(!SERVICE_LIST.includes('Freshers'));
+  }],
+
+  // ---------- Turning a reply's [[Name]]s into links ----------
+  ['Societies open their page in the app; services open NSU\'s page in a new tab; Societies opens /societies', () => {
+    const { text, links } = linksInReply('Try [[Climbing]], the [[Food Pantry]] and [[Societies]].', 'Newcastle');
+    assert.equal(text, 'Try Climbing, the Food Pantry and Societies.');
+    assert.deepEqual(links, [
+      { label: 'Climbing', href: '/societies/15', external: false },
+      { label: 'Food Pantry', href: 'https://mynsu.co.uk/foodpantry', external: true },
+      { label: 'Societies', href: '/societies', external: false }
+    ]);
+  }],
+  ['Made-up names stay plain text; plain words like "music" never become links; each link once', () => {
+    const { text, links } = linksInReply('[[Music]] and [[music]], or [[Underwater Basket Weaving]]. I love music.', 'Newcastle');
+    assert.equal(text, 'Music and Music, or Underwater Basket Weaving. I love music.');
+    assert.deepEqual(links.map((link) => link.label), ['Music']);
+  }],
+  [`At most ${MAX_LINKS} links, societies and services together`, () => {
+    assert.equal(linksInReply('[[Music]], [[Gigs]], [[Rock]], [[Events]], [[Film]]', 'Newcastle').links.length, MAX_LINKS);
+  }],
+  ['Never linked, whatever Gemini writes: a women-only society, or the Freshers Week wristband', () => {
+    const { text, links } = linksInReply('Maybe [[Girls Who Run]] or the [[Freshers Week wristband]].', 'Newcastle');
+    assert.equal(text, 'Maybe Girls Who Run or the Freshers Week wristband.');
+    assert.deepEqual(links, []);
+  }],
+  ['No service has the same name as a society, so a [[Name]] can only mean one thing', () => {
+    const societies = new Set(SOCIETIES.map((society) => society.name.toLowerCase()));
+    assert.deepEqual(SERVICES.filter((service) => societies.has(service.name.toLowerCase())).map((service) => service.name), []);
   }],
   ['Everyday phrases are not', () => {
     for (const text of [

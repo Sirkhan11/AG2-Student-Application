@@ -40,9 +40,11 @@ export const CATEGORIES = /** @type {string[]} */ ([
  * stop it offering a women's running society "if you are a woman"). They stay on the Societies page
  * for anyone to browse, with who they're for shown.
  *
- * PROVISIONAL: worked out from the names. NSU's descriptions don't say either way, so the team
- * should confirm with NSU. If the app later asks students (optionally) who they are, the chat could
- * include these for students they apply to; nothing like that is collected now.
+ * PROVISIONAL until NSU confirms. Thomas read the descriptions on 17 November 2026: these two read
+ * as women's groups. Ice Hockey (a mixed club with an extra women's programme) and Pilates (open to
+ * everyone, with some girls-only classes) have no audience. If the app later asks students
+ * (optionally) who they are, the chat could include these for students they apply to; nothing like
+ * that is collected now.
  * @type {Record<number, 'women'>}
  */
 export const AUDIENCE = {
@@ -92,10 +94,10 @@ export const GROUP_ONLY = {
   168: { note: 'neurodiverse community, everyone welcome', everyoneWelcome: true } // Neurodiverse & Inclusive
 };
 
-/** The most societies one chat reply can link to, whatever Gemini writes. */
-export const MAX_SUGGESTED = 3;
-
-/** True for societies the chat may suggest: everything except those with a restricted AUDIENCE. */
+/**
+ * True for societies the check-in chat may suggest: everything except those with a restricted
+ * AUDIENCE. Chat replies are turned into links by src/lib/checkin/reply-links.js.
+ */
 export function suggestible(/** @type {Society} */ society) {
   return !Object.hasOwn(AUDIENCE, society.nsuId);
 }
@@ -147,29 +149,4 @@ export function initials(name) {
     .split(/[^\p{L}\p{N}+]+/u)
     .filter((word) => word && !['and', 'of', 'the', 'for', 'in'].includes(word.toLowerCase()));
   return words.slice(0, 2).map((word) => word[0].toUpperCase()).join('') || '?';
-}
-
-/**
- * The check-in chat asks Gemini to write a suggested society as [[Name]]. This turns each one into
- * plain text, and collects the ones that really are on the list (on this campus) so the page can
- * show them as links to the society's page in the app. Whatever Gemini writes:
- * - a name that isn't on the list stays as plain text with no link, so a made-up society can never
- *   look real
- * - a society with a restricted AUDIENCE is never linked
- * - at most MAX_SUGGESTED links
- * @param {string} reply
- * @param {string} campus
- * @returns {{ text: string, societies: Society[] }}
- */
-export function societiesInReply(reply, campus) {
-  /** @type {Society[]} */
-  const societies = [];
-  const text = reply.replace(/\[\[([^\]]{1,80})\]\]/g, (_, name) => {
-    const society = findSociety(name, campus);
-    if (society && suggestible(society) && !societies.includes(society) && societies.length < MAX_SUGGESTED) {
-      societies.push(society);
-    }
-    return society ? society.name : name;
-  });
-  return { text, societies };
 }

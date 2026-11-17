@@ -12,7 +12,7 @@
 
   /**
    * One bubble. kind marks the fixed safety message or an error; links are buttons shown under it
-   * (external ones, such as a society's NSU page, open in a new tab).
+   * (external ones, such as an NSU service's page, open in a new tab).
    * @typedef {{ role: 'assistant' | 'user', text: string, kind?: 'safety' | 'error',
    *   links?: { label: string, href: string, external?: boolean }[] }} Message
    */
@@ -82,8 +82,8 @@
       links:
         reply.kind === 'safety'
           ? [{ label: 'Need help now', href: '/need-help' }]
-          : // Suggested societies open their page in the app, which has the details and the NSU links.
-            reply.societies?.map((society) => ({ label: society.name, href: `/societies/${society.nsuId}` }))
+          : // Suggested societies open their page in the app; NSU services open NSU's page in a new tab.
+            reply.links
     });
     waiting = false;
     await showLatest();
@@ -131,7 +131,7 @@
                     href={link.href}
                     target="_blank"
                     rel="noopener noreferrer"
-                    aria-label={`${link.label} on the NSU website (opens in a new tab)`}
+                    aria-label={`${link.label} (opens in a new tab)`}
                   >
                     {link.label} ↗
                   </a>

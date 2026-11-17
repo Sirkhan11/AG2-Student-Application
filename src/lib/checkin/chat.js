@@ -1,7 +1,7 @@
 import { getGeminiModel } from '#lib/firebase/ai.js';
 import { isCrisis, SAFETY_MESSAGE } from '#lib/checkin/safety.js';
 import { CHAT_CAMPUS, CHAT_MODEL, chatInstructions } from '#lib/checkin/chat-prompt.js';
-import { societiesInReply } from '#lib/societies/societies.js';
+import { linksInReply } from '#lib/checkin/reply-links.js';
 
 /** Only the last this-many messages are sent each time, so a long chat can't grow without limit. */
 const MAX_HISTORY_MESSAGES = 20;
@@ -15,9 +15,9 @@ const ERROR_MESSAGE =
 
 /**
  * A reply for the page to show: 'reply' from Gemini, 'safety' (the fixed support message), or 'error'.
- * societies are the real societies Gemini suggested, for the page to show as links.
+ * links are the real societies and NSU services Gemini suggested (see reply-links.js).
  * @typedef {{ kind: 'reply' | 'safety' | 'error', text: string,
- *   societies?: import('#lib/societies/societies.js').Society[] }} ChatReply
+ *   links?: import('#lib/checkin/reply-links.js').ReplyLink[] }} ChatReply
  */
 
 /**
@@ -61,10 +61,10 @@ export function startCheckinChat(about, opener) {
         }
         const reply = response.text().trim();
         if (reply === '') throw new Error('Gemini sent an empty reply.');
-        // Gemini keeps seeing its own [[Society]] format; the student sees plain names plus links.
+        // Gemini keeps seeing its own [[Name]] format; the student sees plain names plus links.
         history.push(message, { role: 'model', parts: [{ type: 'text', text: reply }] });
-        const { text: shown, societies } = societiesInReply(reply, CHAT_CAMPUS);
-        return { kind: 'reply', text: shown, societies };
+        const { text: shown, links } = linksInReply(reply, CHAT_CAMPUS);
+        return { kind: 'reply', text: shown, links };
       } catch (err) {
         console.error('The check-in chat could not reply:', err);
         return { kind: 'error', text: ERROR_MESSAGE };

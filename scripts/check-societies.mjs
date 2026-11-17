@@ -1,15 +1,15 @@
 // Checks the Students' Union societies list (src/lib/societies/nsu-societies.json) and the functions
 // that use it (src/lib/societies/societies.js): the data is what we expect, searching, filtering and
-// lookups work, and only real, suggestible societies written as [[Name]] in a chat reply become
-// links. No Gemini or Firebase.
+// lookups work, and which societies the chat may suggest. (Turning a chat reply's [[Name]]s into
+// links is checked in check-checkin.mjs.) No Gemini or Firebase.
 //
 // Run from the project folder:
 //   node scripts/check-societies.mjs
 
 import assert from 'node:assert/strict';
 import {
-  AUDIENCE, CAMPUSES, CATEGORIES, COLLECTED_AT, findSociety, GROUP_ONLY, initials, MAX_SUGGESTED,
-  searchSocieties, SOCIETIES, societiesInReply, societyById, SOURCE_URL, suggestible
+  AUDIENCE, CAMPUSES, CATEGORIES, COLLECTED_AT, findSociety, GROUP_ONLY, initials,
+  searchSocieties, SOCIETIES, societyById, SOURCE_URL, suggestible
 } from '#lib/societies/societies.js';
 
 /** @type {[string, () => void][]} */
@@ -62,22 +62,11 @@ const checks = [
     assert.equal(initials('Accountancy, Finance & Economics'), 'AF');
     assert.equal(initials('Stitch, Make & Bitch'), 'SM');
   }],
-  ['A chat reply: real [[societies]] become links, made-up ones stay plain text without a link', () => {
-    const { text, societies } = societiesInReply('Try [[Climbing]] or [[Walking]]. Or [[Underwater Basket Weaving]].', 'Newcastle');
-    assert.equal(text, 'Try Climbing or Walking. Or Underwater Basket Weaving.');
-    assert.deepEqual(societies.map((society) => society.nsuId), [15, 221]);
-  }],
-  ['A society named twice gets one link; plain words like "music" are never turned into links', () => {
-    assert.deepEqual(societiesInReply('[[Music]] is great. [[music]] again.', 'Newcastle').societies.map((s) => s.name), ['Music']);
-    assert.deepEqual(societiesInReply('I love music and art.', 'Newcastle').societies, []);
-  }],
-  [`At most ${MAX_SUGGESTED} links, and never one for a society with a restricted audience`, () => {
-    assert.equal(societiesInReply('[[Music]], [[Rock]], [[Dance]], [[Film]], [[Book]]', 'Newcastle').societies.length, MAX_SUGGESTED);
-    const { text, societies } = societiesInReply('Maybe [[Girls Who Run]].', 'Newcastle');
-    assert.equal(text, 'Maybe Girls Who Run.');
-    assert.deepEqual(societies, []);
-    assert.equal(suggestible(/** @type {any} */ (societyById(185))), false);
+  ['The chat may suggest any society except those with a restricted audience', () => {
+    assert.equal(suggestible(/** @type {any} */ (societyById(185))), false, 'Girls Who Run');
+    assert.equal(suggestible(/** @type {any} */ (societyById(213))), false, 'Women in Business');
     assert.equal(suggestible(/** @type {any} */ (societyById(214))), true, 'everyone-welcome societies can be suggested');
+    assert.equal(suggestible(/** @type {any} */ (societyById(15))), true);
   }]
 ];
 
