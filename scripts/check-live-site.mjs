@@ -5,10 +5,12 @@
 //   to log in; Need help now and the GP finder work;
 // - an unverified Northumbria account sees only the check-your-inbox screen ("I've clicked it" says
 //   it isn't verified yet, Need help now still opens, Log out works), and no verification email is
-//   asked for.
-// For that last part it makes one throwaway account in the project .env points at, with a made-up
-// @northumbria.ac.uk address and a random password: making it sends no email, Resend is never
-// pressed, and it's deleted at the end. Nothing secret is printed.
+//   asked for;
+// - the deployed Firestore rules let that unverified account, and an account made without the app's
+//   forms (a never-verified example.com address), read and write nothing.
+// For those parts it makes two throwaway accounts in the project .env points at, with made-up
+// addresses and random passwords: making them sends no email, Resend is never pressed, and both are
+// deleted at the end. Nothing secret is printed.
 // Run from the project folder, against the local preview (npm run build:live, then
 // npx --engine-strict=false firebase-tools emulators:start --only hosting --project demo-ag2) or the live site:
 //   node --env-file=.env scripts/check-live-site.mjs [--base https://ag2-dev-thomas.web.app]
@@ -20,6 +22,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { initializeApp } from 'firebase/app';
 import { createUserWithEmailAndPassword, deleteUser, getAuth, signInWithEmailAndPassword, signOut } from 'firebase/auth';
+import { collection, doc, getDoc, getDocs, getFirestore, query, serverTimestamp, setDoc, where } from 'firebase/firestore/lite';
 
 const baseAt = process.argv.indexOf('--base');
 const BASE = (baseAt > 0 ? process.argv[baseAt + 1] : 'http://127.0.0.1:5005').replace(/\/$/, '');
@@ -31,10 +34,15 @@ const report = (name, ok, detail = '') => { results.push(ok); console.log(`${ok 
 
 // The throwaway account (made before Chrome starts; no email is sent by making it).
 const env = process.env;
-const auth = getAuth(initializeApp({ apiKey: env.VITE_FIREBASE_API_KEY, authDomain: env.VITE_FIREBASE_AUTH_DOMAIN, projectId: env.VITE_FIREBASE_PROJECT_ID, appId: env.VITE_FIREBASE_APP_ID }));
+const app = initializeApp({ apiKey: env.VITE_FIREBASE_API_KEY, authDomain: env.VITE_FIREBASE_AUTH_DOMAIN, projectId: env.VITE_FIREBASE_PROJECT_ID, appId: env.VITE_FIREBASE_APP_ID });
+const auth = getAuth(app);
+const db = getFirestore(app);
 const throwaway = { email: `ag2-verify-check-${randomBytes(4).toString('hex')}@northumbria.ac.uk`, password: randomBytes(18).toString('base64url') };
-await createUserWithEmailAndPassword(auth, throwaway.email, throwaway.password);
-await signOut(auth);
+const outsider = { email: `ag2-rules-check-${randomBytes(4).toString('hex')}@example.com`, password: randomBytes(18).toString('base64url') };
+for (const account of [throwaway, outsider]) {
+  await createUserWithEmailAndPassword(auth, account.email, account.password);
+  await signOut(auth);
+}
 
 const profile = mkdtempSync(join(tmpdir(), 'ag2-live-site-'));
 const chrome = spawn(CHROME, ['--headless=new', `--remote-debugging-port=${PORT}`, `--user-data-dir=${profile}`, '--no-first-run', '--disable-extensions', '--window-size=390,844', 'about:blank'], { stdio: 'ignore' });
@@ -125,17 +133,46 @@ try {
   report('Log out from the check-your-inbox screen goes back to log in', await waitFor(`location.pathname === '/' && ${has('Welcome back')}`));
 
   console.log(`\nConsole errors on the pages: ${errors.length}${errors.length ? `\n  ${errors.slice(0, 4).join('\n  ')}` : ''}`);
+
+  // 4. The deployed rules, signed in as each throwaway account (no browser needed).
+  for (const [who, account] of [['an unverified Northumbria address', throwaway], ['an example.com address made without the app', outsider]]) {
+    const { user } = await signInWithEmailAndPassword(auth, account.email, account.password);
+    /** @type {[string, () => Promise<unknown>][]} */
+    const attempts = [
+      ['read its record', () => getDoc(doc(db, 'students', user.uid))],
+      ['save a checklist', () => setDoc(doc(db, 'students', user.uid), { checklist: [] }, { merge: true })],
+      ['read a society', () => getDoc(doc(db, 'societies', '15'))],
+      ['read a sports club', () => getDoc(doc(db, 'sportClubs', 'swimming'))],
+      ['list approved mentors', () => getDocs(query(collection(db, 'mentors'), where('approved', '==', true)))],
+      ['ask for the coordinator', () => setDoc(doc(db, 'matches', user.uid), { status: 'coordinator', meetingFrequency: 'weekly', availability: '', createdAt: serverTimestamp() })],
+      ['ask to change mentor', () => setDoc(doc(db, 'mentorChangeRequests', user.uid), { reason: 'not-a-good-fit', details: '', createdAt: serverTimestamp() })]
+    ];
+    /** @type {string[]} */
+    const allowed = [];
+    for (const [what, attempt] of attempts) {
+      try {
+        await attempt();
+        allowed.push(what);
+      } catch (err) {
+        if (/** @type {{ code?: string }} */ (err).code !== 'permission-denied') allowed.push(`${what} (${/** @type {{ code?: string }} */ (err).code})`);
+      }
+    }
+    report(`The rules let ${who} read and write nothing`, allowed.length === 0, allowed.join(', '));
+    await signOut(auth);
+  }
 } finally {
   ws?.close();
   chrome.kill();
   await sleep(300);
   rmSync(profile, { recursive: true, force: true });
-  try {
-    const { user } = await signInWithEmailAndPassword(auth, throwaway.email, throwaway.password);
-    await deleteUser(user);
-    console.log('The throwaway account was deleted.');
-  } catch (err) {
-    console.log(`Deleting the throwaway account FAILED (${err?.code}). Delete ag2-verify-check-* in the console.`);
+  for (const account of [throwaway, outsider]) {
+    try {
+      const { user } = await signInWithEmailAndPassword(auth, account.email, account.password);
+      await deleteUser(user);
+      console.log(`A throwaway account (${account.email.split('-').slice(0, 3).join('-')}-…) was deleted.`);
+    } catch (err) {
+      console.log(`Deleting a throwaway account FAILED (${err?.code}). Delete ag2-verify-check-* and ag2-rules-check-* in the console.`);
+    }
   }
 }
 console.log(`\n${results.filter(Boolean).length}/${results.length} checks passed (${BASE})`);
