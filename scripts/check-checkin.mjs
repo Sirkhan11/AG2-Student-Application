@@ -129,9 +129,11 @@ const checks = [
     ]) assert.equal(isCrisis(text), true, text);
   }],
   // ---------- The societies Gemini may suggest ----------
-  ['Gemini\'s society list: one per line, with categories and group notes, and no women-only societies', () => {
+  ['Gemini\'s society list: one per line, with categories, group notes and notes on misleading names, and no women-only societies', () => {
     const lines = SOCIETY_LIST.split('\n');
     assert.ok(lines.includes('Climbing (Recreational Sport)'));
+    assert.ok(lines.includes('Conservation of Fine Art (Academic; conserving artworks)'));
+    assert.ok(lines.includes('Formula Student (Recreational Sport; building a racing car for an engineering competition)'));
     assert.ok(lines.includes('Ukrainian (International and Cultural; Ukrainian community, everyone welcome)'));
     assert.ok(lines.includes('Christian Union (Faith and Belief; for Christians)'));
     assert.ok(!SOCIETY_LIST.includes('Girls Who Run') && !SOCIETY_LIST.includes('Women in Business'));

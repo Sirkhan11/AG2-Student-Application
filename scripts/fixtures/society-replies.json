@@ -1,48 +1,48 @@
 {
   "about": "Check-in chat replies for check-society-suggestions.mjs. Regenerate with --refresh rather than edit.",
   "model": "gemini-3.5-flash-lite",
-  "promptFingerprint": "63df4dcd6274",
-  "made": "2026-11-17T14:14:50.502Z",
+  "promptFingerprint": "95cd8de87309",
+  "made": "2026-11-17T14:38:43.236Z",
   "replies": {
     "gigs, rules out sport": {
       "student": "s-gigs-short",
       "message": "Gigs and live music. Not sport. A gig, then out with mates. Are there any societies you'd recommend?",
-      "reply": "If you love gigs and nights out, you might enjoy [[Music]]. What kind of music are you into?"
+      "reply": "For live music, you might like [[Music]], where you can connect with other musicians and fans.\nHave you had a chance to check out what is coming up on the [[Gigs]] page yet?"
     },
     "homebody, rules out partying": {
       "student": "s-home-short",
       "message": "Board games and reading. Not partying. A quiet night in with a film. Are there any societies you'd recommend?",
-      "reply": "For board games, [[Gaming and Roleplay]] is a great fit, and [[Book]] is ideal if you enjoy reading. You might also like [[Film]] for a cozy movie night in."
+      "reply": "For a quiet night in, [[Book]] and [[Film]] might be right up your street. What kind of books or films do you usually enjoy?"
     },
     "sporty early riser": {
       "student": "s-sport-short",
       "message": "Football and the gym. Up early for a run, then football. Are there any societies you'd recommend?",
-      "reply": "It sounds like you have a great active routine already. For football, you might want to check out [[Sport]] to see what teams are available, and you can also browse the Societies page for more ideas."
+      "reply": "Since you are into football and running, you might enjoy checking out [[Climbing]] or [[Walking]] for keeping active. Have a look at [[Sport]] as well for joining teams and sports clubs."
     },
     "lie-in and the cinema": {
       "student": "s-liein-short",
       "message": "Photography and the cinema. A lie-in, then the cinema. Are there any societies you'd recommend?",
-      "reply": "That sounds like a lovely, relaxing day. If you enjoy films, you might like to take a look at [[Film]]."
+      "reply": "Since you like film, you might enjoy [[Film]]. Have a look at what it offers, and let me know if you would like to chat about anything else."
     },
     "gamer, last minute (near tie)": {
       "student": "s-gamer-short",
       "message": "Gaming, Minecraft and FIFA. Gaming online late with mates. Are there any societies you'd recommend?",
-      "reply": "For gaming and esports, you might like [[Esports]] or [[Gaming and Roleplay]]. Have you had a look at the Societies page to see what else is on offer?"
+      "reply": "It sounds like you love gaming, so you might want to take a look at [[Gaming and Roleplay]] or [[Esports]]. \n\nWhat sort of games do you usually play with your mates online?"
     },
     "clubbing (synonyms for partying)": {
       "student": "s-clubbing-short",
       "message": "Going clubbing and festivals. Big nights out. Are there any societies you'd recommend?",
-      "reply": "Since you love big nights out, clubbing and festivals, you'll definitely want to check out the Students' Union [[Events]] and [[Gigs]] pages."
+      "reply": "For big nights out and music, you might enjoy checking out [[Events]] and [[Gigs]]. What kind of music or festivals are you into?"
     },
     "outdoors, rules out the gym": {
       "student": "s-outdoors-short",
       "message": "Hiking and climbing. Not the gym. Up early for a long walk. Are there any societies you'd recommend?",
-      "reply": "If you love getting up early for long walks and outdoor climbs, [[Walking]], [[Mountaineering]] and [[Outdoor Climbing]] would all be great fits for you. Have a look at the Societies page for more details on each of them."
+      "reply": "That sounds like a great way to spend the morning. For those activities, you might like [[Climbing]], [[Outdoor Climbing]] or [[Walking]]. What do you think of those?"
     },
     "unrelated to every mentor": {
       "student": "s-unrelated-short",
       "message": "Knitting and birdwatching. A trip to a nature reserve. Are there any societies you'd recommend?",
-      "reply": "That sounds really relaxing and a great way to enjoy the outdoors. Have a look on the Societies page to see all the groups available."
+      "reply": "That sounds like a lovely mix of hobbies.\nHave a look at [[Hooked By Crochet]] for something creative with yarn, and you can also browse the Societies page to see all the groups available.\nWhat sort of birds do you like to look out for?"
     },
     "only says what they don't want in 3 answers": {
       "student": "s-too-few",
@@ -52,68 +52,68 @@
     "quiet nights in, not nights out (opposites)": {
       "student": "s-nights-in-short",
       "message": "Reading and films. Quiet nights in, not nights out. Are there any societies you'd recommend?",
-      "reply": "That sounds like a lovely way to spend an evening. Since you enjoy reading and films, you might like [[Book]], [[Film]], or [[Creative Corridor]]."
+      "reply": "For reading and quiet nights in, you might enjoy [[Book]], [[Film]], or [[Creative Corridor]]. \n\nWhat kind of books or films do you most enjoy?"
     },
     "live music (synonym for gigs)": {
       "student": "s-live-music",
       "message": "Live music, mostly indie bands. Seeing a band, then drinks with friends. Are there any societies you'd recommend?",
-      "reply": "If you love indie bands and live music, check out [[Rock]] for getting together with other music fans, or have a look at the [[Gigs]] page for what is on."
+      "reply": "If you enjoy live music and nights out, you might like [[Gigs]] and [[Events]] for things happening at the Students' Union. \n\nWhat kind of instruments do you play, or do you prefer being in the audience?"
     },
     "interested in Ukrainian culture, not Ukrainian": {
       "student": "extra",
       "message": "I'm not Ukrainian, but I'd love to learn more about Ukrainian culture and meet people. Are there any societies you'd recommend?",
-      "reply": "That is wonderful, and everyone is welcome to join! You might like to take a look at [[Ukrainian]]. Have a browse of the Societies page to see what else catches your eye."
+      "reply": "You would be very welcome to join [[Ukrainian]], as everyone is welcome to take part. It is a great way to learn about the culture and meet new people. What kind of things do you usually enjoy doing in your spare time?"
     },
     "a mature student": {
       "student": "extra",
       "message": "I'm a mature student, so I'm a bit older than most people on my course. Are there any societies you'd recommend?",
-      "reply": "It is great that you are here, and there is a society specifically for people in your situation called [[Mature Students]]. \n\nHave a look at the Societies page to browse everything else available as well."
+      "reply": "That is completely fine and you are definitely not alone here. You might like to take a look at [[Mature Students]] which is for students just like you. What kind of hobbies or interests do you enjoy outside of your studies?"
     },
     "worried about money": {
       "student": "extra",
       "message": "I'm really worried about money. My loan won't last until the end of term and I don't know what to do.",
-      "reply": "I am sorry to hear you are feeling worried about money, but there is support available. You can take a look at [[Cost of Living]] for help with money worries in one place."
+      "reply": "Try not to worry, as there is support available through [[Cost of Living]] and [[Food Pantry]] which can help with money worries and food on campus. Have a look at those pages for practical ways NSU can help right now."
     },
     "run out of money for food": {
       "student": "extra",
       "message": "I've run out of money for food this week and I'm not sure what to do.",
-      "reply": "I am sorry to hear you are dealing with that, but there is support available right through the university. Have a look at [[Cost of Living]] and [[Food Pantry]] for help with food and money worries."
+      "reply": "I am really sorry to hear that. You can take a look at [[Cost of Living]] and [[Food Pantry]] to help with money worries and getting food."
     },
     "accused of plagiarism": {
       "student": "extra",
       "message": "I've been accused of plagiarism in one of my essays and I'm panicking.",
-      "reply": "I am really sorry to hear you are dealing with that, but try not to panic. You can get free, confidential guidance from the [[Advice Centre]] on academic misconduct."
+      "reply": "Try not to panic, as help is available. You can contact the [[Advice Centre]] for free guidance and support with academic misconduct. Have you had a chance to look at that page yet?"
     },
     "landlord won't fix the damp": {
       "student": "extra",
       "message": "My landlord won't fix the damp in my flat and keeps ignoring my messages. Can I complain?",
-      "reply": "That sounds really frustrating to deal with, but you don't have to sort it alone. You can check out the [[Advice Centre]] page for guidance on housing issues and complaints."
+      "reply": "That sounds really frustrating, and you definitely deserve a proper response from them. Have a look at the [[Advice Centre]] page for guidance on dealing with housing issues and how to raise a formal complaint."
     }
   },
   "followups": {
     "how to contact a suggested society": {
       "first": "I love knitting and crochet. Are there any societies you'd recommend?",
-      "firstReply": "It sounds like you would love [[Hooked By Crochet]] or [[Stitch, Make & Bitch]], which are both great for getting crafty with others.",
+      "firstReply": "You might really enjoy [[Hooked By Crochet]] or [[Stitch, Make & Bitch]] since they both fit your crafty interests. Have you had a look at your settling-in checklist yet?",
       "then": "How can I contact them?",
-      "thenReply": "To see details and contact buttons for them, take a look at [[Hooked By Crochet]] and [[Stitch, Make & Bitch]]."
+      "thenReply": "You can find out how to contact them by having a look at [[Hooked By Crochet]] or [[Stitch, Make & Bitch]] in the app. Have you had a chance to look at your checklist yet?"
     },
     "how to join a suggested society": {
       "first": "I'm really into climbing and bouldering. Are there any societies you'd recommend?",
-      "firstReply": "It sounds like [[Climbing]] or [[Outdoor Climbing]] would be right up your street. Have you had a look at your checklist yet to see how you are getting on with everything else?",
+      "firstReply": "[[Climbing]] and [[Outdoor Climbing]] would be brilliant for you if you love bouldering and scaling walls. Have you had a chance to check out the [[Sport]] page as well?",
       "then": "How do I join?",
-      "thenReply": "To find out more and see how to sign up, just take a look at [[Climbing]] or [[Outdoor Climbing]]."
+      "thenReply": "To find out how to join, take a look at [[Climbing]]. You will find contact buttons and details on its page."
     },
     "what a suggested society is like": {
       "first": "I like board games and tabletop role-playing games. Are there any societies for that?",
-      "firstReply": "That sounds like fun, and there is definitely a society for that! You might like [[Gaming and Roleplay]]. Have a look on the Societies page to see more details.",
+      "firstReply": "For board games and role-playing, you might like [[Gaming and Roleplay]]. Have a look at the Societies page to see what else might fit you.",
       "then": "What's it like?",
-      "thenReply": "If you want to know what it is like, have a look at [[Gaming and Roleplay]]. The app will show you all the details and how to get in touch."
+      "thenReply": "You can check out [[Gaming and Roleplay]] to see what members get up to and how to get in touch."
     },
     "a suggested society's Instagram": {
       "first": "I love films and going to the cinema. Are there any societies you'd recommend?",
-      "firstReply": "If you love watching movies, you might enjoy [[Film]]. Have a look at the Societies page to see what else is on offer.",
+      "firstReply": "Since you enjoy films, you might like [[Film]]. \n\nWhat kind of films do you usually watch?",
       "then": "Do they have an Instagram?",
-      "thenReply": "If you want to find out how to contact them or see what they are up to, have a look at [[Film]] again for more details."
+      "thenReply": "For details on how to contact or join, take a look at [[Film]]."
     }
   }
 }

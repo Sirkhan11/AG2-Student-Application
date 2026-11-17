@@ -1,5 +1,5 @@
 import { inChat, SERVICES } from '#lib/nsu/services.js';
-import { GROUP_ONLY, SOCIETIES, suggestible } from '#lib/societies/societies.js';
+import { GROUP_ONLY, NAME_NOTES, SOCIETIES, suggestible } from '#lib/societies/societies.js';
 
 // The check-in chat's model and instructions. No Firebase here: chat.js (the app) and
 // scripts/check-society-suggestions.mjs (Node, over REST) both use this, so the measurement uses
@@ -25,7 +25,8 @@ export const CHAT_CAMPUS = 'Newcastle';
  */
 export const SOCIETY_LIST = SOCIETIES.filter((society) => society.campus === CHAT_CAMPUS && suggestible(society))
   .map((society) => {
-    const notes = [society.category, GROUP_ONLY[society.nsuId]?.note].filter(Boolean).join('; ');
+    // A community note (GROUP_ONLY) or a note on a misleading name (NAME_NOTES) goes after the category.
+    const notes = [society.category, GROUP_ONLY[society.nsuId]?.note, NAME_NOTES[society.nsuId]].filter(Boolean).join('; ');
     return notes ? `${society.name} (${notes})` : society.name;
   })
   .join('\n');

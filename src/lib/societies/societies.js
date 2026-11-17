@@ -95,6 +95,21 @@ export const GROUP_ONLY = {
 };
 
 /**
+ * A few words about what a society is, for the few whose names mislead Gemini when the check-in chat
+ * suggests societies (in testing it offered Conservation of Fine Art for birdwatching, reading it
+ * as nature conservation). Shown to Gemini only, after the name and category. Thomas gave the first
+ * note; the others were checked against the society's NSU description. Phab has no description, so
+ * it's left alone rather than guessed. Look at these again when the list is refreshed.
+ * @type {Record<number, string>}
+ */
+export const NAME_NOTES = {
+  18: 'conserving artworks', // Conservation of Fine Art
+  180: 'building a racing car for an engineering competition', // Formula Student
+  237: 'signing people up as stem cell donors', // Marrow
+  6: 'animal welfare law' // Animal Law
+};
+
+/**
  * True for societies the check-in chat may suggest: everything except those with a restricted
  * AUDIENCE. Chat replies are turned into links by src/lib/checkin/reply-links.js.
  */

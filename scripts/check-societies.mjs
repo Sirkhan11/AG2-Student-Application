@@ -14,7 +14,7 @@
 import assert from 'node:assert/strict';
 import { MIN_SOCIETIES } from './lib/nsu-collect.mjs';
 import {
-  AUDIENCE, CAMPUSES, CATEGORIES, COLLECTED_AT, findSociety, GROUP_ONLY, initials,
+  AUDIENCE, CAMPUSES, CATEGORIES, COLLECTED_AT, findSociety, GROUP_ONLY, initials, NAME_NOTES,
   searchSocieties, SOCIETIES, societyById, SOURCE_URL, suggestible
 } from '#lib/societies/societies.js';
 
@@ -59,8 +59,10 @@ const checks = [
     assert.equal(findSociety('Climb', 'Newcastle'), null, 'part of a name is not enough');
     assert.equal(societyById(242)?.campus, 'London', 'Bangladesh Synergy Network moved to London');
   }],
-  ['Every GROUP_ONLY and AUDIENCE id is a real society; the nine "everyone welcome" ones say so', () => {
-    for (const id of [...Object.keys(GROUP_ONLY), ...Object.keys(AUDIENCE)]) assert.ok(societyById(Number(id)), `${id} isn't on the list`);
+  ['Every GROUP_ONLY, AUDIENCE and NAME_NOTES id is a real society; the nine "everyone welcome" ones say so', () => {
+    for (const id of [...Object.keys(GROUP_ONLY), ...Object.keys(AUDIENCE), ...Object.keys(NAME_NOTES)]) assert.ok(societyById(Number(id)), `${id} isn't on the list`);
+    assert.equal(societyById(18)?.name, 'Conservation of Fine Art', 'the misleading names are the societies the notes were written for');
+    assert.equal(societyById(180)?.name, 'Formula Student');
     const welcoming = Object.entries(GROUP_ONLY).filter(([, group]) => group.everyoneWelcome).map(([id]) => Number(id)).sort((a, b) => a - b);
     assert.deepEqual(welcoming, [50, 56, 57, 120, 168, 175, 214, 247, 272]);
     assert.equal(GROUP_ONLY[214].note, 'Ukrainian community, everyone welcome');
