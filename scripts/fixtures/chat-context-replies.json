@@ -1,36 +1,36 @@
 {
   "about": "Check-in chat replies for check-chat-context.mjs (made-up students). Regenerate with --refresh rather than edit.",
   "model": "gemini-3.5-flash-lite",
-  "promptFingerprint": "0881022ba8e5",
-  "made": "2026-11-17T14:51:50.360Z",
+  "promptFingerprint": "7ca7f67863f0",
+  "made": "2026-11-17T16:00:04.554Z",
   "replies": {
     "why matched": {
       "ask": "Why did you match me with my mentor?",
-      "reply": "You were matched because you share interests in live music and gigs, and you like similar weekends like the cinema. Your mentor is also the laid-back kind you asked for."
+      "reply": "You were matched because you both share interests in live music and gigs, and you like similar weekends like going to the cinema. \n\nYou're also both looking for a laid-back mentor."
     },
     "how often": {
       "ask": "How often will we meet?",
-      "reply": "You asked to meet every two weeks."
+      "reply": "You asked to meet with your mentor every two weeks. \nYou can find their details and how to get in touch on the Your Mentor page."
     },
     "checklist": {
       "ask": "What's left on my checklist?",
-      "reply": "On your checklist, you still need to join a society and find a dentist. \n\nSince you're studying English Literature and enjoy reading, you might like the [[Book]] society. Would you like help with either of those checklist items?"
+      "reply": "You still need to join a society and find a dentist, which you can do using the GP and Dentist Finder."
     },
     "who is my mentor": {
       "ask": "Who is my mentor?",
-      "reply": "You can find your mentor's name and contact details on the Your Mentor page."
+      "reply": "You can find your mentor's name and how to get in touch on the Your Mentor page."
     },
     "course society": {
       "ask": "Can you suggest a society for my course?",
-      "reply": "Since you study BA English Literature, [[English]] fits your course well, and [[Book]] matches your interest in reading. \n\nWould you like to know how to join either of them?"
+      "reply": "Since you are studying English Literature, you might like the [[English]] society. Have you had a chance to look at it yet?"
     },
     "why matched, waiting": {
       "ask": "Why did you match me with my mentor?",
-      "reply": "Our mentoring coordinator is finding your mentor by hand. You can check the Your Mentor page to see them and get in touch once they're assigned."
+      "reply": "The mentoring coordinator is matching students by hand, so your mentor is still being found. \n\nOnce your match is ready, you can check the Your Mentor page to see why you were paired and how to get in touch."
     },
     "why matched, no mentor": {
       "ask": "Why did you match me with my mentor?",
-      "reply": "You haven't been matched with a mentor yet, but you can easily find one on the Find a mentor page whenever you are ready."
+      "reply": "You haven't been matched with a mentor yet, but you can easily sign up on the Your Mentor page.\nWould you like to take a look at how that works?"
     }
   }
 }
