@@ -24,6 +24,7 @@ import { approve, deny, MOCK_APP_KEY, MOCK_APP_SECRET, MOCK_HOST, mockFetch } fr
 import { plainText } from '#lib/server/blackboard/read.js';
 import { verifyFirebaseIdToken } from '#lib/server/firebase-token.js';
 import { deadlineEntry, eventEntry, icsFor } from '#lib/blackboard/ics.js';
+import { outlookWebUrl } from '#lib/blackboard/outlook.js';
 import { dueText, topThing } from '#lib/blackboard/priority.js';
 import { closeGuide, forgetOnDevice, guideDone, markSeen, newIds } from '#lib/blackboard/seen.js';
 
@@ -274,6 +275,31 @@ const checks = [
     assert.ok(lines.every((line) => new TextEncoder().encode(line).length <= 75), 'long lines folded');
     const event = icsFor(eventEntry({ id: 'e1', title: 'In-class test', start: '2026-11-22T10:00:00.000Z', end: null }, 'M'));
     assert.ok(event.includes('DTSTART:20261122T100000Z\r\nDTEND:20261122T110000Z'), 'an hour long with no end');
+  }],
+  ['"Add to calendar" offers both: Outlook on the web (UTC times ending in Z) and a calendar file; made on the phone, nothing sent to our server', () => {
+    const url = new URL(outlookWebUrl(deadlineEntry({ id: 't1', title: 'Essay, part 1', due: '2026-11-20T14:00:00.000Z', url: null }, 'Made-Up Module')));
+    assert.equal(`${url.origin}${url.pathname}`, 'https://outlook.office.com/calendar/0/deeplink/compose');
+    assert.equal(url.searchParams.get('subject'), 'Due: Essay, part 1 (Made-Up Module)');
+    assert.equal(url.searchParams.get('startdt'), '2026-11-20T13:30:00Z');
+    assert.equal(url.searchParams.get('enddt'), '2026-11-20T14:00:00Z');
+    assert.equal(url.searchParams.get('rru'), 'addevent');
+    assert.equal(url.searchParams.get('path'), '/calendar/action/compose');
+    assert.ok(/Essay, part 1 is due/.test(url.searchParams.get('body') ?? ''));
+    const button = readFileSync('src/lib/components/AddToCalendar.svelte', 'utf8');
+    assert.match(button, /outlookWebUrl\(entry\)/);
+    assert.match(button, /downloadIcs\(entry\)/);
+    for (const file of ['src/lib/components/AddToCalendar.svelte', 'src/lib/blackboard/outlook.js', 'src/lib/blackboard/ics.js']) {
+      assert.doesNotMatch(readFileSync(file, 'utf8'), /\bfetch\(|\/api\//, `${file} sends nothing to the server`);
+    }
+    const section = readFileSync('src/lib/components/BlackboardSection.svelte', 'utf8');
+    assert.equal([...section.matchAll(/<AddToCalendar /g)].length, 3, 'one button per date: the top thing, each deadline, each event');
+    assert.doesNotMatch(section, /Add to Outlook/);
+  }],
+  ['After Disconnect: how to revoke AG2 in Blackboard too (Tools, Application Authorization, Revoke), marked to check on Northumbria\'s Blackboard', () => {
+    const section = readFileSync('src/lib/components/BlackboardSection.svelte', 'utf8');
+    assert.match(section, /go to Tools, then Application Authorization, and choose Revoke next to AG2/);
+    assert.match(section, /Authorize access to\s*(?:\/\/\s*)?integrated apps/);
+    assert.match(section, /Still to check on Northumbria’s Blackboard once IT registers the app|Still to check on Northumbria's Blackboard once IT registers the app/);
   }],
   ['What counts as new is kept on the device per student (ids only): the first time, the last 7 days; then anything not seen; logging out or disconnecting deletes it', () => {
     const store = new Map();

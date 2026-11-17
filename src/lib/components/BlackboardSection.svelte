@@ -6,13 +6,15 @@
   import { connectBlackboard, disconnectBlackboard, loadBlackboard } from '#lib/blackboard/api.js';
   import { closeGuide, guideDone, markSeen, newIds } from '#lib/blackboard/seen.js';
   import { agoText, dueText, topThing, whenText } from '#lib/blackboard/priority.js';
-  import { deadlineEntry, downloadIcs, eventEntry } from '#lib/blackboard/ics.js';
+  import { deadlineEntry, eventEntry } from '#lib/blackboard/ics.js';
+  import AddToCalendar from '#lib/components/AddToCalendar.svelte';
 
   /**
    * The checklist's Blackboard section. Before connecting: one step, saying what it reads and that
    * they can disconnect at any time. After: a card per module with its most important thing at the
    * top, and the rest (deadlines, dates, what's new, announcements, everything released so far) one
-   * tap away. Every date can go into Outlook as a calendar file. Nothing from here goes to Gemini.
+   * tap away. Every date has "Add to calendar": Outlook on the web or a calendar file (see
+   * AddToCalendar.svelte). Nothing from here goes to Gemini.
    *
    * preview is for the development preview page only: a made-up view and user, so the layout can be
    * checked without signing in or a server.
@@ -90,8 +92,10 @@
       if (!preview) await disconnectBlackboard();
       view = { connected: false, reason: 'not-connected' };
       open = {};
+      // How students remove an app themselves, from Anthology's help page "Authorize access to
+      // integrated apps". Still to check on Northumbria's Blackboard once IT registers the app.
       message =
-        'Disconnected: AG2 no longer keeps anything from your Blackboard. To take away its access in Blackboard too, remove AG2 under Application Authorization in Blackboard’s tools.';
+        'Disconnected: AG2 no longer keeps anything from your Blackboard. To take away its access in Blackboard too, go to Tools, then Application Authorization, and choose Revoke next to AG2.';
     } catch (err) {
       console.error('Disconnecting Blackboard failed:', err instanceof Error ? err.message : err);
       message = 'We couldn’t disconnect just now. Please try again.';
@@ -169,7 +173,7 @@
           </p>
           {#if top.task}
             <p class="small">{dueText(top.task.due, now())}</p>
-            <button class="link" type="button" onclick={() => downloadIcs(deadlineEntry(/** @type {any} */ (top.task), module.name))}>Add to Outlook</button>
+            <AddToCalendar entry={deadlineEntry(top.task, module.name)} />
           {/if}
         </div>
 
@@ -187,7 +191,7 @@
                     {#if passed(task)}<span class="flag">Due date passed</span>{/if}
                     {task.title}
                     <span class="muted small">{dueText(task.due, now())}</span>
-                    <button class="link" type="button" onclick={() => downloadIcs(deadlineEntry(task, module.name))}>Add to Outlook</button>
+                    <AddToCalendar entry={deadlineEntry(task, module.name)} />
                   </li>
                 {/each}
               </ul>
@@ -205,7 +209,7 @@
                   <li>
                     {event.title}
                     <span class="muted small">{whenText(event.start)}</span>
-                    <button class="link" type="button" onclick={() => downloadIcs(eventEntry(event, module.name))}>Add to Outlook</button>
+                    <AddToCalendar entry={eventEntry(event, module.name)} />
                   </li>
                 {/each}
               </ul>
