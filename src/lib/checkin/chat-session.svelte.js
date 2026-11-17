@@ -10,18 +10,18 @@ import { watchSignedIn } from '#lib/firebase/auth.js';
 // requests, so the chat page only changes it from code that runs in the browser.
 
 /**
- * One bubble. kind marks the fixed safety message or an error. links are shown under it: a
- * suggested society, Northumbria Sport club or NSU service as a card with its details (see
- * reply-links.js), anything else
- * as a button (external ones open in a new tab).
- * @typedef {{ role: 'assistant' | 'user', text: string, kind?: 'safety' | 'error',
+ * One bubble. kind marks the fixed safety message, an error, or the chat being unavailable (Gemini's
+ * credit has run out). links are shown under it: a suggested society, Northumbria Sport club or NSU
+ * service as a card with its details (see reply-links.js), anything else as a button (external ones
+ * open in a new tab).
+ * @typedef {{ role: 'assistant' | 'user', text: string, kind?: 'safety' | 'error' | 'unavailable',
  *   links?: { label: string, href: string, external?: boolean, kind?: 'society' | 'club' | 'service',
  *     nsuId?: number, slug?: string, serviceId?: string }[] }} Message
  */
 
 /**
  * @typedef {{ uid: string | null, messages: Message[], draft: string, waiting: boolean,
- *   started: boolean, conversation: number }} ChatSession
+ *   started: boolean, unavailable: boolean, conversation: number }} ChatSession
  */
 
 /**
@@ -29,10 +29,11 @@ import { watchSignedIn } from '#lib/firebase/auth.js';
  * - draft: what they've typed but not sent yet
  * - waiting: true while waiting for a reply, so only one message is sent at a time
  * - started: true once the first messages are in, so coming back shows them instead of starting again
+ * - unavailable: true once Gemini has said its credit has run out, so the message box is switched off
  * - conversation: goes up each time it's cleared, so a reply for a conversation that's gone is dropped
  */
 export const chatSession = $state(
-  /** @type {ChatSession} */ ({ uid: null, messages: [], draft: '', waiting: false, started: false, conversation: 0 })
+  /** @type {ChatSession} */ ({ uid: null, messages: [], draft: '', waiting: false, started: false, unavailable: false, conversation: 0 })
 );
 
 /** The Gemini conversation behind the messages. Not $state, as the page never shows it. */
@@ -58,6 +59,7 @@ export function clearChat(uid = null) {
   chatSession.draft = '';
   chatSession.waiting = false;
   chatSession.started = false;
+  chatSession.unavailable = false;
   chatSession.conversation++;
   gemini = null;
 }

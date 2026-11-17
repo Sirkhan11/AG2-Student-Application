@@ -35,7 +35,8 @@ function getAIService() {
       // Without this, App Check tokens aren't refreshed when they expire.
       isTokenAutoRefreshEnabled: true
     });
-    // GoogleAIBackend means the Gemini Developer API (the free tier), not the Agent Platform one.
+    // GoogleAIBackend means the Gemini Developer API (on the paid tier with prepaid credit since
+    // November 2026), not the Agent Platform one. A 402 means the credit has run out: see ai-errors.js.
     ai = getAI(app, { backend: new GoogleAIBackend() });
   }
   return ai;

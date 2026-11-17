@@ -89,7 +89,7 @@
   async function sendMessage() {
     const text = chatSession.draft.trim();
     const chat = geminiChat();
-    if (!text || chatSession.waiting || !chat) return;
+    if (!text || chatSession.waiting || chatSession.unavailable || !chat) return;
 
     const conversation = chatSession.conversation;
     chatSession.messages.push({ role: 'user', text });
@@ -106,11 +106,13 @@
       text: reply.text,
       kind: reply.kind === 'reply' ? undefined : reply.kind,
       links:
-        reply.kind === 'safety'
+        reply.kind === 'safety' || reply.kind === 'unavailable'
           ? [{ label: 'Need help now', href: '/need-help' }]
           : // Suggested societies and NSU services, shown as cards under the reply.
             reply.links
     });
+    // Gemini's credit has run out: the message box is switched off, as trying again won't help.
+    if (reply.kind === 'unavailable') chatSession.unavailable = true;
     chatSession.waiting = false;
     await showLatest();
   }
@@ -152,7 +154,7 @@
           class="bubble"
           class:user={item.role === 'user'}
           class:safety={item.kind === 'safety'}
-          class:failed={item.kind === 'error'}
+          class:failed={item.kind === 'error' || item.kind === 'unavailable'}
         >
           {item.text}
           {#if buttons.length}
@@ -207,14 +209,14 @@
       <input
         id="chat-message"
         class="field"
-        placeholder="Type your message..."
+        placeholder={chatSession.unavailable ? 'The chat isn’t available right now' : 'Type your message...'}
         autocomplete="off"
-        disabled={chatSession.waiting}
+        disabled={chatSession.waiting || chatSession.unavailable}
         bind:value={chatSession.draft}
       />
 
-      <button class="primary-button" type="submit" disabled={chatSession.waiting}>
-        {chatSession.waiting ? 'Waiting for a reply…' : 'Send'}
+      <button class="primary-button" type="submit" disabled={chatSession.waiting || chatSession.unavailable}>
+        {chatSession.waiting ? 'Waiting for a reply…' : chatSession.unavailable ? 'Chat unavailable' : 'Send'}
       </button>
     </form>
   {/if}

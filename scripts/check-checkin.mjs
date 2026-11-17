@@ -1,5 +1,6 @@
-// Checks the check-in chat's first message and what Gemini is told (src/lib/checkin/opener.js), and
-// the crisis check that runs before anything is sent to Gemini (src/lib/checkin/safety.js).
+// Checks the check-in chat's first message and what Gemini is told (src/lib/checkin/opener.js), the
+// crisis check that runs before anything is sent to Gemini (src/lib/checkin/safety.js), and how the
+// chat answers when Gemini fails (src/lib/checkin/chat-turns.js, with made-up models).
 // Nothing here needs Gemini or Firebase.
 //
 // Run from the project folder:
@@ -13,6 +14,8 @@ import { CLUB_LIST, SERVICE_LIST, SOCIETY_LIST } from '#lib/checkin/chat-prompt.
 import { CLUBS } from '#lib/sport/clubs.js';
 import { linksInReply, MAX_LINKS } from '#lib/checkin/reply-links.js';
 import { startsAfresh } from '#lib/checkin/keep-chat.js';
+import { chatWith, ERROR_MESSAGE, UNAVAILABLE_MESSAGE } from '#lib/checkin/chat-turns.js';
+import { isOutOfCredit } from '#lib/firebase/ai-errors.js';
 import { SERVICES } from '#lib/nsu/services.js';
 import { SOCIETIES } from '#lib/societies/societies.js';
 
@@ -31,7 +34,7 @@ const matched = /** @type {const} */ ({
 });
 const waiting = /** @type {const} */ ({ status: 'coordinator', meetingFrequency: 'weekly', availability: null });
 
-/** @type {[string, () => void][]} */
+/** @type {[string, () => void | Promise<void>][]} */
 const checks = [
   // ---------- The first message ----------
   ['Just matched, nothing ticked: mentor news, then a society question and 3 tasks by name', () => {
@@ -223,13 +226,73 @@ const checks = [
       'Had a really good day, thanks',
       'Not sure which society to join'
     ]) assert.equal(isCrisis(text), false, text);
+  }],
+  // ---------- When Gemini answers or fails (made-up models) ----------
+  ['A reply comes back as a reply, and the conversation so far is sent with each message', async () => {
+    /** @type {number[]} */
+    const sent = [];
+    const chat = chatWith({
+      generateContent: async (/** @type {any} */ request) => {
+        sent.push(request.contents.length);
+        return /** @type {any} */ ({ response: { text: () => 'Hello there.', candidates: [{ finishReason: 'STOP' }] } });
+      }
+    });
+    assert.deepEqual(await chat.send('Hi'), { kind: 'reply', text: 'Hello there.', links: [] });
+    await chat.send('How are you?');
+    assert.deepEqual(sent, [1, 3]);
+  }],
+  ['A 402 (Gemini\'s credit has run out): "isn\'t available", Need help now, and nothing more sent; the crisis check still answers', async () => {
+    assert.equal(isOutOfCredit({ customErrorData: { status: 402 } }), true);
+    assert.equal(isOutOfCredit({ customErrorData: { status: 429 } }), false);
+    assert.equal(isOutOfCredit(new Error('no status')), false);
+    assert.equal(isOutOfCredit(null), false);
+    assert.match(UNAVAILABLE_MESSAGE, /the chat isn’t available right now/);
+    assert.match(UNAVAILABLE_MESSAGE, /Need help now/);
+    assert.doesNotMatch(UNAVAILABLE_MESSAGE, /try again/i);
+
+    let calls = 0;
+    const outOfCredit = chatWith({
+      generateContent: async () => {
+        calls++;
+        throw Object.assign(new Error('[402 Payment Required]'), { customErrorData: { status: 402 } });
+      }
+    });
+    const quiet = console.error;
+    console.error = () => {};
+    try {
+      assert.deepEqual(await outOfCredit.send('Any chess societies?'), { kind: 'unavailable', text: UNAVAILABLE_MESSAGE });
+      assert.deepEqual(await outOfCredit.send('Hello?'), { kind: 'unavailable', text: UNAVAILABLE_MESSAGE });
+      assert.equal(calls, 1, 'not tried again, and nothing more sent');
+      assert.equal((await outOfCredit.send('I want to die')).kind, 'safety');
+      assert.equal(calls, 1, 'the crisis check never needs Gemini');
+    } finally {
+      console.error = quiet;
+    }
+  }],
+  ['Any other failure (such as too many requests) says try again in a minute, and the next message is sent as normal', async () => {
+    let calls = 0;
+    const busy = chatWith({
+      generateContent: async () => {
+        calls++;
+        throw Object.assign(new Error('[429 Too Many Requests]'), { customErrorData: { status: 429 } });
+      }
+    });
+    const quiet = console.error;
+    console.error = () => {};
+    try {
+      assert.deepEqual(await busy.send('Hi'), { kind: 'error', text: ERROR_MESSAGE });
+      assert.deepEqual(await busy.send('Hi again'), { kind: 'error', text: ERROR_MESSAGE });
+      assert.equal(calls, 2);
+    } finally {
+      console.error = quiet;
+    }
   }]
 ];
 
 let failed = 0;
 for (const [name, check] of checks) {
   try {
-    check();
+    await check();
     console.log(`PASS  ${name}`);
   } catch (err) {
     failed++;
