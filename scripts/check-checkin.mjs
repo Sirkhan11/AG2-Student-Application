@@ -7,6 +7,7 @@
 //   node scripts/check-checkin.mjs
 
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { buildOpener, describeForGemini, tidyProfile } from '#lib/checkin/opener.js';
 import { blankContactDetails } from '#lib/checkin/private-details.js';
 import { isCrisis } from '#lib/checkin/safety.js';
@@ -17,6 +18,7 @@ import { startsAfresh } from '#lib/checkin/keep-chat.js';
 import { chatWith, ERROR_MESSAGE, UNAVAILABLE_MESSAGE } from '#lib/checkin/chat-turns.js';
 import { isOutOfCredit } from '#lib/firebase/ai-errors.js';
 import { APP_PAGES, findPage } from '#lib/checkin/app-pages.js';
+import { opensChatFromHome, WAIT_FOR_CHAT_MS } from '#lib/page-transitions.js';
 import { SERVICES } from '#lib/nsu/services.js';
 import { SOCIETIES } from '#lib/societies/societies.js';
 
@@ -247,6 +249,21 @@ const checks = [
     for (const page of APP_PAGES) assert.ok(instructions.includes(`[[${page.name}]]`), page.name);
     assert.match(instructions, /Never mention, explain or show them to the student/);
     assert.ok(!/Pointing them to pages in the app by name: GP and Dentist Finder/.test(instructions), 'the old plain-text page list is gone');
+  }],
+  ['Opening the chat from Home slides it down (not with reduced motion); the bottom bar stays still; other pages just open', () => {
+    assert.equal(opensChatFromHome('/home', '/check-in'), true);
+    assert.equal(opensChatFromHome('/home', '/gp-finder'), false);
+    assert.equal(opensChatFromHome('/checklist', '/check-in'), false);
+    assert.equal(opensChatFromHome(undefined, '/check-in'), false);
+    assert.ok(WAIT_FOR_CHAT_MS <= 400, 'never waits long for the chat before sliding');
+    const css = readFileSync('src/app.css', 'utf8');
+    assert.match(css, /prefers-reduced-motion: no-preference\)[\s\S]*chat-open'\]::view-transition-new\(root\)[\s\S]*ag2-slide-down/);
+    assert.match(css, /@keyframes ag2-slide-down \{\s*from \{\s*transform: translateY\(-100%\);/);
+    assert.match(readFileSync('src/lib/components/BottomNav.svelte', 'utf8'), /view-transition-name: bottom-nav;/);
+    const layout = readFileSync('src/routes/+layout.svelte', 'utf8');
+    assert.match(layout, /opensChatFromHome\(navigation\.from\?\.url\.pathname, navigation\.to\?\.url\.pathname\)/);
+    assert.match(layout, /prefers-reduced-motion: reduce/);
+    assert.match(readFileSync('src/routes/check-in/+page.svelte', 'utf8'), /data-chat-ready/);
   }],
   ['No service has the same name as a society, so a [[Name]] can only mean one thing', () => {
     const societies = new Set(SOCIETIES.map((society) => society.name.toLowerCase()));

@@ -40,6 +40,8 @@
     background: white;
     border-top: 1px solid #dce5e9;
     z-index: 10;
+    /* Animated on its own, so it stays still when a page slides (see page-transitions.js). */
+    view-transition-name: bottom-nav;
   }
 
   a {

@@ -153,7 +153,8 @@
       So please leave out names, contact details and anything you’d want kept private.
     </p>
 
-    <div class="messages" aria-live="polite">
+    <!-- data-chat-ready: the slide from Home waits for this, so the whole chat slides in. -->
+    <div class="messages" aria-live="polite" data-chat-ready>
       {#each chatSession.messages as item, i (i)}
         {@const buttons = (item.links ?? []).filter((link) => !link.kind)}
         {@const cards = (item.links ?? []).filter((link) => link.kind)}
