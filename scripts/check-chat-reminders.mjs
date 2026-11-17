@@ -181,7 +181,8 @@ function shownFor(reply) {
 function alwaysProblems(reply, shown) {
   const withoutMarkers = reply.replace(/\{\{[^{}]*\}\}|\[\[[^[\]]*\]\]/g, '');
   return [
-    /\{\{|\}\}|\[\[|\]\]|task\s*:/i.test(shown.text) ? 'the student would see a marker' : '',
+    // What's left of a marker: braces or brackets (a plain "this task:" in a sentence is fine).
+    /\{\{|\}\}|\[\[|\]\]/.test(shown.text) ? 'the student would see a marker' : '',
     /curly|braces?\b|brackets?\b/i.test(withoutMarkers) ? 'talks about the brackets' : '',
     ...CLAIMS_ADDED.filter((pattern) => pattern.test(shown.text)).map((pattern) => `says it added the task (${pattern.source})`)
   ];
