@@ -1,0 +1,54 @@
+{
+  "about": "Check-in chat replies for check-chat-reminders.mjs (a made-up student). Regenerate with --refresh rather than edit.",
+  "model": "gemini-3.5-flash-lite",
+  "promptFingerprint": "54db17fd8592",
+  "made": "2026-11-17T17:52:35.520Z",
+  "replies": {
+    "bank account": {
+      "ask": "Yes, can you remind me to open a bank account?",
+      "reply": "That is a handy one to have on your list, and you can add it right away. \n\n{{task: Open a bank account}}"
+    },
+    "two things": {
+      "ask": "Yes please, opening a bank account and getting a bus pass",
+      "reply": "{{task: Open a bank account}}"
+    },
+    "add it for me": {
+      "ask": "Yes, add it for me please",
+      "reply": "Only you can add it to your [[Checklist]] using the add button on the card."
+    },
+    "already there": {
+      "ask": "Yes, can you remind me to register with a GP?",
+      "reply": "That's already on your checklist. You can find it on your [[Checklist]] page."
+    },
+    "worried": {
+      "ask": "I’m really worried about money, I can’t afford food this week",
+      "reply": "I am really sorry to hear you are struggling with food this week. \n\nTake a look at [[Cost of Living]] and [[Food Pantry]] for immediate help with food and money worries."
+    }
+  },
+  "conversation": [
+    {
+      "ask": "Pretty good thanks, still unpacking",
+      "reply": "Unpacking takes time, so take it easy. Since you like chess and gigs, you might enjoy [[Chess]] or checking out [[Gigs]] for live music."
+    },
+    {
+      "ask": "Are there any chess societies?",
+      "reply": "Yes, [[Chess]] is a great one to join. You can also visit the [[Societies]] page to browse more groups."
+    },
+    {
+      "ask": "Nice. Anything for gigs?",
+      "reply": "You can check out [[Gigs]] for live music events at the Students' Union."
+    },
+    {
+      "ask": "Thanks, that’s really helpful",
+      "reply": "You are very welcome. Is there anything else you would like reminding about while you settle in?"
+    },
+    {
+      "ask": "No thanks, nothing for now",
+      "reply": "That is no problem at all. Let me know if anything comes up later."
+    },
+    {
+      "ask": "Have a good evening",
+      "reply": "You too! Have a lovely evening, and let me know if you need anything else."
+    }
+  ]
+}

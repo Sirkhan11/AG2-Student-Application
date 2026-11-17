@@ -15,6 +15,7 @@
   import SocietyCard from '#lib/components/SocietyCard.svelte';
   import ServiceCard from '#lib/components/ServiceCard.svelte';
   import ClubCard from '#lib/components/ClubCard.svelte';
+  import TaskSuggestionCard from '#lib/components/TaskSuggestionCard.svelte';
   import { clubBySlug } from '#lib/sport/clubs.js';
   import { serviceById } from '#lib/nsu/services.js';
   import { societyById } from '#lib/societies/societies.js';
@@ -109,7 +110,9 @@
         reply.kind === 'safety' || reply.kind === 'unavailable'
           ? [{ label: 'Need help now', href: '/need-help' }]
           : // Suggested societies and NSU services, shown as cards under the reply.
-            reply.links
+            reply.links,
+      // A checklist task it suggested: a card with Add and No thanks. Nothing is added without a tap.
+      task: reply.tasks?.[0] ? { title: reply.tasks[0], state: 'offered' } : undefined
     });
     // Gemini's credit has run out: the message box is switched off, as trying again won't help.
     if (reply.kind === 'unavailable') chatSession.unavailable = true;
@@ -142,7 +145,8 @@
     </p>
     <p class="muted">
       This chat isn’t saved: it stays while the app is open in this tab, until you log out, and nothing
-      you say is passed on to the university or your mentor. Google doesn’t use it to improve its
+      you say is passed on to the university or your mentor. If it suggests a reminder and you tap Add,
+      that task is saved to your checklist. Google doesn’t use the chat to improve its
       products, but keeps messages for a limited time, only to detect misuse, keep its services safe
       and secure, and meet legal requirements, and they may be stored or cached in any country
       (<a
@@ -200,6 +204,11 @@
                 <ServiceCard {service} />
               {/if}
             {/each}
+          </div>
+        {/if}
+        {#if item.task}
+          <div class="cards">
+            <TaskSuggestionCard bind:task={item.task} />
           </div>
         {/if}
       {/each}

@@ -1,6 +1,7 @@
 // Checks the check-in chat's first message and what Gemini is told (src/lib/checkin/opener.js), the
-// crisis check that runs before anything is sent to Gemini (src/lib/checkin/safety.js), and how the
-// chat answers when Gemini fails (src/lib/checkin/chat-turns.js, with made-up models).
+// crisis check that runs before anything is sent to Gemini (src/lib/checkin/safety.js), how the
+// chat answers when Gemini fails (src/lib/checkin/chat-turns.js, with made-up models), and its
+// checklist reminders (src/lib/checkin/task-suggestions.js, with a made-up checklist store).
 // Nothing here needs Gemini or Firebase.
 //
 // Run from the project folder:
@@ -21,6 +22,8 @@ import { APP_PAGES, findPage } from '#lib/checkin/app-pages.js';
 import { opensChatFromHome, WAIT_FOR_CHAT_MS } from '#lib/page-transitions.js';
 import { SERVICES } from '#lib/nsu/services.js';
 import { SOCIETIES } from '#lib/societies/societies.js';
+import { addSuggestedTask, existingTask, sameTask, stateFor, tasksInReply } from '#lib/checkin/task-suggestions.js';
+import { ChecklistError, defaultTasks, MAX_TASKS } from '#lib/checklist/tasks.js';
 
 /** The five default tasks (see DEFAULT_TASKS in src/lib/checklist/tasks.js), with the given ids ticked. @param {string[]} [done] */
 const tasks = (done = []) =>
@@ -280,6 +283,116 @@ const checks = [
       'Not sure which society to join'
     ]) assert.equal(isCrisis(text), false, text);
   }],
+  // ---------- Checklist reminders: {{task: }} suggestions and the Add card ----------
+  ['A suggested task: the student sees it in quotes, never the {{task: }} marker, and it\'s offered for the card', () => {
+    const { text, tasks } = tasksInReply('Shall I add {{task: Open a bank account}} to your checklist?');
+    assert.equal(text, 'Shall I add “Open a bank account” to your checklist?');
+    assert.deepEqual(tasks, ['Open a bank account']);
+  }],
+  ['However the marker is written, the student never sees it, and only the first task is offered (one at a time)', () => {
+    assert.deepEqual(tasksInReply('{{ Task : "Buy a bus pass." }}').tasks, ['Buy a bus pass']);
+    const two = tasksInReply('First {{task: Open a bank account}}, then {{task: Get a bus pass}}.');
+    assert.deepEqual(two.tasks, ['Open a bank account']);
+    assert.equal(two.text, 'First “Open a bank account”, then “Get a bus pass”.');
+    for (const reply of ['Try {{task: Open a bank', 'Done }} and {{ and {{task:', 'Empty {{task: }} here', 'Odd {{task:}}', '{{TASK:Call home}}']) {
+      const { text } = tasksInReply(reply);
+      assert.ok(!/\{\{|\}\}|task\s*:/i.test(text), `${reply} -> ${text}`);
+    }
+    assert.equal(tasksInReply('Empty {{task: }} here').text, 'Empty here');
+    assert.deepEqual(tasksInReply('Empty {{task: }} here').tasks, []);
+  }],
+  ['A task over 100 characters or with a blanked contact detail is shown but not offered; a [[Name]] inside keeps its name', () => {
+    assert.deepEqual(tasksInReply(`{{task: Do ${'x'.repeat(100)}}}`).tasks, []);
+    assert.deepEqual(tasksInReply('{{task: Call [phone number]}}').tasks, []);
+    assert.deepEqual(tasksInReply('{{task: Go to a [[Chess]] meet}}').tasks, ['Go to a Chess meet']);
+  }],
+  ['A suggestion that\'s already on the checklist points to that task (a standard one or their own); a full list has no room', () => {
+    const list = [...defaultTasks(), { id: 'own-1', title: 'Call home about rent', done: false }];
+    assert.deepEqual(stateFor(list, 'Register with a GP surgery'), { state: 'exists', existing: 'Register with a GP' });
+    assert.deepEqual(stateFor(list, 'call home about rent.'), { state: 'exists', existing: 'Call home about rent' });
+    assert.deepEqual(stateFor(list, 'Open a bank account'), { state: 'offered' });
+    assert.deepEqual(stateFor(list, 'Join the chess society'), { state: 'offered' }, 'a more specific task is new');
+    assert.equal(sameTask('Rent', 'Pay rent'), false, 'one word is too little to call it the same');
+    assert.equal(existingTask(list, 'Find a dentist')?.id, 'dentist');
+    const full = Array.from({ length: MAX_TASKS }, (_, i) => ({ id: `own-${i}`, title: `Task ${i}`, done: false }));
+    assert.deepEqual(stateFor(full, 'Open a bank account'), { state: 'full' });
+  }],
+  ['Add saves one own- task through the checklist\'s "add" change, with the list on screen for offline', async () => {
+    /** @type {any[]} */
+    const saved = [];
+    const list = defaultTasks();
+    const store = { loadChecklist: async () => list, saveChange: async (/** @type {any} */ change, /** @type {any} */ listOnScreen) => {
+      saved.push({ change, listOnScreen });
+      return { status: /** @type {const} */ ('saved') };
+    } };
+    assert.deepEqual(await addSuggestedTask('Open a bank account', store), { state: 'added' });
+    assert.equal(saved.length, 1);
+    assert.equal(saved[0].change.type, 'add');
+    assert.match(saved[0].change.task.id, /^own-/);
+    assert.deepEqual({ ...saved[0].change.task, id: 'x' }, { id: 'x', title: 'Open a bank account', done: false });
+    assert.deepEqual(saved[0].listOnScreen.map((/** @type {any} */ task) => task.title), [...list.map((task) => task.title), 'Open a bank account']);
+  }],
+  ['Add checks the latest list first: already there (added on another device) or full saves nothing; offline it\'s queued; the checklist\'s limits apply', async () => {
+    let saves = 0;
+    const store = (/** @type {any[]} */ list, status = 'saved') => ({ loadChecklist: async () => list, saveChange: async () => {
+      saves++;
+      return { status: /** @type {'saved' | 'queued'} */ (status) };
+    } });
+    const now = [...defaultTasks(), { id: 'own-2', title: 'Open a bank account', done: false }];
+    assert.deepEqual(await addSuggestedTask('open a bank account', store(now)), { state: 'exists', existing: 'Open a bank account' });
+    const full = Array.from({ length: MAX_TASKS }, (_, i) => ({ id: `own-${i}`, title: `Task ${i}`, done: false }));
+    assert.deepEqual(await addSuggestedTask('Open a bank account', store(full)), { state: 'full' });
+    assert.equal(saves, 0, 'nothing saved');
+    assert.deepEqual(await addSuggestedTask('Buy a bus pass', store(defaultTasks(), 'queued')), { state: 'queued' });
+    await assert.rejects(addSuggestedTask('   ', store(defaultTasks())), ChecklistError);
+  }],
+  ['Only the student\'s tap adds a task: the chat code never touches the checklist, and the card adds only from its Add button', () => {
+    for (const file of ['src/lib/checkin/chat-turns.js', 'src/lib/checkin/task-suggestions.js']) {
+      assert.doesNotMatch(readFileSync(file, 'utf8'), /from '#lib\/checklist\/store\.js'|from 'firebase\//, file);
+    }
+    const card = readFileSync('src/lib/components/TaskSuggestionCard.svelte', 'utf8');
+    assert.equal(card.match(/addSuggestedTask\(/g)?.length, 1, 'called in one place');
+    assert.match(card, /async function add\(\) \{[^}]*?addSuggestedTask\(task\.title, \{ loadChecklist, saveChange \}\)/);
+    assert.match(card, /onclick=\{add\}[^>]*>\{busy \? 'Adding…' : 'Add'\}<\/button>/);
+    assert.match(card, />No thanks<\/button>/);
+    const onMount = card.slice(card.indexOf('onMount(async'), card.indexOf('async function add'));
+    assert.doesNotMatch(onMount, /addSuggestedTask|saveChange\(/, 'nothing is added when the card appears');
+  }],
+  ['The chat page shows the card under its reply, and the note at the top stays true', () => {
+    const page = readFileSync('src/routes/check-in/+page.svelte', 'utf8');
+    assert.match(page, /task: reply\.tasks\?\.\[0\] \? \{ title: reply\.tasks\[0\], state: 'offered' \} : undefined/);
+    assert.match(page, /<TaskSuggestionCard bind:task=\{item\.task\} \/>/);
+    const note = page.replace(/\s+/g, ' ');
+    assert.match(note, /This chat isn’t saved: it stays while the app is open in this tab, until you log out/);
+    assert.match(note, /If it suggests a reminder and you tap Add, that task is saved to your checklist\./);
+  }],
+  ['The chat is told to ask about reminders once at a natural point, one {{task: }} at a time, never to say it\'s added, and to point to a task already there', () => {
+    const instructions = chatInstructions('(about)', ['(opener)']);
+    assert.match(instructions, /Once in the conversation, at a natural point, ask whether there's anything they'd like reminding about while they settle in/);
+    assert.match(instructions, /Not while they're worried or upset\. Ask this only once/);
+    assert.match(instructions, /written as \{\{task: Open a bank account\}\}/);
+    assert.match(instructions, /Suggest one task at a time/);
+    assert.match(instructions, /Never say you've added a task or that you will: only they can, with the card's Add button\./);
+    assert.match(instructions, /If it's already on their checklist .* don't suggest it again: say it's already there and point them to their \[\[Checklist\]\]\./);
+    assert.match(instructions, /The double square brackets and \{\{task: \}\} are only for the app/);
+  }],
+  ['chatWith gives the page the suggested task without its marker, and Gemini keeps seeing its own marker (so it knows it asked)', async () => {
+    /** @type {any[]} */
+    const requests = [];
+    const chat = chatWith({
+      generateContent: async (/** @type {any} */ request) => {
+        requests.push(structuredClone(request));
+        return /** @type {any} */ ({ response: { text: () => 'Shall I add {{task: Buy a winter coat}}? Your [[Checklist]] has the rest.', candidates: [{ finishReason: 'STOP' }] } });
+      }
+    });
+    const reply = await chat.send('Can you remind me to buy a coat?');
+    assert.equal(reply.text, 'Shall I add “Buy a winter coat”? Your Checklist has the rest.');
+    assert.deepEqual(reply.tasks, ['Buy a winter coat']);
+    assert.deepEqual(reply.links?.map((link) => link.href), ['/checklist']);
+    await chat.send('Thanks');
+    assert.match(requests[1].contents[1].parts[0].text, /\{\{task: Buy a winter coat\}\}/);
+  }],
+
   // ---------- When Gemini answers or fails (made-up models) ----------
   ['A reply comes back as a reply, and the conversation so far is sent with each message', async () => {
     /** @type {number[]} */
@@ -290,7 +403,7 @@ const checks = [
         return /** @type {any} */ ({ response: { text: () => 'Hello there.', candidates: [{ finishReason: 'STOP' }] } });
       }
     });
-    assert.deepEqual(await chat.send('Hi'), { kind: 'reply', text: 'Hello there.', links: [] });
+    assert.deepEqual(await chat.send('Hi'), { kind: 'reply', text: 'Hello there.', links: [], tasks: [] });
     await chat.send('How are you?');
     assert.deepEqual(sent, [1, 3]);
   }],

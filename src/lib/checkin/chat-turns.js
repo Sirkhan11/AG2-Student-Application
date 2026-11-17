@@ -3,6 +3,7 @@ import { CHAT_CAMPUS } from '#lib/checkin/chat-prompt.js';
 import { linksInReply } from '#lib/checkin/reply-links.js';
 import { blankContactDetails } from '#lib/checkin/private-details.js';
 import { isOutOfCredit } from '#lib/firebase/ai-errors.js';
+import { tasksInReply } from '#lib/checkin/task-suggestions.js';
 
 // How the check-in chat sends each message and turns Gemini's answer into what the page shows.
 // chat.js gives it the Gemini model; it's kept apart so the checks can run it in Node with a made-up
@@ -21,9 +22,10 @@ export const UNAVAILABLE_MESSAGE =
 /**
  * A reply for the page to show: 'reply' from Gemini, 'safety' (the fixed support message), 'error'
  * (try again in a minute) or 'unavailable' (the credit has run out, so the chat stops).
- * links are the real societies, clubs and NSU services Gemini suggested (see reply-links.js).
+ * links are the real societies, clubs and NSU services Gemini suggested (see reply-links.js); tasks
+ * is a checklist task it suggested, for the page's Add / No thanks card (see task-suggestions.js).
  * @typedef {{ kind: 'reply' | 'safety' | 'error' | 'unavailable', text: string,
- *   links?: import('#lib/checkin/reply-links.js').ReplyLink[] }} ChatReply
+ *   links?: import('#lib/checkin/reply-links.js').ReplyLink[], tasks?: string[] }} ChatReply
  */
 
 /**
@@ -72,10 +74,12 @@ export function chatWith(model) {
         }
         const reply = response.text().trim();
         if (reply === '') throw new Error('Gemini sent an empty reply.');
-        // Gemini keeps seeing its own [[Name]] format; the student sees plain names plus links.
+        // Gemini keeps seeing its own [[Name]] and {{task: }} formats; the student sees plain names
+        // and the task in quotes, plus links and the task's card.
         history.push(message, { role: 'model', parts: [{ type: 'text', text: reply }] });
-        const { text: shown, links } = linksInReply(reply, CHAT_CAMPUS);
-        return { kind: 'reply', text: shown, links };
+        const { text: withoutTasks, tasks } = tasksInReply(reply);
+        const { text: shown, links } = linksInReply(withoutTasks, CHAT_CAMPUS);
+        return { kind: 'reply', text: shown, links, tasks };
       } catch (err) {
         if (isOutOfCredit(err)) {
           unavailable = true;

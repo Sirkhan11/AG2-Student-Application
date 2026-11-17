@@ -14,9 +14,16 @@ import { watchSignedIn } from '#lib/firebase/auth.js';
  * credit has run out). links are shown under it: a suggested society, Northumbria Sport club or NSU
  * service as a card with its details (see reply-links.js), anything else as a button (external ones
  * open in a new tab).
+ * task is a checklist task the chat suggested, shown as a card with Add and No thanks; state says
+ * what's happened to it (kept here, so it stays the same when they come back to the chat).
  * @typedef {{ role: 'assistant' | 'user', text: string, kind?: 'safety' | 'error' | 'unavailable',
  *   links?: { label: string, href: string, external?: boolean, kind?: 'society' | 'club' | 'service',
- *     nsuId?: number, slug?: string, serviceId?: string }[] }} Message
+ *     nsuId?: number, slug?: string, serviceId?: string }[],
+ *   task?: SuggestedTask }} Message
+ */
+
+/**
+ * @typedef {{ title: string, state: 'offered' | 'added' | 'queued' | 'declined' | 'exists' | 'full', existing?: string }} SuggestedTask
  */
 
 /**
