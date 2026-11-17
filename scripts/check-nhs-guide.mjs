@@ -1,7 +1,7 @@
 // Checks the NHS guide (src/lib/nhs/guide.js, nhs-costs.json and the page): every fact links to its
 // official source, every money figure comes from the data file (with the date it was checked), the
-// Student GP Registration website is marked "to be confirmed", app links go to real pages, and the
-// chat can link the guide. Offline by default.
+// Student GP Registration website has its sources (the site and Northumbria's page), app links go to
+// real pages, and the chat can link the guide. Offline by default.
 //
 // With --links it also opens every source link (one a second) and says which don't answer:
 //   node scripts/check-nhs-guide.mjs --links
@@ -15,8 +15,11 @@ import { COSTS_CHECKED_ON, REGISTERING, SECTIONS, SOURCES, withFigures } from '#
 import { findPage } from '#lib/checkin/app-pages.js';
 import { chatInstructions } from '#lib/checkin/chat-prompt.js';
 
-/** Where official sources live: GOV.UK, the NHS website, the NHSBSA and Northumbria University. */
-const OFFICIAL = /^https:\/\/(?:www\.)?(?:gov\.uk|nhs\.uk|nhsbsa\.nhs\.uk|northumbria\.ac\.uk)\//;
+/**
+ * Where official sources live: GOV.UK, the NHS website, the NHSBSA, Northumbria University, and the
+ * Student GP Registration website (run on behalf of Newcastle and Northumbria universities).
+ */
+const OFFICIAL = /^https:\/\/(?:www\.)?(?:gov\.uk|nhs\.uk|nhsbsa\.nhs\.uk|northumbria\.ac\.uk|studentgpreg\.org\.uk)\//;
 /** @type {Record<string, { amount: string, label: string, source: string }>} */
 const FIGURES = costs.figures;
 const PAGE = readFileSync('src/routes/nhs-guide/+page.svelte', 'utf8');
@@ -34,18 +37,22 @@ const checks = [
     for (const section of SECTIONS) {
       for (const point of section.points) {
         const where = `${section.id}: "${point.text.slice(0, 50)}"`;
-        if (point.source) assert.match(point.source.href, OFFICIAL, where);
-        else if (point.app) assert.ok(existsSync(`src/routes${point.app.href}/+page.svelte`), `${where}: no page at ${point.app.href}`);
+        if (point.source) {
+          assert.match(point.source.href, OFFICIAL, where);
+          if (point.link) assert.match(point.link.href, OFFICIAL, `${where}: its further link`);
+        } else if (point.app) assert.ok(existsSync(`src/routes${point.app.href}/+page.svelte`), `${where}: no page at ${point.app.href}`);
         else assert.ok(point.toBeConfirmed && point.link?.href.startsWith('https://'), `${where} has no source`);
       }
       for (const term of section.terms ?? []) assert.match(term.source.href, OFFICIAL, term.term);
     }
     for (const source of Object.values(SOURCES)) assert.match(source.href, OFFICIAL, source.label);
   }],
-  ['The Student GP Registration website is marked "to be confirmed", and the page shows that', () => {
-    assert.equal(REGISTERING.studentRegistration.toBeConfirmed, true);
-    assert.equal(REGISTERING.studentRegistration.link.href, 'https://www.studentgpreg.org.uk/');
-    assert.match(PAGE, /To be confirmed/);
+  ['Student GP Registration: confirmed (its own site says it\'s run for both universities), with Northumbria\'s page linked too', () => {
+    const point = /** @type {import('#lib/nhs/guide.js').Point} */ (REGISTERING.studentRegistration);
+    assert.equal(point.toBeConfirmed, undefined);
+    assert.equal(point.source?.href, 'https://www.studentgpreg.org.uk/');
+    assert.equal(point.link?.href, 'https://www.northumbria.ac.uk/study-at-northumbria/support-for-students/international-student-support/registering-with-a-doctor/');
+    assert.deepEqual(SECTIONS.flatMap((section) => section.points).filter((p) => p.toBeConfirmed), [], 'nothing is left to be confirmed');
   }],
   ['No money figure is written in the guide or the page: each comes from nhs-costs.json', () => {
     for (const text of texts) assert.doesNotMatch(text, /£|\bpounds?\b/i, text);
@@ -90,8 +97,7 @@ console.log(`\n${checks.length - failed}/${checks.length} checks passed`);
 if (process.argv.includes('--links')) {
   const links = [...new Set([
     ...Object.values(SOURCES).map((source) => source.href),
-    ...Object.values(FIGURES).map((figure) => figure.source),
-    REGISTERING.studentRegistration.link.href
+    ...Object.values(FIGURES).map((figure) => figure.source)
   ])];
   console.log(`\nOpening ${links.length} links, one a second...`);
   let broken = 0;

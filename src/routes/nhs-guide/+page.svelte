@@ -45,11 +45,13 @@
                 <a class="source" href={point.source.href} target="_blank" rel="noopener noreferrer" aria-label={`Source: ${point.source.label} (opens in a new tab)`}>
                   Source: {point.source.label} ↗
                 </a>
-              {:else if point.link}
+              {/if}
+              {#if point.link}
                 <a class="source" href={point.link.href} target="_blank" rel="noopener noreferrer" aria-label={`${point.link.label} (opens in a new tab)`}>
                   {point.link.label} ↗
                 </a>
-              {:else if point.app}
+              {/if}
+              {#if point.app}
                 <a class="app-link" href={point.app.href}>{point.app.label}</a>
               {/if}
             </li>

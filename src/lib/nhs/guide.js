@@ -9,8 +9,9 @@ import costs from '#lib/nhs/nhs-costs.json' with { type: 'json' };
 
 /** @typedef {{ label: string, href: string }} Link */
 /**
- * One point in a section. A fact has a source; an app point links another page in the app; a point
- * marked toBeConfirmed has a link but couldn't be checked against an official source.
+ * One point in a section. A fact has a source, and may have a further link; an app point links
+ * another page in the app; a point marked toBeConfirmed has a link but couldn't be checked against
+ * an official source (none at the moment).
  * @typedef {{ text: string, source?: Link, app?: Link, link?: Link, toBeConfirmed?: boolean }} Point
  * @typedef {{ term: string, meaning: string, source: Link }} Term
  * @typedef {{ id: string, title: string, intro: string, points: Point[], terms?: Term[] }} Section
@@ -36,7 +37,9 @@ export const SOURCES = {
   nhsAppHelp: { label: 'NHS: help with using the NHS App', href: 'https://www.nhs.uk/nhs-app/help/' },
   nhsNumber: { label: 'NHS: find your NHS number', href: 'https://www.nhs.uk/nhs-services/find-nhs-number/' },
   talkingTherapies: { label: 'NHS: talking therapies you can refer yourself to', href: 'https://www.nhs.uk/nhs-services/mental-health-services/find-nhs-talking-therapies-for-anxiety-and-depression/' },
-  uniMentalHealth: { label: 'Northumbria University: mental health and wellbeing support', href: 'https://www.northumbria.ac.uk/study-at-northumbria/support-for-students/counselling-and-mental-health-support/' }
+  uniMentalHealth: { label: 'Northumbria University: mental health and wellbeing support', href: 'https://www.northumbria.ac.uk/study-at-northumbria/support-for-students/counselling-and-mental-health-support/' },
+  studentGpRegistration: { label: 'Student GP Registration', href: 'https://www.studentgpreg.org.uk/' },
+  registeringWithADoctor: { label: 'Northumbria University: registering with a doctor', href: 'https://www.northumbria.ac.uk/study-at-northumbria/support-for-students/international-student-support/registering-with-a-doctor/' }
 };
 
 /** When the money figures were last checked against their sources, such as "17 November 2026". */
@@ -72,9 +75,9 @@ export const REGISTERING = {
     source: SOURCES.register
   },
   studentRegistration: {
-    text: 'Newcastle campus: Northumbria’s page points to the Student GP Registration website.',
-    link: { label: 'Student GP Registration', href: 'https://www.studentgpreg.org.uk/' },
-    toBeConfirmed: true
+    text: 'Newcastle campus: Northumbria sends you to the Student GP Registration website, which is run on behalf of Newcastle University and Northumbria University.',
+    source: SOURCES.studentGpRegistration,
+    link: SOURCES.registeringWithADoctor
   },
   healthHub: {
     text: 'The Student Health Hub is extra: it doesn’t replace registering with a GP.',
