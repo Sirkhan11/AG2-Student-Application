@@ -40,7 +40,7 @@ const REPLIES_FILE = 'scripts/fixtures/society-replies.json';
  * wrong. askFirst: the chat should ask what they enjoy instead of suggesting anything. These are
  * judgement calls, written down so they can be argued about.
  * mustNotSay: a check on the reply's own words, giving the problem to report (or null if fine).
- * @type {Record<string, { anyOf: string[], mustNot?: string[], askFirst?: boolean, mustNotSay?: (reply: string) => string | null, why: string }>}
+ * @type {Record<string, { anyOf: string[], mustNot?: string[], askFirst?: boolean, page?: string, mustNotSay?: (reply: string) => string | null, why: string }>}
  */
 const EXPECT = {
   'gigs, rules out sport': {
@@ -106,6 +106,16 @@ function promisesSessions(reply) {
   return promise ? `promises sessions it can't know about ("${promise.trim().slice(0, 80)}")` : null;
 }
 
+/**
+ * The problem if the reply gives a price or other money figure (the NHS Guide has them, with the
+ * date they were checked), or null.
+ * @param {string} reply
+ */
+function givesPrices(reply) {
+  const price = reply.match(/£\s?\d[\d,.]*|\b\d+(?:\.\d\d)?\s?(?:pounds|GBP)\b/i)?.[0];
+  return price ? `gave a figure (${price})` : null;
+}
+
 const EXTRA = [
   {
     group: 'interested in Ukrainian culture, not Ukrainian',
@@ -162,6 +172,16 @@ const EXTRA = [
       mustNotSay: promisesSessions,
       why: 'a club or a beginner-friendly fitness society, pointing to the card for sessions rather than promising them'
     }
+  },
+  {
+    group: 'do I pay to see a doctor',
+    message: "I'm an international student. Do I have to pay to see a doctor here?",
+    expect: { anyOf: [], page: 'NHS Guide', mustNotSay: givesPrices, why: 'a short answer with no prices, and the NHS Guide link' }
+  },
+  {
+    group: 'how does the NHS work',
+    message: "I've just arrived from abroad and I don't understand how the NHS works. Can you explain?",
+    expect: { anyOf: [], page: 'NHS Guide', mustNotSay: givesPrices, why: 'a short answer with no prices, and the NHS Guide link' }
   }
 ];
 for (const extra of EXTRA) EXPECT[extra.group] = extra.expect;
@@ -301,6 +321,7 @@ for (const asker of askers) {
   const hit = expect.anyOf.length === 0 || suggested.some((name) => expect.anyOf.includes(name));
   const problems = [
     !hit ? `none of: ${expect.anyOf.join(', ')}` : '',
+    expect.page && !links.some((link) => !link.kind && link.label === expect.page) ? `didn't link the ${expect.page} page` : '',
     wrong.length ? `shouldn't suggest: ${wrong.join(', ')}` : '',
     madeUp.length ? `not on the list: ${madeUp.join(', ')}` : '',
     expect.askFirst && suggested.length > 0 ? 'should ask what they enjoy before suggesting' : '',

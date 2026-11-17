@@ -1,0 +1,46 @@
+{
+  "checkedOn": "2026-11-17",
+  "note": "Every money figure in the NHS guide, for England. NHS charges change each April: check each figure against its source, then change checkedOn.",
+  "figures": {
+    "healthSurcharge": {
+      "amount": "£776",
+      "label": "Immigration health surcharge for students, per year",
+      "source": "https://www.gov.uk/healthcare-immigration-application/how-much-pay"
+    },
+    "prescription": {
+      "amount": "£9.90",
+      "label": "NHS prescription charge, per item",
+      "source": "https://www.nhs.uk/nhs-services/prescriptions/nhs-prescription-charges/"
+    },
+    "prepayment3Months": {
+      "amount": "£32.05",
+      "label": "Prescription prepayment certificate, 3 months",
+      "source": "https://www.nhs.uk/nhs-services/prescriptions/save-money-with-a-prescription-prepayment-certificate-ppc/"
+    },
+    "prepayment12Months": {
+      "amount": "£114.50",
+      "label": "Prescription prepayment certificate, 12 months",
+      "source": "https://www.nhs.uk/nhs-services/prescriptions/save-money-with-a-prescription-prepayment-certificate-ppc/"
+    },
+    "dentalBand1": {
+      "amount": "£27.90",
+      "label": "NHS dental treatment, Band 1",
+      "source": "https://www.nhs.uk/nhs-services/dentists/how-much-nhs-dental-treatment-costs/"
+    },
+    "dentalBand2": {
+      "amount": "£76.60",
+      "label": "NHS dental treatment, Band 2",
+      "source": "https://www.nhs.uk/nhs-services/dentists/how-much-nhs-dental-treatment-costs/"
+    },
+    "dentalBand3": {
+      "amount": "£332.10",
+      "label": "NHS dental treatment, Band 3",
+      "source": "https://www.nhs.uk/nhs-services/dentists/how-much-nhs-dental-treatment-costs/"
+    },
+    "lowIncomeSavings": {
+      "amount": "£16,000",
+      "label": "Savings limit for the NHS Low Income Scheme in England (for people not living in a care home)",
+      "source": "https://www.nhs.uk/nhs-services/help-with-health-costs/nhs-low-income-scheme-lis/"
+    }
+  }
+}
