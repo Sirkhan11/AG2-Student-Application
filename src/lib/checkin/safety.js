@@ -1,7 +1,7 @@
 // The check-in chat's first safety layer, checked in the app before anything is sent to Gemini.
 // If a message suggests someone may be at risk, the chat shows SAFETY_MESSAGE straight away, and the
 // message is NOT sent to Gemini: the reply doesn't depend on the AI, and the most sensitive messages
-// stay out of Google's free tier. Nothing is reported to anyone; the student decides who to tell.
+// never reach Google. Nothing is reported to anyone; the student decides who to tell.
 // No Firebase here, so scripts/check-checkin.mjs can test it in Node.
 //
 // Trade-off: a phrase list misses things people say in other ways (Gemini's instructions are the

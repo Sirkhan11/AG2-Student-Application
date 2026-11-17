@@ -7,8 +7,8 @@ import { CLUBS } from '#lib/sport/clubs.js';
 // exactly the app's prompt.
 
 /**
- * The same model as summarise.js. On the free tier, limits are per model, so the chat and matching
- * share 15 requests a minute: one per chat message, and one per mentor sign-up or match.
+ * The same model as summarise.js: one request per chat message, and one per mentor sign-up or match,
+ * all from the same prepaid credit (Gemini's paid tier).
  */
 export const CHAT_MODEL = 'gemini-3.5-flash-lite';
 

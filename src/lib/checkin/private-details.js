@@ -1,5 +1,6 @@
-// Blanks contact details out of text before it goes to Gemini, as Google's free tier may keep what
-// it's sent: anything shaped like an email address, and UK mobile numbers. Used for the student's
+// Blanks contact details out of text before it goes to Gemini, as Google keeps what it's sent for a
+// limited time (on the paid tier, to detect misuse and for safety, security and legal reasons):
+// anything shaped like an email address, and UK mobile numbers. Used for the student's
 // chat messages (chat.js) and for what the chat is told about them (opener.js). No Firebase here.
 
 const EMAIL_ADDRESS = /\S+@\S+\.\S+/g;

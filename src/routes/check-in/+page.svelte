@@ -142,8 +142,15 @@
     </p>
     <p class="muted">
       This chat isn’t saved: it stays while the app is open in this tab, until you log out, and nothing
-      you say is passed on to the university or your mentor. Google may use messages to improve its
-      services, so please leave out names, contact details and anything you’d want kept private.
+      you say is passed on to the university or your mentor. Google doesn’t use it to improve its
+      products, but keeps messages for a limited time, only to detect misuse, keep its services safe
+      and secure, and meet legal requirements, and they may be stored or cached in any country
+      (<a
+        href="https://ai.google.dev/gemini-api/terms"
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="Gemini API terms (opens in a new tab)">Gemini API terms ↗</a>).
+      So please leave out names, contact details and anything you’d want kept private.
     </p>
 
     <div class="messages" aria-live="polite">
