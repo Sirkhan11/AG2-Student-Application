@@ -21,6 +21,7 @@ import { contactGroups, membershipBlocks } from '#lib/sport/display.js';
 import { chatInstructions, CLUB_LIST } from '#lib/checkin/chat-prompt.js';
 import { buildOpener, describeForGemini } from '#lib/checkin/opener.js';
 import { homedir } from 'node:os';
+import { MIN_CLUBS } from './lib/sport-collect.mjs';
 
 /** The chat's full instructions for a made-up student, as Gemini receives them. */
 const INSTRUCTIONS = chatInstructions(
@@ -32,16 +33,19 @@ const key = (/** @type {string} */ name) => name.toLowerCase().replace(/\s+/g, '
 
 /** @type {[string, () => void][]} */
 const checks = [
-  ['38 clubs, each with a unique slug, a name, a northumbriasport.com link, and an https picture or none', () => {
-    assert.equal(CLUBS.length, 38);
-    assert.equal(new Set(CLUBS.map((club) => club.slug)).size, 38);
+  // No exact counts or names: the weekly refresh runs this before opening its pull request, so a club
+  // joining, leaving or getting a picture mustn't fail it (38 clubs, 3 without a picture, in November 2026).
+  [`At least ${MIN_CLUBS} clubs, sorted by name, each with a unique slug, a name, its northumbriasport.com link, and an https picture or none`, () => {
+    assert.ok(CLUBS.length >= MIN_CLUBS, `only ${CLUBS.length} clubs`);
+    assert.equal(new Set(CLUBS.map((club) => club.slug)).size, CLUBS.length);
+    const names = CLUBS.map((club) => club.name.toLowerCase());
+    assert.deepEqual(names, [...names].sort((a, b) => (a < b ? -1 : a > b ? 1 : 0)));
     for (const club of CLUBS) {
       assert.match(club.slug, /^[a-z0-9-]+$/, club.name);
       assert.ok(club.name.trim() !== '', `${club.slug} has no name`);
-      assert.match(club.url, /^https:\/\/northumbriasport\.com\//, club.name);
+      assert.equal(club.url, `https://northumbriasport.com/sport/${club.slug}`, club.name);
       assert.ok(club.image === null || club.image.startsWith('https://'), `${club.name}: picture link isn't https`);
     }
-    assert.deepEqual(CLUBS.filter((club) => club.image === null).map((club) => club.name), ['Dodgeball', 'Padel', 'Rounders']);
     assert.match(CLUBS_SOURCE, /^https:\/\/northumbriasport\.com\//);
     assert.ok(!Number.isNaN(new Date(CLUBS_COLLECTED_AT).getTime()));
   }],
@@ -53,7 +57,11 @@ const checks = [
     assert.equal(clubBySlug('nope'), null);
     assert.equal(findClub('  table   TENNIS ')?.slug, 'table-tennis');
     assert.equal(findClub('Swim'), null, 'part of a name is not enough');
-    assert.deepEqual(searchClubs('foot').map((club) => club.name), ['American Football', 'Football', 'Gaelic Football']);
+    // Every club with "foot" in its name (American Football, Football and Gaelic Football in November
+    // 2026), in name order, without pinning the whole list, so the weekly refresh doesn't trip on a change.
+    const foot = searchClubs('foot').map((club) => club.name);
+    assert.deepEqual(foot, CLUBS.filter((club) => club.name.toLowerCase().includes('foot')).map((club) => club.name).sort((a, b) => a.localeCompare(b)));
+    assert.ok(foot.includes('Football'));
   }],
   ['No club has exactly the same name as a society (on either campus) or an NSU service', () => {
     const societies = new Set(SOCIETIES.map((society) => key(society.name)));
