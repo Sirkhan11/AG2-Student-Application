@@ -6,7 +6,9 @@
 // Then a few follow-ups in two turns: a student gets a suggestion, then asks how to contact or join
 // it, or what it's like. The chat should name the same society again in [[ ]] (so the app shows its
 // card, with its details, contact buttons and how to join), never say it can't see the details, and
-// never write an email address, handle or link of its own.
+// never write an email address, handle or link of its own. No reply may talk about the [[ ]] format
+// or leave brackets for the student to see; app pages in [[ ]] (such as [[Checklist]]) count as real
+// names, not suggestions.
 //
 // The chat is asked with the app's own instructions (src/lib/checkin/chat-prompt.js) over REST, as
 // make-summary-fixtures.mjs does. Replies are saved in scripts/fixtures/society-replies.json, so by
@@ -23,6 +25,7 @@ import { linksInReply, MAX_LINKS } from '#lib/checkin/reply-links.js';
 import { findService, NOT_IN_CHAT, serviceById } from '#lib/nsu/services.js';
 import { AUDIENCE, findSociety, societyById } from '#lib/societies/societies.js';
 import { CLUBS, findClub } from '#lib/sport/clubs.js';
+import { findPage } from '#lib/checkin/app-pages.js';
 
 /** Every Northumbria Sport club's name, for expectations such as "some club" or "no club at all". */
 const CLUB_NAMES = CLUBS.map((club) => club.name);
@@ -206,6 +209,14 @@ const CANT_SEE = [
   /\b(?:don'?t|don’t|do not)\s+know\s+(?:their|the|what|if|whether|about)\b/i,
   /\bnot sure\s+(?:about|what|if|whether)\b/i
 ];
+/**
+ * The [[ ]] format showing through: the chat talking about brackets, or brackets left in what the
+ * student sees. Gemini is told never to mention them.
+ * @param {string} reply what Gemini wrote
+ * @param {string} shown the same reply as the student sees it (after linksInReply)
+ */
+const bracketsShow = (reply, shown) =>
+  /\bbrackets?\b/i.test(reply) ? 'talked about the brackets' : /\[\[|\]\]/.test(shown) ? 'left brackets in the reply' : '';
 /** An email address, @handle or web link the chat wrote itself. The cards hold the real ones. */
 const OWN_CONTACT = /[\w.%+-]+@[\w.-]+\.[A-Za-z]{2,}|(?<![\w.])@[A-Za-z0-9_.]{2,}|https?:\/\/|www\./i;
 
@@ -279,10 +290,11 @@ for (const asker of askers) {
   }
   const expect = EXPECT[asker.group];
   const { text, links } = linksInReply(entry.reply, CHAT_CAMPUS);
-  const suggested = links.map((link) => link.label);
-  // Everything Gemini wrote in [[ ]]: real societies (on this campus) and services, and anything else (made up).
-  const named = [...entry.reply.matchAll(/\[\[([^\]]{1,80})\]\]/g)].map((m) => m[1]);
-  const isReal = (/** @type {string} */ name) => Boolean(findService(name) || findClub(name) || findSociety(name, CHAT_CAMPUS));
+  // Societies, clubs and services; an app page (such as the Checklist) isn't a suggestion.
+  const suggested = links.filter((link) => link.kind).map((link) => link.label);
+  // Everything Gemini wrote in [[ ]]: real societies (on this campus), clubs, services and app pages, and anything else (made up).
+  const named = [...entry.reply.matchAll(/\[\[([^[\]]{1,80})\]\]/g)].map((m) => m[1]);
+  const isReal = (/** @type {string} */ name) => Boolean(findPage(name) || findService(name) || findClub(name) || findSociety(name, CHAT_CAMPUS));
   const madeUp = named.filter((name) => !isReal(name));
   const realCount = new Set(named.filter(isReal).map((name) => name.toLowerCase())).size;
   const wrong = suggested.filter((name) => expect.mustNot?.includes(name));
@@ -293,6 +305,7 @@ for (const asker of askers) {
     madeUp.length ? `not on the list: ${madeUp.join(', ')}` : '',
     expect.askFirst && suggested.length > 0 ? 'should ask what they enjoy before suggesting' : '',
     expect.mustNotSay?.(entry.reply) ?? '',
+    bracketsShow(entry.reply, text),
     ...UNMENTIONABLE.filter((name) => entry.reply.toLowerCase().includes(name.toLowerCase())).map((name) => `mentioned ${name}, which the chat leaves out`)
   ].filter(Boolean);
   if (problems.length) failures++;
@@ -321,6 +334,8 @@ for (const followup of FOLLOWUPS) {
     suggested.length && !again.length ? `didn't name ${suggested.join(' or ')} again` : '',
     CANT_SEE.some((pattern) => pattern.test(entry.thenReply)) ? "said it can't see the details" : '',
     ownContact ? `wrote a contact detail of its own (${ownContact})` : '',
+    bracketsShow(entry.firstReply, linksInReply(entry.firstReply, CHAT_CAMPUS).text),
+    bracketsShow(entry.thenReply, text),
     ...UNMENTIONABLE.filter((name) => entry.thenReply.toLowerCase().includes(name.toLowerCase())).map((name) => `mentioned ${name}, which the chat leaves out`)
   ].filter(Boolean);
   if (problems.length) followupFailures++;

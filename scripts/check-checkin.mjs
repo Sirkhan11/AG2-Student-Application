@@ -10,12 +10,13 @@ import assert from 'node:assert/strict';
 import { buildOpener, describeForGemini, tidyProfile } from '#lib/checkin/opener.js';
 import { blankContactDetails } from '#lib/checkin/private-details.js';
 import { isCrisis } from '#lib/checkin/safety.js';
-import { CLUB_LIST, SERVICE_LIST, SOCIETY_LIST } from '#lib/checkin/chat-prompt.js';
+import { chatInstructions, CLUB_LIST, SERVICE_LIST, SOCIETY_LIST } from '#lib/checkin/chat-prompt.js';
 import { CLUBS } from '#lib/sport/clubs.js';
 import { linksInReply, MAX_LINKS } from '#lib/checkin/reply-links.js';
 import { startsAfresh } from '#lib/checkin/keep-chat.js';
 import { chatWith, ERROR_MESSAGE, UNAVAILABLE_MESSAGE } from '#lib/checkin/chat-turns.js';
 import { isOutOfCredit } from '#lib/firebase/ai-errors.js';
+import { APP_PAGES, findPage } from '#lib/checkin/app-pages.js';
 import { SERVICES } from '#lib/nsu/services.js';
 import { SOCIETIES } from '#lib/societies/societies.js';
 
@@ -213,6 +214,39 @@ const checks = [
     const { text, links } = linksInReply('Maybe [[Girls Who Run]] or the [[Freshers Week wristband]].', 'Newcastle');
     assert.equal(text, 'Maybe Girls Who Run or the Freshers Week wristband.');
     assert.deepEqual(links, []);
+  }],
+  ['App pages link like societies, by name or an obvious variant, as buttons that keep Gemini\'s words', () => {
+    const { text, links } = linksInReply('Have a look at your [[Checklist]], then the [[GP and Dentist Finder]] and your [[mentor]] page.', 'Newcastle');
+    assert.equal(text, 'Have a look at your Checklist, then the GP and Dentist Finder and your mentor page.');
+    assert.deepEqual(links, [
+      { label: 'Checklist', href: '/checklist', external: false },
+      { label: 'GP Finder', href: '/gp-finder', external: false },
+      { label: 'Your Mentor', href: '/mentor', external: false }
+    ]);
+    assert.equal(findPage('  need   HELP now '), APP_PAGES.find((page) => page.href === '/need-help'));
+    assert.equal(findPage('Find a GP')?.href, '/gp-finder');
+    assert.equal(findPage('Checklists'), null, 'only the names and their variants');
+  }],
+  ['App pages share the limit of 3 with societies, clubs and services', () => {
+    const { links } = linksInReply('[[Film]], [[Swimming]], [[Food Pantry]] and your [[Checklist]]', 'Newcastle');
+    assert.deepEqual(links.map((link) => link.label), ['Film', 'Swimming', 'Food Pantry']);
+  }],
+  ['The student never sees the [[ ]] format: stray or unclosed brackets are taken out, and an unclosed one never swallows the next name', () => {
+    const { text, links } = linksInReply('See [[Checklist and [[Film]]. Or [[Unknown Thing]].]] [[]]', 'Newcastle');
+    assert.equal(text, 'See Checklist and Film. Or Unknown Thing.');
+    assert.deepEqual(links.map((link) => link.label), ['Film']);
+  }],
+  ['No app page (or its variants) has the same name as a society, club or service', () => {
+    const names = APP_PAGES.flatMap((page) => [page.name, ...page.also]);
+    const key = (/** @type {string} */ name) => name.toLowerCase().replace(/\s+/g, ' ').trim();
+    const taken = new Set([...SOCIETIES.map((society) => key(society.name)), ...SERVICES.map((service) => key(service.name)), ...CLUBS.map((club) => key(club.name))]);
+    assert.deepEqual(names.filter((name) => taken.has(key(name))), []);
+  }],
+  ['The chat is told the six app pages as [[ ]] links, and never to mention, explain or show the brackets', () => {
+    const instructions = chatInstructions('(about)', ['(opener)']);
+    for (const page of APP_PAGES) assert.ok(instructions.includes(`[[${page.name}]]`), page.name);
+    assert.match(instructions, /Never mention, explain or show them to the student/);
+    assert.ok(!/Pointing them to pages in the app by name: GP and Dentist Finder/.test(instructions), 'the old plain-text page list is gone');
   }],
   ['No service has the same name as a society, so a [[Name]] can only mean one thing', () => {
     const societies = new Set(SOCIETIES.map((society) => society.name.toLowerCase()));
