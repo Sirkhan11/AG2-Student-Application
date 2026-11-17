@@ -4,6 +4,7 @@
   import { page } from '$app/state';
   import BottomNav from '#lib/components/BottomNav.svelte';
   import { watchSignedIn } from '#lib/firebase/auth.js';
+  import { sendToLogin } from '#lib/login-redirect.js';
   import { loadSavedChecklist } from '#lib/checkin/saved-checklist.js';
   import { loadMyMatch } from '#lib/matching/matches.js';
   import { buildOpener, describeForGemini } from '#lib/checkin/opener.js';
@@ -28,10 +29,12 @@
   /** @type {ReturnType<typeof startCheckinChat> | null} */
   let chat = null;
 
+  // Logged-out visitors go to login, which brings them back here afterwards.
   $effect(() =>
     watchSignedIn((value) => {
       signedIn = value;
       if (value) start();
+      else sendToLogin();
     })
   );
 
@@ -96,13 +99,7 @@
     This is not a medical or emergency service.
   </p>
 
-  {#if signedIn === false}
-    <p>Please log in to use the check-in chat.</p>
-    <div class="actions">
-      <a class="primary-button" href="/">Log in</a>
-      <a class="centred" href="/signup">Create an account</a>
-    </div>
-  {:else if signedIn === null || messages.length === 0}
+  {#if !signedIn || messages.length === 0}
     <p class="muted" role="status">Loading…</p>
   {:else}
     <p class="muted">
@@ -200,13 +197,4 @@
     margin-top: 10px;
   }
 
-  .actions {
-    display: grid;
-    gap: 12px;
-    margin: 16px 0;
-  }
-
-  .centred {
-    text-align: center;
-  }
 </style>

@@ -6,11 +6,16 @@
 // It runs against whichever Firebase project .env points at, using throwaway test accounts:
 // sign up a test mentor at /mentor-signup and a test student at /signup first.
 //
+// Put the test logins in .env.test.local in the project folder. Git ignores it, so the passwords
+// never reach the repo or your terminal history:
+//   TEST_MENTOR_EMAIL=...
+//   TEST_MENTOR_PASSWORD=...
+//   TEST_STUDENT_EMAIL=...      (the student is optional; without it those checks are skipped)
+//   TEST_STUDENT_PASSWORD=...
 // Run from the project folder. Before the coordinator approves the mentor:
-//   TEST_MENTOR_EMAIL='...' TEST_MENTOR_PASSWORD='...' \
-//   TEST_STUDENT_EMAIL='...' TEST_STUDENT_PASSWORD='...' \
-//   node --env-file=.env scripts/check-mentor-signup.mjs
-// After approving the mentor in the console, run it again with EXPECT_APPROVED=true added.
+//   node --env-file=.env --env-file=.env.test.local scripts/check-mentor-signup.mjs
+// After approving the mentor in the console, run it again with EXPECT_APPROVED=true in front:
+//   EXPECT_APPROVED=true node --env-file=.env --env-file=.env.test.local scripts/check-mentor-signup.mjs
 // That second run ends by editing the mentor's display name and item vectors, which (correctly) un-approves
 // them, so re-approve the mentor in the console before running it with EXPECT_APPROVED=true again.
 // The student details are optional; without them the student and capacity checks are skipped.
@@ -43,8 +48,9 @@ const studentPassword = process.env.TEST_STUDENT_PASSWORD;
 const expectApproved = process.env.EXPECT_APPROVED === 'true';
 
 if (!mentorEmail || !mentorPassword || !process.env.VITE_FIREBASE_PROJECT_ID) {
-  console.log('Firebase loaded OK. To run the checks, set TEST_MENTOR_EMAIL and TEST_MENTOR_PASSWORD');
-  console.log('(and optionally the student ones) and run with --env-file=.env from the project folder.');
+  console.log('Firebase loaded OK. To run the checks, put TEST_MENTOR_EMAIL and TEST_MENTOR_PASSWORD (and');
+  console.log('optionally the student ones) in .env.test.local, then from the project folder run:');
+  console.log('  node --env-file=.env --env-file=.env.test.local scripts/check-mentor-signup.mjs');
   process.exit(2);
 }
 
@@ -438,7 +444,7 @@ if (studentEmail && studentPassword) {
 
   await checkTakingPlaces(studentUid);
 } else {
-  console.log('\n-- Student and capacity checks skipped (set TEST_STUDENT_EMAIL and TEST_STUDENT_PASSWORD to run them)');
+  console.log('\n-- Student and capacity checks skipped (add TEST_STUDENT_EMAIL and TEST_STUDENT_PASSWORD to .env.test.local to run them)');
 }
 
 // ---------- Back to the mentor: an approved mentor edits their profile ----------

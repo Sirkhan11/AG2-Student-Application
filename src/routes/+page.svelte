@@ -1,6 +1,8 @@
 
 <script>
   import { goto } from '$app/navigation';
+  import { page } from '$app/state';
+  import { safeNextPath } from '#lib/next-path.js';
   import { logIn } from '#lib/firebase/auth.js';
 
   let email = $state('');
@@ -19,7 +21,8 @@
     try {
       // A real Firebase login, so pages that need a signed-in user (like /find-mentor) work.
       await logIn(email, password);
-      goto('/home');
+      // Back to the page that sent them here (?next=), but only if it's on our own site.
+      goto(safeNextPath(page.url.searchParams.get('next')) ?? '/home');
     } catch (err) {
       const code = /** @type {{ code?: string }} */ (err).code;
       error =

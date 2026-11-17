@@ -65,6 +65,7 @@
     <p>The mentoring coordinator will check your profile, and we'll match you with students once it's approved.</p>
     <p><a href="/">Back to log in</a></p>
   {:else}
+    <p><a href="/">← Back to log in</a></p>
     <h1>Become a mentor</h1>
     <p class="muted">
       Your answers are only used to match you with students who'd get on with you. Google's Gemini

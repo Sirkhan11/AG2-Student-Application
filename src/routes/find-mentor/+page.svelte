@@ -3,6 +3,8 @@
   import { questions } from '#lib/matching/questions.js';
   import { findBlankAnswer } from '#lib/matching/mentors.js';
   import { watchSignedIn } from '#lib/firebase/auth.js';
+  import { sendToLogin } from '#lib/login-redirect.js';
+  import BottomNav from '#lib/components/BottomNav.svelte';
   import { SUMMARISE_FAILED } from '#lib/matching/summarise.js';
   import { MAX_AVAILABILITY_LENGTH, MEETING_FREQUENCIES } from '#lib/matching/matches.js';
   import {
@@ -15,12 +17,13 @@
   /**
    * Which part of the page is showing (only one at a time):
    * - 'checking': working out what to show
-   * - 'signed-out', 'is-mentor', 'no-mentors', 'has-record': shown instead of the form
+   * - 'is-mentor', 'no-mentors', 'has-record': shown instead of the form
+   * (Logged-out visitors are sent to login instead, which brings them back here.)
    * - 'form', then 'busy' while matching or saving (the form stays, disabled)
    * - 'gemini-failed': Gemini is down, so try again or ask the coordinator
    * - 'error': anything else failed, so try that step again
    * Once the result is saved, the page goes to the check-in chat instead (see showOutcome).
-   * @typedef {'checking' | 'signed-out' | 'is-mentor' | 'no-mentors' | 'has-record' | 'form' | 'busy'
+   * @typedef {'checking' | 'is-mentor' | 'no-mentors' | 'has-record' | 'form' | 'busy'
    *   | 'gemini-failed' | 'error'} View
    */
   let view = $state(/** @type {View} */ ('checking'));
@@ -49,7 +52,7 @@
   $effect(() =>
     watchSignedIn((signedIn) => {
       if (signedIn) start();
-      else view = 'signed-out';
+      else sendToLogin();
     })
   );
 
@@ -157,13 +160,6 @@
   {#if view === 'checking'}
     <p class="muted" role="status">Loading…</p>
 
-  {:else if view === 'signed-out'}
-    <p>Please log in to find a mentor.</p>
-    <div class="actions">
-      <a class="primary-button" href="/">Log in</a>
-      <a class="centred" href="/signup">Create an account</a>
-    </div>
-
   {:else if view === 'is-mentor'}
     <p>This page is for students.</p>
     <p class="muted">You’ve signed up as a mentor, so the coordinator will match students with you.</p>
@@ -250,6 +246,8 @@
       <p class="muted" role="status">{busyMessage}</p>
     {/if}
   {/if}
+
+  <BottomNav />
 </main>
 
 <style>
@@ -268,9 +266,5 @@
     display: grid;
     gap: 12px;
     margin: 16px 0;
-  }
-
-  .centred {
-    text-align: center;
   }
 </style>

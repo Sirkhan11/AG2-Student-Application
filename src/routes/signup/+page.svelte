@@ -45,6 +45,7 @@
 </script>
 
 <main class="page">
+  <p><a href="/">← Back to log in</a></p>
   <h1>Create your account</h1>
   <p class="muted">
     Tell us a little about yourself.

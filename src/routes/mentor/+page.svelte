@@ -1,12 +1,14 @@
 <script>
   import { watchSignedIn } from '#lib/firebase/auth.js';
+  import { sendToLogin } from '#lib/login-redirect.js';
+  import BottomNav from '#lib/components/BottomNav.svelte';
   import { loadMyMatch } from '#lib/matching/matches.js';
 
   /**
    * Which part of the page is showing:
-   * - 'checking': loading; 'signed-out'; 'error': loading failed
+   * - 'checking': loading; 'error': loading failed (logged-out visitors are sent to login instead)
    * - 'none': no match record yet; 'waiting': the coordinator is finding a mentor; 'matched'
-   * @typedef {'checking' | 'signed-out' | 'error' | 'none' | 'waiting' | 'matched'} View
+   * @typedef {'checking' | 'error' | 'none' | 'waiting' | 'matched'} View
    */
   let view = $state(/** @type {View} */ ('checking'));
   let match = $state(/** @type {import('#lib/matching/matches.js').Match | null} */ (null));
@@ -16,7 +18,7 @@
   $effect(() =>
     watchSignedIn((signedIn) => {
       if (signedIn) load();
-      else view = 'signed-out';
+      else sendToLogin();
     })
   );
 
@@ -37,13 +39,6 @@
 
   {#if view === 'checking'}
     <p class="muted" role="status">Loading…</p>
-
-  {:else if view === 'signed-out'}
-    <p>Please log in to see your mentor.</p>
-    <div class="actions">
-      <a class="primary-button" href="/">Log in</a>
-      <a class="centred" href="/signup">Create an account</a>
-    </div>
 
   {:else if view === 'error'}
     <p class="error" role="alert">We couldn't load your mentor. Please check your connection.</p>
@@ -75,16 +70,6 @@
       <p>Your coordinator will introduce you.</p>
     </div>
   {/if}
+
+  <BottomNav />
 </main>
-
-<style>
-  .actions {
-    display: grid;
-    gap: 12px;
-    margin: 16px 0;
-  }
-
-  .centred {
-    text-align: center;
-  }
-</style>
