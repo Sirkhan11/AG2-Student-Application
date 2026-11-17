@@ -1,0 +1,236 @@
+{
+  "source": "https://northumbriasport.com/sports",
+  "collectedAt": "2026-11-17T14:44:45.528Z",
+  "note": "Northumbria Sport's student sports clubs. Pictures are links to Northumbria Sport's site, not copies.",
+  "count": 38,
+  "clubs": [
+    {
+      "slug": "american-football",
+      "name": "American Football",
+      "url": "https://northumbriasport.com/sport/american-football",
+      "image": "https://northumbriasport.com/uploads/banners/ls9dM8rbl_THUMB_68b2f9ecd1099-american-football-checkpointimages-19-01-2025-0723_68b2f9ecd08bf.JPG"
+    },
+    {
+      "slug": "archery",
+      "name": "Archery",
+      "url": "https://northumbriasport.com/sport/archery",
+      "image": "https://northumbriasport.com/uploads/banners/IoqorwuzUmwGsfZ_THUMB_68b2fb2717480-american-football-checkpointimages-07-08-2025-0730_68b2fb2716d1c.JPG"
+    },
+    {
+      "slug": "athletics-xc",
+      "name": "Athletics & XC",
+      "url": "https://northumbriasport.com/sport/athletics-xc",
+      "image": "https://northumbriasport.com/uploads/banners/3BEBI1JNZU8Oea5Fkb4_THUMB_695fd50787264-athletics_695fd50787078.jpg"
+    },
+    {
+      "slug": "badminton",
+      "name": "Badminton",
+      "url": "https://northumbriasport.com/sport/badminton",
+      "image": "https://northumbriasport.com/uploads/banners/jY2CS7aL8HQRe_THUMB_68b2fd05e6271-american-football-checkpointimages-24-07-2025-0734_68b2fd05e5d3a.JPG"
+    },
+    {
+      "slug": "basketball",
+      "name": "Basketball",
+      "url": "https://northumbriasport.com/sport/basketball",
+      "image": "https://northumbriasport.com/uploads/banners/hFP6bsfjaFb_THUMB_68b302b69a108-basketball-m1-visualswitheric-06-11-2024-068_68b302b6998a9.JPG"
+    },
+    {
+      "slug": "boxing",
+      "name": "Boxing",
+      "url": "https://northumbriasport.com/sport/boxing",
+      "image": "https://northumbriasport.com/uploads/banners/Z2LjMeCK2iv7wKrd_THUMB_68b3033d88213-boxing-taster-session-checkpointimages-01-10-2024-1031_68b3033d87cbe.JPG"
+    },
+    {
+      "slug": "cheerleading",
+      "name": "Cheerleading",
+      "url": "https://northumbriasport.com/sport/cheerleading",
+      "image": "https://northumbriasport.com/uploads/banners/HAo9TH0bas_THUMB_68b303c86460e-cheer_68b303c86400d.JPG"
+    },
+    {
+      "slug": "cricket",
+      "name": "Cricket",
+      "url": "https://northumbriasport.com/sport/cricket",
+      "image": "https://northumbriasport.com/uploads/banners/qIpF7gtejy26ttHMqG_THUMB_68b30664a0e1e-cricket-checkpointimages-29-05-2025-0717_68b30664a06d4.JPG"
+    },
+    {
+      "slug": "dodgeball",
+      "name": "Dodgeball",
+      "url": "https://northumbriasport.com/sport/dodgeball",
+      "image": null
+    },
+    {
+      "slug": "equestrian",
+      "name": "Equestrian",
+      "url": "https://northumbriasport.com/sport/equestrian",
+      "image": "https://northumbriasport.com/uploads/banners/o4DjKLXlDzYa_THUMB_68b3071f2b43e-equestrian-training-checkpointimages-11-02-2025-0058_68b3071f2ae63.JPG"
+    },
+    {
+      "slug": "football",
+      "name": "Football",
+      "url": "https://northumbriasport.com/sport/football",
+      "image": "https://northumbriasport.com/uploads/banners/Qea2uhGLM_THUMB_68b308a2ad41c-football-m4-theofilmsstuff-16-10-2024-6481_68b308a2ace12.JPG"
+    },
+    {
+      "slug": "futsal",
+      "name": "Futsal",
+      "url": "https://northumbriasport.com/sport/futsal",
+      "image": "https://northumbriasport.com/uploads/banners/gszzNunku7ebEUXAaMe_THUMB_68b30a76c7e77-futsal-m1-theofilmsstuff-15-12-2024-5074_68b30a76c782e.JPG"
+    },
+    {
+      "slug": "gaelic-football",
+      "name": "Gaelic Football",
+      "url": "https://northumbriasport.com/sport/gaelic-football",
+      "image": "https://northumbriasport.com/uploads/banners/Yv1QFwnqelItzsZ_THUMB_68b30962b0619-gaelic-football-taster-session-checkpointimages-04-10-2024-2034_68b30962b00f8.JPG"
+    },
+    {
+      "slug": "golf",
+      "name": "Golf",
+      "url": "https://northumbriasport.com/sport/golf",
+      "image": "https://northumbriasport.com/uploads/banners/yIY3ZwdBOBEvGm_THUMB_68b310a196d35-theofilmsstuff-03149_68b310a19683a.JPG"
+    },
+    {
+      "slug": "gymnastics",
+      "name": "Gymnastics",
+      "url": "https://northumbriasport.com/sport/gymnastics",
+      "image": "https://northumbriasport.com/uploads/banners/xuQyKMFlQZ_THUMB_68b31198aad85-gymnastics-training-visualswitheric-18-02-2025-024_68b31198aa6e6.JPG"
+    },
+    {
+      "slug": "hockey",
+      "name": "Hockey",
+      "url": "https://northumbriasport.com/sport/hockey",
+      "image": "https://northumbriasport.com/uploads/banners/oMRyeGF58MWII1Sbs_THUMB_68b314428be61-hockey-m1--checkpointimages-30-10-2024-2720_68b314428b805.JPG"
+    },
+    {
+      "slug": "jitsu",
+      "name": "Jitsu",
+      "url": "https://northumbriasport.com/sport/jitsu",
+      "image": "https://northumbriasport.com/uploads/banners/9Yu6GTZMSIFjP6ioqWQu_THUMB_68b314b70d9ad-jitsu_taster_11_68b314b70d48a.JPG"
+    },
+    {
+      "slug": "judo",
+      "name": "Judo",
+      "url": "https://northumbriasport.com/sport/judo",
+      "image": "https://northumbriasport.com/uploads/banners/iKs7bQei7TfAoNp4g_THUMB_68b3156d767d6-judo-training-visualswitheric-06-11-2024-024_68b3156d75fdf.JPG"
+    },
+    {
+      "slug": "karate",
+      "name": "Karate",
+      "url": "https://northumbriasport.com/sport/karate",
+      "image": "https://northumbriasport.com/uploads/banners/PALIbXZETupk3W_THUMB_68b315d70a172-karate-(1)_68b315d709c40.JPG"
+    },
+    {
+      "slug": "lacrosse",
+      "name": "Lacrosse",
+      "url": "https://northumbriasport.com/sport/lacrosse",
+      "image": "https://northumbriasport.com/uploads/banners/4WdirDIWHnAK_THUMB_68b31a0c4af3e-lacrosse-m2-checkpointimages-05-02-2025-4803_68b31a0c4a970.JPG"
+    },
+    {
+      "slug": "mma",
+      "name": "MMA",
+      "url": "https://northumbriasport.com/sport/mma",
+      "image": "https://northumbriasport.com/uploads/banners/g7WNLu4rRNfYAdgtPh_THUMB_68b31ac8cbfb1-mma-cheeckpointimages-02-10-2023-125_68b31ac8cb9a9.JPG"
+    },
+    {
+      "slug": "netball",
+      "name": "Netball",
+      "url": "https://northumbriasport.com/sport/netball",
+      "image": "https://northumbriasport.com/uploads/banners/QWfRfDCY_THUMB_68b31d6871603-netball-(1)_68b31d68710d5.JPG"
+    },
+    {
+      "slug": "olympic-weightlifting",
+      "name": "Olympic Weightlifting",
+      "url": "https://northumbriasport.com/sport/olympic-weightlifting",
+      "image": "https://northumbriasport.com/uploads/banners/3uCdoQLOzH1hoKm_THUMB_68bc0c8d09bb9-_ste5185_68bc0c8d096ee.JPG"
+    },
+    {
+      "slug": "padel",
+      "name": "Padel",
+      "url": "https://northumbriasport.com/sport/padel",
+      "image": null
+    },
+    {
+      "slug": "powerlifting",
+      "name": "Powerlifting",
+      "url": "https://northumbriasport.com/sport/powerlifting",
+      "image": "https://northumbriasport.com/uploads/banners/xFyZOncepzCI_THUMB_68bc127d84994-weightlifting-visualswitheric-03-12-2024-012_68bc127d81db1.JPG"
+    },
+    {
+      "slug": "rounders",
+      "name": "Rounders",
+      "url": "https://northumbriasport.com/sport/rounders",
+      "image": null
+    },
+    {
+      "slug": "rowing",
+      "name": "Rowing",
+      "url": "https://northumbriasport.com/sport/rowing",
+      "image": "https://northumbriasport.com/uploads/banners/XOJnZbGFAaABgfm6MIF_THUMB_68bc1547880fe-rowing-checkpointimages-06-09-2025-4446_68bc1547879a8.JPG"
+    },
+    {
+      "slug": "rugby-league",
+      "name": "Rugby League",
+      "url": "https://northumbriasport.com/sport/rugby-league",
+      "image": "https://northumbriasport.com/uploads/banners/yQegCsVKOWdkVcT9Kkkr_THUMB_68b3242289f2a-rugby-league-w1-03-11-24-theofilmsstuff-7832_68b3242288263.JPG"
+    },
+    {
+      "slug": "rugby-union",
+      "name": "Rugby Union",
+      "url": "https://northumbriasport.com/sport/rugby-union",
+      "image": "https://northumbriasport.com/uploads/banners/sVeOQTiEPXnDWW_THUMB_68b324e9e4d1f-rugby-union-m2-theofilmsstuff-16-10-2024-7448_68b324e9e2980.JPG"
+    },
+    {
+      "slug": "running",
+      "name": "Running",
+      "url": "https://northumbriasport.com/sport/running",
+      "image": "https://northumbriasport.com/uploads/banners/HG83xpoBCw184vRFtY8F_THUMB_68bcb605cba6c-gnr-5k-2025-visualswitheric-05-09-2025-119_68bcb605cb3c9.JPG"
+    },
+    {
+      "slug": "squash",
+      "name": "Squash",
+      "url": "https://northumbriasport.com/sport/squash",
+      "image": "https://northumbriasport.com/uploads/banners/vlkCVGk4z_THUMB_68bc1c1299d32-squash-cheeckpointimages-03-12-2019-0006_68bc1c1299884.jpg"
+    },
+    {
+      "slug": "swimming",
+      "name": "Swimming",
+      "url": "https://northumbriasport.com/sport/swimming",
+      "image": "https://northumbriasport.com/uploads/banners/BOykH2AVJyDhaV_THUMB_68bca4d74cc02-swimming-cheeckpointimages-14-02-2025-0001_68bca4d74c5bd.jpg"
+    },
+    {
+      "slug": "table-tennis",
+      "name": "Table Tennis",
+      "url": "https://northumbriasport.com/sport/table-tennis",
+      "image": "https://northumbriasport.com/uploads/banners/pdsOmCNQAL_THUMB_68bc222f6e666-table-tennis-m1-m2-visualswitheric-20-11-2024-014_68bc222f6de69.JPG"
+    },
+    {
+      "slug": "taekwondo",
+      "name": "Taekwondo",
+      "url": "https://northumbriasport.com/sport/taekwondo",
+      "image": "https://northumbriasport.com/uploads/banners/b8SVAfbmNjWf1_THUMB_68bcaebe09b28-taekwondo-checkpointimages-14-05-2024-0140_68bcaebe0751f.JPG"
+    },
+    {
+      "slug": "tennis",
+      "name": "Tennis",
+      "url": "https://northumbriasport.com/sport/tennis",
+      "image": "https://northumbriasport.com/uploads/banners/BRcTETIedhppljYu_THUMB_68bcb05577229-tennis-m1-theofilmsstuff-30-10-2024-5112_68bcb05575756.JPG"
+    },
+    {
+      "slug": "ultimate-frisbee",
+      "name": "Ultimate Frisbee",
+      "url": "https://northumbriasport.com/sport/ultimate-frisbee",
+      "image": "https://northumbriasport.com/uploads/banners/A9Aj1VL5YGA9jb_THUMB_68bcb11bce66e-ultimate-mx1-09-11-24-theofilmsstuff-9278_68bcb11bcdee0.JPG"
+    },
+    {
+      "slug": "volleyball",
+      "name": "Volleyball",
+      "url": "https://northumbriasport.com/sport/volleyball",
+      "image": "https://northumbriasport.com/uploads/banners/jBYMXtQu1_THUMB_68bc235003490-volleyball-m1-visualswitheric-02-10-2024-117_68bc235002f35.JPG"
+    },
+    {
+      "slug": "water-polo",
+      "name": "Water Polo",
+      "url": "https://northumbriasport.com/sport/water-polo",
+      "image": "https://northumbriasport.com/uploads/banners/rGsiapGCdN_THUMB_68bcb3e5e09c4-w1waterpolo-checkpointimages-30-11-2023-613_68bcb3e5e0325.JPG"
+    }
+  ]
+}

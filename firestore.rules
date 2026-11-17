@@ -83,6 +83,15 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // Northumbria Sport's info for each sports club (about, memberships and training, contacts,
+    // socials, booking link), copied from northumbriasport.com by scripts/import-sport-club-pages.mjs,
+    // which uses the Admin SDK and so ignores these rules. The contacts are people's names and emails,
+    // so only signed-in users can read it, and nobody can change it from the app.
+    match /sportClubs/{slug} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+
     // True when the mentor document being written has no fields beyond these five.
     function onlyPublicMentorFields() {
       return request.resource.data.keys().hasOnly(

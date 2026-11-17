@@ -10,10 +10,10 @@
 // the repo, imported into Firestore by hand). Nothing here prints a description or an email, and
 // emails written inside descriptions are replaced with a note rather than collected.
 
-import { realpathSync } from 'node:fs';
-import { homedir } from 'node:os';
-import { dirname, isAbsolute, join, resolve, sep } from 'node:path';
 import { DOMParser } from 'linkedom';
+
+// The path helpers moved to paths.mjs (the sport club import uses them too); still exported from here.
+export { expandHome, isInside } from './paths.mjs';
 
 export const ORIGIN = 'https://mynsu.co.uk';
 /** NSU's A to Z page: it holds the API's site id and NSU's category map. Also the list file's "source". */
@@ -590,39 +590,4 @@ export function checkBeforeWriting({ societies, parsed, pageErrors }) {
   }
   if (pageErrors.length) problems.push(`the pages file doesn't pass the import's checks: ${pageErrors.slice(0, 5).join('; ')}`);
   return problems;
-}
-
-/**
- * The full path for a file the user names, with a leading ~ meaning their home folder.
- * @param {string} path
- */
-export function expandHome(path) {
-  return path === '~' || path.startsWith('~/') ? join(homedir(), path.slice(1)) : resolve(path);
-}
-
-/**
- * True if the path is inside the folder (following symbolic links), so the private pages file
- * can never be written into the repo. Works for files and folders that don't exist yet.
- * @param {string} path
- * @param {string} folder
- */
-export function isInside(path, folder) {
-  /** @param {string} target the real path of the nearest part that exists, plus the rest */
-  const real = (target) => {
-    let existing = target;
-    const rest = [];
-    for (;;) {
-      try {
-        return join(realpathSync(existing), ...rest.reverse());
-      } catch {
-        const parent = dirname(existing);
-        if (parent === existing) return target;
-        rest.push(existing.slice(parent.length + (parent.endsWith(sep) ? 0 : 1)));
-        existing = parent;
-      }
-    }
-  };
-  const target = real(isAbsolute(path) ? path : resolve(path));
-  const root = real(resolve(folder));
-  return target === root || target.startsWith(root + sep);
 }
