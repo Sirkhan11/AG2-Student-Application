@@ -72,6 +72,14 @@ service cloud.firestore {
         && validMatch(request.resource.data);
     }
 
+    // NSU's info for each society (description, memberships, socials, contact email), copied from
+    // its NSU page by scripts/import-society-pages.mjs, which uses the Admin SDK and so ignores these
+    // rules. Signed-in users can read it; nobody can change it from the app.
+    match /societies/{societyId} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+
     // True when the mentor document being written has no fields beyond these five.
     function onlyPublicMentorFields() {
       return request.resource.data.keys().hasOnly(

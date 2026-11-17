@@ -1,0 +1,1251 @@
+{
+  "source": "https://mynsu.co.uk/Activities/home#find",
+  "collectedAt": "2026-11-17T11:53:47.492Z",
+  "count": 154,
+  "categories": [
+    "Academic",
+    "Faith and Belief",
+    "International and Cultural",
+    "Performance",
+    "Political",
+    "Professional Development",
+    "Recreational Sport",
+    "Special Interest",
+    "Volunteering and Charitable",
+    "Wellbeing"
+  ],
+  "societies": [
+    {
+      "nsuId": 2,
+      "name": "Ablaze",
+      "category": "Faith and Belief",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/2",
+      "image": "https://sums-data-public.sums.digital/NB/group-thumbnails/2/8Yo1ALMUZVfi.jpg"
+    },
+    {
+      "nsuId": 268,
+      "name": "Accountancy, Finance & Economics",
+      "category": "Academic",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/268",
+      "image": "https://sums-data-public.sums.digital/NB/group-thumbnails/268/0nU17wcvdQYC.jpg"
+    },
+    {
+      "nsuId": 6,
+      "name": "Animal Law",
+      "category": "Volunteering and Charitable",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/6",
+      "image": "https://sums-data-public.sums.digital/NB/group-thumbnails/6/BR6Nvh0l9CDt.jpg"
+    },
+    {
+      "nsuId": 7,
+      "name": "Architecture",
+      "category": "Academic",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/7",
+      "image": "https://sums-data-public.sums.digital/NB/group-thumbnails/7/26upLIRridnP.png"
+    },
+    {
+      "nsuId": 176,
+      "name": "Art",
+      "category": "Special Interest",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/176",
+      "image": "https://sums-data-public.sums.digital/NB/group-thumbnails/176/bCPmYTWEjl9i.jpg"
+    },
+    {
+      "nsuId": 242,
+      "name": "Bangladesh Synergy Network",
+      "category": "International and Cultural",
+      "campus": "London",
+      "url": "https://mynsu.co.uk/activities/view/242",
+      "image": null
+    },
+    {
+      "nsuId": 202,
+      "name": "Beats Cartel Dance",
+      "category": "Performance",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/202",
+      "image": "https://sums-data-public.sums.su/NB/group-thumbnails/202/S1tNaZpUkFy8.jpg"
+    },
+    {
+      "nsuId": 106,
+      "name": "Beer",
+      "category": "Special Interest",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/106",
+      "image": "https://sums-data-public.sums.digital/NB/group-header-images/106/CiVEYq35QmXr.jpg"
+    },
+    {
+      "nsuId": 182,
+      "name": "Believers Love World",
+      "category": "Faith and Belief",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/182",
+      "image": "https://ff5bc57c611ce76ddc1a-ed147fbb50628632030a983306190a0d.ssl.cf3.rackcdn.com/ac_thumb_182_f480d4_176.jpg"
+    },
+    {
+      "nsuId": 9,
+      "name": "Bhangra",
+      "category": "Performance",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/9",
+      "image": "https://sums-data-public.sums.digital/NB/group-thumbnails/9/5b4MEWmuxcwr.jpg"
+    },
+    {
+      "nsuId": 280,
+      "name": "Big Data & Data Science",
+      "category": "Academic",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/280",
+      "image": "https://sums-data-public.sums.digital/NB/group-thumbnails/280/M8ibtQJTw63C.png"
+    },
+    {
+      "nsuId": 260,
+      "name": "Big Data Sci & Tech",
+      "category": "Professional Development",
+      "campus": "London",
+      "url": "https://mynsu.co.uk/activities/view/260",
+      "image": null
+    },
+    {
+      "nsuId": 10,
+      "name": "Biomed",
+      "category": "Academic",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/10",
+      "image": "https://ff5bc57c611ce76ddc1a-ed147fbb50628632030a983306190a0d.ssl.cf3.rackcdn.com/ac_thumb_10_f961b7_8.jpg"
+    },
+    {
+      "nsuId": 222,
+      "name": "Book",
+      "category": "Special Interest",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/222",
+      "image": "https://sums-data-public.sums.digital/NB/group-thumbnails/222/uLNtK5wDeWk4.png"
+    },
+    {
+      "nsuId": 293,
+      "name": "Breast Cancer Awareness",
+      "category": "Volunteering and Charitable",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/293",
+      "image": null
+    },
+    {
+      "nsuId": 71,
+      "name": "Business",
+      "category": "Academic",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/71",
+      "image": "https://sums-data-public.sums.digital/NB/group-thumbnails/71/hpga683zQV0j.png"
+    },
+    {
+      "nsuId": 263,
+      "name": "Business Meets Tech",
+      "category": "Academic",
+      "campus": "London",
+      "url": "https://mynsu.co.uk/activities/view/263",
+      "image": null
+    },
+    {
+      "nsuId": 196,
+      "name": "Cat Appreciation",
+      "category": "Special Interest",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/196",
+      "image": "https://sums-data-public.sums.digital/NB/group-thumbnails/196/75Y46c9kajTP.png"
+    },
+    {
+      "nsuId": 12,
+      "name": "Chemistry",
+      "category": "Academic",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/12",
+      "image": "https://sums-data-public.sums.digital/NB/group-thumbnails/12/SVmejwbJifuy.png"
+    },
+    {
+      "nsuId": 122,
+      "name": "Chess",
+      "category": "Special Interest",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/122",
+      "image": "https://sums-data-public.sums.digital/NB/group-thumbnails/122/XkclqZ8uPbOe.jpg"
+    },
+    {
+      "nsuId": 126,
+      "name": "Childhood & Early Years Society",
+      "category": "Academic",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/126",
+      "image": "https://sums-data-public.sums.digital/NB/group-thumbnails/126/DRy2xU1jPpet.png"
+    },
+    {
+      "nsuId": 292,
+      "name": "Choose a Challenge",
+      "category": "Volunteering and Charitable",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/292",
+      "image": null
+    },
+    {
+      "nsuId": 14,
+      "name": "Christian Union",
+      "category": "Faith and Belief",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/14",
+      "image": "https://sums-data-public.sums.digital/NB/group-thumbnails/14/KzC7kvwrt9gp.jpg"
+    },
+    {
+      "nsuId": 285,
+      "name": "Civil Engineering",
+      "category": "Academic",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/285",
+      "image": null
+    },
+    {
+      "nsuId": 241,
+      "name": "Claude Builder Club",
+      "category": "Professional Development",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/241",
+      "image": "https://sums-data-public.sums.digital/NB/group-thumbnails/241/OlZeIWKDa5gf.png"
+    },
+    {
+      "nsuId": 15,
+      "name": "Climbing",
+      "category": "Recreational Sport",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/15",
+      "image": "https://sums-data-public.sums.digital/NB/group-thumbnails/15/M7YvJWI8TyLR.png"
+    },
+    {
+      "nsuId": 233,
+      "name": "Comic Book",
+      "category": "Special Interest",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/233",
+      "image": "https://sums-data-public.sums.digital/NB/group-thumbnails/233/kaQhHGOuMSo7.png"
+    },
+    {
+      "nsuId": 284,
+      "name": "Communication",
+      "category": "Academic",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/284",
+      "image": null
+    },
+    {
+      "nsuId": 203,
+      "name": "Computing",
+      "category": "Academic",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/203",
+      "image": "https://sums-data-public.sums.digital/NB/group-thumbnails/203/VoFi6wYZyLjA.png"
+    },
+    {
+      "nsuId": 18,
+      "name": "Conservation of Fine Art",
+      "category": "Academic",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/18",
+      "image": "https://sums-data-public.sums.digital/NB/group-thumbnails/18/6QA4yojYHa39.jpg"
+    },
+    {
+      "nsuId": 262,
+      "name": "Coptic",
+      "category": "Faith and Belief",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/262",
+      "image": "https://sums-data-public.sums.digital/NB/group-thumbnails/262/eNOzTw6fdFWE.png"
+    },
+    {
+      "nsuId": 235,
+      "name": "Cosplay",
+      "category": "Special Interest",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/235",
+      "image": "https://sums-data-public.sums.digital/NB/group-thumbnails/235/9rs2lic5YRxF.png"
+    },
+    {
+      "nsuId": 296,
+      "name": "Creative Corridor",
+      "category": "Special Interest",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/296",
+      "image": null
+    },
+    {
+      "nsuId": 190,
+      "name": "Criminology & Sociology",
+      "category": "Academic",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/190",
+      "image": "https://ff5bc57c611ce76ddc1a-ed147fbb50628632030a983306190a0d.ssl.cf3.rackcdn.com/ac_thumb_190_bfa171_184.jpg"
+    },
+    {
+      "nsuId": 192,
+      "name": "Cyber Hackshield",
+      "category": "Special Interest",
+      "campus": "London",
+      "url": "https://mynsu.co.uk/activities/view/192",
+      "image": "https://sums-data-public.sums.digital/NB/group-thumbnails/192/jEF0XQzNTAR5.png"
+    },
+    {
+      "nsuId": 183,
+      "name": "Cybersecurity",
+      "category": "Academic",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/183",
+      "image": "https://ff5bc57c611ce76ddc1a-ed147fbb50628632030a983306190a0d.ssl.cf3.rackcdn.com/ac_thumb_183_e9f87d_177.jpg"
+    },
+    {
+      "nsuId": 291,
+      "name": "Cycling",
+      "category": "Recreational Sport",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/291",
+      "image": "https://sums-data-public.sums.digital/NB/group-thumbnails/291/hJ8m0tUw6a2l.png"
+    },
+    {
+      "nsuId": 21,
+      "name": "Dance",
+      "category": "Performance",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/21",
+      "image": "https://sums-data-public.sums.digital/NB/group-thumbnails/21/Kqxlzt5MCNDs.png"
+    },
+    {
+      "nsuId": 159,
+      "name": "Darts",
+      "category": "Recreational Sport",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/159",
+      "image": "https://sums-data-public.sums.digital/NB/group-thumbnails/159/JsmzRGh1pMNP.png"
+    },
+    {
+      "nsuId": 276,
+      "name": "Design, Arts & Creative Industries",
+      "category": "Academic",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/276",
+      "image": "https://sums-data-public.sums.digital/NB/group-thumbnails/276/mJqQtEPzZ58G.jpg"
+    },
+    {
+      "nsuId": 24,
+      "name": "Doctor Who",
+      "category": "Special Interest",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/24",
+      "image": "https://sums-data-public.sums.digital/NB/group-thumbnails/24/xeRaQMPrHy0w.png"
+    },
+    {
+      "nsuId": 283,
+      "name": "Drag",
+      "category": "Special Interest",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/283",
+      "image": "https://sums-data-public.sums.digital/NB/group-thumbnails/283/L36qOShlvtMr.png"
+    },
+    {
+      "nsuId": 26,
+      "name": "Drama",
+      "category": "Performance",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/26",
+      "image": "https://sums-data-public.sums.digital/NB/group-thumbnails/26/IEekGsapdHSq.jpg"
+    },
+    {
+      "nsuId": 287,
+      "name": "East African",
+      "category": "International and Cultural",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/287",
+      "image": null
+    },
+    {
+      "nsuId": 142,
+      "name": "Electrical Engineering",
+      "category": "Academic",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/142",
+      "image": "https://ff5bc57c611ce76ddc1a-ed147fbb50628632030a983306190a0d.ssl.cf3.rackcdn.com/ac_thumb_142_a9ceda_25.jpg"
+    },
+    {
+      "nsuId": 131,
+      "name": "Engineering, Physics & Maths",
+      "category": "Academic",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/131",
+      "image": "https://sums-data-public.sums.digital/NB/group-thumbnails/131/lZWCsD2THkIh.png"
+    },
+    {
+      "nsuId": 114,
+      "name": "English",
+      "category": "Academic",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/114",
+      "image": "https://sums-data-public.sums.digital/NB/group-thumbnails/114/kfHdW83zLJ7r.png"
+    },
+    {
+      "nsuId": 31,
+      "name": "Esports",
+      "category": "Special Interest",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/31",
+      "image": "https://sums-data-public.sums.digital/NB/group-thumbnails/31/UVKrZzdL4JFM.png"
+    },
+    {
+      "nsuId": 220,
+      "name": "Explore Together",
+      "category": "Special Interest",
+      "campus": "London",
+      "url": "https://mynsu.co.uk/activities/view/220",
+      "image": null
+    },
+    {
+      "nsuId": 269,
+      "name": "F1",
+      "category": "Special Interest",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/269",
+      "image": null
+    },
+    {
+      "nsuId": 277,
+      "name": "Fashion",
+      "category": "Academic",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/277",
+      "image": "https://sums-data-public.sums.digital/NB/group-header-images/277/ctRMWgur7DTy.jpg"
+    },
+    {
+      "nsuId": 72,
+      "name": "Fashion Show",
+      "category": "Volunteering and Charitable",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/72",
+      "image": "https://sums-data-public.sums.digital/NB/group-thumbnails/72/CtJA5XcMRBv2.jpg"
+    },
+    {
+      "nsuId": 32,
+      "name": "Filipino",
+      "category": "International and Cultural",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/32",
+      "image": "https://sums-data-public.sums.digital/NB/group-thumbnails/32/qJncvDVaCZzs.png"
+    },
+    {
+      "nsuId": 163,
+      "name": "Film",
+      "category": "Special Interest",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/163",
+      "image": "https://sums-data-public.sums.digital/NB/group-thumbnails/163/z7YBv1fE2tak.png"
+    },
+    {
+      "nsuId": 278,
+      "name": "Film & TV Production",
+      "category": "Academic",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/278",
+      "image": null
+    },
+    {
+      "nsuId": 256,
+      "name": "Forensic Science",
+      "category": "Academic",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/256",
+      "image": "https://sums-data-public.sums.digital/NB/group-thumbnails/256/7GE95jAXbfP8.png"
+    },
+    {
+      "nsuId": 180,
+      "name": "Formula Student",
+      "category": "Recreational Sport",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/180",
+      "image": "https://sums-data-public.sums.digital/NB/group-thumbnails/180/qlKv5WpSw1OP.jpg"
+    },
+    {
+      "nsuId": 215,
+      "name": "Game Development",
+      "category": "Professional Development",
+      "campus": "London",
+      "url": "https://mynsu.co.uk/activities/view/215",
+      "image": null
+    },
+    {
+      "nsuId": 35,
+      "name": "Gaming and Roleplay",
+      "category": "Special Interest",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/35",
+      "image": "https://sums-data-public.sums.digital/NB/group-thumbnails/35/3EaLbA9hyVdk.png"
+    },
+    {
+      "nsuId": 36,
+      "name": "Geography",
+      "category": "Academic",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/36",
+      "image": "https://sums-data-public.sums.digital/NB/group-thumbnails/36/eVBtTn3dcl2Q.jpg"
+    },
+    {
+      "nsuId": 271,
+      "name": "Gilmore Girls",
+      "category": "Special Interest",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/271",
+      "image": "https://sums-data-public.sums.digital/NB/group-thumbnails/271/A6EydhkJLZwX.jpg"
+    },
+    {
+      "nsuId": 185,
+      "name": "Girls Who Run",
+      "category": "Wellbeing",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/185",
+      "image": "https://sums-data-public.sums.digital/NB/group-thumbnails/185/zMNscDyRtBHh.jpg"
+    },
+    {
+      "nsuId": 299,
+      "name": "Global Business Management",
+      "category": "Academic",
+      "campus": "London",
+      "url": "https://mynsu.co.uk/activities/view/299",
+      "image": null
+    },
+    {
+      "nsuId": 39,
+      "name": "Guidance & Counselling",
+      "category": "Academic",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/39",
+      "image": "https://sums-data-public.sums.digital/NB/group-thumbnails/39/quG39UE8LSMe.png"
+    },
+    {
+      "nsuId": 41,
+      "name": "History",
+      "category": "Academic",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/41",
+      "image": "https://sums-data-public.sums.digital/NB/group-thumbnails/41/lvoaSVbKCNzQ.png"
+    },
+    {
+      "nsuId": 249,
+      "name": "Hooked By Crochet",
+      "category": "Special Interest",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/249",
+      "image": "https://sums-data-public.sums.digital/NB/group-thumbnails/249/rU5WAo0JvsOX.jpg"
+    },
+    {
+      "nsuId": 270,
+      "name": "Hope Fellowship",
+      "category": "Faith and Belief",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/270",
+      "image": null
+    },
+    {
+      "nsuId": 223,
+      "name": "Ice Hockey",
+      "category": "Recreational Sport",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/223",
+      "image": "https://sums-data-public.sums.digital/NB/group-thumbnails/223/VyRnCo8JO9HW.png"
+    },
+    {
+      "nsuId": 160,
+      "name": "Ice Skating",
+      "category": "Recreational Sport",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/160",
+      "image": "https://sums-data-public.sums.digital/NB/group-thumbnails/160/d0hcCwNrH1yZ.jpg"
+    },
+    {
+      "nsuId": 111,
+      "name": "Indian",
+      "category": "International and Cultural",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/111",
+      "image": "https://sums-data-public.sums.digital/NB/group-thumbnails/111/UIhlv7JVP9kg.png"
+    },
+    {
+      "nsuId": 169,
+      "name": "Indian Society",
+      "category": "International and Cultural",
+      "campus": "London",
+      "url": "https://mynsu.co.uk/activities/view/169",
+      "image": "https://ff5bc57c611ce76ddc1a-ed147fbb50628632030a983306190a0d.ssl.cf3.rackcdn.com/ac_thumb_169_495d62_43.jpg"
+    },
+    {
+      "nsuId": 281,
+      "name": "International Business Management",
+      "category": "Academic",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/281",
+      "image": null
+    },
+    {
+      "nsuId": 247,
+      "name": "Iraqi",
+      "category": "International and Cultural",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/247",
+      "image": "https://sums-data-public.sums.digital/NB/group-thumbnails/247/wj4nqSAL15t3.png"
+    },
+    {
+      "nsuId": 49,
+      "name": "Irish Dance",
+      "category": "Performance",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/49",
+      "image": "https://ff5bc57c611ce76ddc1a-ed147fbb50628632030a983306190a0d.ssl.cf3.rackcdn.com/ac_thumb_49_8fd3c0_logo_(1).jpg"
+    },
+    {
+      "nsuId": 50,
+      "name": "Islamic",
+      "category": "Faith and Belief",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/50",
+      "image": "https://sums-data-public.sums.digital/NB/group-thumbnails/50/P4NMaXIzrK6f.png"
+    },
+    {
+      "nsuId": 51,
+      "name": "JAC-Dan",
+      "category": "Special Interest",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/51",
+      "image": "https://sums-data-public.sums.digital/NB/group-thumbnails/51/itF5OWIAsvZ3.png"
+    },
+    {
+      "nsuId": 53,
+      "name": "K-Pop",
+      "category": "Special Interest",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/53",
+      "image": "https://sums-data-public.sums.digital/NB/group-thumbnails/53/m85TKbni4WGX.png"
+    },
+    {
+      "nsuId": 52,
+      "name": "Kayaking",
+      "category": "Recreational Sport",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/52",
+      "image": "https://sums-data-public.sums.digital/NB/group-thumbnails/52/FRf5UKDWMoae.png"
+    },
+    {
+      "nsuId": 272,
+      "name": "Kurdish",
+      "category": "International and Cultural",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/272",
+      "image": "https://sums-data-public.sums.digital/NB/group-thumbnails/272/tCdzQhYFOXGT.jpg"
+    },
+    {
+      "nsuId": 257,
+      "name": "Language Exchange",
+      "category": "International and Cultural",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/257",
+      "image": "https://sums-data-public.sums.digital/NB/group-thumbnails/257/fJan81hu5zZl.png"
+    },
+    {
+      "nsuId": 38,
+      "name": "Law",
+      "category": "Academic",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/38",
+      "image": "https://sums-data-public.sums.digital/NB/group-thumbnails/38/QrnmxCcuadSw.png"
+    },
+    {
+      "nsuId": 56,
+      "name": "LGBTQ+",
+      "category": "Wellbeing",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/56",
+      "image": "https://sums-data-public.sums.digital/NB/group-thumbnails/56/zKgeidL8nUq5.png"
+    },
+    {
+      "nsuId": 250,
+      "name": "Link Up Society",
+      "category": "Special Interest",
+      "campus": "London",
+      "url": "https://mynsu.co.uk/activities/view/250",
+      "image": null
+    },
+    {
+      "nsuId": 303,
+      "name": "Litter Picking",
+      "category": "Volunteering and Charitable",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/303",
+      "image": null
+    },
+    {
+      "nsuId": 57,
+      "name": "Malaysian",
+      "category": "International and Cultural",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/57",
+      "image": "https://sums-data-public.sums.digital/NB/group-thumbnails/57/93QGFS8PAhU7.png"
+    },
+    {
+      "nsuId": 279,
+      "name": "Marketing",
+      "category": "Academic",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/279",
+      "image": "https://sums-data-public.sums.digital/NB/group-thumbnails/279/ilCW0xHcbzgq.png"
+    },
+    {
+      "nsuId": 237,
+      "name": "Marrow",
+      "category": "Volunteering and Charitable",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/237",
+      "image": "https://sums-data-public.sums.digital/NB/group-thumbnails/237/O4ufxS5dMGs8.png"
+    },
+    {
+      "nsuId": 58,
+      "name": "MARS (Mooting, Advocacy & Research Skills)",
+      "category": "Academic",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/58",
+      "image": "https://sums-data-public.sums.digital/NB/group-thumbnails/58/Rq3mzldtyxNg.png"
+    },
+    {
+      "nsuId": 289,
+      "name": "Masters Society",
+      "category": "Professional Development",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/289",
+      "image": null
+    },
+    {
+      "nsuId": 294,
+      "name": "Mature Students",
+      "category": "Wellbeing",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/294",
+      "image": null
+    },
+    {
+      "nsuId": 275,
+      "name": "Mechanical & Automotive Engineering",
+      "category": "Academic",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/275",
+      "image": "https://sums-data-public.sums.digital/NB/group-thumbnails/275/jUKikD0O7e9c.png"
+    },
+    {
+      "nsuId": 246,
+      "name": "MEDLIFE",
+      "category": "Volunteering and Charitable",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/246",
+      "image": "https://sums-data-public.sums.digital/NB/group-thumbnails/246/YGakLNRibdMs.jpg"
+    },
+    {
+      "nsuId": 217,
+      "name": "Mental Wellbeing",
+      "category": "Wellbeing",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/217",
+      "image": "https://sums-data-public.sums.digital/NB/group-thumbnails/217/GkFBbq4MD982.jpg"
+    },
+    {
+      "nsuId": 61,
+      "name": "Midwifery",
+      "category": "Academic",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/61",
+      "image": "https://sums-data-public.sums.digital/NB/group-thumbnails/61/7235bwCRvlqW.png"
+    },
+    {
+      "nsuId": 62,
+      "name": "Model United Nations",
+      "category": "Academic",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/62",
+      "image": "https://sums-data-public.sums.digital/NB/group-thumbnails/62/MdI8pJDyNQzb.jpg"
+    },
+    {
+      "nsuId": 63,
+      "name": "Mountaineering",
+      "category": "Recreational Sport",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/63",
+      "image": "https://sums-data-public.sums.digital/NB/group-thumbnails/63/EMFGkyuY6hB9.png"
+    },
+    {
+      "nsuId": 288,
+      "name": "Muay Thai",
+      "category": "Recreational Sport",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/288",
+      "image": null
+    },
+    {
+      "nsuId": 64,
+      "name": "Music",
+      "category": "Performance",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/64",
+      "image": "https://sums-data-public.sums.digital/NB/group-thumbnails/64/3jZ2Cwk7UIex.png"
+    },
+    {
+      "nsuId": 65,
+      "name": "Musical Theatre",
+      "category": "Performance",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/65",
+      "image": "https://sums-data-public.sums.digital/NB/group-thumbnails/65/yqWgBOfXUvAF.jpg"
+    },
+    {
+      "nsuId": 240,
+      "name": "NetGen Engineering",
+      "category": "Academic",
+      "campus": "London",
+      "url": "https://mynsu.co.uk/activities/view/240",
+      "image": null
+    },
+    {
+      "nsuId": 168,
+      "name": "Neurodiverse & Inclusive",
+      "category": "Special Interest",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/168",
+      "image": "https://sums-data-public.sums.digital/NB/group-thumbnails/168/43tqr8KSYBzw.png"
+    },
+    {
+      "nsuId": 67,
+      "name": "Nigerian",
+      "category": "International and Cultural",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/67",
+      "image": "https://sums-data-public.sums.digital/NB/group-thumbnails/67/GemNyHztQnDL.png"
+    },
+    {
+      "nsuId": 201,
+      "name": "Nigerian",
+      "category": "International and Cultural",
+      "campus": "London",
+      "url": "https://mynsu.co.uk/activities/view/201",
+      "image": "https://sums-data-public.sums.digital/NB/group-thumbnails/201/GQ2alskAWPTi.png"
+    },
+    {
+      "nsuId": 273,
+      "name": "No Plans?",
+      "category": "Special Interest",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/273",
+      "image": "https://sums-data-public.sums.digital/NB/group-thumbnails/273/56BOe3TiU4kx.png"
+    },
+    {
+      "nsuId": 261,
+      "name": "Northumbria Construct",
+      "category": "Academic",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/261",
+      "image": "https://sums-data-public.sums.digital/NB/group-thumbnails/261/MFbLGUl2x5ou.png"
+    },
+    {
+      "nsuId": 76,
+      "name": "Nursing",
+      "category": "Academic",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/76",
+      "image": "https://sums-data-public.sums.digital/NB/group-thumbnails/76/eXfpLOq4u3jl.png"
+    },
+    {
+      "nsuId": 77,
+      "name": "Occupational Therapy",
+      "category": "Academic",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/77",
+      "image": "https://sums-data-public.sums.digital/NB/group-thumbnails/77/w6IU3GaE7bdM.jpg"
+    },
+    {
+      "nsuId": 244,
+      "name": "Operating Department Practice",
+      "category": "Academic",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/244",
+      "image": "https://sums-data-public.sums.digital/NB/group-thumbnails/244/Pl1VuCvzMweF.png"
+    },
+    {
+      "nsuId": 170,
+      "name": "Ottilie Debate",
+      "category": "Professional Development",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/170",
+      "image": "https://sums-data-public.sums.digital/NB/group-thumbnails/170/oRHgzUktdYTX.png"
+    },
+    {
+      "nsuId": 229,
+      "name": "Outdoor Climbing",
+      "category": "Recreational Sport",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/229",
+      "image": "https://sums-data-public.sums.digital/NB/group-thumbnails/229/sGldawUBcu9e.png"
+    },
+    {
+      "nsuId": 152,
+      "name": "Pakistani",
+      "category": "International and Cultural",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/152",
+      "image": "https://ff5bc57c611ce76ddc1a-ed147fbb50628632030a983306190a0d.ssl.cf3.rackcdn.com/ac_thumb_152_0f5e97_149.jpg"
+    },
+    {
+      "nsuId": 290,
+      "name": "PENSA",
+      "category": "Faith and Belief",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/290",
+      "image": "https://sums-data-public.sums.digital/NB/group-thumbnails/290/XxSbWEYoAD6R.png"
+    },
+    {
+      "nsuId": 298,
+      "name": "Phab",
+      "category": "Volunteering and Charitable",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/298",
+      "image": null
+    },
+    {
+      "nsuId": 79,
+      "name": "Physio",
+      "category": "Academic",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/79",
+      "image": "https://ff5bc57c611ce76ddc1a-ed147fbb50628632030a983306190a0d.ssl.cf3.rackcdn.com/ac_thumb_79_e33024_81.jpg"
+    },
+    {
+      "nsuId": 264,
+      "name": "Pilates",
+      "category": "Recreational Sport",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/264",
+      "image": "https://sums-data-public.sums.digital/NB/group-thumbnails/264/aDBAHt8JcXu9.png"
+    },
+    {
+      "nsuId": 258,
+      "name": "Poetry",
+      "category": "Special Interest",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/258",
+      "image": null
+    },
+    {
+      "nsuId": 81,
+      "name": "Pole Dance",
+      "category": "Recreational Sport",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/81",
+      "image": "https://sums-data-public.sums.digital/NB/group-thumbnails/81/lKr54iptemdT.png"
+    },
+    {
+      "nsuId": 167,
+      "name": "Politics",
+      "category": "Academic",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/167",
+      "image": "https://sums-data-public.sums.digital/NB/group-thumbnails/167/5SVaAxGcT4lX.jpg"
+    },
+    {
+      "nsuId": 83,
+      "name": "Pool and Snooker",
+      "category": "Recreational Sport",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/83",
+      "image": "https://sums-data-public.sums.digital/NB/group-thumbnails/83/IvgSs8ZTimtD.png"
+    },
+    {
+      "nsuId": 266,
+      "name": "Postgraduate Education Research",
+      "category": "Academic",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/266",
+      "image": "https://sums-data-public.sums.digital/NB/group-thumbnails/266/QCNDxftZ9WOl.png"
+    },
+    {
+      "nsuId": 84,
+      "name": "Postgraduate Research",
+      "category": "Academic",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/84",
+      "image": "https://sums-data-public.sums.digital/NB/group-thumbnails/84/pNOoT17JW94h.png"
+    },
+    {
+      "nsuId": 155,
+      "name": "Primary Education",
+      "category": "Academic",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/155",
+      "image": "https://sums-data-public.sums.digital/NB/group-thumbnails/155/6LcjlrVxFiqY.png"
+    },
+    {
+      "nsuId": 85,
+      "name": "Pro Wrestling",
+      "category": "Special Interest",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/85",
+      "image": "https://sums-data-public.sums.digital/NB/group-thumbnails/85/PuoHrTFYCtk8.png"
+    },
+    {
+      "nsuId": 300,
+      "name": "Project Leaders",
+      "category": "Academic",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/300",
+      "image": null
+    },
+    {
+      "nsuId": 87,
+      "name": "Psychology",
+      "category": "Academic",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/87",
+      "image": "https://sums-data-public.sums.digital/NB/group-thumbnails/87/eGAsp48Y5UlJ.jpg"
+    },
+    {
+      "nsuId": 162,
+      "name": "Quantity Surveying",
+      "category": "Academic",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/162",
+      "image": "https://ff5bc57c611ce76ddc1a-ed147fbb50628632030a983306190a0d.ssl.cf3.rackcdn.com/ac_thumb_162_0c2362_85.jpg"
+    },
+    {
+      "nsuId": 219,
+      "name": "Redeemed Christian Fellowship",
+      "category": "Faith and Belief",
+      "campus": "London",
+      "url": "https://mynsu.co.uk/activities/view/219",
+      "image": null
+    },
+    {
+      "nsuId": 89,
+      "name": "Rock",
+      "category": "Special Interest",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/89",
+      "image": "https://sums-data-public.sums.digital/NB/group-thumbnails/89/BGVkhS8OvAec.jpg"
+    },
+    {
+      "nsuId": 91,
+      "name": "Salsa and Bachata",
+      "category": "International and Cultural",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/91",
+      "image": "https://sums-data-public.sums.digital/NB/group-thumbnails/91/ly5kNiWvQ9Jh.png"
+    },
+    {
+      "nsuId": 92,
+      "name": "Saudi",
+      "category": "International and Cultural",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/92",
+      "image": "https://ff5bc57c611ce76ddc1a-ed147fbb50628632030a983306190a0d.ssl.cf3.rackcdn.com/ac_thumb_92_8ed5f8_93.jpg"
+    },
+    {
+      "nsuId": 302,
+      "name": "Shawarma",
+      "category": "Special Interest",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/302",
+      "image": null
+    },
+    {
+      "nsuId": 97,
+      "name": "Snow Sports",
+      "category": "Recreational Sport",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/97",
+      "image": "https://sums-data-public.sums.digital/NB/group-thumbnails/97/Ibywo0H7TVCs.png"
+    },
+    {
+      "nsuId": 295,
+      "name": "Social Work",
+      "category": "Academic",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/295",
+      "image": null
+    },
+    {
+      "nsuId": 120,
+      "name": "Sri Lankan",
+      "category": "International and Cultural",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/120",
+      "image": "https://sums-data-public.sums.digital/NB/group-thumbnails/120/IKHZ8Rpa1O2U.png"
+    },
+    {
+      "nsuId": 99,
+      "name": "Stitch, Make & Bitch",
+      "category": "Special Interest",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/99",
+      "image": "https://sums-data-public.sums.digital/NB/group-thumbnails/99/j1GgwizevSX0.jpg"
+    },
+    {
+      "nsuId": 224,
+      "name": "Student Carers",
+      "category": "Wellbeing",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/224",
+      "image": "https://sums-data-public.sums.digital/NB/group-thumbnails/224/MW7UzbSEXk1g.jpg"
+    },
+    {
+      "nsuId": 100,
+      "name": "Student Staff",
+      "category": "Special Interest",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/100",
+      "image": "https://sums-data-public.sums.digital/NB/group-thumbnails/100/qMU1fKxihvmC.jpg"
+    },
+    {
+      "nsuId": 175,
+      "name": "Sudanese",
+      "category": "International and Cultural",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/175",
+      "image": "https://sums-data-public.sums.digital/NB/group-thumbnails/175/n4LxE1jcY2Dl.png"
+    },
+    {
+      "nsuId": 101,
+      "name": "Surf",
+      "category": "Recreational Sport",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/101",
+      "image": "https://sums-data-public.sums.digital/NB/group-thumbnails/101/ueIUcYRjOfoL.jpg"
+    },
+    {
+      "nsuId": 23,
+      "name": "Sync DJ",
+      "category": "Professional Development",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/23",
+      "image": "https://sums-data-public.sums.digital/NB/group-thumbnails/23/uwDLNVxI2X4v.png"
+    },
+    {
+      "nsuId": 239,
+      "name": "Tech Connect",
+      "category": "Academic",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/239",
+      "image": "https://sums-data-public.sums.digital/NB/group-thumbnails/239/RnH4NKf5tvm0.jpg"
+    },
+    {
+      "nsuId": 212,
+      "name": "TechSphere Society",
+      "category": "Special Interest",
+      "campus": "London",
+      "url": "https://mynsu.co.uk/activities/view/212",
+      "image": null
+    },
+    {
+      "nsuId": 230,
+      "name": "The Great Experience",
+      "category": "Faith and Belief",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/230",
+      "image": null
+    },
+    {
+      "nsuId": 274,
+      "name": "Treb",
+      "category": "Special Interest",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/274",
+      "image": "https://sums-data-public.sums.digital/NB/group-thumbnails/274/PFc3b6da0xhm.png"
+    },
+    {
+      "nsuId": 214,
+      "name": "Ukrainian",
+      "category": "International and Cultural",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/214",
+      "image": "https://sums-data-public.sums.digital/NB/group-thumbnails/214/WLaRFGpQxDEi.png"
+    },
+    {
+      "nsuId": 301,
+      "name": "Understanding, Networking, Inclusion, Trust & Engagement",
+      "category": "Volunteering and Charitable",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/301",
+      "image": null
+    },
+    {
+      "nsuId": 17,
+      "name": "Video Game",
+      "category": "Special Interest",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/17",
+      "image": "https://sums-data-public.sums.digital/NB/group-thumbnails/17/yK4tMcHrnaQ0.png"
+    },
+    {
+      "nsuId": 265,
+      "name": "Vocaloid",
+      "category": "Special Interest",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/265",
+      "image": "https://sums-data-public.sums.su/NB/group-thumbnails/265/BOH78p4y02jk.jpg"
+    },
+    {
+      "nsuId": 221,
+      "name": "Walking",
+      "category": "Recreational Sport",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/221",
+      "image": "https://sums-data-public.sums.digital/NB/group-thumbnails/221/evtWOwgKpry9.png"
+    },
+    {
+      "nsuId": 218,
+      "name": "Way of Life",
+      "category": "Wellbeing",
+      "campus": "London",
+      "url": "https://mynsu.co.uk/activities/view/218",
+      "image": null
+    },
+    {
+      "nsuId": 286,
+      "name": "Witchy Workshop",
+      "category": "Special Interest",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/286",
+      "image": "https://sums-data-public.sums.digital/NB/group-thumbnails/286/MghYGNS9WKJ7.png"
+    },
+    {
+      "nsuId": 213,
+      "name": "Women in Business",
+      "category": "Professional Development",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/213",
+      "image": "https://sums-data-public.sums.digital/NB/group-thumbnails/213/5l7JT6NX4b1P.jpg"
+    },
+    {
+      "nsuId": 178,
+      "name": "Workers' Liberty",
+      "category": "Political",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/178",
+      "image": "https://sums-data-public.sums.digital/NB/group-thumbnails/178/9jvTKhPRdilu.png"
+    },
+    {
+      "nsuId": 110,
+      "name": "Yoga",
+      "category": "Recreational Sport",
+      "campus": "Newcastle",
+      "url": "https://mynsu.co.uk/activities/view/110",
+      "image": "https://sums-data-public.sums.digital/NB/group-thumbnails/110/VumIPylbzJ4s.png"
+    }
+  ]
+}
