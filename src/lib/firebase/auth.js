@@ -11,6 +11,11 @@ export function watchSignedIn(callback) {
   return onAuthStateChanged(getFirebaseAuth(), (user) => callback(user !== null));
 }
 
+/** The signed-in user's uid, or null if nobody is signed in. */
+export function currentUid() {
+  return getFirebaseAuth().currentUser?.uid ?? null;
+}
+
 /**
  * Logs in with an email and password. Firebase keeps the session in the browser, so the person stays
  * logged in across page loads until they log out.

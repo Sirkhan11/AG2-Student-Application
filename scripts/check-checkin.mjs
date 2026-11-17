@@ -10,6 +10,7 @@ import { buildOpener, describeForGemini } from '#lib/checkin/opener.js';
 import { isCrisis } from '#lib/checkin/safety.js';
 import { SERVICE_LIST, SOCIETY_LIST } from '#lib/checkin/chat-prompt.js';
 import { linksInReply, MAX_LINKS } from '#lib/checkin/reply-links.js';
+import { startsAfresh } from '#lib/checkin/keep-chat.js';
 import { SERVICES } from '#lib/nsu/services.js';
 import { SOCIETIES } from '#lib/societies/societies.js';
 
@@ -78,7 +79,6 @@ const checks = [
     assert.match(about, /they have one/, 'Gemini is told they have a mentor');
     assert.match(about, /Your Mentor page/, 'and where to see who it is');
   }],
-
   // ---------- The crisis check ----------
   ['Crisis phrases are caught, including with a phone\'s curly apostrophe', () => {
     for (const text of [
@@ -106,6 +106,16 @@ const checks = [
     assert.ok(lines.some((line) => line.startsWith('Food Pantry (Money and food): ')));
     assert.ok(lines.some((line) => line.startsWith('Advice Centre (Help and advice): ') && line.includes('Topics: ') && line.includes('Academic misconduct')));
     assert.ok(!SERVICE_LIST.includes('Freshers'));
+  }],
+
+  // ---------- Keeping the conversation when they visit another page ----------
+  ['The chat keeps its conversation when they come back, but starts afresh for someone else, after logging out, or after Find a mentor', () => {
+    const back = { keptUid: 'student-1', started: true, uid: 'student-1', fromFindMentor: false };
+    assert.equal(startsAfresh(back), false, 'the same student coming back');
+    assert.equal(startsAfresh({ ...back, started: false }), true, 'nothing kept yet');
+    assert.equal(startsAfresh({ ...back, uid: 'student-2' }), true, 'someone else logged in');
+    assert.equal(startsAfresh({ ...back, keptUid: null }), true, 'cleared when they logged out');
+    assert.equal(startsAfresh({ ...back, fromFindMentor: true }), true, 'they\'ve just asked for a mentor');
   }],
 
   // ---------- Turning a reply's [[Name]]s into links ----------

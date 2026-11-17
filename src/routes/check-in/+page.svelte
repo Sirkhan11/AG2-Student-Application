@@ -2,61 +2,66 @@
 <script>
   import { tick } from 'svelte';
   import { page } from '$app/state';
+  import { replaceState } from '$app/navigation';
   import BottomNav from '#lib/components/BottomNav.svelte';
-  import { watchSignedIn } from '#lib/firebase/auth.js';
+  import { currentUid, watchSignedIn } from '#lib/firebase/auth.js';
   import { sendToLogin } from '#lib/login-redirect.js';
   import { loadSavedChecklist } from '#lib/checkin/saved-checklist.js';
   import { loadMyMatch } from '#lib/matching/matches.js';
   import { buildOpener, describeForGemini } from '#lib/checkin/opener.js';
   import { startCheckinChat } from '#lib/checkin/chat.js';
+  import { chatSession, clearChat, clearChatOnSignOut, geminiChat, setGeminiChat } from '#lib/checkin/chat-session.svelte.js';
+  import { startsAfresh } from '#lib/checkin/keep-chat.js';
   import SocietyCard from '#lib/components/SocietyCard.svelte';
   import ServiceCard from '#lib/components/ServiceCard.svelte';
   import { serviceById } from '#lib/nsu/services.js';
   import { societyById } from '#lib/societies/societies.js';
 
-  /**
-   * One bubble. kind marks the fixed safety message or an error. links are shown under it: a
-   * suggested society or NSU service as a card with its details (see reply-links.js), anything else
-   * as a button (external ones open in a new tab).
-   * @typedef {{ role: 'assistant' | 'user', text: string, kind?: 'safety' | 'error',
-   *   links?: { label: string, href: string, external?: boolean, kind?: 'society' | 'service',
-   *     nsuId?: number, serviceId?: string }[] }} Message
-   */
+  // The conversation (messages, cards, what they've typed, and Gemini's side) lives in
+  // chat-session.svelte.js rather than here, so it's still there after visiting another page.
 
   // null while Firebase checks for a saved login.
   let signedIn = $state(/** @type {boolean | null} */ (null));
-  let messages = $state(/** @type {Message[]} */ ([]));
-  let message = $state('');
-  // True while waiting for a reply, so only one message is sent at a time.
-  let waiting = $state(false);
   /** @type {HTMLFormElement | undefined} */
   let form = $state();
 
-  // The Gemini conversation. Not $state, because the page never shows it directly.
-  /** @type {ReturnType<typeof startCheckinChat> | null} */
-  let chat = null;
-
-  // Logged-out visitors go to login, which brings them back here afterwards.
-  $effect(() =>
-    watchSignedIn((value) => {
+  // Logged-out visitors go to login, which brings them back here afterwards. Logging out on any
+  // page clears the conversation.
+  $effect(() => {
+    clearChatOnSignOut();
+    return watchSignedIn((value) => {
       signedIn = value;
       if (value) start();
       else sendToLogin();
-    })
-  );
+    });
+  });
 
-  /** Builds the first messages from the student's match and checklist, then starts the chat. */
+  /**
+   * Shows the conversation kept from earlier, if it's theirs. Otherwise builds the first messages
+   * from the student's match and checklist, and starts a new conversation.
+   */
   async function start() {
-    messages = [];
+    const uid = currentUid();
+    const justSignedUp = page.url.searchParams.get('from') === 'find-mentor';
+    // So coming back to this page later (or going back to it) keeps the conversation.
+    if (justSignedUp) replaceState('/check-in', {});
+    if (!startsAfresh({ keptUid: chatSession.uid, started: chatSession.started, uid, fromFindMentor: justSignedUp })) {
+      await showLatest();
+      return;
+    }
+
+    clearChat(uid);
+    const conversation = chatSession.conversation;
     // If either can't be loaded, the chat still starts; it just says less.
     const [match, tasks] = await Promise.all([
       loadMyMatch().catch((err) => (console.error(err), undefined)),
       loadSavedChecklist().catch((err) => (console.error(err), null))
     ]);
-    const justSignedUp = page.url.searchParams.get('from') === 'find-mentor';
+    // Logged out, or started again, while those were loading.
+    if (chatSession.conversation !== conversation) return;
 
     const opener = buildOpener({ match, tasks, justSignedUp });
-    messages = opener.messages.map((text, i) => ({
+    chatSession.messages = opener.messages.map((text, i) => ({
       role: 'assistant',
       text,
       // The buttons go under the last of the first messages.
@@ -65,23 +70,28 @@
 
     // Gemini is told the same facts and first messages, but without the mentor's name.
     const withoutName = match?.status === 'matched' ? { ...match, mentorName: null } : match;
-    chat = startCheckinChat(
-      describeForGemini({ match, tasks }),
-      buildOpener({ match: withoutName, tasks, justSignedUp }).messages
+    setGeminiChat(
+      startCheckinChat(describeForGemini({ match, tasks }), buildOpener({ match: withoutName, tasks, justSignedUp }).messages)
     );
+    chatSession.started = true;
   }
 
   async function sendMessage() {
-    const text = message.trim();
-    if (!text || waiting || !chat) return;
+    const text = chatSession.draft.trim();
+    const chat = geminiChat();
+    if (!text || chatSession.waiting || !chat) return;
 
-    messages.push({ role: 'user', text });
-    message = '';
-    waiting = true;
+    const conversation = chatSession.conversation;
+    chatSession.messages.push({ role: 'user', text });
+    chatSession.draft = '';
+    chatSession.waiting = true;
     await showLatest();
 
+    // Carries on if they move to another page meanwhile: the reply is there when they come back.
     const reply = await chat.send(text);
-    messages.push({
+    // Logged out while waiting: the reply belongs to a conversation that's gone.
+    if (chatSession.conversation !== conversation) return;
+    chatSession.messages.push({
       role: 'assistant',
       text: reply.text,
       kind: reply.kind === 'reply' ? undefined : reply.kind,
@@ -91,7 +101,7 @@
           : // Suggested societies and NSU services, shown as cards under the reply.
             reply.links
     });
-    waiting = false;
+    chatSession.waiting = false;
     await showLatest();
   }
 
@@ -110,17 +120,18 @@
     This is not a medical or emergency service.
   </p>
 
-  {#if !signedIn || messages.length === 0}
+  {#if !signedIn || chatSession.messages.length === 0}
     <p class="muted" role="status">Loading…</p>
   {:else}
     <p class="muted">
-      Replies are written by Google’s Gemini AI. This chat isn’t saved, and nothing you say is passed
-      on to the university or your mentor. Google may use messages to improve its services, so please
-      leave out names, contact details and anything you’d want kept private.
+      Replies are written by Google’s Gemini AI. This chat isn’t saved: it stays while the app is open
+      in this tab, until you log out, and nothing you say is passed on to the university or your
+      mentor. Google may use messages to improve its services, so please leave out names, contact
+      details and anything you’d want kept private.
     </p>
 
     <div class="messages" aria-live="polite">
-      {#each messages as item, i (i)}
+      {#each chatSession.messages as item, i (i)}
         {@const buttons = (item.links ?? []).filter((link) => !link.kind)}
         {@const cards = (item.links ?? []).filter((link) => link.kind)}
         <div
@@ -165,7 +176,7 @@
           </div>
         {/if}
       {/each}
-      {#if waiting}
+      {#if chatSession.waiting}
         <div class="bubble typing">Typing…</div>
       {/if}
     </div>
@@ -181,12 +192,12 @@
         class="field"
         placeholder="Type your message..."
         autocomplete="off"
-        disabled={waiting}
-        bind:value={message}
+        disabled={chatSession.waiting}
+        bind:value={chatSession.draft}
       />
 
-      <button class="primary-button" type="submit" disabled={waiting}>
-        {waiting ? 'Waiting for a reply…' : 'Send'}
+      <button class="primary-button" type="submit" disabled={chatSession.waiting}>
+        {chatSession.waiting ? 'Waiting for a reply…' : 'Send'}
       </button>
     </form>
   {/if}
