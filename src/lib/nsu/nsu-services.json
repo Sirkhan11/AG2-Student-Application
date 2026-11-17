@@ -1,0 +1,210 @@
+{
+  "source": "https://mynsu.co.uk/home",
+  "checkedAt": "2026-11-17",
+  "note": "Northumbria Students' Union services that matter to new students, from the menus on mynsu.co.uk. Summaries are short descriptions of each page; the page itself has the details.",
+  "groups": [
+    {
+      "name": "Help and advice",
+      "services": [
+        {
+          "id": "advice-centre",
+          "name": "Advice Centre",
+          "url": "https://mynsu.co.uk/advice-centre",
+          "summary": "Guides and advice from NSU's Advice Team on housing, academic appeals and misconduct, complaints and fee problems.",
+          "topics": [
+            {
+              "name": "How to contact the Advice Team",
+              "url": "https://mynsu-advice.kb.help/how-to-contact-the-advice-team/"
+            },
+            {
+              "name": "Housing",
+              "url": "https://mynsu-advice.kb.help/housing/"
+            },
+            {
+              "name": "Fines and charges in accommodation",
+              "url": "https://mynsu-advice.kb.help/disciplinary-fines-and-charges-in-accommodation/"
+            },
+            {
+              "name": "Academic appeals",
+              "url": "https://mynsu-advice.kb.help/academic-appeals/"
+            },
+            {
+              "name": "Academic misconduct",
+              "url": "https://mynsu-advice.kb.help/academic-misconduct/"
+            },
+            {
+              "name": "Complaints",
+              "url": "https://mynsu-advice.kb.help/complaints/"
+            },
+            {
+              "name": "Financial exclusion",
+              "url": "https://mynsu-advice.kb.help/financial-exclusion/"
+            },
+            {
+              "name": "Request for review",
+              "url": "https://mynsu-advice.kb.help/request-for-review/"
+            },
+            {
+              "name": "Discipline",
+              "url": "https://mynsu-advice.kb.help/discipline/"
+            },
+            {
+              "name": "Fitness to practise",
+              "url": "https://mynsu-advice.kb.help/fitness-to-practice/"
+            },
+            {
+              "name": "OIA (independent complaints)",
+              "url": "https://mynsu-advice.kb.help/oia/"
+            },
+            {
+              "name": "Research students",
+              "url": "https://mynsu-advice.kb.help/information-for-research-students/"
+            }
+          ]
+        },
+        {
+          "id": "wellbeing",
+          "name": "Wellbeing",
+          "url": "https://mynsu.co.uk/advice-centre/your-wellbeing",
+          "summary": "Wellbeing drop-in sessions, a quiet wellbeing room for a break, NSU's student wellbeing guide and podcast, and where to find more support."
+        },
+        {
+          "id": "rate-your-landlord",
+          "name": "Rate Your Landlord",
+          "url": "https://mynsu.co.uk/rateyourlandlord",
+          "summary": "Read and write reviews of Newcastle student landlords and homes, run with Newcastle University SU and Unipol."
+        },
+        {
+          "id": "contact-nsu",
+          "name": "Contact NSU",
+          "url": "https://mynsu.co.uk/contact-us",
+          "summary": "Where NSU is and how to get in touch."
+        }
+      ]
+    },
+    {
+      "name": "Money and food",
+      "services": [
+        {
+          "id": "cost-of-living",
+          "name": "Cost of Living",
+          "url": "https://mynsu.co.uk/cost-of-living-24",
+          "summary": "NSU's help with money worries in one place: the food pantry, laptop loans, and free hot water and microwaves on campus."
+        },
+        {
+          "id": "food-pantry",
+          "name": "Food Pantry",
+          "url": "https://mynsu.co.uk/foodpantry",
+          "summary": "Food for students who need it. Book a ticket on the NSU website the day before (one per person); you just show your ticket."
+        },
+        {
+          "id": "laptop-loan",
+          "name": "Laptop Loan",
+          "url": "https://mynsu.co.uk/union/laptop-loan",
+          "summary": "Borrow a laptop from NSU for a short time."
+        }
+      ]
+    },
+    {
+      "name": "Get involved",
+      "services": [
+        {
+          "id": "societies",
+          "name": "Societies",
+          "appPath": "/societies",
+          "url": "https://mynsu.co.uk/Activities/home#find",
+          "summary": "Find a society to join."
+        },
+        {
+          "id": "sport",
+          "name": "Sport",
+          "url": "https://northumbriasport.com/sports",
+          "summary": "Sports clubs and other ways to play sport, on the Northumbria Sport website."
+        },
+        {
+          "id": "student-voice",
+          "name": "Student Voice",
+          "url": "https://mynsu.co.uk/student-voice",
+          "summary": "Become a course rep, have a say on NSU policy, or start a project that helps students."
+        },
+        {
+          "id": "sabb-team",
+          "name": "SABB Team",
+          "url": "https://mynsu.co.uk/sabbteam",
+          "summary": "The six elected student officers who run NSU and speak up for students."
+        },
+        {
+          "id": "the-studio",
+          "name": "The Studio",
+          "url": "https://mynsu.co.uk/thestudio",
+          "summary": "NSU's podcasting studio on campus. Book a session; first-timers do a short training session first."
+        },
+        {
+          "id": "green-impact",
+          "name": "Green Impact",
+          "url": "https://mynsu.co.uk/greenimpact",
+          "summary": "Sustainability campaigns you can get involved in with NSU."
+        },
+        {
+          "id": "jobs",
+          "name": "Jobs at NSU",
+          "url": "https://mynsu.co.uk/working-at-the-su",
+          "summary": "Jobs at the Students' Union."
+        }
+      ]
+    },
+    {
+      "name": "Eat, drink and go out",
+      "services": [
+        {
+          "id": "freshers-week",
+          "name": "Freshers Week wristband",
+          "url": "https://mynsu.co.uk/freshersweek26",
+          "summary": "The official Freshers nightlife wristband: 10+ club nights in Newcastle with other Northumbria students, sold by Voodoo Events with NSU.",
+          "seasonal": "Nightlife, and the page address changes every year (freshersweek26), so check the link each summer."
+        },
+        {
+          "id": "events",
+          "name": "Events",
+          "url": "https://mynsu.co.uk/events",
+          "summary": "What's on, including events to help new students settle in and meet people."
+        },
+        {
+          "id": "gigs",
+          "name": "Gigs",
+          "url": "https://mynsu.co.uk/gigs",
+          "summary": "Gigs at the Students' Union, with venue and accessibility information."
+        },
+        {
+          "id": "habita",
+          "name": "Habita",
+          "url": "https://mynsu.co.uk/habita",
+          "summary": "NSU's student hub and bar, where you can order drinks from your table on the Student Orders app."
+        },
+        {
+          "id": "greenhouse-coffee",
+          "name": "Greenhouse Coffee",
+          "url": "https://mynsu.co.uk/thegreenhouse",
+          "summary": "NSU's campus café for a coffee, a light lunch or a study session."
+        }
+      ]
+    },
+    {
+      "name": "About NSU",
+      "services": [
+        {
+          "id": "campuses",
+          "name": "Campuses",
+          "url": "https://mynsu.co.uk/campuses",
+          "summary": "Northumbria's campuses and what NSU has at each."
+        },
+        {
+          "id": "all-services",
+          "name": "All NSU services",
+          "url": "https://mynsu.co.uk/union",
+          "summary": "Everything else NSU offers, such as the binding service and Mental Health First Aid training."
+        }
+      ]
+    }
+  ]
+}

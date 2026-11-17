@@ -6,6 +6,7 @@
     { title: 'Checklist', icon: '☑', href: '/checklist' },
     { title: 'GP Finder', icon: '♡', href: '/gp-finder' },
     { title: 'Societies', icon: '♧', href: '/societies' },
+    { title: 'Students’ Union', icon: '☆', href: '/students-union' },
     { title: 'Your Mentor', icon: '♙', href: '/mentor' },
     { title: 'Need Help', icon: '!', href: '/need-help' },
     { title: 'More', icon: '☰', href: '/more' }
@@ -68,6 +69,11 @@
     border: 1px solid #dce5e9;
     border-radius: 14px;
     color: #1764a1;
+  }
+
+  /* With an odd number of cards, the last one takes the full width instead of sitting alone. */
+  .feature-card:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
   }
 
   .feature-icon {

@@ -7,6 +7,7 @@
     { name: 'Late Arrivals', href: '/late-arrivals' },
     { name: 'GP and Dentist Finder', href: '/gp-finder' },
     { name: 'Societies', href: '/societies' },
+    { name: 'Students’ Union', href: '/students-union' },
     { name: 'Privacy', href: '/privacy' }
   ];
 </script>
