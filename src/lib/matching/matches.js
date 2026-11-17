@@ -1,6 +1,7 @@
-import { doc, getDoc, increment, serverTimestamp, writeBatch } from 'firebase/firestore';
+import { doc, getDoc, increment, serverTimestamp, setDoc, writeBatch } from 'firebase/firestore';
 import { db, getFirebaseAuth } from '#lib/firebase/client.js';
 import { summaryToSave } from '#lib/matching/summary-prompt.js';
+import { summaryForChat } from '#lib/checkin/about-you.js';
 import { MAX_REASONS } from '#lib/matching/explain.js';
 import { MAX_AVAILABILITY_LENGTH, MEETING_FREQUENCIES } from '#lib/matching/meeting.js';
 
@@ -95,7 +96,8 @@ export async function takePlace(mentor, reasons, preferences) {
  * Saves that the signed-in student is waiting for the coordinator to find them a mentor. No mentor's
  * place is taken. Two writes, in one batch so there's never one without the other:
  * - students/{uid}.mentorRequest: their answers, Gemini's summary (null if Gemini failed) and why they
- *   were passed on. Merged in, so nothing else in their student record is overwritten.
+ *   were passed on, and matchingSummary, the summary the check-in chat is told (see about-you.js).
+ *   Merged in, so nothing else in their student record is overwritten.
  * - matches/{uid} with status 'coordinator', which can't hold answers (see firestore.rules).
  * @param {MeetingPreferences} preferences
  * @param {MentorRequest} request
@@ -114,7 +116,8 @@ export async function passToCoordinator(preferences, request) {
         // have one list of phrases per question, under q1 to q6.
         summaries: request.summary ? summaryToSave(request.summary) : null,
         requestedAt: serverTimestamp()
-      }
+      },
+      ...(request.summary ? { matchingSummary: summaryForChat(request.summary) } : {})
     },
     { merge: true }
   );
@@ -124,6 +127,17 @@ export async function passToCoordinator(preferences, request) {
     createdAt: serverTimestamp()
   });
   await batch.commit();
+}
+
+/**
+ * Keeps the summary of a matched student's answers in their own record (students/{uid}.matchingSummary),
+ * for the check-in chat (see about-you.js): what they're into, what they'd rather avoid, and how they
+ * like to do things. Only they can read their record. It's saved after the match, on its own: if it
+ * fails, the match stands and the chat just goes without it.
+ * @param {import('#lib/matching/summary-prompt.js').Summary} summary
+ */
+export async function keepMatchingSummary(summary) {
+  await setDoc(doc(db, 'students', currentUid()), { matchingSummary: summaryForChat(summary) }, { merge: true });
 }
 
 /**

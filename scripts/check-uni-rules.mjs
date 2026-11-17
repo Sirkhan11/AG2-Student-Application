@@ -84,7 +84,7 @@ const offline = [
     }
     assert.match(readFileSync('src/lib/login-redirect.js', 'utf8'), /loginPathFor\(location\.pathname \+ location\.search\)/, 'and back to where they were');
   }],
-  ['Home greets the student by the first name they gave ("Hi there" without one), hidden until it’s known; the chat never gets their name', () => {
+  ['Home greets the student by the first name they gave ("Hi there" without one), hidden until it’s known; the chat gets only their first name, never their email', () => {
     assert.equal(greetingFor('Sam Student'), 'Hi Sam');
     assert.equal(greetingFor('  sam  '), 'Hi sam', 'as they typed it');
     for (const none of ['', '   ', null, undefined, 42]) assert.equal(greetingFor(none), 'Hi there', String(none));
@@ -97,7 +97,9 @@ const offline = [
     for (const file of readdirSync('src/lib/checkin').map((name) => `src/lib/checkin/${name}`)) {
       assert.doesNotMatch(readFileSync(file, 'utf8'), /loadMyName|greetingFor/, file);
     }
-    assert.doesNotMatch(readFileSync('src/lib/checklist/store.js', 'utf8').match(/export async function loadMyRecord[\s\S]*?\n\}/)?.[0] ?? '', /\.name\b/, 'loadMyRecord (the chat’s) has no name');
+    const loadMyRecord = readFileSync('src/lib/checklist/store.js', 'utf8').match(/export async function loadMyRecord[\s\S]*?\n\}/)?.[0] ?? '';
+    assert.match(loadMyRecord, /name: firstName\(data\?\.name\),/, 'loadMyRecord (the chat’s) has only the first name');
+    assert.doesNotMatch(loadMyRecord, /\.email\b/, 'and no email');
   }],
   ['The sign-up waits in the tab only, for one account, and a storage that refuses just means nothing waits', () => {
     const waiting = waitingSignUp(memoryStorage());

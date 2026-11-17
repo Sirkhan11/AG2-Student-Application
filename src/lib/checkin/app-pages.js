@@ -15,7 +15,8 @@ export const APP_PAGES = [
   { name: 'NHS Guide', href: '/nhs-guide', also: [] },
   { name: 'GP Finder', href: '/gp-finder', also: ['GP and Dentist Finder', 'Find a GP', 'Find a GP or Dentist'] },
   { name: 'Your Mentor', href: '/mentor', also: ['Mentor', 'Your Mentor page', 'Mentor page'] },
-  { name: 'Need Help Now', href: '/need-help', also: ['Need help now page', 'Need Help'] }
+  { name: 'Need Help Now', href: '/need-help', also: ['Need help now page', 'Need Help'] },
+  { name: 'What the chat knows', href: '/about-you', also: ['What the chat knows about you', 'About you'] }
 ];
 
 /** Lower case with single spaces, so "your  mentor" finds "Your Mentor". @param {string} name */

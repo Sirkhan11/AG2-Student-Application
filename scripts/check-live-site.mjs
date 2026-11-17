@@ -125,7 +125,7 @@ try {
   await clickText('← Back');
   const fromLogin = await waitFor(`location.pathname === '/' && ${has('Welcome back')}`, 8000);
   report('Logged out, Need help’s "← Back" goes to log in, opened directly or from the log-in page', directHelp && fromLogin);
-  const PRIVATE = ['/home', '/check-in', '/checklist', '/find-mentor', '/mentor', '/more', '/nhs-guide', '/gp-finder', '/late-arrivals', '/societies', '/societies/15', '/sport', '/sport/swimming', '/students-union'];
+  const PRIVATE = ['/home', '/check-in', '/checklist', '/find-mentor', '/mentor', '/more', '/about-you', '/nhs-guide', '/gp-finder', '/late-arrivals', '/societies', '/societies/15', '/sport', '/sport/swimming', '/students-union'];
   /** @type {string[]} */
   const notSent = [];
   for (const path of PRIVATE) {

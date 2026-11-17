@@ -1,4 +1,5 @@
 import { watchSignedIn } from '#lib/firebase/auth.js';
+import { describeForGemini } from '#lib/checkin/opener.js';
 
 // The check-in chat's conversation, kept in memory while the app is open in this browser tab, so
 // switching to another page (such as Mentor) and back doesn't wipe it, cards and all. Nothing is
@@ -17,15 +18,22 @@ import { watchSignedIn } from '#lib/firebase/auth.js';
  * task is a checklist task the chat suggested, shown as a card with Add and No thanks; state says
  * what's happened to it (kept here, so it stays the same when they come back to the chat).
  * offer is one of the chat's own actions Gemini offered (chat-actions.js), shown as a card with Start
- * and Not now. flow is a card from an action the app is running in the chat (mentor-flow.js), such as
+ * and Not now. note is something Gemini offered to remember (remember-notes.js), shown as a card with
+ * Remember and Not now. flow is a card from an action the app is running in the chat (mentor-flow.js), such as
  * the meeting choices or the answers to check. A link with an action starts that action in the chat.
  * @typedef {{ role: 'assistant' | 'user', text: string, kind?: 'safety' | 'error' | 'unavailable',
  *   links?: { label: string, href: string, external?: boolean, kind?: 'society' | 'club' | 'service',
  *     nsuId?: number, slug?: string, serviceId?: string, action?: string }[],
- *   task?: SuggestedTask, offer?: Offer, flow?: import('#lib/checkin/mentor-flow.js').FlowCard & { id: number } }} Message
+ *   task?: SuggestedTask, offer?: Offer, note?: OfferedNote, flow?: import('#lib/checkin/mentor-flow.js').FlowCard & { id: number } }} Message
  */
 
 /** @typedef {{ action: string, state: 'offered' | 'started' | 'declined' }} Offer */
+
+/**
+ * A note the chat offered to remember, and what's happened to it: 'saved', not now ('declined'),
+ * already remembered ('exists'), no room ('full'), or never remembered ('refused', see screenNote).
+ * @typedef {{ text: string, state: 'offered' | 'saved' | 'declined' | 'exists' | 'full' | 'refused' }} OfferedNote
+ */
 
 /**
  * @typedef {{ title: string, state: 'offered' | 'added' | 'queued' | 'declined' | 'exists' | 'full', existing?: string }} SuggestedTask
@@ -86,6 +94,27 @@ export const chatFacts = () => facts;
 /** @param {Parameters<typeof import('#lib/checkin/opener.js').describeForGemini>[0] | null} next */
 export function setChatFacts(next) {
   facts = next;
+}
+
+/**
+ * Tells Gemini what the app knows now, keeping the conversation so far (see retell in chat.js): after
+ * a mentor is found in the chat, or when the student's notes change (one saved from a card in the
+ * chat, or deleted on the "What the chat knows about you" page). Does nothing if no chat is running
+ * in this tab: the next one is told when it starts.
+ * @param {Partial<Parameters<typeof describeForGemini>[0]>} change
+ */
+export function tellGemini(change) {
+  if (!facts) return;
+  facts = { ...facts, ...change };
+  gemini?.retell(describeForGemini(facts));
+}
+
+/**
+ * The student's notes have changed: a running chat is told.
+ * @param {string[]} notes their words, oldest first
+ */
+export function notesChanged(notes) {
+  if (facts) tellGemini({ profile: { ...facts.profile, notes } });
 }
 
 /**

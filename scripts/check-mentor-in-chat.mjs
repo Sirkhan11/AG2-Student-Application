@@ -285,7 +285,7 @@ const checks = [
     assert.match(t, /Offer it only when they ask for a mentor, ask for someone to help them settle in or organise their work, say yes to the mentor offer in your first messages, or talk about their mentor when they haven’t got one yet/);
     assert.doesNotMatch(t, /\[\[Find a mentor\]\]/);
     assert.equal(findPage('Find a mentor'), null);
-    assert.deepEqual(APP_PAGES.map((page) => page.name), ['Checklist', 'NHS Guide', 'GP Finder', 'Your Mentor', 'Need Help Now']);
+    assert.deepEqual(APP_PAGES.map((page) => page.name), ['Checklist', 'NHS Guide', 'GP Finder', 'Your Mentor', 'Need Help Now', 'What the chat knows']);
     assert.match(t, /If they ask about changing their mentor, tell them they can ask the mentoring coordinator for a different one on the \[\[Your Mentor\]\] page/, 'changing mentor stays as it was');
     assert.match(t, /call 999 if they're in danger now, NHS 111 for urgent help, Samaritans free on 116 123 at any time, and \[\[Need Help Now\]\]/, 'every safety rule');
     assert.match(t, /Keep replies short: one to three sentences\./);
@@ -323,7 +323,7 @@ const checks = [
     assert.match(page, /onclick=\{\(\) => chatFlow\(\)\?\.stop\(\)\}>Stop<\/button>/);
     assert.match(page, /if \(question\) \/\*\* @type \{HTMLInputElement \| null\} \*\/ \(document\.getElementById\('chat-message'\)\)\?\.focus\(\);/);
     assert.match(page, /<div class="messages" aria-live="polite"/);
-    assert.match(page.replace(/\s+/g, ' '), /If you find a mentor here, your answers are only used for matching and are saved when you choose Find my mentor, as on the Find a mentor page; they’re never sent to Gemini as chat messages\./, 'the note at the top stays true');
+    assert.match(page.replace(/\s+/g, ' '), /If you find a mentor here, your answers are saved when you choose Find my mentor, as on the Find a mentor page; they’re never sent to Gemini as chat messages, though it’s told the short summary\./, 'the note at the top stays true');
     assert.match(page, /\{#if link\.action\}[\s\S]*onclick=\{\(\) => startAction\(/, 'the first message’s button starts it here');
     assert.match(page, /offer: reply\.offers\?\.\[0\] \? \{ action: reply\.offers\[0\], state: 'offered' \} : undefined/);
     for (const file of ['src/lib/checkin/mentor-flow.js', 'src/lib/matching/find-mentor-steps.js']) {

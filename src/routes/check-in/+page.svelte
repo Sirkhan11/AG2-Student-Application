@@ -10,15 +10,16 @@
   import { buildOpener, describeForGemini } from '#lib/checkin/opener.js';
   import { startCheckinChat } from '#lib/checkin/chat.js';
   import {
-    chatFacts,
     chatFlow,
     chatSession,
     clearChat,
     clearChatOnSignOut,
     geminiChat,
+    notesChanged,
     setChatFacts,
     setChatFlow,
-    setGeminiChat
+    setGeminiChat,
+    tellGemini
   } from '#lib/checkin/chat-session.svelte.js';
   import { createMentorFlow } from '#lib/checkin/mentor-flow.js';
   import { hasMentorProfile } from '#lib/matching/mentor-account.js';
@@ -30,6 +31,10 @@
   import ServiceCard from '#lib/components/ServiceCard.svelte';
   import ClubCard from '#lib/components/ClubCard.svelte';
   import TaskSuggestionCard from '#lib/components/TaskSuggestionCard.svelte';
+  import RememberCard from '#lib/components/RememberCard.svelte';
+  import { loadMyNotes } from '#lib/checkin/chat-notes.js';
+  import { db } from '#lib/firebase/client.js';
+  import { isoDate } from '#lib/checkin/about-you.js';
   import { clubBySlug } from '#lib/sport/clubs.js';
   import { serviceById } from '#lib/nsu/services.js';
   import { societyById } from '#lib/societies/societies.js';
@@ -56,7 +61,9 @@
   /**
    * Shows the conversation kept from earlier, if it's theirs. Otherwise builds the first messages
    * from the student's match and checklist, and starts a new conversation, telling Gemini about
-   * their match, checklist, course and interests (see describeForGemini in opener.js).
+   * them: the about-you record (their first name, course, interests, arrival date, the summary from
+   * finding a mentor and what they asked it to remember), their match and their checklist (see
+   * describeForGemini in opener.js).
    */
   async function start() {
     const uid = currentUid();
@@ -72,14 +79,17 @@
     const conversation = chatSession.conversation;
     // If either can't be loaded, the chat still starts; it just says less.
     // The checklist comes through the same loader as the checklist page, so the two always agree.
-    const [match, record, isMentor] = await Promise.all([
+    const [match, record, isMentor, notes] = await Promise.all([
       loadMyMatch().catch((err) => (console.error(err), undefined)),
       loadMyRecord().catch((err) => (console.error(err), null)),
-      hasMentorProfile().catch(() => false)
+      hasMentorProfile().catch(() => false),
+      (uid ? loadMyNotes(db, uid) : Promise.resolve([])).catch((err) => (console.error(err), []))
     ]);
     const tasks = record?.checklist.tasks ?? null;
     const checklistSaved = record?.checklist.saved ?? false;
-    const profile = { course: record?.course ?? null, interests: record?.interests ?? null };
+    // Only the first name comes from the record (loadMyRecord): never their full name or email.
+    const profile = { ...record, checklist: undefined, notes: notes.map((note) => note.text) };
+    const today = isoDate(new Date());
     // Logged out, or started again, while those were loading.
     if (chatSession.conversation !== conversation) return;
 
@@ -94,10 +104,10 @@
     // Gemini is told the same facts and first messages, but without the mentor's name. The facts are
     // kept, so Gemini can be told again when they change here (a mentor found in the chat, say).
     const withoutName = match?.status === 'matched' ? { ...match, mentorName: null } : match;
-    setChatFacts({ match, tasks, checklistSaved, profile, isMentor });
+    setChatFacts({ match, tasks, checklistSaved, profile, isMentor, today });
     setGeminiChat(
       startCheckinChat(
-        describeForGemini({ match, tasks, checklistSaved, profile, isMentor }),
+        describeForGemini({ match, tasks, checklistSaved, profile, isMentor, today }),
         buildOpener({ match: withoutName, tasks, checklistSaved, justSignedUp, isMentor }).messages
       )
     );
@@ -106,17 +116,6 @@
 
   // ---------- The chat's own actions (chat-actions.js): for now, finding a mentor ----------
 
-  /**
-   * Tells Gemini what the app knows now, keeping the conversation (see retell in chat.js).
-   * @param {Partial<Parameters<typeof describeForGemini>[0]>} change
-   */
-  function tellGemini(change) {
-    const facts = chatFacts();
-    if (!facts) return;
-    const next = { ...facts, ...change };
-    setChatFacts(next);
-    geminiChat()?.retell(describeForGemini(next));
-  }
 
   /** The mentor flow for this conversation, made the first time it's started. */
   function mentorFlow() {
@@ -157,6 +156,13 @@
   /** Starts one of the chat's own actions: from an offer card's Start, or a first-message button. @param {string} action */
   function startAction(action) {
     if (action === 'mentor' && !chatSession.flow?.active) mentorFlow().start();
+  }
+
+  /** A note was saved from a Remember card: Gemini is told what it now remembers. */
+  async function noteSaved() {
+    const uid = currentUid();
+    const notes = uid ? await loadMyNotes(db, uid).catch(() => null) : null;
+    if (notes) notesChanged(notes.map((note) => note.text));
   }
 
   /** They tapped Not now on an offer: Gemini is told, so it doesn't offer again unless they ask. @param {string} action */
@@ -205,7 +211,9 @@
       // A checklist task it suggested: a card with Add and No thanks. Nothing is added without a tap.
       task: reply.tasks?.[0] ? { title: reply.tasks[0], state: 'offered' } : undefined,
       // One of the chat's own actions it offered (finding a mentor): a card with Start and Not now.
-      offer: reply.offers?.[0] ? { action: reply.offers[0], state: 'offered' } : undefined
+      offer: reply.offers?.[0] ? { action: reply.offers[0], state: 'offered' } : undefined,
+      // Something it offered to remember: a card with Remember and Not now. Nothing is saved without a tap.
+      note: reply.notes?.[0] ? { text: reply.notes[0], state: 'offered' } : undefined
     });
     // Gemini's credit has run out: the message box is switched off, as trying again won't help.
     if (reply.kind === 'unavailable') chatSession.unavailable = true;
@@ -238,16 +246,19 @@
     <p class="muted" role="status">Loading…</p>
   {:else}
     <p class="muted">
-      Replies are written by Google’s Gemini AI. To help, Gemini is told whether you have a mentor and
-      why you were matched, how often you asked to meet, your checklist progress, and the course and
-      interests you gave when you signed up. It’s never told your name or email, or your mentor’s.
+      Replies are written by Google’s Gemini AI. To help, Gemini is told your first name; the course,
+      interests and arrival date you gave when you signed up; whether you have a mentor, why you were
+      matched and how often you asked to meet; a short summary of your answers from finding a mentor;
+      your checklist progress; and anything you’ve asked it to remember. It’s never told your full name
+      or email, or your mentor’s name. <a href="/about-you">See what the chat knows about you</a>.
     </p>
     <p class="muted">
       This chat isn’t saved: it stays while the app is open in this tab, until you log out, and nothing
       you say is passed on to the university or your mentor. If it suggests a reminder and you tap Add,
-      that task is saved to your checklist. If you find a mentor here, your answers are only used for
-      matching and are saved when you choose Find my mentor, as on the Find a mentor page; they’re never
-      sent to Gemini as chat messages. Google doesn’t use the chat to improve its
+      that task is saved to your checklist, and if it offers to remember something and you tap
+      Remember, that’s kept for later chats until you delete it. If you find a mentor here, your answers
+      are saved when you choose Find my mentor, as on the Find a mentor page; they’re never sent to
+      Gemini as chat messages, though it’s told the short summary. Google doesn’t use the chat to improve its
       products, but keeps messages for a limited time, only to detect misuse, keep its services safe
       and secure, and meet legal requirements, and they may be stored or cached in any country
       (<a
@@ -315,6 +326,11 @@
         {#if item.task}
           <div class="cards">
             <TaskSuggestionCard bind:task={item.task} />
+          </div>
+        {/if}
+        {#if item.note}
+          <div class="cards">
+            <RememberCard bind:note={item.note} onsaved={noteSaved} />
           </div>
         {/if}
         {#if item.offer}

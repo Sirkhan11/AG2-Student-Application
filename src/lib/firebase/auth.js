@@ -17,6 +17,13 @@ export function currentUid() {
   return getFirebaseAuth().currentUser?.uid ?? null;
 }
 
+/** The signed-in user's uid, for something only they can do: throws if nobody is signed in. */
+export function signedInUid() {
+  const uid = currentUid();
+  if (!uid) throw new Error('You need to be logged in.');
+  return uid;
+}
+
 /**
  * The signed-in user's Firebase ID token, for the app's own server routes (which check it), or null.
  * Firebase renews it when it's about to run out.

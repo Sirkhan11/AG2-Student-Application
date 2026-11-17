@@ -4,7 +4,9 @@
 // Gemini request just because the page opened. No Firebase here, so scripts/check-checkin.mjs can
 // test it in Node.
 
-import { blankContactDetails } from '#lib/checkin/private-details.js';
+import { aboutYou, aboutYouForGemini, tidyText } from '#lib/checkin/about-you.js';
+
+export { tidyProfile } from '#lib/checkin/about-you.js';
 
 /** @typedef {import('#lib/matching/matches.js').Match} Match */
 /** @typedef {import('#lib/checklist/tasks.js').Task} Task */
@@ -113,54 +115,26 @@ export function buildOpener({ match, tasks, checklistSaved = true, justSignedUp,
   return { messages, links };
 }
 
-/** How much of the student's sign-up details is passed on: at most this many interests, each this long. */
-const MAX_INTERESTS = 10;
-const MAX_INTEREST_LENGTH = 40;
-const MAX_COURSE_LENGTH = 80;
+/** How long each saved reason for their match can be, as Gemini is told it. */
 const MAX_REASON_LENGTH = 160;
 
 /**
- * Text from the student's own records, tidied for Gemini: one line, contact details blanked, kept short.
- * @param {unknown} value
- * @param {number} max
- */
-function tidyText(value, max) {
-  return typeof value === 'string' ? blankContactDetails(value).replace(/\s+/g, ' ').trim().slice(0, max).trim() : '';
-}
-
-/**
- * The course and interests from a student's sign-up, tidied for Gemini. The sign-up form saves the
- * interests as typed, split on commas, so they're trimmed, with blanks and repeats dropped, kept
- * short, and any email address or phone number blanked.
- * @param {{ course?: unknown, interests?: unknown } | null | undefined} profile
- * @returns {{ course: string | null, interests: string[] }}
- */
-export function tidyProfile(profile) {
-  const given = profile?.interests;
-  const raw = Array.isArray(given) ? given : typeof given === 'string' ? given.split(',') : [];
-  /** @type {string[]} */
-  const interests = [];
-  for (const item of raw) {
-    const interest = tidyText(item, MAX_INTEREST_LENGTH);
-    if (interest && !interests.some((known) => known.toLowerCase() === interest.toLowerCase())) interests.push(interest);
-  }
-  return { course: tidyText(profile?.course, MAX_COURSE_LENGTH) || null, interests: interests.slice(0, MAX_INTERESTS) };
-}
-
-/**
- * Describes the student for Gemini's instructions, using only what the chat needs: their mentor
- * match (status, the reasons saved with it, and how often they asked to meet), their checklist, and
- * the course and interests they gave at sign-up. Never names (not theirs, not their mentor's),
- * emails, their mentor's id or their availability note. Their own checklist tasks are counted but
- * not named, as they could contain anything.
+ * Describes the student for Gemini's instructions, using only what the chat needs: the about-you
+ * record (about-you.js: their first name, course, interests and arrival date from sign-up, the summary
+ * of their answers from finding a mentor, and what they asked the chat to remember), their mentor
+ * match (status, the reasons saved with it, and how often they asked to meet) and their checklist.
+ * Never their full name, their email, their mentor's name or id, or their availability note. Their own
+ * checklist tasks are counted but not named, as they could contain anything.
  * isMentor: they signed up as a mentor, so they're never offered one. mentorNote: what happened to
  * finding a mentor in this chat, so Gemini doesn't offer it again ('declined': they said not now;
- * 'stopped': they stopped part way; 'no-mentors': there were none available).
+ * 'stopped': they stopped part way; 'no-mentors': there were none available). today, as the sign-up
+ * form writes dates (2026-11-17), tells Gemini whether they've arrived yet.
  * @param {{ match: Match | null | undefined, tasks: Task[] | null, checklistSaved?: boolean,
- *   profile?: { course?: unknown, interests?: unknown } | null, isMentor?: boolean,
- *   mentorNote?: 'declined' | 'stopped' | 'no-mentors' | null }} input
+ *   profile?: Parameters<typeof aboutYou>[0], isMentor?: boolean,
+ *   mentorNote?: 'declined' | 'stopped' | 'no-mentors' | null, today?: string | null }} input
  */
-export function describeForGemini({ match, tasks, checklistSaved = true, profile = null, isMentor = false, mentorNote = null }) {
+export function describeForGemini({ match, tasks, checklistSaved = true, profile = null, isMentor = false, mentorNote = null, today = null }) {
+  const about = aboutYou(profile);
   const lines = [];
   if (isMentor) {
     lines.push('Mentor: they’re a mentor themselves (they signed up as one), so don’t offer to find them one.');
@@ -199,8 +173,5 @@ export function describeForGemini({ match, tasks, checklistSaved = true, profile
     lines.push('Checklist: not known.');
   }
 
-  const { course, interests } = tidyProfile(profile);
-  if (course) lines.push(`Their course (from when they signed up): ${course}.`);
-  if (interests.length) lines.push(`Interests they gave when they signed up: ${interests.join(', ')}.`);
-  return lines.join('\n');
+  return [...aboutYouForGemini(about, today), ...lines].join('\n');
 }

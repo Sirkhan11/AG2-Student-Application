@@ -2,8 +2,9 @@
 // page. Gemini only offers one, by writing its marker in a reply. The app takes the marker out, shows a
 // card, and does the rest itself (asking any questions), and nothing starts or is saved until the
 // student taps. The chat's instructions are built from this list (chat-prompt.js), so each new action
-// (changing mentor, the GP finder and so on, later) adds one entry here. No Firebase here, so the
-// checks can use it in Node.
+// (changing mentor, the GP finder and so on, later) adds one entry here. Actions whose marker carries
+// words have their own reader: {{task: …}} task-suggestions.js, {{remember: …}} remember-notes.js.
+// No Firebase here, so the checks can use it in Node.
 
 /**
  * One thing the chat can do: its id (what the app's card is for), a heading and the marker for the
@@ -36,6 +37,17 @@ export const CHAT_ACTIONS = Object.freeze([
       "Never ask them the matching questions, or what they want in a mentor, yourself."
     ],
     card: { title: 'Find a mentor here?', text: 'I’ll ask six short questions here in the chat. Nothing is saved until you choose Find my mentor.' }
+  },
+  {
+    id: 'remember',
+    title: 'Remembering something for later chats',
+    marker: '{{remember: Planning to join a running club}}',
+    rules: [
+      "When they tell you something about themselves that would help in later chats, such as a plan, a goal, something they're into or how they like to do things, you can offer to remember it: ask in a few words, then write it as {{remember: Planning to join a running club}}, one short line about them (under 100 characters), in their words where you can. The app shows it on a card, and only their tap saves it.",
+      'Never offer to remember anything about their health, money, worries or feelings, or their safety, anything about other people (names, or details about someone), or contact details, and never while they’re worried or upset.',
+      'Offer only one at a time, only when it would really help later, and not something already in what they asked you to remember (see what the app knows about them below).',
+      "Never say you've remembered something, or that you will: only they can save it, with the card's Remember button. If they ask what you remember, or want you to forget something, point them to [[What the chat knows]], where they can see and delete it."
+    ]
   }
 ]);
 

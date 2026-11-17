@@ -3,7 +3,7 @@ import { embedSummaries } from '#lib/matching/compare-items.js';
 import { hasMentorProfile, loadApprovedMentors } from '#lib/matching/mentors.js';
 import { coordinatorReason, rankMentors } from '#lib/matching/match.js';
 import { explainMatch } from '#lib/matching/explain.js';
-import { loadMyMatch, passToCoordinator, takePlace } from '#lib/matching/matches.js';
+import { keepMatchingSummary, loadMyMatch, passToCoordinator, takePlace } from '#lib/matching/matches.js';
 
 /** @typedef {import('#lib/matching/matches.js').Match} Match */
 /** @typedef {import('#lib/matching/matches.js').MeetingPreferences} MeetingPreferences */
@@ -119,6 +119,8 @@ export async function matchAndSave(prepared, preferences) {
     const reasons = explainMatch(prepared.summary.likes, prepared.itemVectors, mentor.itemVectors, top.perQuestion);
     try {
       await takePlace({ id: top.id, name: top.name }, reasons, preferences);
+      // For the check-in chat (see about-you.js). The match is saved whatever happens to this.
+      await keepMatchingSummary(prepared.summary).catch((err) => console.error('Keeping the matching summary failed:', err?.code ?? err));
       return { outcome: 'matched', mentorName: top.name, reasons };
     } catch (err) {
       if (/** @type {{ code?: string }} */ (err).code !== 'permission-denied') throw err;

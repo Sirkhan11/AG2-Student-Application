@@ -5,6 +5,7 @@ import { blankContactDetails } from '#lib/checkin/private-details.js';
 import { isOutOfCredit } from '#lib/firebase/ai-errors.js';
 import { tasksInReply } from '#lib/checkin/task-suggestions.js';
 import { offersInReply } from '#lib/checkin/chat-actions.js';
+import { notesInReply } from '#lib/checkin/remember-notes.js';
 
 // How the check-in chat sends each message and turns Gemini's answer into what the page shows.
 // chat.js gives it the Gemini model; it's kept apart so the checks can run it in Node with a made-up
@@ -26,9 +27,11 @@ export const UNAVAILABLE_MESSAGE =
  * links are the real societies, clubs and NSU services Gemini suggested (see reply-links.js); tasks
  * is a checklist task it suggested, for the page's Add / No thanks card (see task-suggestions.js);
  * offers are the chat's own actions it offered, such as 'mentor', for the page's Start / Not now
- * card (see chat-actions.js).
+ * card (see chat-actions.js); notes is something it offered to remember, for the page's Remember /
+ * Not now card (see remember-notes.js).
  * @typedef {{ kind: 'reply' | 'safety' | 'error' | 'unavailable', text: string,
- *   links?: import('#lib/checkin/reply-links.js').ReplyLink[], tasks?: string[], offers?: string[] }} ChatReply
+ *   links?: import('#lib/checkin/reply-links.js').ReplyLink[], tasks?: string[], offers?: string[],
+ *   notes?: string[] }} ChatReply
  */
 
 /**
@@ -86,14 +89,15 @@ export function chatWith(model) {
         }
         const reply = response.text().trim();
         if (reply === '') throw new Error('Gemini sent an empty reply.');
-        // Gemini keeps seeing its own [[Name]], {{task: }} and {{mentor}} markers; the student sees
-        // plain names and the task in quotes, plus links and the cards. Offers come out first, as
-        // tasksInReply takes out any marker it doesn't know.
+        // Gemini keeps seeing its own [[Name]], {{task: }}, {{remember: }} and {{mentor}} markers;
+        // the student sees plain names and the task in quotes, plus links and the cards. Offers and
+        // notes come out first, as tasksInReply takes out any marker it doesn't know.
         history.push(message, { role: 'model', parts: [{ type: 'text', text: reply }] });
         const { text: withoutOffers, offers } = offersInReply(reply);
-        const { text: withoutTasks, tasks } = tasksInReply(withoutOffers);
+        const { text: withoutNotes, notes } = notesInReply(withoutOffers);
+        const { text: withoutTasks, tasks } = tasksInReply(withoutNotes);
         const { text: shown, links } = linksInReply(withoutTasks, CHAT_CAMPUS);
-        return { kind: 'reply', text: shown, links, tasks, offers };
+        return { kind: 'reply', text: shown, links, tasks, offers, notes };
       } catch (err) {
         if (isOutOfCredit(err)) {
           unavailable = true;

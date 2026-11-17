@@ -13,8 +13,10 @@ export { MAX_AVAILABILITY_LENGTH, MEETING_FREQUENCIES, questions };
 
 /** The note before the questions, about how the answers are used. */
 export const ANSWERS_NOTE =
-  'Google’s Gemini AI summarises your answers to find your match, and they’re only used for matching. ' +
-  'Your mentor won’t see them. If we can’t find a good match automatically, the mentoring coordinator may read them to match you themselves.';
+  'Google’s Gemini AI summarises your answers to find your match. Your mentor won’t see them. ' +
+  'A short summary (what you’re into, what you’d rather avoid and how you like to do things) is also kept for the check-in chat, ' +
+  'so it can suggest things that suit you, and you can see it on What the chat knows about you. ' +
+  'If we can’t find a good match automatically, the mentoring coordinator may read your answers to match you themselves.';
 
 /**
  * What it says while finding a mentor, and while sending the answers to the coordinator. The note

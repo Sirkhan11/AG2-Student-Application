@@ -310,7 +310,7 @@ try {
   // 3. Every page opens, logged in; none sends them to log in.
   /** @type {string[]} */
   const sentAway = [];
-  for (const path of ['/home', '/check-in', '/checklist', '/find-mentor', '/mentor', '/more', '/nhs-guide', '/gp-finder', '/late-arrivals', '/societies', '/sport', '/students-union', '/need-help', '/signup', '/forgot-password', '/mentor-signup']) {
+  for (const path of ['/home', '/check-in', '/checklist', '/find-mentor', '/mentor', '/more', '/about-you', '/nhs-guide', '/gp-finder', '/late-arrivals', '/societies', '/sport', '/students-union', '/need-help', '/signup', '/forgot-password', '/mentor-signup']) {
     await go(path);
     await sleep(700);
     if (!(await evaluate(`location.pathname === ${JSON.stringify(path)} && !${has('Welcome back')}`))) sentAway.push(path);

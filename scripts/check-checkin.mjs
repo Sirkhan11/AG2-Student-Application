@@ -364,7 +364,7 @@ const checks = [
     assert.match(page, /<TaskSuggestionCard bind:task=\{item\.task\} \/>/);
     const note = page.replace(/\s+/g, ' ');
     assert.match(note, /This chat isn’t saved: it stays while the app is open in this tab, until you log out/);
-    assert.match(note, /If it suggests a reminder and you tap Add, that task is saved to your checklist\./);
+    assert.match(note, /If it suggests a reminder and you tap Add, that task is saved to your checklist,/);
   }],
   ['The chat is told to ask about reminders once at a natural point, one {{task: }} at a time, never to say it\'s added, and to point to a task already there', () => {
     const instructions = chatInstructions('(about)', ['(opener)']);
@@ -403,7 +403,7 @@ const checks = [
         return /** @type {any} */ ({ response: { text: () => 'Hello there.', candidates: [{ finishReason: 'STOP' }] } });
       }
     });
-    assert.deepEqual(await chat.send('Hi'), { kind: 'reply', text: 'Hello there.', links: [], tasks: [], offers: [] });
+    assert.deepEqual(await chat.send('Hi'), { kind: 'reply', text: 'Hello there.', links: [], tasks: [], offers: [], notes: [] });
     await chat.send('How are you?');
     assert.deepEqual(sent, [1, 3]);
   }],

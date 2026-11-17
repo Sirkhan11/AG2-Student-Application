@@ -8,6 +8,7 @@
     { name: 'GP and Dentist Finder', href: '/gp-finder' },
     { name: 'Societies', href: '/societies' },
     { name: 'Students’ Union', href: '/students-union' },
+    { name: 'What the chat knows about you', href: '/about-you' },
     { name: 'Privacy', href: '/privacy' }
   ];
 </script>

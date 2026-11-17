@@ -1,6 +1,7 @@
 import { doc, getDoc, runTransaction, setDoc } from 'firebase/firestore';
 import { db, getFirebaseAuth } from '#lib/firebase/client.js';
 import { applyToLatest, CHECKLIST_FIELD, ChecklistError, checklistFrom } from '#lib/checklist/tasks.js';
+import { firstName } from '#lib/students/greeting.js';
 
 /** @typedef {import('#lib/checklist/tasks.js').Task} Task */
 /** @typedef {import('#lib/checklist/tasks.js').Change} Change */
@@ -19,21 +20,30 @@ function myRecord() {
 /**
  * Reads the signed-in student's record once and returns what the app uses from it: their checklist
  * (see checklistFrom in tasks.js: what they've saved, or the five defaults if they've never changed
- * it, which aren't saved until they do), and the course and interests they gave when they signed
- * up, which the check-in chat passes on (tidied by tidyProfile in opener.js). Nothing else is taken
- * from it: not their name, email or arrival date.
+ * it, which aren't saved until they do), and what the check-in chat is told about them (the about-you
+ * record, tidied by about-you.js): the first name, course, interests and arrival date they gave when
+ * they signed up, and the summary of their answers from finding a mentor. Only the first word of
+ * their name is taken, and nothing else: not their email.
  *
- * The checklist page and the check-in chat both load through this, so they can't disagree.
- * @returns {Promise<{ checklist: { tasks: Task[], saved: boolean }, course: unknown, interests: unknown }>}
+ * The checklist page, the check-in chat and the "What the chat knows about you" page all load
+ * through this, so they can't disagree.
+ * @returns {Promise<{ checklist: { tasks: Task[], saved: boolean }, name: string | null, course: unknown,
+ *   interests: unknown, arrivalDate: unknown, matchingSummary: unknown }>}
  */
 export async function loadMyRecord() {
   const data = (await getDoc(myRecord())).data();
-  return { checklist: checklistFrom(data), course: data?.course ?? null, interests: data?.interests ?? null };
+  return {
+    checklist: checklistFrom(data),
+    name: firstName(data?.name),
+    course: data?.course ?? null,
+    interests: data?.interests ?? null,
+    arrivalDate: data?.arrivalDate ?? null,
+    matchingSummary: data?.matchingSummary ?? null
+  };
 }
 
 /**
- * The name the signed-in student gave at sign-up, for Home's greeting only (see greeting.js), or null.
- * Kept apart from loadMyRecord, which the check-in chat uses, so the chat never has their name.
+ * The name the signed-in student gave at sign-up, for Home's greeting (see greeting.js), or null.
  * @returns {Promise<unknown>}
  */
 export async function loadMyName() {
