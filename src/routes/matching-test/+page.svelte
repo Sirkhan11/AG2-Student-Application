@@ -1,8 +1,13 @@
 <script>
   import { embed } from '#lib/matching/embed.js';
   import { similarity } from '#lib/matching/similarity.js';
-  import { summariseWants } from '#lib/matching/summarise.js';
+  import { summariseAnswer } from '#lib/matching/summarise.js';
+  import { stylesText } from '#lib/matching/summary-prompt.js';
   import { bestMatches, compareItems, embedItems } from '#lib/matching/compare-items.js';
+
+  /** @typedef {import('#lib/matching/summary-prompt.js').Styles} Styles */
+  /** One answer's summary: what it likes and avoids, and any styles it states. */
+  /** @typedef {{ likes: string[], avoids: string[], styles: Styles }} AnswerSummary */
 
   // The negation example: the student rules sport out, so the gig-goer should be the better match.
   const exampleStudent = "I'm not into sport or the gym at all, I'd rather go to gigs.";
@@ -11,18 +16,19 @@
 
   /**
    * Writing-style fairness tests. Each one is a single student written three ways, compared with one
-   * mentor. Every version says the same thing, so a fair method gives them about the same score.
-   * mustKeep lists phrases every version's summary has to keep: a dropped phrase doesn't always move
-   * the score (see the work style test), so it's checked separately.
-   * @type {{ name: string, mentor: string, note: string, mustKeep: string[],
+   * mentor. Every version says the same thing, so a fair method gives them about the same score, and
+   * every version's summary should meet the expectations: phrases its likes must keep, phrases its
+   * avoids must hold, and the styles it must get.
+   * @type {{ name: string, mentor: string, note: string,
+   *   expect: { likes?: string[], avoids?: string[], styles?: Partial<Styles> },
    *   versions: { label: string, text: string }[] }[]}
    */
   const styleTests = [
     {
       name: 'Interests',
       mentor: gigMentor,
-      note: 'No sport or gym; likes gigs and live music.',
-      mustKeep: ['gigs', 'live music'],
+      note: 'No sport or gym; likes gigs and live music. Sport and the gym go in avoids, never in likes.',
+      expect: { likes: ['gigs', 'live music'], avoids: ['sport', 'gym'] },
       versions: [
         { label: 'Short', text: 'Not sport or the gym. Gigs and live music.' },
         {
@@ -37,14 +43,13 @@
     },
     {
       name: 'Work style',
-      // A mentor who plans ahead, on purpose: if a summary drops "last minute", that version's score
-      // goes UP (only "working alone" is left, which matches perfectly), hiding a real difference.
-      // With a last-minute mentor, dropping it wouldn't change the score at all.
+      // Work style is a style, not a like: it's never embedded, so this test has no scores. What
+      // matters is that every version gets the same styles. The first version is word for word the
+      // answer that once came back as just "working alone".
       mentor: 'I always plan ahead and I like working on my own.',
-      note: 'Leaves things to the last minute; works best alone. "Last minute" is a work style, not a schedule detail, so it must be kept.',
-      mustKeep: ['last minute'],
+      note: 'Leaves things to the last minute; works best alone. Every version should get the styles "last minute" and "on my own", with nothing in likes.',
+      expect: { likes: [], styles: { planning: 'last minute', working: 'on my own' } },
       versions: [
-        // Word for word, the answer that came back as just "working alone" in testing.
         { label: 'Short', text: 'Last minute, and I work best on my own' },
         {
           label: 'Long',
@@ -56,10 +61,10 @@
     {
       name: 'Weekend',
       // An early riser, on purpose: if a summary drops "lie-in", only "cinema" is left, and the
-      // score moves, as well as the must-keep check failing.
+      // score moves, as well as the check failing.
       mentor: 'Up early for a run, then football in the afternoon.',
       note: 'Likes a lie-in, then the cinema. A lie-in is something they do, not a schedule detail, so it must be kept.',
-      mustKeep: ['lie-in'],
+      expect: { likes: ['lie-in'] },
       versions: [
         { label: 'Short', text: 'A lie-in, then the cinema' },
         {
@@ -72,7 +77,7 @@
   ];
 
   /**
-   * Two summary lists scored three ways: the old way (each list joined up and embedded as one),
+   * Two lists of likes scored three ways: the old way (each list joined up and embedded as one),
    * and both item-by-item options. `matches` gives each student item's closest mentor item.
    * @typedef {{
    *   wholeList: number | null,
@@ -83,8 +88,8 @@
    */
 
   /**
-   * One fairness test's results: the mentor's list, then one row per version of the student.
-   * @typedef {{ mentorWants: string[], rows: ({ label: string, wants: string[], kept: boolean } & ListScores)[] }} StyleResult
+   * One fairness test's results: the mentor's summary, then one row per version of the student.
+   * @typedef {{ mentor: AnswerSummary, rows: ({ label: string, summary: AnswerSummary, ok: boolean } & ListScores)[] }} StyleResult
    */
 
   let first = $state('');
@@ -92,9 +97,9 @@
   let score = $state(/** @type {number | null} */ (null));
   let loading = $state(false);
 
-  // Results of the Gemini version: each person's list, and how the lists compare.
-  let firstWants = $state(/** @type {string[] | null} */ (null));
-  let secondWants = $state(/** @type {string[] | null} */ (null));
+  // Results of the Gemini version: each person's summary, and how their likes compare.
+  let firstSummary = $state(/** @type {AnswerSummary | null} */ (null));
+  let secondSummary = $state(/** @type {AnswerSummary | null} */ (null));
   let summaryScores = $state(/** @type {ListScores | null} */ (null));
   let summarising = $state(false);
   let error = $state('');
@@ -106,8 +111,8 @@
 
   function clearResults() {
     score = null;
-    firstWants = null;
-    secondWants = null;
+    firstSummary = null;
+    secondSummary = null;
     summaryScores = null;
     error = '';
   }
@@ -124,6 +129,11 @@
     return value === null ? 'none' : value.toFixed(3);
   }
 
+  /** @param {string[]} phrases */
+  function list(phrases) {
+    return phrases.length ? phrases.join(', ') : '(nothing)';
+  }
+
   /**
    * How far apart the highest and lowest scores are. Every version says the same thing, so the
    * smaller the spread, the less a method cares about writing style. Null if any score is missing.
@@ -135,34 +145,58 @@
     return Math.max(...numbers) - Math.min(...numbers);
   }
 
+  /** Ignores capitals and hyphens, so "last-minute working" counts as containing "last minute". */
+  const normalise = (/** @type {string} */ text) => text.toLowerCase().replaceAll('-', ' ');
+
   /**
-   * True when every must-keep phrase appears inside one of the summary's phrases, ignoring capitals
-   * and hyphens, so "last-minute working" counts as keeping "last minute".
-   * @param {string[]} wants
-   * @param {string[]} mustKeep
+   * True when every expected phrase appears inside one of the phrases in the list.
+   * @param {string[]} phrases
+   * @param {string[]} expected
    */
-  function keepsAll(wants, mustKeep) {
-    /** @param {string} text */
-    const normalise = (text) => text.toLowerCase().replaceAll('-', ' ');
-    return mustKeep.every((needed) => wants.some((want) => normalise(want).includes(normalise(needed))));
+  function containsAll(phrases, expected) {
+    return expected.every((needed) => phrases.some((phrase) => normalise(phrase).includes(normalise(needed))));
   }
 
   /**
-   * Scores two summary lists the old way and both new ways, so they can be compared side by side.
-   * @param {string[]} studentWants
-   * @param {string[]} mentorWants
+   * True when a summary meets a test's expectations. An empty expected likes list means the likes
+   * must be empty (the work style test).
+   * @param {AnswerSummary} summary
+   * @param {{ likes?: string[], avoids?: string[], styles?: Partial<Styles> }} expect
+   */
+  function meetsExpectations(summary, expect) {
+    const likesOk = !expect.likes || (expect.likes.length === 0 ? summary.likes.length === 0 : containsAll(summary.likes, expect.likes));
+    const avoidsOk = !expect.avoids || containsAll(summary.avoids, expect.avoids);
+    const stylesOk = Object.entries(expect.styles ?? {}).every(
+      ([name, value]) => summary.styles[/** @type {keyof Styles} */ (name)] === value
+    );
+    return likesOk && avoidsOk && stylesOk;
+  }
+
+  /** @param {{ likes?: string[], avoids?: string[], styles?: Partial<Styles> }} expect */
+  function expectText(expect) {
+    const parts = [];
+    if (expect.likes) parts.push(expect.likes.length ? `likes keep ${expect.likes.join(', ')}` : 'no likes');
+    if (expect.avoids) parts.push(`avoids ${expect.avoids.join(', ')}`);
+    if (expect.styles) parts.push(`styles ${Object.values(expect.styles).join(', ')}`);
+    return parts.join('; ');
+  }
+
+  /**
+   * Scores two lists of likes the old way and both new ways, so they can be compared side by side.
+   * @param {string[]} studentLikes
+   * @param {string[]} mentorLikes
    * @returns {Promise<ListScores>}
    */
-  async function scoreLists(studentWants, mentorWants) {
-    // An empty list means the answer only said what they don't want, so there's nothing to compare.
-    if (studentWants.length === 0 || mentorWants.length === 0) {
+  async function scoreLists(studentLikes, mentorLikes) {
+    // An empty list means the answer only said what they don't want, or only gave styles.
+    if (studentLikes.length === 0 || mentorLikes.length === 0) {
       return { wholeList: null, studentSide: null, both: null, matches: [] };
     }
     const [studentVectors, mentorVectors, studentWhole, mentorWhole] = await Promise.all([
-      embedItems(studentWants),
-      embedItems(mentorWants),
-      embed(studentWants.join(', ')),
-      embed(mentorWants.join(', '))
+      embedItems(studentLikes),
+      embedItems(mentorLikes),
+      embed(studentLikes.join(', ')),
+      embed(mentorLikes.join(', '))
     ]);
     return {
       wholeList: similarity(studentWhole, mentorWhole),
@@ -183,18 +217,18 @@
     }
   }
 
-  // Asks Gemini for each answer's list, then compares the lists instead of the raw answers.
+  // Asks Gemini to summarise each answer, then compares the likes instead of the raw answers.
   async function compareSummaries() {
     summarising = true;
     error = '';
-    firstWants = null;
-    secondWants = null;
+    firstSummary = null;
+    secondSummary = null;
     summaryScores = null;
     try {
-      const [a, b] = await Promise.all([summariseWants(first), summariseWants(second)]);
-      firstWants = a;
-      secondWants = b;
-      summaryScores = await scoreLists(a, b);
+      const [a, b] = await Promise.all([summariseAnswer(first), summariseAnswer(second)]);
+      firstSummary = a;
+      secondSummary = b;
+      summaryScores = await scoreLists(a.likes, b.likes);
     } catch (err) {
       console.error(err);
       error = `Summarising failed: ${err instanceof Error ? err.message : String(err)}`;
@@ -205,7 +239,7 @@
 
   /**
    * Runs one fairness test: summarises the mentor and each version of the student (one Gemini
-   * request each, so 4 in all), then scores each version against the mentor.
+   * request each, so 4 in all), then scores each version's likes against the mentor's.
    * @param {number} index which test in styleTests
    */
   async function runStyleTest(index) {
@@ -214,19 +248,19 @@
     styleErrors[index] = '';
     styleResults[index] = null;
     try {
-      const [mentorWants, ...versionWants] = await Promise.all([
-        summariseWants(test.mentor),
-        ...test.versions.map((version) => summariseWants(version.text))
+      const [mentor, ...versions] = await Promise.all([
+        summariseAnswer(test.mentor),
+        ...test.versions.map((version) => summariseAnswer(version.text))
       ]);
       const rows = await Promise.all(
         test.versions.map(async (version, i) => ({
           label: version.label,
-          wants: versionWants[i],
-          kept: keepsAll(versionWants[i], test.mustKeep),
-          ...(await scoreLists(versionWants[i], mentorWants))
+          summary: versions[i],
+          ok: meetsExpectations(versions[i], test.expect),
+          ...(await scoreLists(versions[i].likes, mentor.likes))
         }))
       );
-      styleResults[index] = { mentorWants, rows };
+      styleResults[index] = { mentor, rows };
     } catch (err) {
       console.error(err);
       styleErrors[index] = `Fairness test failed: ${err instanceof Error ? err.message : String(err)}`;
@@ -262,22 +296,28 @@
   <p role="alert">{error}</p>
 {/if}
 
-{#if firstWants && secondWants}
-  <p>Student wants: {firstWants.length ? firstWants.join(', ') : '(nothing, only things they don’t want)'}</p>
-  <p>Mentor wants: {secondWants.length ? secondWants.join(', ') : '(nothing, only things they don’t want)'}</p>
+{#if firstSummary && secondSummary}
+  <p>
+    Student likes: {list(firstSummary.likes)}. Avoids: {list(firstSummary.avoids)}.
+    Styles: {stylesText(firstSummary.styles)}.
+  </p>
+  <p>
+    Mentor likes: {list(secondSummary.likes)}. Avoids: {list(secondSummary.avoids)}.
+    Styles: {stylesText(secondSummary.styles)}.
+  </p>
   {#if summaryScores}
     {#if summaryScores.wholeList === null}
-      <p>No scores: one list is empty, so there’s nothing to compare.</p>
+      <p>No scores: one side has no likes, so there’s nothing to compare.</p>
     {:else}
       <ul>
         <li>Whole lists, each embedded as one (the old way): {show(summaryScores.wholeList)}</li>
         <li>Item by item, student side only: {show(summaryScores.studentSide)}</li>
         <li>Item by item, both directions averaged: {show(summaryScores.both)}</li>
       </ul>
-      <p>Each student item’s closest mentor item:</p>
+      <p>Each student like’s closest mentor like:</p>
       <ul>
         {#each summaryScores.matches as match, i (i)}
-          <li>{firstWants[i]} → {secondWants[match.index]} ({match.score.toFixed(3)})</li>
+          <li>{firstSummary.likes[i]} → {secondSummary.likes[match.index]} ({match.score.toFixed(3)})</li>
         {/each}
       </ul>
     {/if}
@@ -288,7 +328,7 @@
 <p>
   Each test is one student written three ways and compared with one mentor. Every version says the
   same thing, so a fair method gives them close scores (a small spread), and every summary should
-  keep the listed phrases. Each test uses 4 of the 15 Gemini requests allowed a minute.
+  meet the test’s expectations. Each test uses 4 of the 15 Gemini requests allowed a minute.
 </p>
 
 {#each styleTests as test, t (test.name)}
@@ -310,13 +350,16 @@
   {/if}
 
   {#if result}
-    <p>Mentor wants: {result.mentorWants.length ? result.mentorWants.join(', ') : '(nothing)'}</p>
+    <p>
+      Mentor likes: {list(result.mentor.likes)}. Avoids: {list(result.mentor.avoids)}.
+      Styles: {stylesText(result.mentor.styles)}.
+    </p>
     <table>
       <thead>
         <tr>
           <th scope="col">Version</th>
           <th scope="col">Gemini summary</th>
-          <th scope="col">Keeps {test.mustKeep.join(', ')}?</th>
+          <th scope="col">As expected ({expectText(test.expect)})?</th>
           <th scope="col">Whole lists (old way)</th>
           <th scope="col">Item by item, student side</th>
           <th scope="col">Item by item, both directions</th>
@@ -326,8 +369,12 @@
         {#each result.rows as row (row.label)}
           <tr>
             <th scope="row">{row.label}</th>
-            <td>{row.wants.length ? row.wants.join(', ') : '(nothing)'}</td>
-            <td>{row.kept ? 'yes' : 'NO'}</td>
+            <td>
+              Likes: {list(row.summary.likes)}<br />
+              Avoids: {list(row.summary.avoids)}<br />
+              Styles: {stylesText(row.summary.styles)}
+            </td>
+            <td>{row.ok ? 'yes' : 'NO'}</td>
             <td>{show(row.wholeList)}</td>
             <td>{show(row.studentSide)}</td>
             <td>{show(row.both)}</td>

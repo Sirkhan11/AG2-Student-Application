@@ -1,5 +1,6 @@
 import { doc, getDoc, increment, serverTimestamp, writeBatch } from 'firebase/firestore';
 import { db, getFirebaseAuth } from '#lib/firebase/client.js';
+import { summaryToSave } from '#lib/matching/summary-prompt.js';
 import { MAX_REASONS } from '#lib/matching/explain.js';
 
 /*
@@ -36,7 +37,8 @@ export const MAX_AVAILABILITY_LENGTH = 200;
 
 /**
  * What the coordinator needs to match a student by hand, as the match record can't hold answers.
- * @typedef {{ answers: string[], summaries: string[][] | null, reason: string, reasonText: string }} MentorRequest
+ * @typedef {{ answers: string[], summary: import('#lib/matching/summary-prompt.js').Summary | null,
+ *   reason: string, reasonText: string }} MentorRequest
  */
 
 /** The signed-in user's uid. Matches are always saved under it. */
@@ -94,7 +96,7 @@ export async function takePlace(mentor, reasons, preferences) {
 /**
  * Saves that the signed-in student is waiting for the coordinator to find them a mentor. No mentor's
  * place is taken. Two writes, in one batch so there's never one without the other:
- * - students/{uid}.mentorRequest: their answers, Gemini's phrases (null if Gemini failed) and why they
+ * - students/{uid}.mentorRequest: their answers, Gemini's summary (null if Gemini failed) and why they
  *   were passed on. Merged in, so nothing else in their student record is overwritten.
  * - matches/{uid} with status 'coordinator', which can't hold answers (see firestore.rules).
  * @param {MeetingPreferences} preferences
@@ -110,10 +112,9 @@ export async function passToCoordinator(preferences, request) {
         reason: request.reason,
         reasonText: request.reasonText,
         answers: request.answers.map((answer) => answer.trim()),
-        // Firestore can't store a list of lists, so one list of phrases per question, under q1 to q6.
-        summaries: request.summaries
-          ? Object.fromEntries(request.summaries.map((phrases, i) => [`q${i + 1}`, phrases]))
-          : null,
+        // Likes, avoids and styles. Firestore can't store a list of lists, so likes and avoids each
+        // have one list of phrases per question, under q1 to q6.
+        summaries: request.summary ? summaryToSave(request.summary) : null,
         requestedAt: serverTimestamp()
       }
     },

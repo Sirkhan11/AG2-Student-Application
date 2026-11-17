@@ -32,7 +32,7 @@ const gemini = geminiFromEnv(process.env);
 const cases = JSON.parse(readFileSync('scripts/fixtures/matching-cases.json', 'utf8'));
 const profiles = [...cases.mentors, ...cases.students];
 
-/** @type {{ about: string, model: string, promptFingerprint: string, made: string, summaries: Record<string, string[][]> }} */
+/** @type {{ about: string, model: string, promptFingerprint: string, made: string, summaries: Record<string, import('#lib/matching/summary-prompt.js').Summary> }} */
 let out = {
   about: 'Gemini summaries of the profiles in matching-cases.json, made by make-summary-fixtures.mjs. Regenerate rather than edit by hand.',
   model: MODEL_NAME,

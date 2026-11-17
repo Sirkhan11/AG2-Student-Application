@@ -40,6 +40,7 @@ import { getAuth, signInWithEmailAndPassword, signOut } from 'firebase/auth';
 import {
   getFirestore, doc, getDoc, updateDoc, collection, query, where, getDocs, writeBatch, increment, serverTimestamp
 } from 'firebase/firestore/lite';
+import { STYLES } from '#lib/matching/summary-prompt.js';
 
 const mentorEmail = process.env.TEST_MENTOR_EMAIL;
 const mentorPassword = process.env.TEST_MENTOR_PASSWORD;
@@ -169,18 +170,32 @@ if (priv) {
     Array.isArray(priv.answers) && priv.answers.length === 6 && priv.answers.every(isText));
   report('createdAt is a server timestamp', typeof priv.createdAt?.toDate === 'function');
 
-  const summaryKeys = Object.keys(priv.summaries ?? {}).sort();
-  report('summaries has exactly q1 to q6', summaryKeys.join() === QUESTION_KEYS,
-    `got ${summaryKeys.join() || 'nothing'}`);
-  for (const key of summaryKeys) {
-    const phrases = priv.summaries[key];
-    const ok = Array.isArray(phrases) && phrases.length <= MAX_PHRASES && phrases.every(isText);
-    // The nth vector goes with the nth phrase, so match explanations can say which phrases matched.
-    const flat = pub?.itemVectors?.[key];
-    const vectorCount = Array.isArray(flat) ? flat.length / VECTOR_LENGTH : NaN;
-    report(`${key} summary is 0 to 5 phrases, one per stored vector`, ok && vectorCount === phrases.length,
-      ok ? `${phrases.length} phrase(s): ${JSON.stringify(phrases)}; ${vectorCount} vector(s)` : 'wrong shape');
+  // summaries holds likes and avoids (one list per question, q1 to q6) and styles.
+  report('summaries has likes, avoids and styles', Object.keys(priv.summaries ?? {}).sort().join() === 'avoids,likes,styles',
+    `got ${Object.keys(priv.summaries ?? {}).sort().join() || 'nothing'}`);
+  for (const part of ['likes', 'avoids']) {
+    const keys = Object.keys(priv.summaries?.[part] ?? {}).sort();
+    report(`summaries.${part} has exactly q1 to q6`, keys.join() === QUESTION_KEYS, `got ${keys.join() || 'nothing'}`);
+    for (const key of keys) {
+      const phrases = priv.summaries[part][key];
+      const ok = Array.isArray(phrases) && phrases.length <= MAX_PHRASES && phrases.every(isText);
+      if (part === 'avoids') {
+        report(`${key} avoids are 0 to 5 phrases`, ok, ok ? `${phrases.length} phrase(s)` : 'wrong shape');
+        continue;
+      }
+      // Only likes are embedded. The nth vector goes with the nth liked phrase, so match
+      // explanations can say which phrases matched.
+      const flat = pub?.itemVectors?.[key];
+      const vectorCount = Array.isArray(flat) ? flat.length / VECTOR_LENGTH : NaN;
+      report(`${key} likes are 0 to 5 phrases, one per stored vector`, ok && vectorCount === phrases.length,
+        ok ? `${phrases.length} phrase(s): ${JSON.stringify(phrases)}; ${vectorCount} vector(s)` : 'wrong shape');
+    }
   }
+  const styles = priv.summaries?.styles ?? {};
+  report('summaries.styles has social, planning and working, each an allowed value or null',
+    Object.keys(styles).sort().join() === 'planning,social,working' &&
+      Object.entries(STYLES).every(([name, values]) => styles[name] === null || values.includes(styles[name])),
+    JSON.stringify(styles));
 }
 
 console.log('\n-- No email stored');

@@ -23,22 +23,23 @@ const REASON_TEXT = {
 };
 
 /**
- * A student's answers, ready to match: Gemini's phrases and their vectors. It's made once, so matching
- * can be tried again (for example after a mentor fills up) without another Gemini request.
- * @typedef {{ answers: string[], summaries: string[][], itemVectors: number[][][] }} PreparedStudent
+ * A student's answers, ready to match: Gemini's summary, and the vectors of its likes. It's made once,
+ * so matching can be tried again (for example after a mentor fills up) without another Gemini request.
+ * @typedef {{ answers: string[], summary: import('#lib/matching/summary-prompt.js').Summary,
+ *   itemVectors: number[][][] }} PreparedStudent
  */
 
 /**
- * Summarises the answers with Gemini (one request) and embeds each phrase.
+ * Summarises the answers with Gemini (one request) and embeds each liked phrase.
  * Throws an error with code SUMMARISE_FAILED if Gemini fails; other errors (such as the embedding model
  * failing to download) are thrown as they are.
  * @param {string[]} answers in question order
  * @returns {Promise<PreparedStudent>}
  */
 export async function prepareStudent(answers) {
-  const summaries = await summariseAnswers(answers);
-  const itemVectors = await embedSummaries(summaries);
-  return { answers, summaries, itemVectors };
+  const summary = await summariseAnswers(answers);
+  const itemVectors = await embedSummaries(summary.likes);
+  return { answers, summary, itemVectors };
 }
 
 /**
@@ -80,13 +81,13 @@ export async function checkBeforeMatching() {
 /**
  * Saves the student as waiting for the coordinator, with what the coordinator needs to match them by hand.
  * @param {string[]} answers
- * @param {string[][] | null} summaries null if Gemini couldn't make them
+ * @param {import('#lib/matching/summary-prompt.js').Summary | null} summary null if Gemini couldn't make one
  * @param {MeetingPreferences} preferences
  * @param {string} reason a CoordinatorReason, 'mentor-full' or 'gemini-unavailable'
  * @returns {Promise<SaveOutcome>}
  */
-async function requestCoordinator(answers, summaries, preferences, reason) {
-  await passToCoordinator(preferences, { answers, summaries, reason, reasonText: REASON_TEXT[reason] ?? reason });
+async function requestCoordinator(answers, summary, preferences, reason) {
+  await passToCoordinator(preferences, { answers, summary, reason, reasonText: REASON_TEXT[reason] ?? reason });
   return { outcome: 'coordinator' };
 }
 
@@ -111,11 +112,11 @@ export async function matchAndSave(prepared, preferences) {
   for (let attempt = 1; attempt <= 2; attempt++) {
     const { mentors, ranked, reason } = await rankForStudent(prepared);
     if (reason === 'no-mentors') return { outcome: 'no-mentors' };
-    if (reason !== null) return requestCoordinator(prepared.answers, prepared.summaries, preferences, reason);
+    if (reason !== null) return requestCoordinator(prepared.answers, prepared.summary, preferences, reason);
 
     const top = ranked[0];
     const mentor = /** @type {import('#lib/matching/match.js').MatchableMentor} */ (mentors.find((m) => m.id === top.id));
-    const reasons = explainMatch(prepared.summaries, prepared.itemVectors, mentor.itemVectors, top.perQuestion);
+    const reasons = explainMatch(prepared.summary.likes, prepared.itemVectors, mentor.itemVectors, top.perQuestion);
     try {
       await takePlace({ id: top.id, name: top.name }, reasons, preferences);
       return { outcome: 'matched', mentorName: top.name, reasons };
@@ -124,7 +125,7 @@ export async function matchAndSave(prepared, preferences) {
       console.warn(`Taking a place with mentor ${top.id} was refused (attempt ${attempt}); they may have filled up.`);
     }
   }
-  return requestCoordinator(prepared.answers, prepared.summaries, preferences, 'mentor-full');
+  return requestCoordinator(prepared.answers, prepared.summary, preferences, 'mentor-full');
 }
 
 /**
@@ -147,7 +148,7 @@ export async function askCoordinator(answers, preferences) {
  * @typedef {{ status: 'summarise-failed', passToCoordinator: true }
  *   | { status: 'ranked', passToCoordinator: boolean,
  *       ranked: import('#lib/matching/match.js').RankedMentor[],
- *       mentorCount: number, studentSummaries: string[][] }} MatchResult
+ *       mentorCount: number, studentSummary: import('#lib/matching/summary-prompt.js').Summary }} MatchResult
  */
 
 /**
@@ -173,6 +174,6 @@ export async function matchStudent(answers) {
     passToCoordinator: reason !== null,
     ranked,
     mentorCount: mentors.length,
-    studentSummaries: prepared.summaries
+    studentSummary: prepared.summary
   };
 }

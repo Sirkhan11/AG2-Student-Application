@@ -1,6 +1,7 @@
 import { getGeminiModel } from '#lib/firebase/ai.js';
 import {
   cleanAnswers,
+  emptySummary,
   INSTRUCTIONS,
   MAX_WANTS,
   MODEL_NAME,
@@ -11,6 +12,9 @@ import {
 
 // The instructions, reply shape and so on live in summary-prompt.js, which the test fixtures use too.
 export { MAX_WANTS };
+
+/** @typedef {import('#lib/matching/summary-prompt.js').Summary} Summary */
+/** @typedef {import('#lib/matching/summary-prompt.js').Styles} Styles */
 
 /** Error code for when Gemini couldn't summarise the answers. Pages check err.code, as with Firebase errors. */
 export const SUMMARISE_FAILED = 'matching/summarise-failed';
@@ -46,27 +50,30 @@ function getModel(count) {
 }
 
 /**
- * Asks Gemini, in ONE request, for a short list of the interests, activities and needs in each of
- * someone's answers, leaving out anything they said they don't want. Comparing these items
- * (see compare-items.js) instead of the raw answers stops MiniLM matching people on things they
- * rejected ("I'm not into sport" vs a sporty mentor), and on how much they happened to write.
+ * Asks Gemini, in ONE request, to summarise someone's answers: for each answer, what they like
+ * (interests, activities and needs) and what they avoid, plus three styles from all the answers
+ * together (going out or staying in, planning ahead or last minute, on their own or with others).
+ *
+ * Only likes are embedded and compared item by item (see compare-items.js), so things someone
+ * rejected ("I'm not into sport") never count towards a match, and nor does how much they happened
+ * to write. Styles are never embedded.
  *
  * One request rather than one per answer because the free tier allows 15 requests a minute:
  * that's 15 sign-ups or matches a minute, instead of 2 or 3.
  *
  * All or nothing: if the request fails or the reply is broken, it throws an error with code
- * SUMMARISE_FAILED instead of returning some of the lists.
+ * SUMMARISE_FAILED instead of returning part of a summary.
  *
  * Only the answers are sent, never a name or profile, and anything that looks like an email
  * address is replaced with [email] first.
  * @param {string[]} answers
- * @returns {Promise<string[][]>} one list of phrases per answer, in the same order; a list is empty
- *   when that answer only says what they don't want (or is blank)
+ * @returns {Promise<Summary>} likes and avoids have one list per answer, in the same order; an
+ *   answer's likes are empty when it only says what they don't want (or is blank)
  */
 export async function summariseAnswers(answers) {
   const texts = cleanAnswers(answers);
   // Nothing to summarise, so don't use up a request.
-  if (texts.every((text) => text === '')) return texts.map(() => []);
+  if (texts.every((text) => text === '')) return emptySummary(texts.length);
 
   try {
     const result = await getModel(texts.length).generateContent(requestText(texts));
@@ -80,12 +87,13 @@ export async function summariseAnswers(answers) {
 }
 
 /**
- * Summarises a single answer, for the matching test page. It's a one-answer summariseAnswers,
- * so it uses exactly the same instructions and settings as sign-up and matching.
+ * Summarises a single answer, for the matching test page: its likes and avoids, and any styles it
+ * states. It's a one-answer summariseAnswers, so it uses exactly the same instructions and settings
+ * as sign-up and matching.
  * @param {string} answer
- * @returns {Promise<string[]>}
+ * @returns {Promise<{ likes: string[], avoids: string[], styles: Styles }>}
  */
-export async function summariseWants(answer) {
-  const [phrases] = await summariseAnswers([answer]);
-  return phrases;
+export async function summariseAnswer(answer) {
+  const summary = await summariseAnswers([answer]);
+  return { likes: summary.likes[0], avoids: summary.avoids[0], styles: summary.styles };
 }

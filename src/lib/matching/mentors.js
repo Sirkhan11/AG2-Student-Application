@@ -3,6 +3,7 @@ import { collection, doc, getDoc, getDocs, query, serverTimestamp, where, writeB
 import { db, getFirebaseAuth } from '#lib/firebase/client.js';
 import { questions } from '#lib/matching/questions.js';
 import { MAX_WANTS, summariseAnswers } from '#lib/matching/summarise.js';
+import { summaryToSave } from '#lib/matching/summary-prompt.js';
 import { embedSummaries } from '#lib/matching/compare-items.js';
 
 /** all-MiniLM-L6-v2 (see embed.js) turns each phrase into 384 numbers. */
@@ -56,7 +57,7 @@ function byQuestion(perQuestion) {
  * - firestore.rules can check it in one line per question: a whole number of 384-number vectors,
  *   and no more than 5 of them. That enforces the 5-phrase cap on the server, so a mentor can't
  *   store extra phrases to match more students.
- * - The nth vector goes with the nth phrase in mentorDetails/{uid}.summaries, for explaining matches.
+ * - The nth vector goes with the nth phrase in mentorDetails/{uid}.summaries.likes, for explaining matches.
  * - The field is called itemVectors, not vectors, so a profile in the old format (one whole-answer
  *   vector per question) can never be mistaken for one phrase per question.
  */
@@ -111,12 +112,13 @@ export async function registerMentor(profile, login) {
   if (findBlankAnswer(answers) !== -1) throw new Error('Every answer needs some text.');
   if (!isValidMaxStudents(profile.maxStudents)) throw new Error('maxStudents must be a whole number from 1 to 5.');
 
-  const summaries = await summariseAnswers(answers);
+  const summary = await summariseAnswers(answers);
   // Every question would be skipped, so this mentor could never be matched with anyone.
-  if (summaries.every((items) => items.length === 0)) {
+  if (summary.likes.every((items) => items.length === 0)) {
     throw Object.assign(new Error('Gemini found nothing to match on in any answer.'), { code: NOTHING_TO_MATCH });
   }
-  const itemVectors = await embedSummaries(summaries);
+  // Only likes are embedded. Avoids and styles are saved below but never turned into vectors.
+  const itemVectors = await embedSummaries(summary.likes);
 
   const { user } = await createUserWithEmailAndPassword(getFirebaseAuth(), login.email, login.password);
 
@@ -136,9 +138,9 @@ export async function registerMentor(profile, login) {
     name: profile.name.trim(),
     course: profile.course.trim(),
     answers,
-    // What Gemini picked out of each answer, in the same order as the vectors. Private for now:
-    // students only see a summary once the mentor has agreed to it (not built yet).
-    summaries: byQuestion(summaries),
+    // What Gemini picked out: likes (in the same order as the vectors), avoids and styles. Private
+    // for now: students only see a summary once the mentor has agreed to it (not built yet).
+    summaries: summaryToSave(summary),
     meetingFrequency: profile.meetingFrequency,
     availability: profile.availability.trim(),
     createdAt: serverTimestamp()

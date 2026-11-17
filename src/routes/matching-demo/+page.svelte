@@ -2,6 +2,7 @@
   import { questions } from '#lib/matching/questions.js';
   import { watchSignedIn } from '#lib/firebase/auth.js';
   import { matchStudent } from '#lib/matching/find-match.js';
+  import { stylesText } from '#lib/matching/summary-prompt.js';
 
   let answers = $state(questions.map(() => ''));
   let result = $state(/** @type {import('#lib/matching/find-match.js').MatchResult | null} */ (null));
@@ -72,12 +73,18 @@
     matched on the raw answers.
   </p>
 {:else if result && result.status === 'ranked'}
-  <p>What Gemini picked out of each answer:</p>
+  <p>What Gemini picked out of each answer (only likes are compared):</p>
   <ol>
-    {#each result.studentSummaries as items, i (i)}
-      <li>{items.length ? items.join(', ') : '(nothing to compare, so this question is skipped)'}</li>
+    {#each result.studentSummary.likes as likes, i (i)}
+      <li>
+        {likes.length ? likes.join(', ') : '(nothing to compare, so this question is skipped)'}
+        {#if result.studentSummary.avoids[i].length}
+          <br />Avoids: {result.studentSummary.avoids[i].join(', ')}
+        {/if}
+      </li>
     {/each}
   </ol>
+  <p>Styles (not used in matching yet): {stylesText(result.studentSummary.styles)}</p>
 
   {#if result.mentorCount === 0}
     <p>There are no approved mentors to match with yet.</p>

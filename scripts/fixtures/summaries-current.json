@@ -1,780 +1,1241 @@
 {
   "about": "Gemini summaries of the profiles in matching-cases.json, made by make-summary-fixtures.mjs. Regenerate rather than edit by hand.",
   "model": "gemini-3.5-flash-lite",
-  "promptFingerprint": "3b7c268a5057",
-  "made": "2026-11-17T04:37:12.644Z",
+  "promptFingerprint": "4fb52d1f0f49",
+  "made": "2026-11-17T14:01:22.416Z",
   "summaries": {
-    "m-gigs": [
-      [
-        "music scene",
-        "meeting people",
-        "gigs"
-      ],
-      [
-        "live music",
-        "going to gigs",
-        "club night"
-      ],
-      [
-        "gig",
-        "night out"
-      ],
-      [
-        "last minute",
-        "working with others"
-      ],
-      [
-        "meeting new people",
-        "having fun"
-      ],
-      [
-        "sociable",
-        "bringing along to things"
-      ]
-    ],
-    "m-home": [
-      [
-        "organising deadlines",
-        "settling into routine"
-      ],
-      [
-        "board games",
-        "baking",
-        "reading"
-      ],
-      [
-        "quiet nights in",
-        "film",
-        "takeaway"
-      ],
-      [
-        "plan ahead",
-        "working alone"
-      ],
-      [
-        "feeling settled",
-        "keeping on top of work"
-      ],
-      [
-        "calm",
-        "patient",
-        "easy to talk to"
-      ]
-    ],
-    "m-sport": [
-      [
-        "joining sports clubs",
-        "finding your feet",
-        "gym"
-      ],
-      [
-        "football",
-        "gym",
-        "running"
-      ],
-      [
-        "park run",
-        "five-a-side"
-      ],
-      [
-        "plan ahead",
-        "training with others",
-        "studying with others"
-      ],
-      [
-        "staying active",
-        "team"
-      ],
-      [
-        "motivating",
-        "gets you moving"
-      ]
-    ],
-    "m-game1": [
-      [
-        "finding other gamers",
-        "study setup"
-      ],
-      [
-        "video games",
-        "Minecraft",
-        "FIFA",
-        "building PCs"
-      ],
-      [
-        "gaming online"
-      ],
-      [
-        "last minute",
-        "working alone"
-      ],
-      [
-        "group of mates",
-        "gaming"
-      ],
-      [
-        "laid-back",
-        "online"
-      ]
-    ],
-    "m-game2": [
-      [
-        "finding gamers",
-        "study space"
-      ],
-      [
-        "gaming",
-        "Minecraft",
-        "FIFA",
-        "PC building"
-      ],
-      [
-        "online gaming",
-        "gaming with mates"
-      ],
-      [
-        "last minute",
-        "working alone"
-      ],
-      [
-        "friends to game with"
-      ],
-      [
-        "relaxed",
-        "easy to reach online"
-      ]
-    ],
-    "m-outdoors": [
-      [
-        "walking groups",
-        "climbing groups",
-        "planning your week"
-      ],
-      [
-        "hiking",
-        "climbing",
-        "wild swimming"
-      ],
-      [
-        "long walk in the hills"
-      ],
-      [
-        "plan everything ahead",
-        "working alone",
-        "working with others"
-      ],
-      [
-        "getting outdoors",
-        "looking after wellbeing"
-      ],
-      [
-        "organised",
-        "encouraging"
-      ]
-    ],
-    "m-creative": [
-      [
-        "creative societies",
-        "getting used to the city"
-      ],
-      [
-        "photography",
-        "art galleries",
-        "cinema"
-      ],
-      [
-        "cinema",
-        "gallery"
-      ],
-      [
-        "last minute",
-        "working on my own"
-      ],
-      [
-        "being creative",
-        "explore the city"
-      ],
-      [
-        "friendly",
-        "laid-back"
-      ]
-    ],
-    "m-party": [
-      [
-        "nights out",
-        "making friends"
-      ],
-      [
-        "partying",
-        "clubbing",
-        "festivals"
-      ],
-      [
-        "clubbing"
-      ],
-      [
-        "last minute",
-        "working with others"
-      ],
-      [
-        "making friends",
-        "having a good time"
-      ],
-      [
-        "fun mentor",
-        "nightlife"
-      ]
-    ],
-    "s-gigs-short": [
-      [
-        "making friends"
-      ],
-      [
-        "gigs",
-        "live music"
-      ],
-      [
-        "gig",
-        "out with mates"
-      ],
-      [
-        "last minute",
-        "working with others"
-      ],
-      [
-        "meeting people"
-      ],
-      [
-        "sociable"
-      ]
-    ],
-    "s-gigs-long": [
-      [
-        "making friends"
-      ],
-      [
-        "live music",
-        "going to gigs"
-      ],
-      [
-        "live music",
-        "nights out"
-      ],
-      [
-        "last minute",
-        "working with others"
-      ],
-      [
-        "meeting new people",
-        "social life"
-      ],
-      [
-        "sociable"
-      ]
-    ],
-    "s-gigs-misspelt": [
-      [
-        "making friends"
-      ],
-      [
-        "gigs",
-        "live music"
-      ],
-      [
-        "gigs",
-        "going out"
-      ],
-      [
-        "last minute",
-        "working with others"
-      ],
-      [
-        "meeting new people"
-      ],
-      [
-        "sociable"
-      ]
-    ],
-    "s-home-short": [
-      [
-        "getting organised"
-      ],
-      [
-        "board games",
-        "reading"
-      ],
-      [
-        "quiet night in",
-        "film"
-      ],
-      [
-        "plan ahead",
-        "working alone"
-      ],
-      [
-        "keeping on top of work"
-      ],
-      [
-        "calm"
-      ]
-    ],
-    "s-home-long": [
-      [
-        "getting organised",
-        "deadlines"
-      ],
-      [
-        "board games",
-        "baking",
-        "reading"
-      ],
-      [
-        "films",
-        "takeaway",
-        "quiet night"
-      ],
-      [
-        "planning ahead",
-        "working alone"
-      ],
-      [
-        "keeping on top of work",
-        "feeling settled"
-      ],
-      [
-        "calm",
-        "patient",
-        "someone to talk to"
-      ]
-    ],
-    "s-home-misspelt": [
-      [
-        "getting organised"
-      ],
-      [
-        "board games",
-        "reading"
-      ],
-      [
-        "film"
-      ],
-      [
-        "planning ahead",
-        "working alone"
-      ],
-      [
-        "keeping on top of work"
-      ],
-      [
-        "calm",
-        "patient"
-      ]
-    ],
-    "s-sport-short": [
-      [
-        "football club"
-      ],
-      [
-        "football",
-        "gym"
-      ],
-      [
-        "run",
-        "football"
-      ],
-      [
-        "plan ahead",
-        "working with others"
-      ],
-      [
-        "staying active"
-      ],
-      [
-        "motivating"
-      ]
-    ],
-    "s-sport-long": [
-      [
-        "football team",
-        "football"
-      ],
-      [
-        "football",
-        "gym",
-        "running"
-      ],
-      [
-        "running",
-        "five-a-side game"
-      ],
-      [
-        "planning ahead",
-        "training with others",
-        "studying with others"
-      ],
-      [
-        "staying active",
-        "team membership"
-      ],
-      [
-        "motivating",
-        "getting out and about"
-      ]
-    ],
-    "s-liein-short": [
-      [
-        "exploring the city"
-      ],
-      [
-        "photography",
-        "cinema"
-      ],
-      [
-        "cinema"
-      ],
-      [
-        "last minute",
-        "working alone"
-      ],
-      [
-        "being creative"
-      ],
-      [
-        "laid-back"
-      ]
-    ],
-    "s-liein-long": [
-      [
-        "getting to know the city",
-        "finding creative societies"
-      ],
-      [
-        "photography",
-        "cinema",
-        "art galleries"
-      ],
-      [
-        "cinema",
-        "gallery"
-      ],
-      [
-        "last minute",
-        "working on own"
-      ],
-      [
-        "creative",
-        "explore"
-      ],
-      [
-        "friendly",
-        "laid-back"
-      ]
-    ],
-    "s-liein-misspelt": [
-      [
-        "getting to know the city"
-      ],
-      [
-        "photography",
-        "cinema"
-      ],
-      [
-        "cinema"
-      ],
-      [
-        "last minute",
-        "working alone"
-      ],
-      [
-        "being creative"
-      ],
-      [
-        "laid-back"
-      ]
-    ],
-    "s-gamer-short": [
-      [
-        "finding gamers"
-      ],
-      [
-        "gaming",
-        "Minecraft",
-        "FIFA"
-      ],
-      [
-        "gaming online"
-      ],
-      [
-        "last minute",
-        "working alone"
-      ],
-      [
-        "good group of mates"
-      ],
-      [
-        "laid-back"
-      ]
-    ],
-    "s-gamer-long": [
-      [
-        "gaming"
-      ],
-      [
-        "Minecraft",
-        "FIFA",
-        "building a PC"
-      ],
-      [
-        "gaming online"
-      ],
-      [
-        "last minute",
-        "working alone"
-      ],
-      [
-        "gaming"
-      ],
-      [
-        "laid-back",
-        "easy to message"
-      ]
-    ],
-    "s-clubbing-short": [
-      [
-        "making friends"
-      ],
-      [
-        "clubbing",
-        "festivals"
-      ],
-      [
-        "nights out"
-      ],
-      [
-        "last minute",
-        "working with others"
-      ],
-      [
-        "having fun"
-      ],
-      [
-        "fun"
-      ]
-    ],
-    "s-clubbing-long": [
-      [
-        "making friends",
-        "finding nightlife"
-      ],
-      [
-        "clubbing",
-        "festivals"
-      ],
-      [
-        "night outs"
-      ],
-      [
-        "last minute",
-        "working with others"
-      ],
-      [
-        "making friends",
-        "having a good time"
-      ],
-      [
-        "fun",
-        "knowing nightlife"
-      ]
-    ],
-    "s-clubbing-misspelt": [
-      [
-        "making friends"
-      ],
-      [
-        "going clubbing",
-        "festivals"
-      ],
-      [
-        "nights out"
-      ],
-      [
-        "last minute",
-        "working with others"
-      ],
-      [
-        "having a good time"
-      ],
-      [
-        "fun"
-      ]
-    ],
-    "s-outdoors-short": [
-      [
-        "walking group"
-      ],
-      [
-        "hiking",
-        "climbing"
-      ],
-      [
-        "long walk"
-      ],
-      [
-        "plan ahead"
-      ],
-      [
-        "being outdoors"
-      ],
-      [
-        "organised"
-      ]
-    ],
-    "s-outdoors-long": [
-      [
-        "walking group",
-        "climbing group",
-        "planning my week"
-      ],
-      [
-        "hiking",
-        "climbing",
-        "wild swimming"
-      ],
-      [
-        "long walk in the hills"
-      ],
-      [
-        "planning ahead"
-      ],
-      [
-        "getting outdoors",
-        "looking after myself"
-      ],
-      [
-        "organised",
-        "encouraging"
-      ]
-    ],
-    "s-unrelated-short": [
-      [
-        "learning Japanese"
-      ],
-      [
-        "knitting",
-        "birdwatching"
-      ],
-      [
-        "nature reserve"
-      ],
-      [],
-      [
-        "course"
-      ],
-      []
-    ],
-    "s-unrelated-long": [
-      [
-        "practising Japanese",
-        "finding Japanese practice"
-      ],
-      [
-        "knitting",
-        "birdwatching"
-      ],
-      [
-        "nature reserve trips",
-        "using binoculars"
-      ],
-      [],
-      [
-        "doing well on course"
-      ],
-      []
-    ],
-    "s-too-few": [
-      [
-        "finding campus"
-      ],
-      [],
-      [],
-      [
-        "planning ahead"
-      ],
-      [
-        "coursework"
-      ],
-      []
-    ],
-    "s-nights-in-short": [
-      [
-        "settling in"
-      ],
-      [
-        "reading",
-        "films"
-      ],
-      [
-        "quiet nights in"
-      ],
-      [
-        "plan ahead",
-        "working alone"
-      ],
-      [
-        "feeling settled"
-      ],
-      [
-        "patient"
-      ]
-    ],
-    "s-nights-in-long": [
-      [
-        "big change",
-        "settling in"
-      ],
-      [
-        "reading",
-        "films"
-      ],
-      [
-        "quiet nights in"
-      ],
-      [
-        "plan ahead",
-        "working alone"
-      ],
-      [
-        "feeling settled",
-        "calm"
-      ],
-      [
-        "patient",
-        "quiet chat"
-      ]
-    ],
-    "s-live-music": [
-      [
-        "meeting people",
-        "music"
-      ],
-      [
-        "live music",
-        "indie bands"
-      ],
-      [
-        "seeing a band",
-        "drinks with friends"
-      ],
-      [
-        "last minute",
-        "working with others"
-      ],
-      [
-        "social life"
-      ],
-      [
-        "outgoing"
-      ]
-    ]
+    "m-gigs": {
+      "likes": [
+        [
+          "music scene",
+          "meeting people",
+          "gigs"
+        ],
+        [
+          "live music",
+          "gigs",
+          "club night"
+        ],
+        [
+          "gig"
+        ],
+        [],
+        [
+          "meeting new people",
+          "having fun"
+        ],
+        [
+          "sociable",
+          "bring you along"
+        ]
+      ],
+      "avoids": [
+        [],
+        [],
+        [],
+        [],
+        [],
+        []
+      ],
+      "styles": {
+        "social": "going out",
+        "planning": "last minute",
+        "working": "with others"
+      }
+    },
+    "m-home": {
+      "likes": [
+        [
+          "getting organised",
+          "settling into routine"
+        ],
+        [
+          "board games",
+          "baking",
+          "reading"
+        ],
+        [
+          "film",
+          "takeaway"
+        ],
+        [],
+        [
+          "feeling settled",
+          "keeping on top"
+        ],
+        [
+          "calm",
+          "patient",
+          "easy to talk to"
+        ]
+      ],
+      "avoids": [
+        [],
+        [],
+        [],
+        [],
+        [],
+        []
+      ],
+      "styles": {
+        "social": "staying in",
+        "planning": "planning ahead",
+        "working": "on my own"
+      }
+    },
+    "m-sport": {
+      "likes": [
+        [
+          "joining sports clubs",
+          "finding your feet",
+          "gym"
+        ],
+        [
+          "football",
+          "gym",
+          "running"
+        ],
+        [
+          "park run",
+          "five-a-side"
+        ],
+        [
+          "training",
+          "studying"
+        ],
+        [
+          "staying active",
+          "part of a team"
+        ],
+        [
+          "motivating",
+          "gets you moving"
+        ]
+      ],
+      "avoids": [
+        [],
+        [],
+        [],
+        [],
+        [],
+        []
+      ],
+      "styles": {
+        "social": null,
+        "planning": "planning ahead",
+        "working": "with others"
+      }
+    },
+    "m-game1": {
+      "likes": [
+        [
+          "finding other gamers",
+          "good study setup"
+        ],
+        [
+          "video games",
+          "Minecraft",
+          "FIFA",
+          "building PCs"
+        ],
+        [
+          "gaming online"
+        ],
+        [],
+        [
+          "good group of mates"
+        ],
+        [
+          "laid-back",
+          "around online"
+        ]
+      ],
+      "avoids": [
+        [],
+        [],
+        [],
+        [],
+        [],
+        []
+      ],
+      "styles": {
+        "social": "staying in",
+        "planning": "last minute",
+        "working": "on my own"
+      }
+    },
+    "m-game2": {
+      "likes": [
+        [
+          "finding gamers",
+          "study space"
+        ],
+        [
+          "gaming",
+          "Minecraft",
+          "FIFA",
+          "PC building"
+        ],
+        [
+          "gaming online",
+          "mates"
+        ],
+        [],
+        [
+          "group of friends",
+          "game with"
+        ],
+        [
+          "relaxed",
+          "easy to reach online"
+        ]
+      ],
+      "avoids": [
+        [],
+        [],
+        [],
+        [],
+        [],
+        []
+      ],
+      "styles": {
+        "social": "staying in",
+        "planning": "last minute",
+        "working": "on my own"
+      }
+    },
+    "m-outdoors": {
+      "likes": [
+        [
+          "walking groups",
+          "climbing groups",
+          "planning your week"
+        ],
+        [
+          "hiking",
+          "climbing",
+          "wild swimming"
+        ],
+        [
+          "long walk in hills",
+          "tea"
+        ],
+        [],
+        [
+          "getting outdoors",
+          "looking after wellbeing"
+        ],
+        [
+          "organised",
+          "encouraging"
+        ]
+      ],
+      "avoids": [
+        [],
+        [],
+        [],
+        [],
+        [],
+        []
+      ],
+      "styles": {
+        "social": null,
+        "planning": "planning ahead",
+        "working": "both"
+      }
+    },
+    "m-creative": {
+      "likes": [
+        [
+          "creative societies",
+          "getting used to the city"
+        ],
+        [
+          "Photography",
+          "art galleries",
+          "cinema"
+        ],
+        [
+          "lie-in",
+          "cinema",
+          "gallery"
+        ],
+        [],
+        [
+          "time to be creative",
+          "explore the city"
+        ],
+        [
+          "friendly",
+          "laid-back"
+        ]
+      ],
+      "avoids": [
+        [],
+        [],
+        [],
+        [],
+        [],
+        []
+      ],
+      "styles": {
+        "social": null,
+        "planning": "last minute",
+        "working": "on my own"
+      }
+    },
+    "m-party": {
+      "likes": [
+        [
+          "making friends"
+        ],
+        [
+          "clubbing",
+          "festivals"
+        ],
+        [
+          "clubbing",
+          "recovering"
+        ],
+        [],
+        [
+          "making loads of friends",
+          "good time"
+        ],
+        [
+          "fun mentor",
+          "nightlife"
+        ]
+      ],
+      "avoids": [
+        [],
+        [],
+        [],
+        [],
+        [],
+        []
+      ],
+      "styles": {
+        "social": "going out",
+        "planning": "last minute",
+        "working": "with others"
+      }
+    },
+    "s-gigs-short": {
+      "likes": [
+        [
+          "making friends"
+        ],
+        [
+          "gigs",
+          "live music"
+        ],
+        [
+          "gig"
+        ],
+        [],
+        [
+          "meeting people"
+        ],
+        [
+          "sociable"
+        ]
+      ],
+      "avoids": [
+        [],
+        [
+          "sport"
+        ],
+        [],
+        [],
+        [],
+        []
+      ],
+      "styles": {
+        "social": "going out",
+        "planning": "last minute",
+        "working": "with others"
+      }
+    },
+    "s-gigs-long": {
+      "likes": [
+        [
+          "making friends"
+        ],
+        [
+          "live music",
+          "gig"
+        ],
+        [
+          "catching a band"
+        ],
+        [],
+        [
+          "meeting new people",
+          "having a social life"
+        ],
+        [
+          "sociable",
+          "bringing me along"
+        ]
+      ],
+      "avoids": [
+        [],
+        [
+          "sport",
+          "gym"
+        ],
+        [],
+        [],
+        [],
+        []
+      ],
+      "styles": {
+        "social": "going out",
+        "planning": "last minute",
+        "working": "with others"
+      }
+    },
+    "s-gigs-misspelt": {
+      "likes": [
+        [
+          "making friends"
+        ],
+        [
+          "gigs",
+          "live music"
+        ],
+        [
+          "gig"
+        ],
+        [],
+        [
+          "meeting new people"
+        ],
+        [
+          "sociable"
+        ]
+      ],
+      "avoids": [
+        [],
+        [
+          "sport"
+        ],
+        [],
+        [],
+        [],
+        []
+      ],
+      "styles": {
+        "social": "going out",
+        "planning": "last minute",
+        "working": "with others"
+      }
+    },
+    "s-home-short": {
+      "likes": [
+        [
+          "getting organised"
+        ],
+        [
+          "board games",
+          "reading"
+        ],
+        [
+          "film"
+        ],
+        [],
+        [
+          "keeping on top of work"
+        ],
+        [
+          "calm"
+        ]
+      ],
+      "avoids": [
+        [],
+        [],
+        [],
+        [],
+        [],
+        []
+      ],
+      "styles": {
+        "social": "staying in",
+        "planning": "planning ahead",
+        "working": "on my own"
+      }
+    },
+    "s-home-long": {
+      "likes": [
+        [
+          "getting organised"
+        ],
+        [
+          "board games",
+          "baking",
+          "book"
+        ],
+        [
+          "film",
+          "takeaway"
+        ],
+        [],
+        [
+          "keeping on top of work",
+          "feeling settled"
+        ],
+        [
+          "calm",
+          "patient"
+        ]
+      ],
+      "avoids": [
+        [],
+        [
+          "clubbing"
+        ],
+        [],
+        [],
+        [],
+        []
+      ],
+      "styles": {
+        "social": "staying in",
+        "planning": "planning ahead",
+        "working": "on my own"
+      }
+    },
+    "s-home-misspelt": {
+      "likes": [
+        [
+          "getting organised"
+        ],
+        [
+          "board games",
+          "reading"
+        ],
+        [
+          "film"
+        ],
+        [],
+        [
+          "keeping on top of work"
+        ],
+        [
+          "calm",
+          "patient"
+        ]
+      ],
+      "avoids": [
+        [],
+        [],
+        [],
+        [],
+        [],
+        []
+      ],
+      "styles": {
+        "social": "staying in",
+        "planning": "planning ahead",
+        "working": "on my own"
+      }
+    },
+    "s-sport-short": {
+      "likes": [
+        [
+          "finding a football club"
+        ],
+        [
+          "football",
+          "gym"
+        ],
+        [
+          "run",
+          "football"
+        ],
+        [],
+        [
+          "staying active"
+        ],
+        [
+          "motivating"
+        ]
+      ],
+      "avoids": [
+        [],
+        [],
+        [],
+        [],
+        [],
+        []
+      ],
+      "styles": {
+        "social": null,
+        "planning": "planning ahead",
+        "working": "with others"
+      }
+    },
+    "s-sport-long": {
+      "likes": [
+        [
+          "football team"
+        ],
+        [
+          "football",
+          "gym",
+          "running"
+        ],
+        [
+          "run",
+          "five-a-side game"
+        ],
+        [
+          "training",
+          "studying"
+        ],
+        [
+          "staying active",
+          "part of a team"
+        ],
+        [
+          "motivate"
+        ]
+      ],
+      "avoids": [
+        [],
+        [],
+        [],
+        [],
+        [],
+        []
+      ],
+      "styles": {
+        "social": null,
+        "planning": "planning ahead",
+        "working": "with others"
+      }
+    },
+    "s-liein-short": {
+      "likes": [
+        [
+          "getting to know the city"
+        ],
+        [
+          "photography",
+          "cinema"
+        ],
+        [
+          "lie-in",
+          "cinema"
+        ],
+        [],
+        [
+          "being creative"
+        ],
+        [
+          "laid-back"
+        ]
+      ],
+      "avoids": [
+        [],
+        [],
+        [],
+        [],
+        [],
+        []
+      ],
+      "styles": {
+        "social": null,
+        "planning": "last minute",
+        "working": "on my own"
+      }
+    },
+    "s-liein-long": {
+      "likes": [
+        [
+          "getting to know the city",
+          "finding creative societies"
+        ],
+        [
+          "photography",
+          "cinema",
+          "art galleries"
+        ],
+        [
+          "long lie-in",
+          "cinema",
+          "gallery"
+        ],
+        [],
+        [
+          "being creative",
+          "explore"
+        ],
+        [
+          "friendly",
+          "laid-back"
+        ]
+      ],
+      "avoids": [
+        [],
+        [],
+        [],
+        [],
+        [],
+        []
+      ],
+      "styles": {
+        "social": null,
+        "planning": "last minute",
+        "working": "on my own"
+      }
+    },
+    "s-liein-misspelt": {
+      "likes": [
+        [
+          "getting to know the city"
+        ],
+        [
+          "photography",
+          "cinema"
+        ],
+        [
+          "lie in",
+          "cinema"
+        ],
+        [],
+        [
+          "being creative"
+        ],
+        [
+          "laid back"
+        ]
+      ],
+      "avoids": [
+        [],
+        [],
+        [],
+        [],
+        [],
+        []
+      ],
+      "styles": {
+        "social": null,
+        "planning": "last minute",
+        "working": "on my own"
+      }
+    },
+    "s-gamer-short": {
+      "likes": [
+        [
+          "finding other gamers"
+        ],
+        [
+          "gaming",
+          "Minecraft",
+          "FIFA"
+        ],
+        [
+          "gaming online"
+        ],
+        [],
+        [],
+        [
+          "laid-back"
+        ]
+      ],
+      "avoids": [
+        [],
+        [],
+        [],
+        [],
+        [],
+        []
+      ],
+      "styles": {
+        "social": null,
+        "planning": "last minute",
+        "working": "on my own"
+      }
+    },
+    "s-gamer-long": {
+      "likes": [
+        [
+          "finding other gamers"
+        ],
+        [
+          "Minecraft",
+          "FIFA",
+          "building a PC"
+        ],
+        [
+          "gaming online"
+        ],
+        [],
+        [
+          "group of mates",
+          "gaming"
+        ],
+        [
+          "laid-back",
+          "easy to message"
+        ]
+      ],
+      "avoids": [
+        [],
+        [],
+        [],
+        [],
+        [],
+        []
+      ],
+      "styles": {
+        "social": "staying in",
+        "planning": "last minute",
+        "working": "on my own"
+      }
+    },
+    "s-clubbing-short": {
+      "likes": [
+        [
+          "making friends"
+        ],
+        [
+          "clubbing",
+          "festivals"
+        ],
+        [],
+        [],
+        [
+          "having a good time"
+        ],
+        [
+          "fun"
+        ]
+      ],
+      "avoids": [
+        [],
+        [],
+        [],
+        [],
+        [],
+        []
+      ],
+      "styles": {
+        "social": "going out",
+        "planning": "last minute",
+        "working": "with others"
+      }
+    },
+    "s-clubbing-long": {
+      "likes": [
+        [
+          "making friends"
+        ],
+        [
+          "clubbing",
+          "festival"
+        ],
+        [],
+        [],
+        [
+          "making loads of friends",
+          "having a good time"
+        ],
+        [
+          "fun",
+          "nightlife"
+        ]
+      ],
+      "avoids": [
+        [],
+        [],
+        [],
+        [],
+        [],
+        []
+      ],
+      "styles": {
+        "social": "going out",
+        "planning": "last minute",
+        "working": "with others"
+      }
+    },
+    "s-clubbing-misspelt": {
+      "likes": [
+        [
+          "making friends"
+        ],
+        [
+          "festivals"
+        ],
+        [],
+        [],
+        [
+          "good time"
+        ],
+        [
+          "fun"
+        ]
+      ],
+      "avoids": [
+        [],
+        [],
+        [],
+        [],
+        [],
+        []
+      ],
+      "styles": {
+        "social": "going out",
+        "planning": "last minute",
+        "working": "with others"
+      }
+    },
+    "s-outdoors-short": {
+      "likes": [
+        [
+          "walking group"
+        ],
+        [
+          "hiking",
+          "climbing"
+        ],
+        [
+          "long walk"
+        ],
+        [],
+        [
+          "being outdoors"
+        ],
+        [
+          "organised"
+        ]
+      ],
+      "avoids": [
+        [],
+        [
+          "gym"
+        ],
+        [],
+        [],
+        [],
+        []
+      ],
+      "styles": {
+        "social": null,
+        "planning": "planning ahead",
+        "working": null
+      }
+    },
+    "s-outdoors-long": {
+      "likes": [
+        [
+          "walking group",
+          "climbing group",
+          "planning my week"
+        ],
+        [
+          "hiking",
+          "climbing",
+          "wild swimming"
+        ],
+        [
+          "long walk"
+        ],
+        [],
+        [
+          "getting outdoors",
+          "looking after myself"
+        ],
+        [
+          "organised",
+          "encouraging"
+        ]
+      ],
+      "avoids": [
+        [],
+        [
+          "gym",
+          "team sports"
+        ],
+        [],
+        [],
+        [],
+        []
+      ],
+      "styles": {
+        "social": null,
+        "planning": "planning ahead",
+        "working": null
+      }
+    },
+    "s-unrelated-short": {
+      "likes": [
+        [
+          "learning Japanese"
+        ],
+        [
+          "knitting",
+          "birdwatching"
+        ],
+        [
+          "nature reserve"
+        ],
+        [],
+        [
+          "course"
+        ],
+        []
+      ],
+      "avoids": [
+        [],
+        [],
+        [],
+        [],
+        [],
+        []
+      ],
+      "styles": {
+        "social": null,
+        "planning": null,
+        "working": null
+      }
+    },
+    "s-unrelated-long": {
+      "likes": [
+        [
+          "practising Japanese"
+        ],
+        [
+          "knitting",
+          "birdwatching"
+        ],
+        [
+          "nature reserve",
+          "binoculars"
+        ],
+        [],
+        [
+          "doing well"
+        ],
+        []
+      ],
+      "avoids": [
+        [],
+        [],
+        [],
+        [],
+        [],
+        []
+      ],
+      "styles": {
+        "social": null,
+        "planning": null,
+        "working": null
+      }
+    },
+    "s-too-few": {
+      "likes": [
+        [
+          "finding way around campus"
+        ],
+        [],
+        [],
+        [],
+        [
+          "doing well on course"
+        ],
+        []
+      ],
+      "avoids": [
+        [],
+        [
+          "sport",
+          "clubbing",
+          "gaming"
+        ],
+        [],
+        [],
+        [],
+        []
+      ],
+      "styles": {
+        "social": "staying in",
+        "planning": "planning ahead",
+        "working": null
+      }
+    },
+    "s-nights-in-short": {
+      "likes": [
+        [
+          "settling in"
+        ],
+        [
+          "reading",
+          "films"
+        ],
+        [],
+        [],
+        [
+          "feeling settled"
+        ],
+        [
+          "patient"
+        ]
+      ],
+      "avoids": [
+        [],
+        [],
+        [],
+        [],
+        [],
+        []
+      ],
+      "styles": {
+        "social": "staying in",
+        "planning": "planning ahead",
+        "working": "on my own"
+      }
+    },
+    "s-nights-in-long": {
+      "likes": [
+        [],
+        [
+          "reading",
+          "films"
+        ],
+        [],
+        [],
+        [
+          "feeling settled",
+          "calm"
+        ],
+        [
+          "patient",
+          "quiet chat"
+        ]
+      ],
+      "avoids": [
+        [],
+        [],
+        [
+          "clubs"
+        ],
+        [],
+        [],
+        []
+      ],
+      "styles": {
+        "social": "staying in",
+        "planning": "planning ahead",
+        "working": "on my own"
+      }
+    },
+    "s-live-music": {
+      "likes": [
+        [
+          "meeting people",
+          "music"
+        ],
+        [
+          "live music",
+          "indie bands"
+        ],
+        [
+          "seeing a band",
+          "drinks"
+        ],
+        [],
+        [
+          "social life"
+        ],
+        [
+          "outgoing"
+        ]
+      ],
+      "avoids": [
+        [],
+        [],
+        [],
+        [],
+        [],
+        []
+      ],
+      "styles": {
+        "social": null,
+        "planning": "last minute",
+        "working": "with others"
+      }
+    },
+    "s-q6-people": {
+      "likes": [
+        [
+          "getting organised"
+        ],
+        [
+          "board games",
+          "reading"
+        ],
+        [
+          "film"
+        ],
+        [],
+        [
+          "keeping on top of work"
+        ],
+        [
+          "calm"
+        ]
+      ],
+      "avoids": [
+        [],
+        [],
+        [],
+        [],
+        [],
+        []
+      ],
+      "styles": {
+        "social": "staying in",
+        "planning": "planning ahead",
+        "working": "on my own"
+      }
+    },
+    "s-q6-faith": {
+      "likes": [
+        [
+          "getting organised"
+        ],
+        [
+          "board games",
+          "reading"
+        ],
+        [
+          "film"
+        ],
+        [],
+        [
+          "keeping on top of work"
+        ],
+        [
+          "calm"
+        ]
+      ],
+      "avoids": [
+        [],
+        [],
+        [],
+        [],
+        [],
+        []
+      ],
+      "styles": {
+        "social": "staying in",
+        "planning": "planning ahead",
+        "working": "on my own"
+      }
+    }
   }
 }
