@@ -1,6 +1,22 @@
 <script>
+  import { page } from '$app/state';
+
   /** @type {import('./$types').PageProps} */
   let { data } = $props();
+
+  /**
+   * Where a button posts: this same address, with the app's sign-in request (redirect_uri, state,
+   * code_challenge and the rest) still in the query, plus the action's name, which SvelteKit reads
+   * from the query parameter starting with "/". A bare "?/allow" would replace the query, so the
+   * action, which checks the request from the query exactly as the page does, would find nothing.
+   * @param {'allow' | 'deny'} name
+   */
+  function actionFor(name) {
+    const query = new URLSearchParams(page.url.search);
+    for (const key of [...query.keys()]) if (key.startsWith('/')) query.delete(key);
+    const rest = query.toString();
+    return `?${rest ? `${rest}&` : ''}/${name}`;
+  }
 </script>
 
 <svelte:head>
@@ -18,7 +34,7 @@
   </p>
   <p>AG2 is asking for: <strong>{data.scope === 'read offline' ? 'read only, and to stay connected' : data.scope}</strong></p>
 
-  <form method="POST" action="?/allow">
+  <form method="POST" action={actionFor('allow')}>
     <fieldset>
       <legend>What should the pretend Blackboard do?</legend>
       {#each data.scenarios as scenario, i (scenario.id)}
@@ -30,7 +46,7 @@
     </fieldset>
     <button class="primary-button" type="submit">Allow</button>
   </form>
-  <form method="POST" action="?/deny">
+  <form method="POST" action={actionFor('deny')}>
     <button class="secondary-button" type="submit">Deny</button>
   </form>
 </main>

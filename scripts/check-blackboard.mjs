@@ -7,19 +7,26 @@
 // files for Outlook, what counts as new, and that only signed-in students see the section and logging
 // out forgets the connection. Nothing here goes to the network.
 //
+// The pretend Allow page is also checked as a student uses it: a local dev server is started on a
+// free port (BLACKBOARD_HOST=mock), and the page's own Allow and Deny forms are read from its HTML and
+// submitted as a browser submits them, then followed through /blackboard/callback. (The checks before
+// those call approve() and deny() directly, which can't notice a form that loses the sign-in request.)
+//
 // With --build it also builds the app with made-up key, secret and cookie key values and checks
 // none of them is anywhere in what the browser downloads (about a minute):
 //   node scripts/check-blackboard.mjs [--build]
 
 import assert from 'node:assert/strict';
-import { spawnSync } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import { generateKeyPairSync, randomBytes, sign } from 'node:crypto';
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
+import { createServer } from 'node:net';
 import { dirname, join, resolve } from 'node:path';
+import { parseHTML } from 'linkedom';
 import { blackboardClient, SCOPE } from '#lib/server/blackboard/client.js';
 import { blackboardSettings } from '#lib/server/blackboard/config.js';
 import { challengeFor, newState, newVerifier, seal, unseal } from '#lib/server/blackboard/crypto.js';
-import { finishConnect, readView, startConnect } from '#lib/server/blackboard/flow.js';
+import { finishConnect, FLOW_COOKIE, readView, SESSION_COOKIE, startConnect } from '#lib/server/blackboard/flow.js';
 import { approve, deny, MOCK_APP_KEY, MOCK_APP_SECRET, MOCK_HOST, mockFetch } from '#lib/server/blackboard/mock.js';
 import { plainText } from '#lib/server/blackboard/read.js';
 import { verifyFirebaseIdToken } from '#lib/server/firebase-token.js';
@@ -346,8 +353,140 @@ const checks = [
       for (const reached of reachable(file)) assert.ok(!/firebase\/ai|checkin\//.test(reached), `${file} reaches ${reached}`);
       assert.doesNotMatch(readFileSync(file, 'utf8'), /from ['"](?:firebase\/ai|#lib\/firebase\/ai\.js|#lib\/checkin\/)/, file);
     }
+  }],
+
+  // ---------- The pretend Allow page itself, through a local dev server ----------
+  ['The pretend Allow page: its own Allow form, submitted as a browser does, goes back to the callback with a code and the same state, and connects', async () => {
+    const server = await devServer();
+    const page = await openAllowPage(server);
+    const allow = page.forms.find((form) => form.button === 'Allow');
+    assert.ok(allow, 'an Allow form');
+    assert.equal(allow.method, 'POST');
+    assert.equal(allow.body.get('scenario'), 'normal', 'the first scenario is chosen');
+    const response = await submit(server, allow);
+    assert.equal(response.status, 303, `Allow answered ${response.status}: ${(await response.text()).replace(/\s+/g, ' ').slice(0, 120)}`);
+    const back = new URL(/** @type {string} */ (response.headers.get('location')), server.base);
+    assert.equal(`${back.origin}${back.pathname}`, `${server.base}/blackboard/callback`);
+    assert.match(back.searchParams.get('code') ?? '', /^mock-code-/);
+    assert.equal(back.searchParams.get('state'), page.state);
+    const done = await fetch(back, { redirect: 'manual', headers: { cookie: `${FLOW_COOKIE}=${page.flow}` } });
+    assert.equal(done.status, 303);
+    assert.equal(done.headers.get('location'), '/checklist?blackboard=connected#blackboard');
+    assert.ok(done.headers.getSetCookie().some((cookie) => cookie.startsWith(`${SESSION_COOKIE}=`) && /HttpOnly/i.test(cookie)), 'the sealed session cookie is set');
+  }],
+  ['The pretend Allow page: its own Deny form goes back to the callback with access_denied and the same state, and nothing is connected', async () => {
+    const server = await devServer();
+    const page = await openAllowPage(server);
+    const deny = page.forms.find((form) => form.button === 'Deny');
+    assert.ok(deny, 'a Deny form');
+    const response = await submit(server, deny);
+    assert.equal(response.status, 303, `Deny answered ${response.status}: ${(await response.text()).replace(/\s+/g, ' ').slice(0, 120)}`);
+    const back = new URL(/** @type {string} */ (response.headers.get('location')), server.base);
+    assert.equal(`${back.origin}${back.pathname}`, `${server.base}/blackboard/callback`);
+    assert.equal(back.searchParams.get('error'), 'access_denied');
+    assert.equal(back.searchParams.get('state'), page.state);
+    const done = await fetch(back, { redirect: 'manual', headers: { cookie: `${FLOW_COOKIE}=${page.flow}` } });
+    assert.equal(done.headers.get('location'), '/checklist?blackboard=denied#blackboard');
+    assert.ok(!done.headers.getSetCookie().some((cookie) => cookie.startsWith(`${SESSION_COOKIE}=`)), 'no session cookie');
+  }],
+  ['The pretend Allow page: what its forms post is checked as the page is (another site\'s callback, no address, another app), and the old bare "?/allow" is refused', async () => {
+    const server = await devServer();
+    const page = await openAllowPage(server);
+    const allow = /** @type {Form} */ (page.forms.find((form) => form.button === 'Allow'));
+    /** @param {(query: URLSearchParams) => void} change */
+    const changed = (change) => {
+      const url = new URL(allow.action);
+      change(url.searchParams);
+      return url.href;
+    };
+    for (const [why, action] of [
+      ['another site’s callback', changed((query) => query.set('redirect_uri', 'https://evil.example/blackboard/callback'))],
+      ['no redirect address', changed((query) => query.delete('redirect_uri'))],
+      ['another app', changed((query) => query.set('client_id', 'someone-else'))],
+      ['the old bare ?/allow', new URL('?/allow', page.url).href]
+    ]) {
+      const response = await submit(server, allow, action);
+      assert.equal(response.status, 400, `${why}: answered ${response.status}`);
+    }
   }]
 ];
+
+/** @typedef {{ button: string | undefined, method: string, action: string, body: URLSearchParams }} Form */
+/** @typedef {{ base: string, cookieKey: Buffer, stop: () => void }} DevServer */
+
+/** @type {Promise<DevServer> | undefined} */
+let started;
+/** The local dev server for the page checks, started once on a free port (mock Blackboard). */
+const devServer = () => (started ??= startDevServer());
+
+/** @returns {Promise<DevServer>} */
+async function startDevServer() {
+  const port = await new Promise((done, fail) => {
+    const probe = createServer();
+    probe.on('error', fail);
+    probe.listen(0, '127.0.0.1', () => {
+      const { port: free } = /** @type {import('node:net').AddressInfo} */ (probe.address());
+      probe.close(() => done(free));
+    });
+  });
+  const cookieKey = randomBytes(32);
+  const child = spawn(process.execPath, ['node_modules/vite/bin/vite.js', 'dev', '--host', '127.0.0.1', '--port', String(port), '--strictPort'], {
+    env: { ...process.env, BLACKBOARD_HOST: 'mock', BLACKBOARD_COOKIE_KEY: cookieKey.toString('base64') },
+    stdio: ['ignore', 'pipe', 'pipe']
+  });
+  let output = '';
+  child.stdout.on('data', (chunk) => (output += chunk));
+  child.stderr.on('data', (chunk) => (output += chunk));
+  const base = `http://127.0.0.1:${port}`;
+  const stop = () => child.kill();
+  for (let tries = 0; tries < 120; tries++) {
+    if (child.exitCode !== null) throw new Error(`the dev server stopped:\n${output.split('\n').slice(-8).join('\n')}`);
+    const ready = await fetch(`${base}/`).then((response) => response.status < 500, () => false);
+    if (ready) return { base, cookieKey, stop };
+    await new Promise((wait) => setTimeout(wait, 500));
+  }
+  stop();
+  throw new Error('the dev server didn’t start within a minute');
+}
+
+/**
+ * Opens the pretend Allow page as the app sends a student there (the same sign-in address and
+ * flow cookie as /api/blackboard/connect makes), and reads its forms as a browser would: each
+ * form's action resolved against the page's address, and the fields it would send.
+ * @param {DevServer} server
+ */
+async function openAllowPage(server) {
+  const client = blackboardClient({ host: MOCK_HOST, browserHost: `${server.base}/blackboard/mock`, appKey: MOCK_APP_KEY, appSecret: MOCK_APP_SECRET, fetch: mockFetch });
+  const { url, flow } = startConnect({ cookieKey: server.cookieKey, client, uid: 'page-check-student', origin: server.base });
+  const response = await fetch(url);
+  assert.equal(response.status, 200, `the page answered ${response.status}`);
+  const { document } = parseHTML(await response.text());
+  /** @type {Form[]} */
+  const forms = [...document.querySelectorAll('form')].map((form) => ({
+    button: form.querySelector('button')?.textContent?.trim(),
+    method: (form.getAttribute('method') ?? 'GET').toUpperCase(),
+    action: new URL(form.getAttribute('action') ?? '', url).href,
+    body: new URLSearchParams(
+      [...form.querySelectorAll('input[name], select[name], textarea[name]')]
+        .filter((field) => !['radio', 'checkbox'].includes(field.getAttribute('type') ?? '') || field.hasAttribute('checked'))
+        .map((field) => [field.getAttribute('name') ?? '', field.getAttribute('value') ?? 'on'])
+    )
+  }));
+  return { url, flow, state: new URL(url).searchParams.get('state'), forms };
+}
+
+/**
+ * Submits a form as a browser does (a same-site POST of its fields), without following the redirect.
+ * @param {DevServer} server @param {Form} form @param {string} [action] a changed address, to try tampering
+ */
+function submit(server, form, action = form.action) {
+  return fetch(action, {
+    method: form.method,
+    redirect: 'manual',
+    body: form.body,
+    headers: { 'content-type': 'application/x-www-form-urlencoded', origin: server.base, accept: 'text/html' }
+  });
+}
 
 /** Every .js and .svelte file under a folder. @param {string} folder @returns {string[]} */
 function walk(folder) {
@@ -388,6 +527,7 @@ for (const [name, check] of checks) {
     console.log(`FAIL  ${name}\n      ${/** @type {Error} */ (err).message.split('\n').slice(0, 6).join('\n      ')}`);
   }
 }
+if (started) (await started.catch(() => null))?.stop();
 console.log(`\n${checks.length - failed}/${checks.length} checks passed`);
 
 if (process.argv.includes('--build')) {
