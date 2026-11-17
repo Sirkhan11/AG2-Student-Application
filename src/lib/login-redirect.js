@@ -1,4 +1,5 @@
 import { goto } from '$app/navigation';
+import { trail } from '#lib/back.js';
 import { loginPathFor } from '#lib/next-path.js';
 
 /**
@@ -8,5 +9,6 @@ import { loginPathFor } from '#lib/next-path.js';
  * them straight back to login.
  */
 export function sendToLogin() {
+  trail.willReplace();
   goto(loginPathFor(location.pathname + location.search), { replaceState: true });
 }

@@ -1,13 +1,14 @@
 <script>
   import '../app.css';
   import { onMount } from 'svelte';
-  import { goto, onNavigate } from '$app/navigation';
+  import { afterNavigate, goto, onNavigate } from '$app/navigation';
   import { page } from '$app/state';
   import { chatShown, opensChatFromHome } from '#lib/page-transitions.js';
   import { gateFor } from '#lib/account-gate.js';
   import { watchAccount } from '#lib/firebase/auth.js';
   import { db, getFirebaseAuth } from '#lib/firebase/client.js';
   import { sendToLogin } from '#lib/login-redirect.js';
+  import { trail } from '#lib/back.js';
   import { finishSignUp } from '#lib/signup/finish.js';
   import { waitingSignUp } from '#lib/signup/waiting.js';
   import NorthumbriaOnly from '#lib/components/NorthumbriaOnly.svelte';
@@ -29,6 +30,15 @@
   $effect(() => {
     if (screen === 'login' && !getFirebaseAuth().currentUser) sendToLogin();
   });
+
+  // Every navigation goes on this tab's trail, so "← Back" knows the page they came from (back.js).
+  afterNavigate((navigation) =>
+    trail.record({
+      type: navigation.type,
+      delta: navigation.type === 'popstate' ? navigation.delta : null,
+      to: navigation.to ? navigation.to.url.pathname + navigation.to.url.search : '/'
+    })
+  );
 
   /** Each page's tab title; every other page is just "AG2". */
   const TITLES = /** @type {Record<string, string>} */ ({ '/nhs-guide': 'NHS Guide', '/gp-finder': 'Find a GP', '/late-arrivals': 'Arriving late' });

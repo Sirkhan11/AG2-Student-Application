@@ -1,4 +1,5 @@
 <script>
+  import BackLink from '#lib/components/BackLink.svelte';
   import BottomNav from '#lib/components/BottomNav.svelte';
   import { SECTIONS } from '#lib/late-arrivals/guide.js';
 
@@ -8,7 +9,7 @@
 
 
 <main class="page">
-  <a href="/more">← Back</a>
+  <BackLink />
 
   <h1>Arriving late</h1>
   <p class="muted">

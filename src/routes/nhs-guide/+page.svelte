@@ -1,4 +1,5 @@
 <script>
+  import BackLink from '#lib/components/BackLink.svelte';
   import BottomNav from '#lib/components/BottomNav.svelte';
   import { COSTS_CHECKED_ON, SECTIONS, withFigures } from '#lib/nhs/guide.js';
 
@@ -9,7 +10,7 @@
 
 
 <main class="page">
-  <a href="/more">← Back</a>
+  <BackLink />
 
   <h1>NHS Guide</h1>
   <p class="muted">

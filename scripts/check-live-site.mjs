@@ -113,6 +113,18 @@ try {
     await sleep(800);
     report(`Logged out, ${path} opens`, await waitFor(`location.pathname === ${JSON.stringify(path)} && ${has(heading)}`));
   }
+  // Need help's "← Back", logged out: to log in, whether it was opened directly or from the log-in page.
+  await go('/need-help');
+  await waitFor(has('← Back'));
+  await clickText('← Back');
+  const directHelp = await waitFor(`location.pathname === '/' && ${has('Welcome back')}`, 8000);
+  await go('/');
+  await waitFor(has('Need help now?'));
+  await evaluate(`(document.querySelector('a.help-link').click(), true)`);
+  await waitFor(`location.pathname === '/need-help' && ${has('← Back')}`);
+  await clickText('← Back');
+  const fromLogin = await waitFor(`location.pathname === '/' && ${has('Welcome back')}`, 8000);
+  report('Logged out, Need help’s "← Back" goes to log in, opened directly or from the log-in page', directHelp && fromLogin);
   const PRIVATE = ['/home', '/check-in', '/checklist', '/find-mentor', '/mentor', '/more', '/nhs-guide', '/gp-finder', '/late-arrivals', '/societies', '/societies/15', '/sport', '/sport/swimming', '/students-union'];
   /** @type {string[]} */
   const notSent = [];

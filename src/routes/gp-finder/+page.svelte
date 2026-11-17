@@ -1,4 +1,5 @@
 <script>
+  import BackLink from '#lib/components/BackLink.svelte';
   import BottomNav from '#lib/components/BottomNav.svelte';
   import { REGISTERING } from '#lib/nhs/guide.js';
   import {
@@ -167,7 +168,7 @@
 
 
 <main class="page">
-  <a href="/more">← Back</a>
+  <BackLink />
 
   <h1>Find a GP</h1>
   <p class="muted">

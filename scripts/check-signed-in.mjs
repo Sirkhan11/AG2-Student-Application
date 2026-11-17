@@ -5,6 +5,8 @@
 // - a logged-out visitor sent to log in from the checklist is back on it after logging in;
 // - Home greets them by first name, and never shows a wrong name while it loads;
 // - logged in, every page opens and none sends them to log in;
+// - "← Back" returns to the page they came from, or Home when they opened the page directly, and
+//   never to the log-in page after being sent there;
 // - a student whose details were lost (no name or course): Home says "Hi there" with Finish your
 //   details, and saving them from the sign-up page greets them by name;
 // - the GP finder keeps "Use my location" on the phone: scripts/check-gp-finder-privacy.mjs, logged in.
@@ -200,13 +202,41 @@ try {
   report('Logged in, every page opens and none sends them to log in', sentAway.length === 0, sentAway.join(', '));
   report('The tab says AG2, or the page’s name with AG2', (await evaluate('document.title')) === 'Find a GP · AG2' || (await evaluate('document.title')) === 'AG2', await evaluate('document.title'));
 
-  // 4. Lost details: "Hi there", the card, and saving them on the sign-up page.
+  // 4. "← Back": to the page they came from, or Home when opened directly.
+  /** @param {string} path */
+  const backTo = async (path) => {
+    await clickText('← Back');
+    return waitFor(`location.pathname === ${JSON.stringify(path)}`, 8000);
+  };
+  /** @param {string} selector @param {string} path */
+  const tap = async (selector, path) => {
+    await evaluate(`(document.querySelector(${JSON.stringify(selector)}).click(), true)`);
+    return waitFor(`location.pathname === ${JSON.stringify(path)} && ${has('← Back')}`, 8000);
+  };
+  await go('/home');
+  await waitFor(has('How can we help you today?'));
+  const fromHome = (await tap('a.feature-card[href="/gp-finder"]', '/gp-finder')) && (await backTo('/home'));
+  await evaluate(`(document.querySelector('a.feature-card[href="/more"]').click(), true)`);
+  await waitFor(`location.pathname === '/more'`);
+  const fromMore = (await tap('a.menu-item[href="/nhs-guide"]', '/nhs-guide')) && (await backTo('/more'));
+  await go('/late-arrivals');
+  await waitFor(has('← Back'));
+  const direct = await backTo('/home');
+  const help = (await tap('a.feature-card[href="/need-help"]', '/need-help')) && (await backTo('/home'));
+  report('"← Back" returns to where they came from (GP finder to Home, NHS guide to More, Need help to Home); opened directly, it goes Home', fromHome && fromMore && direct && help,
+    `${fromHome} ${fromMore} ${direct} ${help}`);
+
+  // 5. Lost details: "Hi there", the card, and saving them on the sign-up page. On the way, Back after
+  //    being sent to log in goes Home, not back to the log-in page.
   await go('/home');
   await waitFor(has('How can we help you today?'));
   await clickText('Log out');
   await waitFor(`location.pathname === '/'`);
+  await go('/gp-finder');
+  await waitFor(`location.pathname === '/' && location.search === '?next=%2Fgp-finder'`);
   await logIn(lost);
-  await waitFor(`location.pathname === '/home'`);
+  await waitFor(`location.pathname === '/gp-finder' && ${has('← Back')}`);
+  report('Sent to log in from the GP finder and back: "← Back" then goes Home, not to the log-in page', await backTo('/home'));
   const asked = await waitFor(`${has('Finish your details')} && document.querySelector('main h1')?.textContent.trim() === 'Hi there'`);
   await clickText('Add my details');
   const form = await waitFor(`location.pathname === '/signup' && ${has('You’re logged in, so these are saved to your account.')} && !document.querySelector('#email') && !document.querySelector('#password')`);
@@ -223,7 +253,7 @@ try {
   rmSync(profile, { recursive: true, force: true });
 }
 
-// 5. The GP finder's privacy check, logged in as Sam.
+// 6. The GP finder's privacy check, logged in as Sam.
 const gp = await new Promise((done) => {
   const child = spawn(process.execPath, ['scripts/check-gp-finder-privacy.mjs', BASE], { env: { ...process.env, CHECK_LOGIN_EMAIL: sam.email, CHECK_LOGIN_PASSWORD: sam.password }, stdio: ['ignore', 'pipe', 'pipe'] });
   let output = '';

@@ -1,4 +1,5 @@
 <script>
+  import BackLink from '#lib/components/BackLink.svelte';
   import { serviceById } from '#lib/nsu/services.js';
 
   // Non-emergency help from the Students' Union, from src/lib/nsu/nsu-services.json
@@ -7,7 +8,7 @@
 </script>
 
 <main class="page">
-  <a href="/">← Back</a>
+  <BackLink />
 
   <h1>Need help now?</h1>
 
