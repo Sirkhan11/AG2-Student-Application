@@ -1,32 +1,97 @@
 // The offline part of refresh-gp-practices.mjs: reading NHS England's list of GP practices (the
-// "epraccur" report from ODS Data Search and Export, Open Government Licence), keeping the active GP
-// practices near the Newcastle city campus, and building src/lib/gp/gp-practices.json. Tested with
-// made-up rows by check-gp-practices.mjs. Nothing here goes to the network.
+// "epraccur" report from ODS Data Search and Export, Open Government Licence), keeping England's active
+// GP practices, and building the two files the GP finder uses:
+// - src/lib/gp/gp-practices.json: the North East list (NE, DH and SR postcode areas), with each
+//   practice's phone, email and website from its page on the NHS website. It's part of the page.
+// - static/gp/england.tsv: every active practice in England, compact, loaded only when a search lands
+//   outside the North East list.
+// Tested with made-up rows and pages by check-gp-practices.mjs. Nothing here goes to the network.
 
 export const REPORT_URL = 'https://www.odsdatasearchandexport.nhs.uk/api/getReport?report=epraccur';
 export const POSTCODES_URL = 'https://api.postcodes.io/postcodes';
 /** Says what's asking, so the services can tell it apart from people and other bots. */
 export const USER_AGENT = 'AG2StudentApp-GP-refresh/1.0 (Northumbria University student project)';
-/** The point distances are measured from. */
+/** The campus, for the page's wording. */
 export const CENTRE = { name: 'Northumbria University city campus', postcode: 'NE1 8ST' };
-/** How far from the campus the list goes, in a straight line. */
-export const RADIUS_KM = 10;
-/** Postcode areas that reach within 10 km of the campus: only practices in these are looked up. */
-export const AREAS = ['NE', 'DH'];
-/** Fewer practices than this means the report has probably changed (78 within 10 km in November 2026). */
-export const MIN_PRACTICES = 60;
+/**
+ * The postcode areas the list covers: Tyne and Wear, Northumberland and County Durham (NE, DH, SR),
+ * where Newcastle-campus students live. A search elsewhere gets NHS Find a GP instead.
+ */
+export const AREAS = ['NE', 'DH', 'SR'];
+/** Fewer practices than this means the report has probably changed (202 in November 2026). */
+export const MIN_PRACTICES = 150;
 /** ODS's role code for a GP practice. Other roles in the report are out-of-hours services, prisons, walk-in centres and so on. */
 export const GP_PRACTICE_ROLE = 'RO76';
 
 /** Where things are in each row of the report (counting from 0). It has no header row. */
-const COLUMN = { code: 0, name: 1, address: [4, 5, 6, 7, 8], postcode: 9, status: 12, phone: 17, role: 25 };
+const COLUMN = { code: 0, name: 1, grouping: 2, address: [4, 5, 6, 7, 8], postcode: 9, status: 12, phone: 17, role: 25 };
+
+/**
+ * True for a practice in England: it sits in an NHS England region (national grouping Y56 to Y63).
+ * The report also has Wales's practices (codes starting W, no grouping); the finder sends people in
+ * Wales to Wales's own GP finder instead.
+ * @param {string[]} row
+ */
+const inEngland = (row) => /^Y\d\d$/.test(row[COLUMN.grouping] ?? '');
 
 /**
  * @typedef {{ code: string, name: string, address: string, postcode: string, phone: string | null }} Practice
- * @typedef {Practice & { lat: number, lng: number }} PlacedPractice
+ * @typedef {{ phone: string | null, email: string | null, website: string | null }} Contact
+ * @typedef {Practice & Contact & { lat: number, lng: number }} PlacedPractice
  * @typedef {{ source: string, licence: string, dataFrom: string, centre: { name: string, postcode: string, lat: number, lng: number },
- *   radiusKm: number, count: number, practices: PlacedPractice[] }} PracticesFile
+ *   areas: string[], count: number, practices: PlacedPractice[] }} PracticesFile
  */
+
+/**
+ * A practice's "contact details and opening times" page on the NHS website. The part before the
+ * ODS code can be anything: the NHS website redirects to the right one.
+ * @param {string} code
+ */
+export const contactPageUrl = (code) => `https://www.nhs.uk/services/gp-surgery/gp/${code}/contact-details-and-opening-times`;
+
+/**
+ * The phone number, email address and website from a practice's NHS contact page, or null for any
+ * it doesn't give. The phone is as the page writes it ("0191 232 4274").
+ * @param {string} html
+ * @returns {Contact}
+ */
+export function parseContactPage(html) {
+  const links = [...html.matchAll(/<a\b([^>]*)>([\s\S]*?)<\/a>/gi)].map((m) => ({
+    href: (m[1].match(/href\s*=\s*"([^"]*)"/i)?.[1] ?? '').replace(/&amp;/g, '&').trim(),
+    text: m[2].replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
+  }));
+  const tel = links.find((link) => /^tel:/i.test(link.href));
+  const mail = links.find((link) => /^mailto:/i.test(link.href));
+  const site = links.find((link) => /website/i.test(link.text) && /^https?:\/\//i.test(link.href) && !/(^|\.)nhs\.uk\//i.test(link.href.replace(/^https?:\/\//i, '')));
+  const digits = tel ? tel.href.replace(/^tel:/i, '').replace(/[^\d+]/g, '') : '';
+  const shown = tel && tel.text.replace(/\D/g, '') === digits.replace(/^\+44/, '0') ? tel.text : digits;
+  let email = null;
+  if (mail) {
+    try {
+      email = decodeURIComponent(mail.href.replace(/^mailto:/i, '')).split('?')[0].trim().toLowerCase() || null;
+    } catch {
+      email = null;
+    }
+  }
+  return { phone: shown || null, email: email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ? email : null, website: site?.href ?? null };
+}
+
+/** Words that mark a shared mailbox rather than a person's own. */
+const MAILBOX_WORDS = new Set(['practice', 'surgery', 'surgeries', 'medical', 'med', 'medicalcentre', 'reception', 'admin', 'administration', 'enquiries', 'enquiry', 'info', 'contact', 'patients', 'patient', 'gp', 'gps', 'health', 'healthcentre', 'centre', 'center', 'group', 'office', 'appointments', 'secretaries', 'team', 'mc', 'hc', 'nhs']);
+
+/**
+ * True if an email address looks like the practice's own mailbox (it names the practice, its ODS code,
+ * or a word such as "reception"), not a person's. Anything else is left out of the public list.
+ * @param {string} email
+ * @param {{ code: string, name: string }} practice
+ */
+export function isPracticeMailbox(email, practice) {
+  const local = email.split('@')[0].toLowerCase();
+  if (local.includes(practice.code.toLowerCase())) return true;
+  const parts = local.split(/[._+-]+/).map((part) => part.replace(/\d+$/, '')).filter(Boolean);
+  const nameWords = new Set(practice.name.toLowerCase().split(/[^a-z]+/).filter((word) => word.length >= 4));
+  return parts.some((part) => MAILBOX_WORDS.has(part) || nameWords.has(part) || [...nameWords].some((word) => part.startsWith(word) || word.startsWith(part) && part.length >= 5));
+}
 
 /**
  * Splits CSV text into rows of fields. Handles quoted fields, "" inside them, and Windows line ends.
@@ -96,14 +161,15 @@ export function tidyName(raw) {
 const areaOf = (postcode) => postcode.trim().toUpperCase().match(/^([A-Z]{1,2})\d/)?.[1] ?? '';
 
 /**
- * The active GP practices in the given postcode areas, tidied.
+ * England's active GP practices, tidied: all of them, or those in the given postcode areas.
  * @param {string[][]} rows the report's rows
- * @param {string[]} areas such as ['NE', 'DH']
+ * @param {string[] | null} [areas] such as ['NE', 'DH']; null for all of England
  * @returns {Practice[]}
  */
-export function activeGpPractices(rows, areas) {
+export function activeGpPractices(rows, areas = null) {
   return rows
-    .filter((row) => row[COLUMN.status] === 'ACTIVE' && row[COLUMN.role] === GP_PRACTICE_ROLE && areas.includes(areaOf(row[COLUMN.postcode] ?? '')))
+    .filter((row) => row[COLUMN.status] === 'ACTIVE' && row[COLUMN.role] === GP_PRACTICE_ROLE && inEngland(row))
+    .filter((row) => !areas || areas.includes(areaOf(row[COLUMN.postcode] ?? '')))
     .map((row) => ({
       code: row[COLUMN.code].trim(),
       name: tidyName(row[COLUMN.name]),
@@ -124,18 +190,50 @@ export function buildFile(practices, centre, dataFrom) {
   const round = (/** @type {number} */ n) => Math.round(n * 1e5) / 1e5;
   const sorted = [...practices].sort((a, b) => a.name.localeCompare(b.name, 'en-GB') || a.code.localeCompare(b.code));
   return {
-    source: 'NHS England Organisation Data Service: GP practices (epraccur), from https://www.odsdatasearchandexport.nhs.uk/',
+    source:
+      'NHS England Organisation Data Service: GP practices (epraccur), from https://www.odsdatasearchandexport.nhs.uk/. ' +
+      'Phone numbers, email addresses and websites from each practice\'s contact page on the NHS website (nhs.uk).',
     licence:
       'Contains NHS England data, Open Government Licence v3.0. Coordinates from postcodes.io (ONS Postcode Directory): ' +
       'contains OS data © Crown copyright and database right; contains Royal Mail data © Royal Mail copyright and database right; ' +
       'contains National Statistics data © Crown copyright and database right.',
     dataFrom,
     centre: { ...centre, lat: round(centre.lat), lng: round(centre.lng) },
-    radiusKm: RADIUS_KM,
+    areas: AREAS,
     count: sorted.length,
     practices: sorted.map((practice) => ({ ...practice, lat: round(practice.lat), lng: round(practice.lng) }))
   };
 }
+
+/** The first address line and the town, for the compact England file: "Lawson Street, Stockton-on-Tees". @param {string} address */
+export function shortAddress(address) {
+  const parts = address.split(', ').filter(Boolean);
+  return parts.length > 1 ? `${parts[0]}, ${parts[parts.length - 1]}` : address;
+}
+
+/**
+ * The all-England file (static/gp/england.tsv, read by src/lib/gp/england.js): a note line, the
+ * column names, then one practice per line, tab-separated, sorted by ODS code, coordinates to 4
+ * places (about 10 m).
+ * @param {PlacedPractice[]} practices
+ * @param {string} dataFrom
+ */
+export function englandFile(practices, dataFrom) {
+  const clean = (/** @type {unknown} */ value) => String(value ?? '').replace(/[\t\r\n]+/g, ' ').trim();
+  const lines = [...practices]
+    .sort((a, b) => a.code.localeCompare(b.code))
+    .map((p) => [p.code, p.name, shortAddress(p.address), p.postcode, p.phone ?? '', p.lat.toFixed(4), p.lng.toFixed(4)].map(clean).join('\t'));
+  return [
+    `# GP practices in England, ${dataFrom}: NHS England Organisation Data Service (epraccur), Open Government Licence v3.0. ` +
+      'Coordinates from postcodes.io (ONS Postcode Directory): contains OS data © Crown copyright and database right; ' +
+      'contains Royal Mail data © Royal Mail copyright and database right; contains National Statistics data © Crown copyright and database right.',
+    ['code', 'name', 'address', 'postcode', 'phone', 'lat', 'lng'].join('\t'),
+    ...lines
+  ].join('\n') + '\n';
+}
+
+/** The England file's text without its dated note line, to see whether anything really changed. @param {string} text */
+export const englandBody = (text) => text.split('\n').filter((line) => !line.startsWith('#')).join('\n');
 
 /**
  * True if the two files hold the same practices (the download date doesn't count).
@@ -164,12 +262,14 @@ export function listChanges(last, next) {
 }
 
 /**
- * Reasons not to write the file: too few practices, or too many postcodes postcodes.io couldn't place.
- * @param {{ kept: number, candidates: number, unplaced: number }} counts
+ * Reasons not to write the file: too few practices, too many postcodes postcodes.io couldn't place,
+ * or too many contact pages that didn't read.
+ * @param {{ kept: number, candidates: number, unplaced: number, contactsMissing?: number }} counts
  */
-export function checkBeforeWriting({ kept, candidates, unplaced }) {
+export function checkBeforeWriting({ kept, candidates, unplaced, contactsMissing = 0 }) {
   const problems = [];
-  if (kept < MIN_PRACTICES) problems.push(`only ${kept} practices within ${RADIUS_KM} km (at least ${MIN_PRACTICES} expected), so the report may have changed`);
+  if (kept < MIN_PRACTICES) problems.push(`only ${kept} practices in ${AREAS.join(', ')} (at least ${MIN_PRACTICES} expected), so the report may have changed`);
   if (candidates > 0 && unplaced / candidates > 0.05) problems.push(`postcodes.io couldn't place ${unplaced} of ${candidates} postcodes`);
+  if (kept > 0 && contactsMissing / kept > 0.1) problems.push(`${contactsMissing} of ${kept} NHS contact pages didn't read, so the NHS website may have changed`);
   return problems;
 }
