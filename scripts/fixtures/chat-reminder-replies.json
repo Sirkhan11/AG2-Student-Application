@@ -1,54 +1,54 @@
 {
   "about": "Check-in chat replies for check-chat-reminders.mjs (a made-up student). Regenerate with --refresh rather than edit.",
   "model": "gemini-3.5-flash-lite",
-  "promptFingerprint": "8af629b1eab5",
-  "made": "2026-11-17T19:00:28.873Z",
+  "promptFingerprint": "fd9dc98d0360",
+  "made": "2026-11-17T21:26:09.731Z",
   "replies": {
     "bank account": {
       "ask": "Yes, can you remind me to open a bank account?",
-      "reply": "That is a handy one to keep on top of. You can add it with {{task: Open a bank account}} on your [[Checklist]]."
+      "reply": "You can add {{task: Open a bank account}} to your checklist."
     },
     "two things": {
       "ask": "Yes please, opening a bank account and getting a bus pass",
-      "reply": "For your bank account, you can use this task: {{task: Open a bank account}}. Let's get that added to your [[Checklist]], and we can look at the bus pass next."
+      "reply": "You can add that to your checklist here. {{task: Open a bank account}}"
     },
     "add it for me": {
       "ask": "Yes, add it for me please",
-      "reply": "You can add it yourself by tapping the button on the card. Let me know if you need help with anything else."
+      "reply": "Only you can add it by tapping the card. Have you had a chance to look at [[Chess]] or [[Computing]] for your course and interests?"
     },
     "already there": {
       "ask": "Yes, can you remind me to register with a GP?",
-      "reply": "That's already on your checklist, and you can see it on your [[Checklist]] page. Have you thought about joining [[Chess]] or checking out [[Gigs]]?"
+      "reply": "That's already on your [[Checklist]], so you can tick it off there once it's done."
     },
     "worried": {
       "ask": "I’m really worried about money, I can’t afford food this week",
-      "reply": "I am so sorry you are going through this. Please take a look at [[Cost of Living]] and [[Food Pantry]] for help with money and food right now."
+      "reply": "I am really sorry to hear you are struggling with money and food this week. \n\n[[Cost of Living]] and [[Food Pantry]] can help with food and money worries."
     }
   },
   "conversation": [
     {
       "ask": "Pretty good thanks, still unpacking",
-      "reply": "Unpacking can take a while, so take it easy! Since you like gigs and chess, you might enjoy [[Chess]] and checking out [[Gigs]] for upcoming live music."
+      "reply": "Unpacking can take a while, so make sure you take some breaks. Since you're into chess and gigs, you might like [[Chess]] or [[Gigs]]."
     },
     {
       "ask": "Are there any chess societies?",
-      "reply": "Yes, [[Chess]] is a great one to join. Have a look at its page to see how to get in touch and join in."
+      "reply": "Yes, [[Chess]] is a great one for playing and meeting others who enjoy the game."
     },
     {
       "ask": "Nice. Anything for gigs?",
-      "reply": "[[Gigs]] has all the details on live music at the Students' Union. Is there anything else you'd like reminding about while you settle in?"
-    },
-    {
-      "ask": "No thanks, nothing for now",
-      "reply": "No problem at all. Let me know if you need anything else while you get settled in!"
+      "reply": "NSU's [[Gigs]] page has what's on for live music."
     },
     {
       "ask": "Thanks, that’s really helpful",
-      "reply": "You're very welcome, and I hope the rest of your unpacking goes smoothly. Have a great time getting settled into Northumbria!"
+      "reply": "You're very welcome. Is there anything else you would like reminding about while you settle in, such as opening a bank account?"
+    },
+    {
+      "ask": "No thanks, nothing for now",
+      "reply": "That is no problem at all. If anything comes up later, just let me know."
     },
     {
       "ask": "Have a good evening",
-      "reply": "And you, have a lovely evening! Let me know if you need anything else later on."
+      "reply": "And you, have a great evening."
     }
   ]
 }
