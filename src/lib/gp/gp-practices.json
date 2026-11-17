@@ -1,0 +1,717 @@
+{
+  "source": "NHS England Organisation Data Service: GP practices (epraccur), from https://www.odsdatasearchandexport.nhs.uk/",
+  "licence": "Contains NHS England data, Open Government Licence v3.0. Coordinates from postcodes.io (ONS Postcode Directory): contains OS data © Crown copyright and database right; contains Royal Mail data © Royal Mail copyright and database right; contains National Statistics data © Crown copyright and database right.",
+  "dataFrom": "2026-11-17",
+  "centre": {
+    "name": "Northumbria University city campus",
+    "postcode": "NE1 8ST",
+    "lat": 54.97663,
+    "lng": -1.60745
+  },
+  "radiusKm": 10,
+  "count": 78,
+  "practices": [
+    {
+      "code": "A88010",
+      "name": "Albert Road Surgery",
+      "address": "118 Albert Road, Jarrow",
+      "postcode": "NE32 5AG",
+      "phone": "0191 3009659",
+      "lat": 54.97808,
+      "lng": -1.49151
+    },
+    {
+      "code": "A85026",
+      "name": "Beacon View Medical Centre",
+      "address": "6 Beacon Lough Road, Beacon Lough, Gateshead",
+      "postcode": "NE9 6YS",
+      "phone": "0191 4824000",
+      "lat": 54.93307,
+      "lng": -1.58421
+    },
+    {
+      "code": "A86023",
+      "name": "Benfield Park Medical Group",
+      "address": "Benfield Road, Newcastle upon Tyne",
+      "postcode": "NE6 4QD",
+      "phone": "0191 2821010",
+      "lat": 54.98937,
+      "lng": -1.56163
+    },
+    {
+      "code": "A85002",
+      "name": "Bensham Family Practice",
+      "address": "Sidney Grove, Gateshead",
+      "postcode": "NE8 2XB",
+      "phone": "0191 4776955",
+      "lat": 54.95279,
+      "lng": -1.61705
+    },
+    {
+      "code": "A86030",
+      "name": "Betts Avenue Medical Group",
+      "address": "2 Betts Avenue, Benwell, Newcastle upon Tyne",
+      "postcode": "NE15 6TQ",
+      "phone": "0191 2742767",
+      "lat": 54.9733,
+      "lng": -1.67588
+    },
+    {
+      "code": "A85017",
+      "name": "Bewick Road Surgery",
+      "address": "10 Bewick Road, Gateshead",
+      "postcode": "NE8 4DP",
+      "phone": "0191 4772296",
+      "lat": 54.95641,
+      "lng": -1.60167
+    },
+    {
+      "code": "A87013",
+      "name": "Bewicke Medical Centre",
+      "address": "51 Tynemouth Road, Howden, Wallsend",
+      "postcode": "NE28 0AD",
+      "phone": "0191 2623036",
+      "lat": 54.99664,
+      "lng": -1.49976
+    },
+    {
+      "code": "A86010",
+      "name": "Biddlestone Health Group",
+      "address": "Biddlestone Road, Heaton, Newcastle upon Tyne",
+      "postcode": "NE6 5SL",
+      "phone": "0191 2655755",
+      "lat": 54.98919,
+      "lng": -1.57674
+    },
+    {
+      "code": "A85008",
+      "name": "Birtley Medical Group",
+      "address": "Durham Road, Birtley, Chester le Street",
+      "postcode": "DH3 2QT",
+      "phone": "0191 4921022",
+      "lat": 54.89189,
+      "lng": -1.57645
+    },
+    {
+      "code": "A88009",
+      "name": "Boldon GP Practice",
+      "address": "Gibson Court, Boldon Colliery",
+      "postcode": "NE35 9AN",
+      "phone": "0191 5193000",
+      "lat": 54.94977,
+      "lng": -1.46072
+    },
+    {
+      "code": "A86033",
+      "name": "Brunton Park",
+      "address": "Princes Road, Brunton Park, Newcastle upon Tyne",
+      "postcode": "NE3 5NF",
+      "phone": "0191 2363338",
+      "lat": 55.02681,
+      "lng": -1.62775
+    },
+    {
+      "code": "A85019",
+      "name": "Central Gateshead Medical Group",
+      "address": "Prince Consort Road, Gateshead",
+      "postcode": "NE8 1NB",
+      "phone": "0191 4772243",
+      "lat": 54.95649,
+      "lng": -1.60432
+    },
+    {
+      "code": "A85010",
+      "name": "Chainbridge Medical Partnership",
+      "address": "Shibdon Road, Blaydon-on-Tyne",
+      "postcode": "NE21 5AE",
+      "phone": "0191 4990965",
+      "lat": 54.96422,
+      "lng": -1.71273
+    },
+    {
+      "code": "A88016",
+      "name": "Colliery Court Medical Group",
+      "address": "Gibson Court, Boldon Colliery",
+      "postcode": "NE35 9AN",
+      "phone": "0191 5190077",
+      "lat": 54.94977,
+      "lng": -1.46072
+    },
+    {
+      "code": "A89022",
+      "name": "Concord Medical Practice",
+      "address": "Victoria Road, Washington",
+      "postcode": "NE37 2PU",
+      "phone": "0191 4173557",
+      "lat": 54.91342,
+      "lng": -1.52488
+    },
+    {
+      "code": "A85009",
+      "name": "Crowhall Medical Centre",
+      "address": "Felling Health Centre, Stephenson Terrace, Felling, Gateshead",
+      "postcode": "NE10 9QG",
+      "phone": "0191 4699391",
+      "lat": 54.948,
+      "lng": -1.56814
+    },
+    {
+      "code": "A86017",
+      "name": "Cruddas Park Surgery",
+      "address": "178 Westmorland Road, Cruddas Park, Newcastle upon Tyne",
+      "postcode": "NE4 7JT",
+      "phone": "0191 2261414",
+      "lat": 54.96818,
+      "lng": -1.63098
+    },
+    {
+      "code": "A86013",
+      "name": "Denton Park Medical Group",
+      "address": "Denton Park Health Centre, West Denton Way, Newcastle upon Tyne",
+      "postcode": "NE5 2QW",
+      "phone": "0191 2295800",
+      "lat": 54.99312,
+      "lng": -1.69874
+    },
+    {
+      "code": "A86601",
+      "name": "Denton Turret Medical Centre",
+      "address": "10 Kenley Road, Slatyford, Newcastle upon Tyne",
+      "postcode": "NE5 2UY",
+      "phone": "0191 2741840",
+      "lat": 54.98394,
+      "lng": -1.6864
+    },
+    {
+      "code": "Y00184",
+      "name": "Dilston Medical Centre",
+      "address": "23 Dilston Road, Newcastle upon Tyne",
+      "postcode": "NE4 5AB",
+      "phone": "0191 2196975",
+      "lat": 54.97663,
+      "lng": -1.64037
+    },
+    {
+      "code": "A88613",
+      "name": "East Wing Practice",
+      "address": "East Wing Surgery, Palmer Community Hospital, Wear Street, Jarrow",
+      "postcode": "NE32 3UX",
+      "phone": "0191 4028075",
+      "lat": 54.98067,
+      "lng": -1.49199
+    },
+    {
+      "code": "A88012",
+      "name": "Ellison View Surgery",
+      "address": "The Glen Primary Care Centre, 30 Glen Street, Hebburn",
+      "postcode": "NE31 1NU",
+      "phone": "0191 2831610",
+      "lat": 54.97394,
+      "lng": -1.5216
+    },
+    {
+      "code": "A86037",
+      "name": "Elswick Family Practice",
+      "address": "Meldon Street, Newcastle upon Tyne",
+      "postcode": "NE4 6SH",
+      "phone": "0191 2986060",
+      "lat": 54.96932,
+      "lng": -1.64046
+    },
+    {
+      "code": "A85007",
+      "name": "Fell Cottage Surgery",
+      "address": "123 Kells Lane, Low Fell, Gateshead",
+      "postcode": "NE9 5XY",
+      "phone": "0191 4872656",
+      "lat": 54.93842,
+      "lng": -1.59421
+    },
+    {
+      "code": "A85001",
+      "name": "Fell Tower Medical Centre",
+      "address": "575-583 Durham Road, Gateshead",
+      "postcode": "NE9 5EY",
+      "phone": "0191 4913322",
+      "lat": 54.93505,
+      "lng": -1.59907
+    },
+    {
+      "code": "A86031",
+      "name": "Fenham Hall Surgery",
+      "address": "Fenham Hall Drive, Fenham, Newcastle upon Tyne",
+      "postcode": "NE4 9XD",
+      "phone": "0191 2743724",
+      "lat": 54.98446,
+      "lng": -1.66024
+    },
+    {
+      "code": "A89012",
+      "name": "Galleries Medical Practice",
+      "address": "The Galleries Health Centre, Washington Centre, Washington",
+      "postcode": "NE38 7NQ",
+      "phone": "0191 5435555",
+      "lat": 54.89882,
+      "lng": -1.53125
+    },
+    {
+      "code": "A85006",
+      "name": "Glenpark & Teams Medical Services",
+      "address": "Ravensworth Road, Gateshead",
+      "postcode": "NE11 9FJ",
+      "phone": "0191 4604300",
+      "lat": 54.95297,
+      "lng": -1.63908
+    },
+    {
+      "code": "A87029",
+      "name": "Hadrian Health Centre",
+      "address": "Elton Street East, Wallsend",
+      "postcode": "NE28 8QU",
+      "phone": "01913 002707",
+      "lat": 54.99201,
+      "lng": -1.53664
+    },
+    {
+      "code": "A86024",
+      "name": "Heaton Road Surgery",
+      "address": "17-19 Heaton Road, Newcastle upon Tyne",
+      "postcode": "NE6 1SA",
+      "phone": "0191 2655911",
+      "lat": 54.97833,
+      "lng": -1.57986
+    },
+    {
+      "code": "A85616",
+      "name": "Hollyhurst Medical Centre",
+      "address": "8 Front Street, Blaydon-on-Tyne",
+      "postcode": "NE21 4RD",
+      "phone": "0191 4990966",
+      "lat": 54.95518,
+      "lng": -1.72361
+    },
+    {
+      "code": "A86021",
+      "name": "Holmside Medical Group",
+      "address": "142 Armstrong Road, Benwell, Newcastle upon Tyne",
+      "postcode": "NE4 8QB",
+      "phone": "0191 2734009",
+      "lat": 54.96897,
+      "lng": -1.65998
+    },
+    {
+      "code": "A86020",
+      "name": "Jesmond Health Partnership",
+      "address": "200 Osborne Road, Jesmond, Newcastle upon Tyne",
+      "postcode": "NE2 3LD",
+      "phone": "01912 814588",
+      "lat": 54.99639,
+      "lng": -1.60928
+    },
+    {
+      "code": "A86016",
+      "name": "Lane End Surgery",
+      "address": "2 Manor Walk, Benton, Newcastle upon Tyne",
+      "postcode": "NE7 7XX",
+      "phone": "0191 2665246",
+      "lat": 55.00891,
+      "lng": -1.57724
+    },
+    {
+      "code": "A85004",
+      "name": "Longrigg Medical Centre",
+      "address": "2 Longrigg, Leam Lane Estate, Felling, Gateshead",
+      "postcode": "NE10 8PH",
+      "phone": "0191 4692173",
+      "lat": 54.94376,
+      "lng": -1.54589
+    },
+    {
+      "code": "A87615",
+      "name": "Mallard Medical Practice",
+      "address": "The Health Centre, Citadel East, Killingworth, Newcastle upon Tyne",
+      "postcode": "NE12 6HS",
+      "phone": "0191 2160061",
+      "lat": 55.0373,
+      "lng": -1.56408
+    },
+    {
+      "code": "A88004",
+      "name": "Mayfield Medical Group",
+      "address": "Park Road, Jarrow",
+      "postcode": "NE32 5SE",
+      "phone": "0191 4897183",
+      "lat": 54.97789,
+      "lng": -1.49646
+    },
+    {
+      "code": "A85013",
+      "name": "Millennium Family Practice",
+      "address": "Trinity Square Health Ctr, Gateshead",
+      "postcode": "NE8 1AD",
+      "phone": "0191 4783678",
+      "lat": 54.96306,
+      "lng": -1.60372
+    },
+    {
+      "code": "A89026",
+      "name": "New Washington Medical Group",
+      "address": "Victoria Road Health Centre, Victoria Road, Concord, Washington",
+      "postcode": "NE37 2PU",
+      "phone": "0191 4155656",
+      "lat": 54.91342,
+      "lng": -1.52488
+    },
+    {
+      "code": "A86038",
+      "name": "Newburn Surgery",
+      "address": "4 Newburn Road, Newburn, Newcastle upon Tyne",
+      "postcode": "NE15 8LX",
+      "phone": "0191 2290090",
+      "lat": 54.98565,
+      "lng": -1.74363
+    },
+    {
+      "code": "A86027",
+      "name": "Newcastle Medical Centre",
+      "address": "Hotspur Way, Intu Eldon Square, Newcastle upon Tyne",
+      "postcode": "NE1 7XR",
+      "phone": "0191 2322973",
+      "lat": 54.97514,
+      "lng": -1.61478
+    },
+    {
+      "code": "A87022",
+      "name": "Northumberland Park Medical Group",
+      "address": "Shiremoor Centre, Earsdon Road, Shiremoor, Newcastle upon Tyne",
+      "postcode": "NE27 0HJ",
+      "phone": "0191 2537892",
+      "lat": 55.03768,
+      "lng": -1.50671
+    },
+    {
+      "code": "A85018",
+      "name": "Oldwell Surgery",
+      "address": "10 Front Street, Winlaton, Blaydon-on-Tyne",
+      "postcode": "NE21 4RD",
+      "phone": "0191 5002023",
+      "lat": 54.95518,
+      "lng": -1.72361
+    },
+    {
+      "code": "A85005",
+      "name": "Oxford Tce & Rawling Rd Medical Group",
+      "address": "1 Oxford Terrace, Bensham, Gateshead",
+      "postcode": "NE8 1RQ",
+      "phone": "0191 4772169",
+      "lat": 54.95431,
+      "lng": -1.60629
+    },
+    {
+      "code": "A86008",
+      "name": "Park Medical Group",
+      "address": "Shopping Centre, Fawdon Park Road, Fawdon, Newcastle upon Tyne",
+      "postcode": "NE3 2PE",
+      "phone": "0191 2851763",
+      "lat": 55.01394,
+      "lng": -1.64538
+    },
+    {
+      "code": "A86022",
+      "name": "Parkway Medical Group",
+      "address": "Chapel House Primary Care Centre, Hillhead Parkway, Newcastle upon Tyne",
+      "postcode": "NE5 1LJ",
+      "phone": "0191 2671773",
+      "lat": 54.99685,
+      "lng": -1.71514
+    },
+    {
+      "code": "A85611",
+      "name": "Pelaw Medical Practice",
+      "address": "7-8 Croxdale Terrace, Pelaw, Gateshead",
+      "postcode": "NE10 0RR",
+      "phone": "0191 4692337",
+      "lat": 54.95473,
+      "lng": -1.54038
+    },
+    {
+      "code": "A86004",
+      "name": "Prospect Medical Centre",
+      "address": "501 Westgate Road, Newcastle upon Tyne",
+      "postcode": "NE4 8AY",
+      "phone": "0191 2260226",
+      "lat": 54.97419,
+      "lng": -1.6462
+    },
+    {
+      "code": "A87030",
+      "name": "Redburn Park Medical Centre",
+      "address": "15 Station Road, Percy Main, North Shields",
+      "postcode": "NE29 6HT",
+      "phone": "0191 2961456",
+      "lat": 55.00093,
+      "lng": -1.47479
+    },
+    {
+      "code": "A86028",
+      "name": "Regent Medical Centre",
+      "address": "Ridley House, Henry Street, Newcastle upon Tyne",
+      "postcode": "NE3 1DQ",
+      "phone": "0191 2236555",
+      "lat": 55.00902,
+      "lng": -1.62282
+    },
+    {
+      "code": "A86006",
+      "name": "Roseworth Surgery",
+      "address": "27-29 Roseworth Avenue, Newcastle upon Tyne",
+      "postcode": "NE3 1NB",
+      "phone": "0191 2132392",
+      "lat": 55.00137,
+      "lng": -1.61868
+    },
+    {
+      "code": "A86003",
+      "name": "Saville Medical Group",
+      "address": "7 Saville Place, Newcastle upon Tyne",
+      "postcode": "NE1 8DQ",
+      "phone": "0191 2324274",
+      "lat": 54.9761,
+      "lng": -1.60961
+    },
+    {
+      "code": "A85021",
+      "name": "Second Street Surgery",
+      "address": "Second Street, Gateshead",
+      "postcode": "NE8 2UR",
+      "phone": "0191 4772430",
+      "lat": 54.95465,
+      "lng": -1.61492
+    },
+    {
+      "code": "A85011",
+      "name": "St. Albans Medical Group",
+      "address": "Felling Health Centre, Stephenson Terrace, Felling, Gateshead",
+      "postcode": "NE10 9QG",
+      "phone": "0191 4692316",
+      "lat": 54.948,
+      "lng": -1.56814
+    },
+    {
+      "code": "A86040",
+      "name": "St. Anthony's Health Centre",
+      "address": "St. Anthony's Med Group, St. Anthony's Road, Walker, Newcastle upon Tyne",
+      "postcode": "NE6 2NN",
+      "phone": "0191 2196100",
+      "lat": 54.96637,
+      "lng": -1.55644
+    },
+    {
+      "code": "A87007",
+      "name": "Stephenson Park Health Group",
+      "address": "Station Road, Forest Hall, Newcastle upon Tyne",
+      "postcode": "NE12 9BQ",
+      "phone": "0191 2599666",
+      "lat": 55.02036,
+      "lng": -1.56758
+    },
+    {
+      "code": "A89025",
+      "name": "Sunderland GP Alliance Medical Practice",
+      "address": "Health Centre, The Galleries, Washington Centre, Washington",
+      "postcode": "NE38 7NQ",
+      "phone": "0191 4166130",
+      "lat": 54.89882,
+      "lng": -1.53125
+    },
+    {
+      "code": "A85617",
+      "name": "Sunniside Surgery",
+      "address": "8 Dewhurst Terrace, Sunniside, Newcastle upon Tyne",
+      "postcode": "NE16 5LP",
+      "phone": "0191 4883200",
+      "lat": 54.92294,
+      "lng": -1.67509
+    },
+    {
+      "code": "A86041",
+      "name": "Swarland Avenue Surgery",
+      "address": "2 Swarland Avenue, Benton, Newcastle upon Tyne",
+      "postcode": "NE7 7TD",
+      "phone": "0191 2150141",
+      "lat": 55.00637,
+      "lng": -1.57864
+    },
+    {
+      "code": "A85614",
+      "name": "The Bridges Medical Practice",
+      "address": "Trinity Square Health Ctr, Gateshead",
+      "postcode": "NE8 1AD",
+      "phone": "0191 3009889",
+      "lat": 54.96306,
+      "lng": -1.60372
+    },
+    {
+      "code": "A88025",
+      "name": "The G.p.suite",
+      "address": "Palmer Community Hospitals, Wear Street, Jarrow",
+      "postcode": "NE32 3UX",
+      "phone": "0191 4028078",
+      "lat": 54.98067,
+      "lng": -1.49199
+    },
+    {
+      "code": "A88022",
+      "name": "The Glen Medical Group",
+      "address": "30 Glen Street, Hebburn",
+      "postcode": "NE31 1NU",
+      "phone": "0191 2832250",
+      "lat": 54.97394,
+      "lng": -1.5216
+    },
+    {
+      "code": "A86018",
+      "name": "The Grove Medical Group",
+      "address": "1 the Grove, Gosforth, Newcastle upon Tyne",
+      "postcode": "NE3 1NU",
+      "phone": "0191 2106680",
+      "lat": 55.00218,
+      "lng": -1.6191
+    },
+    {
+      "code": "A89010",
+      "name": "The Stephenson Medical Practice",
+      "address": "Victoria Road Health Centre, Victoria Road, Concord, Washington",
+      "postcode": "NE37 2PU",
+      "phone": "0191 4162578",
+      "lat": 54.91342,
+      "lng": -1.52488
+    },
+    {
+      "code": "A87016",
+      "name": "The Village Green Surgery",
+      "address": "The Green, Wallsend",
+      "postcode": "NE28 6BB",
+      "phone": "0191 2958500",
+      "lat": 54.99632,
+      "lng": -1.52929
+    },
+    {
+      "code": "A86029",
+      "name": "Thornfield Medical Group",
+      "address": "Molineux Street, Newcastle upon Tyne",
+      "postcode": "NE6 1SG",
+      "phone": "0191 2755740",
+      "lat": 54.97751,
+      "lng": -1.58349
+    },
+    {
+      "code": "A86026",
+      "name": "Throckley Primary Care Centre",
+      "address": "Throckley Primary Care Ct, Tillmouth Pk Rd,throckley, Newcastle upon Tyne",
+      "postcode": "NE15 9PA",
+      "phone": "0191 2641014",
+      "lat": 54.99289,
+      "lng": -1.75887
+    },
+    {
+      "code": "A88001",
+      "name": "Victoria Medical Centre",
+      "address": "12-28 Glen Street, Hebburn",
+      "postcode": "NE31 1NU",
+      "phone": "0191 4832106",
+      "lat": 54.97394,
+      "lng": -1.5216
+    },
+    {
+      "code": "A86011",
+      "name": "Walker Medical Group",
+      "address": "Church Walk, Newcastle upon Tyne",
+      "postcode": "NE6 3BS",
+      "phone": "0191 2620444",
+      "lat": 54.97245,
+      "lng": -1.54524
+    },
+    {
+      "code": "A87612",
+      "name": "Wellspring Medical Pract.",
+      "address": "Killingworth Health Centre, Citadel East, Killingworth, Newcastle upon Tyne",
+      "postcode": "NE12 6HS",
+      "phone": "0191 2164920",
+      "lat": 55.0373,
+      "lng": -1.56408
+    },
+    {
+      "code": "A88005",
+      "name": "Wenlock Road Surgery",
+      "address": "171 Wenlock Road, Simonside, South Shields",
+      "postcode": "NE34 9BP",
+      "phone": "0191 4560463",
+      "lat": 54.97264,
+      "lng": -1.45524
+    },
+    {
+      "code": "A86005",
+      "name": "West Farm Surgery",
+      "address": "31 West Farm Avenue, Longbenton, Newcastle upon Tyne",
+      "postcode": "NE12 8LS",
+      "phone": "0191 2662215",
+      "lat": 55.01207,
+      "lng": -1.58407
+    },
+    {
+      "code": "A86012",
+      "name": "West Road Medical Centre",
+      "address": "170 West Road, Fenham, Newcastle upon Tyne",
+      "postcode": "NE4 9QB",
+      "phone": "0191 2822890",
+      "lat": 54.97622,
+      "lng": -1.65628
+    },
+    {
+      "code": "A86025",
+      "name": "Westerhope Medical Group",
+      "address": "377-377A Stamfordham Road, Westerhope, Newcastle upon Tyne",
+      "postcode": "NE5 2LH",
+      "phone": "0191 2437000",
+      "lat": 54.99778,
+      "lng": -1.68683
+    },
+    {
+      "code": "A85020",
+      "name": "Whickham Cottage Medical Centre",
+      "address": "Rectory Lane, Whickham, Newcastle upon Tyne",
+      "postcode": "NE16 4PD",
+      "phone": "0191 4885555",
+      "lat": 54.94539,
+      "lng": -1.67724
+    },
+    {
+      "code": "A87012",
+      "name": "Wideopen Medical Centre",
+      "address": "Tulach Ard, North Road, Wideopen, Newcastle upon Tyne",
+      "postcode": "NE13 6LN",
+      "phone": "0191 2362115",
+      "lat": 55.04826,
+      "lng": -1.62453
+    },
+    {
+      "code": "A87017",
+      "name": "Woodlands Park Health Ctr",
+      "address": "Canterbury Way, Wideopen, Newcastle upon Tyne",
+      "postcode": "NE13 6JJ",
+      "phone": "0191 2362366",
+      "lat": 55.04615,
+      "lng": -1.62884
+    },
+    {
+      "code": "A85016",
+      "name": "Wrekenton Medical Group",
+      "address": "Springwell Road, Wrekenton, Gateshead",
+      "postcode": "NE9 7AD",
+      "phone": "0191 4876129",
+      "lat": 54.92638,
+      "lng": -1.57043
+    }
+  ]
+}
