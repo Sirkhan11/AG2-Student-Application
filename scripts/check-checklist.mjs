@@ -3,8 +3,11 @@
 //    and the saved format the check-in chat reads. Runs in Node with nothing else needed.
 // 2. Keeping the screen in step with saving (src/lib/checklist/sync.js), with a pretend server.
 // 3. Against the real Firestore, with two test students: student 1 can save, a change made from an
-//    out-of-date copy doesn't wipe a newer one, and student 2 can't read or change student 1's
-//    checklist. This part only runs if both students' logins are in .env.test.local (git ignores it):
+//    out-of-date copy doesn't wipe a newer one, a tick saved as the page saves it is what the shared
+//    loader (and so the chat) reads, the rules refuse 51 tasks, a title over 100 characters and an
+//    extra field but accept a full list, and student 2 can't read or change student 1's checklist.
+//    Publish firestore.rules first. This part only runs if both students' logins are in
+//    .env.test.local (git ignores it):
 //      TEST_STUDENT_EMAIL=...       TEST_STUDENT_PASSWORD=...
 //      TEST_STUDENT2_EMAIL=...      TEST_STUDENT2_PASSWORD=...
 //    It changes student 1's checklist while it runs, and puts it back at the end.
@@ -286,6 +289,24 @@ if (!haveStudents || !env.VITE_FIREBASE_PROJECT_ID) {
       const saved = await runTransaction(db, (tx) => applyToLatest(tx, record, makeTick(stale[0].id, true))); // browser 2 ticks
       assert.ok(saved.some((task) => task.title === 'Rules test: added in browser 1 later'), 'the newer task survived');
       assert.equal(saved.find((task) => task.id === stale[0].id)?.done, true, 'the tick was saved');
+    });
+
+    await check('A tick saved the way the page saves it is what the shared loader reads, so the chat sees it too', async () => {
+      await runTransaction(db, (tx) => applyToLatest(tx, record, makeTick('gp', true)));
+      const loaded = checklistFrom((await getDoc(record)).data());
+      assert.equal(loaded.saved, true);
+      assert.equal(loaded.tasks.find((task) => task.id === 'gp')?.done, true);
+    });
+
+    /** @param {number} count @param {string} title @param {object} [extra] */
+    const list = (count, title, extra = {}) => Array.from({ length: count }, (_, i) => ({ id: `own-rules-${i}`, title, done: false, ...extra }));
+    await denied(`The rules refuse ${MAX_TASKS + 1} tasks`, () => setDoc(record, { checklist: list(MAX_TASKS + 1, 'Rules test') }, { merge: true }));
+    await denied(`The rules refuse a title over ${MAX_TITLE_LENGTH} characters`,
+      () => setDoc(record, { checklist: list(1, 'x'.repeat(MAX_TITLE_LENGTH + 1)) }, { merge: true }));
+    await denied('The rules refuse a task with anything but id, title and done', () => setDoc(record, { checklist: list(1, 'Rules test', { note: 'extra' }) }, { merge: true }));
+    await check(`The rules accept a full list: ${MAX_TASKS} tasks with ${MAX_TITLE_LENGTH}-character titles (the per-task check fits Firestore's limits)`, async () => {
+      await setDoc(record, { checklist: list(MAX_TASKS, 'y'.repeat(MAX_TITLE_LENGTH)) }, { merge: true });
+      assert.equal(checklistFrom((await getDoc(record)).data()).tasks.length, MAX_TASKS);
     });
 
     await signInAs(/** @type {string} */ (env.TEST_STUDENT2_EMAIL), /** @type {string} */ (env.TEST_STUDENT2_PASSWORD));

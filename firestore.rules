@@ -4,9 +4,12 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Students can only read and change their own record
+    // Students can only read and change their own record. A write that leaves a checklist in it
+    // (the checklist page's) must leave a valid one: see validChecklist below.
     match /students/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read, delete: if request.auth != null && request.auth.uid == userId;
+      allow create, update: if request.auth != null && request.auth.uid == userId
+        && (!('checklist' in request.resource.data) || validChecklist(request.resource.data.checklist));
     }
 
     // The public part of a mentor's profile: only what matching needs.
@@ -141,6 +144,71 @@ service cloud.firestore {
       let mentor = /databases/$(database)/documents/mentors/$(mentorId);
       return get(mentor).data.approved == true
         && getAfter(mentor).data.studentCount == get(mentor).data.studentCount + 1;
+    }
+
+    // One settling-in task: only id, title and done, with a title of at most 100 characters
+    // (MAX_TITLE_LENGTH in src/lib/checklist/tasks.js). A task that isn't a map, or has no title,
+    // makes the check fail, which refuses the write. Kept short, as it runs once per task.
+    function validTask(task) {
+      return task.keys().hasOnly(['id', 'title', 'done'])
+        && task.title is string && task.title.size() <= 100
+        && task.done is bool;
+    }
+
+    // At most 50 tasks (MAX_TASKS in tasks.js), each valid. Rules can't loop over a list, so each
+    // of the 50 places is checked in turn; a shorter list passes the places it doesn't reach.
+    function validChecklist(tasks) {
+      return tasks is list && tasks.size() <= 50
+        && (tasks.size() <= 0 || validTask(tasks[0]))
+        && (tasks.size() <= 1 || validTask(tasks[1]))
+        && (tasks.size() <= 2 || validTask(tasks[2]))
+        && (tasks.size() <= 3 || validTask(tasks[3]))
+        && (tasks.size() <= 4 || validTask(tasks[4]))
+        && (tasks.size() <= 5 || validTask(tasks[5]))
+        && (tasks.size() <= 6 || validTask(tasks[6]))
+        && (tasks.size() <= 7 || validTask(tasks[7]))
+        && (tasks.size() <= 8 || validTask(tasks[8]))
+        && (tasks.size() <= 9 || validTask(tasks[9]))
+        && (tasks.size() <= 10 || validTask(tasks[10]))
+        && (tasks.size() <= 11 || validTask(tasks[11]))
+        && (tasks.size() <= 12 || validTask(tasks[12]))
+        && (tasks.size() <= 13 || validTask(tasks[13]))
+        && (tasks.size() <= 14 || validTask(tasks[14]))
+        && (tasks.size() <= 15 || validTask(tasks[15]))
+        && (tasks.size() <= 16 || validTask(tasks[16]))
+        && (tasks.size() <= 17 || validTask(tasks[17]))
+        && (tasks.size() <= 18 || validTask(tasks[18]))
+        && (tasks.size() <= 19 || validTask(tasks[19]))
+        && (tasks.size() <= 20 || validTask(tasks[20]))
+        && (tasks.size() <= 21 || validTask(tasks[21]))
+        && (tasks.size() <= 22 || validTask(tasks[22]))
+        && (tasks.size() <= 23 || validTask(tasks[23]))
+        && (tasks.size() <= 24 || validTask(tasks[24]))
+        && (tasks.size() <= 25 || validTask(tasks[25]))
+        && (tasks.size() <= 26 || validTask(tasks[26]))
+        && (tasks.size() <= 27 || validTask(tasks[27]))
+        && (tasks.size() <= 28 || validTask(tasks[28]))
+        && (tasks.size() <= 29 || validTask(tasks[29]))
+        && (tasks.size() <= 30 || validTask(tasks[30]))
+        && (tasks.size() <= 31 || validTask(tasks[31]))
+        && (tasks.size() <= 32 || validTask(tasks[32]))
+        && (tasks.size() <= 33 || validTask(tasks[33]))
+        && (tasks.size() <= 34 || validTask(tasks[34]))
+        && (tasks.size() <= 35 || validTask(tasks[35]))
+        && (tasks.size() <= 36 || validTask(tasks[36]))
+        && (tasks.size() <= 37 || validTask(tasks[37]))
+        && (tasks.size() <= 38 || validTask(tasks[38]))
+        && (tasks.size() <= 39 || validTask(tasks[39]))
+        && (tasks.size() <= 40 || validTask(tasks[40]))
+        && (tasks.size() <= 41 || validTask(tasks[41]))
+        && (tasks.size() <= 42 || validTask(tasks[42]))
+        && (tasks.size() <= 43 || validTask(tasks[43]))
+        && (tasks.size() <= 44 || validTask(tasks[44]))
+        && (tasks.size() <= 45 || validTask(tasks[45]))
+        && (tasks.size() <= 46 || validTask(tasks[46]))
+        && (tasks.size() <= 47 || validTask(tasks[47]))
+        && (tasks.size() <= 48 || validTask(tasks[48]))
+        && (tasks.size() <= 49 || validTask(tasks[49]));
     }
   }
 }
