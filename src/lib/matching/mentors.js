@@ -18,6 +18,14 @@ export const NOTHING_TO_MATCH = 'matching/nothing-to-match';
  */
 
 /**
+ * True for a whole number from 1 to 5, the only values firestore.rules accepts for maxStudents.
+ * @param {unknown} value
+ */
+export function isValidMaxStudents(value) {
+  return Number.isInteger(value) && /** @type {number} */ (value) >= 1 && /** @type {number} */ (value) <= 5;
+}
+
+/**
  * Finds the first answer that's empty or only spaces, and returns its position (or -1 if every answer has text).
  * The browser's `required` check accepts "   ", so this is what actually stops blank answers.
  * @param {string[]} answers
@@ -99,8 +107,9 @@ function unpackItems(list) {
  */
 export async function registerMentor(profile, login) {
   const answers = profile.answers.map((answer) => answer.trim());
-  // Safety net: the page checks this first, but blank answers must never be saved, whoever calls this.
+  // Safety nets: the page checks these first, but bad values must never be saved, whoever calls this.
   if (findBlankAnswer(answers) !== -1) throw new Error('Every answer needs some text.');
+  if (!isValidMaxStudents(profile.maxStudents)) throw new Error('maxStudents must be a whole number from 1 to 5.');
 
   const summaries = await summariseAnswers(answers);
   // Every question would be skipped, so this mentor could never be matched with anyone.
@@ -118,7 +127,10 @@ export async function registerMentor(profile, login) {
     displayName: profile.displayName.trim(),
     itemVectors: byQuestion(itemVectors.map(packItems)),
     approved: false,
-    maxStudents: profile.maxStudents
+    maxStudents: profile.maxStudents,
+    // How many of their places are taken. Only a student taking a place can add to it (see
+    // matches.js and firestore.rules); the coordinator corrects it in the console if a match ends.
+    studentCount: 0
   });
   batch.set(doc(db, 'mentorDetails', user.uid), {
     name: profile.name.trim(),
@@ -145,23 +157,31 @@ export async function registerMentor(profile, login) {
 }
 
 /**
- * Loads every approved mentor, in the shape rankMentors expects: id, name to show, and one list of
- * item vectors per question. Only the public mentors/{uid} documents are read; students can't see
- * anything in mentorDetails. The vectors were worked out at sign-up, so nothing is re-embedded here.
- * The query must ask for approved == true: the Firestore rules refuse any list of mentors without it.
- * Needs a signed-in user, because the rules don't let logged-out visitors read mentors.
+ * Loads every approved mentor with a place free, in the shape rankMentors expects: id, name to show,
+ * and one list of item vectors per question. Only the public mentors/{uid} documents are read;
+ * students can't see anything in mentorDetails. The vectors were worked out at sign-up, so nothing is
+ * re-embedded here. The query must ask for approved == true: the Firestore rules refuse any list of
+ * mentors without it. Needs a signed-in user, because the rules don't let logged-out visitors read mentors.
+ *
+ * Leaving full mentors out here keeps them out of the ranking, but it's the rules that actually stop
+ * a full mentor being matched: a mentor can fill up between loading and saving (see takePlace).
  * @returns {Promise<import('#lib/matching/match.js').MatchableMentor[]>}
  */
 export async function loadApprovedMentors() {
   const snapshot = await getDocs(query(collection(db, 'mentors'), where('approved', '==', true)));
 
-  // TODO(capacity): every mentor has maxStudents, but nothing stores matches yet, so there's no way to count
-  // how many students they already have. Once matches are saved, leave out mentors who are full here.
-
   /** @type {import('#lib/matching/match.js').MatchableMentor[]} */
   const mentors = [];
   for (const mentorDoc of snapshot.docs) {
     const data = mentorDoc.data();
+    // Without a studentCount the rules refuse every place, so a profile made before capacity existed
+    // can't be matched until the coordinator adds one in the console.
+    if (typeof data.studentCount !== 'number') {
+      console.warn(`Skipping mentor ${mentorDoc.id}: no studentCount yet (add it in the console).`);
+      continue;
+    }
+    if (data.studentCount >= data.maxStudents) continue; // full
+
     // Turn q1 to q6 back into a list in question order, so itemVectors[0] goes with questions[0], and so on.
     const itemVectors = questions.map((_, i) => unpackItems(data.itemVectors?.[`q${i + 1}`]));
     // A missing or damaged question would crash or skew rankMentors, so skip that mentor and say why.

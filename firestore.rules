@@ -16,17 +16,41 @@ service cloud.firestore {
     match /mentors/{userId} {
       allow read: if request.auth != null
         && (resource.data.approved == true || request.auth.uid == userId);
+
+      // A new mentor starts unapproved, with no students yet.
       allow create: if request.auth != null && request.auth.uid == userId
         && onlyPublicMentorFields()
         && validItemVectors(request.resource.data.itemVectors)
-        && request.resource.data.approved == false;
-      // After an edit, approved can only be true if it was true before AND nothing the
-      // coordinator checked has changed. So mentors can't approve themselves, and changing
-      // their display name or item vectors sends them back to the coordinator (approved: false).
+        && validMaxStudents()
+        && request.resource.data.approved == false
+        && request.resource.data.studentCount == 0;
+
+      // The mentor editing their own profile. After an edit, approved can only be true if it
+      // was true before AND nothing the coordinator checked has changed. So mentors can't
+      // approve themselves, and changing their display name or item vectors sends them back
+      // to the coordinator (approved: false). They can't change studentCount (only a student
+      // taking a place can, below), or lower maxStudents below it.
       allow update: if request.auth != null && request.auth.uid == userId
         && onlyPublicMentorFields()
         && validItemVectors(request.resource.data.itemVectors)
+        && validMaxStudents()
+        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['studentCount'])
+        && request.resource.data.maxStudents >= request.resource.data.studentCount
         && request.resource.data.approved == (resource.data.approved && !checkedFieldsChanged());
+
+      // A student taking one of this mentor's places (see matches below). The only change
+      // allowed is studentCount going up by exactly one, so every other field, including
+      // approved, stays exactly as it was. The mentor must be approved and have room, the
+      // student must not have a match yet, and their match to this mentor must be created
+      // in the same write.
+      allow update: if request.auth != null && request.auth.uid != userId
+        && resource.data.approved == true
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['studentCount'])
+        && request.resource.data.studentCount == resource.data.studentCount + 1
+        && request.resource.data.studentCount <= resource.data.maxStudents
+        && !exists(/databases/$(database)/documents/matches/$(request.auth.uid))
+        && getAfter(/databases/$(database)/documents/matches/$(request.auth.uid)).data.mentorId == userId;
+
       allow delete: if request.auth != null && request.auth.uid == userId;
     }
 
@@ -36,9 +60,28 @@ service cloud.firestore {
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }
 
-    // True when the mentor document being written has no fields beyond these four.
+    // A student's match, stored under their own uid, so each student has at most one.
+    // Only that student can create or read it; the coordinator uses the console.
+    // Nobody can change or delete it from the app, so a student can't swap mentors, or free
+    // up a place and take another.
+    // - status 'matched': the student took one of mentorId's places in the same write.
+    // - status 'coordinator': no mentor yet; the coordinator will find one.
+    match /matches/{studentId} {
+      allow read: if request.auth != null && request.auth.uid == studentId;
+      allow create: if request.auth != null && request.auth.uid == studentId
+        && validMatch(request.resource.data);
+    }
+
+    // True when the mentor document being written has no fields beyond these five.
     function onlyPublicMentorFields() {
-      return request.resource.data.keys().hasOnly(['displayName', 'itemVectors', 'approved', 'maxStudents']);
+      return request.resource.data.keys().hasOnly(
+        ['displayName', 'itemVectors', 'approved', 'maxStudents', 'studentCount']);
+    }
+
+    // maxStudents must be a whole number from 1 to 5, the range on the sign-up form.
+    function validMaxStudents() {
+      let max = request.resource.data.maxStudents;
+      return max is int && max >= 1 && max <= 5;
     }
 
     // itemVectors must have exactly q1 to q6, one per question. Firestore can't store a list of
@@ -64,6 +107,32 @@ service cloud.firestore {
     // True when an edit changes something the coordinator checked before approving.
     function checkedFieldsChanged() {
       return request.resource.data.diff(resource.data).affectedKeys().hasAny(['displayName', 'itemVectors']);
+    }
+
+    // A match has only these fields. Reading a field that's missing makes the rule fail, so
+    // every field named here is also required. A 'matched' one also names the mentor (with
+    // their display name, so it can still be shown if they're un-approved later) and up to
+    // 3 reasons, and must take one of that mentor's places in the same write.
+    function validMatch(record) {
+      return record.meetingFrequency in ['weekly', 'every two weeks', 'monthly']
+        && record.availability is string && record.availability.size() <= 200
+        && record.createdAt == request.time
+        && ((record.status == 'coordinator'
+              && record.keys().hasOnly(['status', 'meetingFrequency', 'availability', 'createdAt']))
+          || (record.status == 'matched'
+              && record.keys().hasOnly(['status', 'mentorId', 'mentorName', 'reasons',
+                                        'meetingFrequency', 'availability', 'createdAt'])
+              && record.mentorName is string
+              && record.reasons is list && record.reasons.size() <= 3
+              && takesPlace(record.mentorId)));
+    }
+
+    // True when the mentor is approved and their studentCount goes up by exactly one in this
+    // same write. The mentors rules above check the rest (room, nothing else changing).
+    function takesPlace(mentorId) {
+      let mentor = /databases/$(database)/documents/mentors/$(mentorId);
+      return get(mentor).data.approved == true
+        && getAfter(mentor).data.studentCount == get(mentor).data.studentCount + 1;
     }
   }
 }
