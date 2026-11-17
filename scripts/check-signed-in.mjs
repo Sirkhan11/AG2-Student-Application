@@ -4,6 +4,8 @@
 // headless Chrome at phone size:
 // - a logged-out visitor sent to log in from the checklist is back on it after logging in;
 // - Home greets them by first name, and never shows a wrong name while it loads;
+// - opening the chat from Home the first time in a tab slides it in straight away (no frozen screen
+//   while the slide waits for the chat, no timeout);
 // - logged in, every page opens and none sends them to log in;
 // - "← Back" returns to the page they came from, or Home when they opened the page directly, and
 //   never to the log-in page after being sent there;
@@ -278,6 +280,32 @@ try {
   const headings = await evaluate('window.__headings');
   const wrong = headings.filter((seen) => seen.endsWith('| visible') && !seen.startsWith('Hi Sam |'));
   report('Home greets them by first name ("Hi Sam"), and never shows another name while it loads', greeted && wrong.length === 0, wrong.join('; ') || `${await heading()}`);
+
+  // 2b. Opening the chat from Home, the first time in this tab (the chat isn't loaded yet): the slide
+  //     starts as soon as the chat is on the page (it waits at most 200 ms for it), rather than the
+  //     screen freezing until Chrome gives up on the slide after 4 seconds. Measured from when the
+  //     browser hands over to the app's update to when the slide starts, so loading the page's code
+  //     (slow on the first visit to vite dev) doesn't count.
+  /** @type {{ waited?: number, problem?: string }} */
+  const slide = await evaluate(`new Promise((done) => {
+    const original = document.startViewTransition?.bind(document);
+    if (!original) return done({ problem: 'this Chrome has no View Transitions' });
+    document.startViewTransition = (update) => {
+      document.startViewTransition = original;
+      let began = 0;
+      const transition = original(async () => { began = performance.now(); await update(); });
+      transition.ready.then(
+        () => done({ waited: Math.round(performance.now() - began) }),
+        (err) => done({ problem: err.name + ': ' + err.message })
+      );
+      return transition;
+    };
+    document.querySelector('a.chat-button').click();
+    setTimeout(() => done({ problem: 'no slide within 30 seconds' }), 30000);
+  })`);
+  const chatOpened = await waitFor(`location.pathname === '/check-in' && document.querySelector('[data-chat-ready]')`);
+  report('Opening the chat from Home the first time in the tab: it slides in straight away, with no frozen screen or timeout',
+    chatOpened && slide.waited !== undefined && slide.waited < 1000, slide.problem ?? `the slide started ${slide.waited} ms after the update began`);
 
   // 3. Every page opens, logged in; none sends them to log in.
   /** @type {string[]} */

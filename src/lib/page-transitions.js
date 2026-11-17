@@ -17,15 +17,25 @@ export const WAIT_FOR_CHAT_MS = 200;
 /**
  * Waits until the chat's messages are on the page (data-chat-ready), or WAIT_FOR_CHAT_MS has
  * passed, so the slide shows the whole chat rather than "Loading…". Browser only.
+ *
+ * This runs inside the slide's update, while the browser holds the old screen and draws no frames,
+ * so it watches the page for changes and sets a timer. A once-a-frame check (requestAnimationFrame)
+ * never runs there: it froze the screen until Chrome gave up on the slide after 4 seconds.
  * @returns {Promise<void>}
  */
 export function chatShown() {
+  const ready = () => document.querySelector('[data-chat-ready]') !== null;
+  if (ready()) return Promise.resolve();
   return new Promise((resolve) => {
-    const started = performance.now();
-    const look = () => {
-      if (document.querySelector('[data-chat-ready]') || performance.now() - started > WAIT_FOR_CHAT_MS) resolve();
-      else requestAnimationFrame(look);
+    const done = () => {
+      observer.disconnect();
+      clearTimeout(timer);
+      resolve();
     };
-    look();
+    const observer = new MutationObserver(() => {
+      if (ready()) done();
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+    const timer = setTimeout(done, WAIT_FOR_CHAT_MS);
   });
 }
