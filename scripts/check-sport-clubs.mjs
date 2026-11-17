@@ -1,7 +1,8 @@
 // Checks Northumbria Sport's club list (src/lib/sport/sport-clubs.json) and src/lib/sport/clubs.js:
 // the data is what we expect and holds no contact details, lookups work, and no club has exactly the
 // same name as a society or an NSU service, so a name in a chat reply can only mean one thing (a
-// later refresh that adds a clash fails here). No Gemini or Firebase.
+// later refresh that adds a clash fails here). Also how a club's contacts and training times are
+// shown (src/lib/sport/display.js), with made-up people. No Gemini or Firebase.
 //
 // Run from the project folder:
 //   node scripts/check-sport-clubs.mjs
@@ -11,6 +12,7 @@ import { readFileSync } from 'node:fs';
 import { CLUBS, CLUBS_COLLECTED_AT, CLUBS_SOURCE, clubBySlug, findClub, searchClubs } from '#lib/sport/clubs.js';
 import { findSociety, SOCIETIES } from '#lib/societies/societies.js';
 import { SERVICES } from '#lib/nsu/services.js';
+import { contactGroups, membershipBlocks } from '#lib/sport/display.js';
 
 const key = (/** @type {string} */ name) => name.toLowerCase().replace(/\s+/g, ' ').trim();
 
@@ -44,6 +46,37 @@ const checks = [
     const services = new Set(SERVICES.map((service) => key(service.name)));
     const clashes = CLUBS.filter((club) => societies.has(key(club.name)) || services.has(key(club.name))).map((club) => club.name);
     assert.deepEqual(clashes, []);
+  }],
+  ['Contact buttons: roles as the club writes them, with the name beside; "Supported by" is Northumbria Sport staff; a note goes above its buttons', () => {
+    const groups = contactGroups([
+      { role: "Men's Club President", note: null, people: [{ name: 'Alex Example', email: 'alex@example.org' }, { name: null, email: 'mens@example.org' }] },
+      { role: 'Supported by', note: null, people: [{ name: 'Sam Example', email: 'sam@example.org' }] },
+      { role: null, note: 'Non-students should get in touch first.', people: [{ name: 'Jo Example', email: 'jo@example.org' }, { name: null, email: 'club@example.org' }] }
+    ]);
+    assert.deepEqual(groups, [
+      { note: null, buttons: [
+        { label: "Email the Men's Club President", name: 'Alex Example', email: 'alex@example.org' },
+        { label: "Email the Men's Club President", name: null, email: 'mens@example.org' }
+      ] },
+      { note: null, buttons: [{ label: 'Email Northumbria Sport staff', name: 'Sam Example', email: 'sam@example.org' }] },
+      { note: 'Non-students should get in touch first.', buttons: [
+        { label: 'Email Jo Example', name: null, email: 'jo@example.org' },
+        { label: 'Email this contact', name: null, email: 'club@example.org' }
+      ] }
+    ]);
+  }],
+  ['Memberships and training: each line with the session times under it listed beneath it', () => {
+    assert.deepEqual(membershipBlocks([
+      { kind: 'item', text: 'Saturdays 10:00' },
+      { kind: 'text', text: 'COMPETE Swimming - £120' },
+      { kind: 'item', text: 'Mondays 18:00-19:00' },
+      { kind: 'item', text: 'Thursdays 07:00-08:00' },
+      { kind: 'text', text: 'Includes BUCS entry' }
+    ]), [
+      { text: null, items: ['Saturdays 10:00'] },
+      { text: 'COMPETE Swimming - £120', items: ['Mondays 18:00-19:00', 'Thursdays 07:00-08:00'] },
+      { text: 'Includes BUCS entry', items: [] }
+    ]);
   }],
   ['Hockey is the club and Ice Hockey the society, never the other way round', () => {
     assert.equal(findClub('Hockey')?.slug, 'hockey');

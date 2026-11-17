@@ -1,6 +1,7 @@
 <script>
   import { page } from '$app/state';
   import BottomNav from '$lib/components/BottomNav.svelte';
+  import ClubsSwitch from '#lib/components/ClubsSwitch.svelte';
   import {
     AUDIENCE,
     AUDIENCE_LABELS,
@@ -32,6 +33,7 @@
 
 <main class="page">
   <h1>Societies</h1>
+  <ClubsSwitch current="societies" />
   <p class="muted">
     Northumbria Students’ Union has {campusTotal} societies at the {campus} campus. Search or choose a
     category, then open a society to find out more and how to join.

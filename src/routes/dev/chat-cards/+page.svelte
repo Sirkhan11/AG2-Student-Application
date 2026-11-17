@@ -1,4 +1,5 @@
 <script>
+  import ClubDetails from '#lib/components/ClubDetails.svelte';
   import ServiceCard from '#lib/components/ServiceCard.svelte';
   import SocietyCard from '#lib/components/SocietyCard.svelte';
   import { serviceById } from '#lib/nsu/services.js';
@@ -45,11 +46,41 @@
   const listOnly = { nsuId: 900002, name: 'Pretend Hiking', category: 'Recreational Sport', campus: 'Newcastle', url: 'https://mynsu.co.uk/', image: null };
 
   const services = [serviceById('food-pantry'), serviceById('societies')].filter((service) => service !== null);
+
+  /** A made-up sports club and its details, for the club page's sections. */
+  /** @type {import('#lib/sport/clubs.js').Club} */
+  const club = { slug: 'made-up-swimming', name: 'Made-Up Swimming', url: 'https://example.org/club', image: picture };
+  /** @type {import('#lib/sport/pages.js').ClubPage} */
+  const clubDetails = {
+    about: [
+      'A made-up club for checking the layout. We train in the pool every week, and our team swims in the BUCS leagues.',
+      'A second paragraph about the made-up club.'
+    ],
+    membership: [
+      { kind: 'text', text: 'TRAIN Swimming - £60 per person' },
+      { kind: 'item', text: 'Mondays 18:00-19:00 (Pool)' },
+      { kind: 'item', text: 'Thursdays 07:00-08:00 (Pool)' },
+      { kind: 'text', text: 'COMPETE Swimming - £120 per person, includes BUCS entry' },
+      { kind: 'item', text: 'Tuesdays 19:00-20:30 (Pool)' }
+    ],
+    socials: [
+      { platform: 'instagram', url: 'https://example.org/instagram' },
+      { platform: 'facebook', url: 'https://example.org/facebook' }
+    ],
+    contacts: [
+      { role: 'Club President', note: null, people: [{ name: 'Alex Example', email: 'alex@example.org' }] },
+      { role: "Women's Captain", note: null, people: [{ name: 'Jo Example', email: 'jo@example.org' }] },
+      { role: null, note: 'Non-students should get in touch before buying a membership.', people: [{ name: 'Pat Example', email: 'pat@example.org' }] },
+      { role: 'Supported by', note: null, people: [{ name: 'Sam Example', email: 'sam@example.org' }] }
+    ],
+    bookUrl: 'https://example.org/book',
+    collectedAt: '2026-11-17T14:44:45.528Z'
+  };
 </script>
 
 <main class="page">
   <h1>Chat cards preview</h1>
-  <p class="muted">Development only, with made-up details, for checking the chat's cards at phone width.</p>
+  <p class="muted">Development only, with made-up details, for checking the chat's cards and a club page's sections at phone width.</p>
 
   <div class="messages">
     <div class="bubble">
@@ -64,6 +95,9 @@
       {/each}
     </div>
   </div>
+
+  <h2>A club page’s details</h2>
+  <ClubDetails {club} details={clubDetails} />
 </main>
 
 <style>
