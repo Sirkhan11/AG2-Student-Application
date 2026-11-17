@@ -109,13 +109,13 @@ const checks = [
   }],
 
   // ---------- Turning a reply's [[Name]]s into links ----------
-  ['Societies open their page in the app; services open NSU\'s page in a new tab; Societies opens /societies', () => {
+  ['Each link says which society or service it is (for its card); societies open in the app, services on NSU\'s site, Societies at /societies', () => {
     const { text, links } = linksInReply('Try [[Climbing]], the [[Food Pantry]] and [[Societies]].', 'Newcastle');
     assert.equal(text, 'Try Climbing, the Food Pantry and Societies.');
     assert.deepEqual(links, [
-      { label: 'Climbing', href: '/societies/15', external: false },
-      { label: 'Food Pantry', href: 'https://mynsu.co.uk/foodpantry', external: true },
-      { label: 'Societies', href: '/societies', external: false }
+      { label: 'Climbing', href: '/societies/15', external: false, kind: 'society', nsuId: 15 },
+      { label: 'Food Pantry', href: 'https://mynsu.co.uk/foodpantry', external: true, kind: 'service', serviceId: 'food-pantry' },
+      { label: 'Societies', href: '/societies', external: false, kind: 'service', serviceId: 'societies' }
     ]);
   }],
   ['Made-up names stay plain text; plain words like "music" never become links; each link once', () => {
@@ -123,8 +123,10 @@ const checks = [
     assert.equal(text, 'Music and Music, or Underwater Basket Weaving. I love music.');
     assert.deepEqual(links.map((link) => link.label), ['Music']);
   }],
-  [`At most ${MAX_LINKS} links, societies and services together`, () => {
-    assert.equal(linksInReply('[[Music]], [[Gigs]], [[Rock]], [[Events]], [[Film]]', 'Newcastle').links.length, MAX_LINKS);
+  [`At most ${MAX_LINKS} links (so at most ${MAX_LINKS} cards), societies and services together`, () => {
+    const { links } = linksInReply('[[Music]], [[Gigs]], [[Rock]], [[Events]], [[Film]]', 'Newcastle');
+    assert.equal(links.length, MAX_LINKS);
+    assert.ok(links.every((link) => link.kind === 'society' || link.kind === 'service'));
   }],
   ['Never linked, whatever Gemini writes: a women-only society, or the Freshers Week wristband', () => {
     const { text, links } = linksInReply('Maybe [[Girls Who Run]] or the [[Freshers Week wristband]].', 'Newcastle');

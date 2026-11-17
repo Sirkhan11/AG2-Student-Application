@@ -4,6 +4,7 @@
   import { loginPathFor } from '#lib/next-path.js';
   import { loadSocietyPage } from '#lib/societies/pages.js';
   import { AUDIENCE, AUDIENCE_LABELS, COLLECTED_AT, initials } from '#lib/societies/societies.js';
+  import { platformName, priceText } from '#lib/societies/display.js';
 
   /** @type {{ data: import('./$types').PageData }} */
   let { data } = $props();
@@ -45,17 +46,6 @@
   // the button works even before the details load.
   let eventsUrl = $derived(details?.eventsUrl ?? `${society.url}#events`);
 
-  /** How each social platform is named on its button. */
-  const PLATFORMS = /** @type {Record<string, string>} */ ({
-    instagram: 'Instagram', facebook: 'Facebook', x: 'X', tiktok: 'TikTok', youtube: 'YouTube',
-    discord: 'Discord', linkedin: 'LinkedIn', whatsapp: 'WhatsApp', spotify: 'Spotify', twitch: 'Twitch'
-  });
-  /** @param {string} platform */
-  const platformName = (platform) => PLATFORMS[platform] ?? platform.charAt(0).toUpperCase() + platform.slice(1);
-
-  const pounds = new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP' });
-  /** @param {number} price */
-  const priceText = (price) => (price === 0 ? 'Free' : pounds.format(price));
   /** @param {string} iso */
   const dayText = (iso) => new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
 

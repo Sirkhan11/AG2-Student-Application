@@ -7,7 +7,12 @@ import { findSociety, suggestible } from '#lib/societies/societies.js';
 /** The most links one reply can have, societies and services together, whatever Gemini writes. */
 export const MAX_LINKS = 3;
 
-/** @typedef {{ label: string, href: string, external: boolean }} ReplyLink */
+/**
+ * A link under a chat reply. Societies and services also say which one they are (kind, with nsuId or
+ * serviceId), so the chat shows a card with their details instead of a plain button.
+ * @typedef {{ label: string, href: string, external: boolean, kind?: 'society' | 'service',
+ *   nsuId?: number, serviceId?: string }} ReplyLink
+ */
 
 /**
  * Takes the [[Name]] markers out of a reply, and collects links for the names that really are on
@@ -33,12 +38,14 @@ export function linksInReply(reply, campus) {
   const text = reply.replace(/\[\[([^\]]{1,80})\]\]/g, (_, name) => {
     const service = findService(name);
     if (service) {
-      if (inChat(service)) add({ label: service.name, ...serviceLink(service) });
+      if (inChat(service)) add({ label: service.name, ...serviceLink(service), kind: 'service', serviceId: service.id });
       return service.name;
     }
     const society = findSociety(name, campus);
     if (society) {
-      if (suggestible(society)) add({ label: society.name, href: `/societies/${society.nsuId}`, external: false });
+      if (suggestible(society)) {
+        add({ label: society.name, href: `/societies/${society.nsuId}`, external: false, kind: 'society', nsuId: society.nsuId });
+      }
       return society.name;
     }
     return name;

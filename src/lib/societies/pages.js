@@ -34,3 +34,26 @@ export async function loadSocietyPage(nsuId) {
     collectedAt: typeof data.collectedAt === 'string' ? data.collectedAt : null
   };
 }
+
+/** Pages already asked for in this visit, by nsuId (the promise, so two cards asking at once share one read). */
+/** @type {Map<number, Promise<SocietyPage | null>>} */
+const loaded = new Map();
+
+/**
+ * loadSocietyPage, remembered for the rest of the visit, for the check-in chat's society cards: a
+ * society suggested twice is only read once. A failed read isn't remembered, so a later card can
+ * try again.
+ * @param {number} nsuId
+ * @returns {Promise<SocietyPage | null>}
+ */
+export function loadSocietyPageOnce(nsuId) {
+  let page = loaded.get(nsuId);
+  if (!page) {
+    page = loadSocietyPage(nsuId).catch((err) => {
+      loaded.delete(nsuId);
+      throw err;
+    });
+    loaded.set(nsuId, page);
+  }
+  return page;
+}

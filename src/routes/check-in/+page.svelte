@@ -9,12 +9,18 @@
   import { loadMyMatch } from '#lib/matching/matches.js';
   import { buildOpener, describeForGemini } from '#lib/checkin/opener.js';
   import { startCheckinChat } from '#lib/checkin/chat.js';
+  import SocietyCard from '#lib/components/SocietyCard.svelte';
+  import ServiceCard from '#lib/components/ServiceCard.svelte';
+  import { serviceById } from '#lib/nsu/services.js';
+  import { societyById } from '#lib/societies/societies.js';
 
   /**
-   * One bubble. kind marks the fixed safety message or an error; links are buttons shown under it
-   * (external ones, such as an NSU service's page, open in a new tab).
+   * One bubble. kind marks the fixed safety message or an error. links are shown under it: a
+   * suggested society or NSU service as a card with its details (see reply-links.js), anything else
+   * as a button (external ones open in a new tab).
    * @typedef {{ role: 'assistant' | 'user', text: string, kind?: 'safety' | 'error',
-   *   links?: { label: string, href: string, external?: boolean }[] }} Message
+   *   links?: { label: string, href: string, external?: boolean, kind?: 'society' | 'service',
+   *     nsuId?: number, serviceId?: string }[] }} Message
    */
 
   // null while Firebase checks for a saved login.
@@ -82,7 +88,7 @@
       links:
         reply.kind === 'safety'
           ? [{ label: 'Need help now', href: '/need-help' }]
-          : // Suggested societies open their page in the app; NSU services open NSU's page in a new tab.
+          : // Suggested societies and NSU services, shown as cards under the reply.
             reply.links
     });
     waiting = false;
@@ -115,6 +121,8 @@
 
     <div class="messages" aria-live="polite">
       {#each messages as item, i (i)}
+        {@const buttons = (item.links ?? []).filter((link) => !link.kind)}
+        {@const cards = (item.links ?? []).filter((link) => link.kind)}
         <div
           class="bubble"
           class:user={item.role === 'user'}
@@ -122,9 +130,9 @@
           class:failed={item.kind === 'error'}
         >
           {item.text}
-          {#if item.links?.length}
+          {#if buttons.length}
             <div class="links">
-              {#each item.links as link (link.href + link.label)}
+              {#each buttons as link (link.href + link.label)}
                 {#if link.external}
                   <a
                     class="secondary-button"
@@ -142,6 +150,20 @@
             </div>
           {/if}
         </div>
+        {#if cards.length}
+          <!-- Not read out as they arrive: the reply already names them, and screen reader users can move to them. -->
+          <div class="cards" aria-live="off">
+            {#each cards as link (link.href)}
+              {@const society = link.kind === 'society' ? societyById(link.nsuId ?? -1) : null}
+              {@const service = link.kind === 'service' ? serviceById(link.serviceId ?? '') : null}
+              {#if society}
+                <SocietyCard {society} />
+              {:else if service}
+                <ServiceCard {service} />
+              {/if}
+            {/each}
+          </div>
+        {/if}
       {/each}
       {#if waiting}
         <div class="bubble typing">Typing…</div>
@@ -212,6 +234,13 @@
     flex-wrap: wrap;
     gap: 8px;
     margin-top: 10px;
+  }
+
+  /* Cards for suggested societies and services, the full width of the chat. */
+  .cards {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
   }
 
 </style>
