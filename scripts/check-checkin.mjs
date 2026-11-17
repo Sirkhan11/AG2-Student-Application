@@ -15,7 +15,7 @@ import { startsAfresh } from '#lib/checkin/keep-chat.js';
 import { SERVICES } from '#lib/nsu/services.js';
 import { SOCIETIES } from '#lib/societies/societies.js';
 
-/** The five default tasks (see src/lib/checkin/saved-checklist.js), with the given ids ticked. @param {string[]} [done] */
+/** The five default tasks (see DEFAULT_TASKS in src/lib/checklist/tasks.js), with the given ids ticked. @param {string[]} [done] */
 const tasks = (done = []) =>
   [
     ['gp', 'Register with a GP'],
@@ -79,6 +79,15 @@ const checks = [
     assert.match(about, /1 task of their own still to do/);
     assert.match(about, /they have one/, 'Gemini is told they have a mentor');
     assert.match(about, /Your Mentor page/, 'and where to see who it is');
+  }],
+  ['A checklist they\'ve never saved: the first message points to it, and Gemini is told not to say they haven\'t done things', () => {
+    const { messages, links } = buildOpener({ match: null, tasks: tasks(), checklistSaved: false, justSignedUp: false });
+    assert.match(messages[1], /Your checklist has a few things/);
+    assert.ok(!messages.join(' ').includes('haven’t registered'), 'no claim about what they haven\'t done');
+    assert.ok(links.some((link) => link.href === '/checklist'));
+    const about = describeForGemini({ match: null, tasks: tasks(), checklistSaved: false });
+    assert.match(about, /haven’t ticked anything off yet, and may not have opened it/);
+    assert.ok(!about.includes('Checklist, not done yet'));
   }],
   ['Gemini knows why they were matched, how often they asked to meet, and the course and interests from sign-up', () => {
     const match = { ...matched, reasons: ['You share interests: gigs', 'You like similar weekends: cinema'], meetingFrequency: 'every two weeks' };

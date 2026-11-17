@@ -1,6 +1,6 @@
 import { doc, getDoc, runTransaction, setDoc } from 'firebase/firestore';
 import { db, getFirebaseAuth } from '#lib/firebase/client.js';
-import { applyToLatest, CHECKLIST_FIELD, ChecklistError, defaultTasks, readSaved } from '#lib/checklist/tasks.js';
+import { applyToLatest, CHECKLIST_FIELD, ChecklistError, checklistFrom } from '#lib/checklist/tasks.js';
 
 /** @typedef {import('#lib/checklist/tasks.js').Task} Task */
 /** @typedef {import('#lib/checklist/tasks.js').Change} Change */
@@ -17,13 +17,26 @@ function myRecord() {
 }
 
 /**
- * Loads the signed-in student's checklist. Someone who has never changed it gets the defaults, which
- * aren't saved until they change something.
+ * Reads the signed-in student's record once and returns what the app uses from it: their checklist
+ * (see checklistFrom in tasks.js: what they've saved, or the five defaults if they've never changed
+ * it, which aren't saved until they do), and the course and interests they gave when they signed
+ * up, which the check-in chat passes on (tidied by tidyProfile in opener.js). Nothing else is taken
+ * from it: not their name, email or arrival date.
+ *
+ * The checklist page and the check-in chat both load through this, so they can't disagree.
+ * @returns {Promise<{ checklist: { tasks: Task[], saved: boolean }, course: unknown, interests: unknown }>}
+ */
+export async function loadMyRecord() {
+  const data = (await getDoc(myRecord())).data();
+  return { checklist: checklistFrom(data), course: data?.course ?? null, interests: data?.interests ?? null };
+}
+
+/**
+ * The signed-in student's checklist, for the checklist page (see loadMyRecord).
  * @returns {Promise<Task[]>}
  */
 export async function loadChecklist() {
-  const saved = (await getDoc(myRecord())).data()?.[CHECKLIST_FIELD];
-  return readSaved(saved) ?? defaultTasks();
+  return (await loadMyRecord()).checklist.tasks;
 }
 
 /** True for errors that mean "couldn't reach the server" rather than "the server said no". */

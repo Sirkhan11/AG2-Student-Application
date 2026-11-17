@@ -6,7 +6,7 @@
   import BottomNav from '#lib/components/BottomNav.svelte';
   import { currentUid, watchSignedIn } from '#lib/firebase/auth.js';
   import { sendToLogin } from '#lib/login-redirect.js';
-  import { loadForChat } from '#lib/checkin/saved-checklist.js';
+  import { loadMyRecord } from '#lib/checklist/store.js';
   import { loadMyMatch } from '#lib/matching/matches.js';
   import { buildOpener, describeForGemini } from '#lib/checkin/opener.js';
   import { startCheckinChat } from '#lib/checkin/chat.js';
@@ -54,16 +54,18 @@
     clearChat(uid);
     const conversation = chatSession.conversation;
     // If either can't be loaded, the chat still starts; it just says less.
+    // The checklist comes through the same loader as the checklist page, so the two always agree.
     const [match, record] = await Promise.all([
       loadMyMatch().catch((err) => (console.error(err), undefined)),
-      loadForChat().catch((err) => (console.error(err), { tasks: null, course: null, interests: null }))
+      loadMyRecord().catch((err) => (console.error(err), null))
     ]);
-    const tasks = record.tasks;
-    const profile = { course: record.course, interests: record.interests };
+    const tasks = record?.checklist.tasks ?? null;
+    const checklistSaved = record?.checklist.saved ?? false;
+    const profile = { course: record?.course ?? null, interests: record?.interests ?? null };
     // Logged out, or started again, while those were loading.
     if (chatSession.conversation !== conversation) return;
 
-    const opener = buildOpener({ match, tasks, justSignedUp });
+    const opener = buildOpener({ match, tasks, checklistSaved, justSignedUp });
     chatSession.messages = opener.messages.map((text, i) => ({
       role: 'assistant',
       text,
@@ -74,7 +76,10 @@
     // Gemini is told the same facts and first messages, but without the mentor's name.
     const withoutName = match?.status === 'matched' ? { ...match, mentorName: null } : match;
     setGeminiChat(
-      startCheckinChat(describeForGemini({ match, tasks, profile }), buildOpener({ match: withoutName, tasks, justSignedUp }).messages)
+      startCheckinChat(
+        describeForGemini({ match, tasks, checklistSaved, profile }),
+        buildOpener({ match: withoutName, tasks, checklistSaved, justSignedUp }).messages
+      )
     );
     chatSession.started = true;
   }

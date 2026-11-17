@@ -16,7 +16,7 @@
 import assert from 'node:assert/strict';
 import {
   applyChange, applyToLatest, ChecklistError, DEFAULT_TASKS, defaultTasks, makeAdd, makeDelete,
-  makeEdit, makeTick, MAX_TASKS, MAX_TITLE_LENGTH, readSaved
+  makeEdit, makeTick, MAX_TASKS, MAX_TITLE_LENGTH, readSaved, checklistFrom
 } from '#lib/checklist/tasks.js';
 import { createChecklistSync } from '#lib/checklist/sync.js';
 
@@ -100,6 +100,18 @@ await check('Reading a saved list: nothing saved gives null; badly formed tasks 
     { id: 'x', title: 'X', done: false }
   ]);
 });
+await check('The page and the chat read the checklist the same way: what\'s saved, or the five defaults, unticked, marked as never saved', () => {
+  const saved = checklistFrom({ checklist: [{ id: 'gp', title: 'Register with a GP', done: true }], course: 'Law' });
+  assert.deepEqual(saved, { tasks: [{ id: 'gp', title: 'Register with a GP', done: true }], saved: true });
+  for (const record of [undefined, {}, { checklist: 'not a list' }]) {
+    const fresh = checklistFrom(/** @type {any} */ (record));
+    assert.equal(fresh.saved, false);
+    assert.deepEqual(ids(fresh.tasks), ['gp', 'student-id', 'society', 'dentist', 'contacts']);
+    assert.ok(fresh.tasks.every((task) => task.done === false));
+  }
+  assert.deepEqual(checklistFrom({ checklist: [] }), { tasks: [], saved: true }, 'an emptied list stays empty');
+});
+
 await check('Saved format is exactly what the check-in chat reads: { id, title, done }', () => {
   const list = applyChange(applyChange(defaultTasks(), makeAdd('Buy a lamp')), makeTick('gp', true));
   for (const task of list) {

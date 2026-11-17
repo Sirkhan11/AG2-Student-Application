@@ -2,8 +2,8 @@
 // can make (add, tick, edit, delete). No Firebase imports here, so scripts/check-checklist.mjs can
 // test it in Node.
 //
-// Saved format, at students/{uid}.checklist (the check-in chat reads the same format, see
-// src/lib/checkin/saved-checklist.js):
+// Saved format, at students/{uid}.checklist (the checklist page and the check-in chat both read it
+// through checklistFrom() below, via loadMyRecord() in store.js, so they always show the same list):
 //   [{ id: string, title: string, done: boolean }, ...]
 // The five defaults always keep their ids; tasks the student adds get ids starting "own-".
 
@@ -58,6 +58,18 @@ export function readSaved(saved) {
   return saved
     .filter((task) => task && typeof task.id === 'string' && typeof task.title === 'string')
     .map((task) => ({ id: task.id, title: task.title, done: task.done === true }));
+}
+
+/**
+ * A student's checklist from their record (students/{uid}): what they've saved, or a fresh copy of
+ * the defaults, all unticked, if they've never changed it. saved says which, so the check-in chat
+ * can word a list nobody has ticked yet carefully (they may have done things without ticking them).
+ * @param {Record<string, unknown> | undefined} record
+ * @returns {{ tasks: Task[], saved: boolean }}
+ */
+export function checklistFrom(record) {
+  const saved = readSaved(record?.[CHECKLIST_FIELD]);
+  return saved ? { tasks: saved, saved: true } : { tasks: defaultTasks(), saved: false };
 }
 
 /**

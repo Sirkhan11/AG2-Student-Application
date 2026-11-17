@@ -7,10 +7,10 @@
 import { blankContactDetails } from '#lib/checkin/private-details.js';
 
 /** @typedef {import('#lib/matching/matches.js').Match} Match */
-/** @typedef {import('#lib/checkin/saved-checklist.js').Task} Task */
+/** @typedef {import('#lib/checklist/tasks.js').Task} Task */
 /** @typedef {{ label: string, href: string }} Link */
 
-/** How each default checklist task reads in "you haven't … yet", by task id (see saved-checklist.js). */
+/** How each default checklist task reads in "you haven't … yet", by task id (see DEFAULT_TASKS in checklist/tasks.js). */
 const NOT_DONE = {
   gp: 'registered with a GP',
   'student-id': 'collected your student ID',
@@ -36,13 +36,15 @@ const plural = (count, noun) => `${count} ${noun}${count === 1 ? '' : 's'}`;
 
 /**
  * Builds the chat's first messages and the buttons under them.
- * @param {{ match: Match | null | undefined, tasks: Task[] | null, justSignedUp: boolean }} input
+ * @param {{ match: Match | null | undefined, tasks: Task[] | null, checklistSaved?: boolean, justSignedUp: boolean }} input
  *   match is null if they have no match record, and undefined if it couldn't be loaded;
- *   tasks is null if the checklist couldn't be loaded; justSignedUp is true when they've come
+ *   tasks is null if the checklist couldn't be loaded; checklistSaved is false when they've never
+ *   changed it (tasks are then the five defaults, unticked: they may have done some without
+ *   ticking them, so the message doesn't say they haven't); justSignedUp is true when they've come
  *   straight from /find-mentor
  * @returns {{ messages: string[], links: Link[] }}
  */
-export function buildOpener({ match, tasks, justSignedUp }) {
+export function buildOpener({ match, tasks, checklistSaved = true, justSignedUp }) {
   /** @type {Link[]} */
   const links = [];
   const hello = justSignedUp ? 'Thanks for answering those questions.' : 'Hi!';
@@ -63,7 +65,11 @@ export function buildOpener({ match, tasks, justSignedUp }) {
   const messages = [first];
 
   // 2. Their checklist: a society first (as a question), then up to 3 other tasks by name.
-  if (tasks && tasks.length > 0) {
+  if (tasks && tasks.length > 0 && !checklistSaved) {
+    // Never ticked anything: point them to it, without claiming what they haven't done.
+    messages.push('Your checklist has a few things that help with settling in, like registering with a GP and joining a society. Have a look when you’re ready.');
+    links.push({ label: 'Open your checklist', href: '/checklist' });
+  } else if (tasks && tasks.length > 0) {
     const notDone = tasks.filter((task) => !task.done);
     if (notDone.length === 0) {
       messages.push('I can see your checklist’s all done. Nice work!');
@@ -141,10 +147,10 @@ export function tidyProfile(profile) {
  * the course and interests they gave at sign-up. Never names (not theirs, not their mentor's),
  * emails, their mentor's id or their availability note. Their own checklist tasks are counted but
  * not named, as they could contain anything.
- * @param {{ match: Match | null | undefined, tasks: Task[] | null,
+ * @param {{ match: Match | null | undefined, tasks: Task[] | null, checklistSaved?: boolean,
  *   profile?: { course?: unknown, interests?: unknown } | null }} input
  */
-export function describeForGemini({ match, tasks, profile = null }) {
+export function describeForGemini({ match, tasks, checklistSaved = true, profile = null }) {
   const lines = [];
   if (match?.status === 'matched') {
     lines.push('Mentor: they have one. They’ve been matched with a student mentor, and the mentoring coordinator will introduce them. You aren’t told the mentor’s name: if they ask who it is, tell them it’s on the Your Mentor page.');
@@ -164,7 +170,9 @@ export function describeForGemini({ match, tasks, profile = null }) {
   const frequency = match?.status === 'matched' || match?.status === 'coordinator' ? tidyText(match.meetingFrequency, 40) : '';
   if (frequency) lines.push(`How often they asked to meet their mentor: ${frequency}.`);
 
-  if (tasks) {
+  if (tasks && !checklistSaved) {
+    lines.push(`Checklist: they haven’t ticked anything off yet, and may not have opened it, so don’t say they haven’t done these. It starts with: ${tasks.map((task) => task.title).join(', ')}.`);
+  } else if (tasks) {
     const titles = (/** @type {boolean} */ done) =>
       tasks.filter((task) => task.done === done && task.id in NOT_DONE).map((task) => task.title);
     const ownLeft = tasks.filter((task) => !task.done && !(task.id in NOT_DONE)).length;
