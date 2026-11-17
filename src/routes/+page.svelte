@@ -1,19 +1,34 @@
 
 <script>
   import { goto } from '$app/navigation';
+  import { logIn } from '#lib/firebase/auth.js';
 
   let email = $state('');
   let password = $state('');
+  let error = $state('');
+  let loggingIn = $state(false);
 
-  function handleLogin() {
+  async function handleLogin() {
     if (!email || !password) {
       alert('Please enter your email and password.');
       return;
     }
 
-    // Temporary login for the front-end prototype.
-    // Firebase Authentication will replace this later.
-    goto('/home');
+    error = '';
+    loggingIn = true;
+    try {
+      // A real Firebase login, so pages that need a signed-in user (like /find-mentor) work.
+      await logIn(email, password);
+      goto('/home');
+    } catch (err) {
+      const code = /** @type {{ code?: string }} */ (err).code;
+      error =
+        code === 'auth/invalid-credential'
+          ? "That email and password don't match an account."
+          : 'Something went wrong. Please try again.';
+    } finally {
+      loggingIn = false;
+    }
   }
 </script>
 
@@ -45,8 +60,12 @@
       required
     />
 
-    <button class="primary-button" type="submit">
-      Log in
+    {#if error}
+      <p class="error" role="alert">{error}</p>
+    {/if}
+
+    <button class="primary-button" type="submit" disabled={loggingIn}>
+      {loggingIn ? 'Logging in…' : 'Log in'}
     </button>
   </form>
 
