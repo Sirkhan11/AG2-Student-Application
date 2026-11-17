@@ -1,36 +1,36 @@
 {
   "about": "Check-in chat replies for check-chat-context.mjs (made-up students). Regenerate with --refresh rather than edit.",
   "model": "gemini-3.5-flash-lite",
-  "promptFingerprint": "7ca7f67863f0",
-  "made": "2026-11-17T16:00:04.554Z",
+  "promptFingerprint": "fddac0947abe",
+  "made": "2026-11-17T16:19:07.901Z",
   "replies": {
     "why matched": {
       "ask": "Why did you match me with my mentor?",
-      "reply": "You were matched because you both share interests in live music and gigs, and you like similar weekends like going to the cinema. \n\nYou're also both looking for a laid-back mentor."
+      "reply": "You were matched because you both enjoy live music and gigs, and like similar weekends at the cinema. The app also chose them because they have the laid-back style you asked for."
     },
     "how often": {
       "ask": "How often will we meet?",
-      "reply": "You asked to meet with your mentor every two weeks. \nYou can find their details and how to get in touch on the Your Mentor page."
+      "reply": "You asked to meet every two weeks. You can check your mentor's details and how to get in touch on the [[Your Mentor]] page."
     },
     "checklist": {
       "ask": "What's left on my checklist?",
-      "reply": "You still need to join a society and find a dentist, which you can do using the GP and Dentist Finder."
+      "reply": "You have two tasks left on your [[Checklist]]: to join a society and to find a dentist. \n\nSince you're studying English, you might like the [[English]] society or the [[Book]] society since you enjoy reading."
     },
     "who is my mentor": {
       "ask": "Who is my mentor?",
-      "reply": "You can find your mentor's name and how to get in touch on the Your Mentor page."
+      "reply": "Your mentor's name and how to get in touch are listed on your [[Your Mentor]] page. You can also check [[Find a mentor]] if you ever need to request one."
     },
     "course society": {
       "ask": "Can you suggest a society for my course?",
-      "reply": "Since you are studying English Literature, you might like the [[English]] society. Have you had a chance to look at it yet?"
+      "reply": "Since you are studying BA English Literature, you might enjoy [[English]] and [[Book]], which are great ways to meet people on your course and share your love of reading."
     },
     "why matched, waiting": {
       "ask": "Why did you match me with my mentor?",
-      "reply": "The mentoring coordinator is matching students by hand, so your mentor is still being found. \n\nOnce your match is ready, you can check the Your Mentor page to see why you were paired and how to get in touch."
+      "reply": "The mentoring coordinator is actually still finding a mentor for you by hand, so you haven't been matched just yet. \n\nOnce they find someone for you, you'll be meeting weekly, and you can check [[Your Mentor]] for their details as soon as they're ready."
     },
     "why matched, no mentor": {
       "ask": "Why did you match me with my mentor?",
-      "reply": "You haven't been matched with a mentor yet, but you can easily sign up on the Your Mentor page.\nWould you like to take a look at how that works?"
+      "reply": "You haven't been matched with a mentor yet because you haven't asked for one. If you'd like one, you can head over to [[Find a mentor]] to answer a few questions and get matched."
     }
   }
 }
