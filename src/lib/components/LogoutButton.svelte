@@ -2,6 +2,7 @@
   import { goto } from '$app/navigation';
   import { signOut } from 'firebase/auth';
   import { getFirebaseAuth } from '#lib/firebase/client';
+  import { disconnectBlackboard } from '#lib/blackboard/api.js';
 
   let loading = $state(false);
   let errorMessage = $state('');
@@ -11,6 +12,8 @@
     errorMessage = '';
 
     try {
+      // Forget the Blackboard connection on this device first, so a shared computer keeps nothing.
+      await disconnectBlackboard().catch((err) => console.error('Blackboard disconnect on logout failed:', err?.message));
       await signOut(getFirebaseAuth());
       await goto('/');
     } catch (err) {

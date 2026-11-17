@@ -3,7 +3,9 @@
 // and token swap as Learn documents them, connecting end to end, what each module shows, that no
 // grades, authors, other people, tokens or secrets reach the browser, the awkward cases (denied,
 // forged, expired, removed, down, slow, no modules, someone else's browser), and that nothing can carry
-// Blackboard data into Gemini. Nothing here goes to the network.
+// Blackboard data into Gemini. And the page side: each module's most important thing, the calendar
+// files for Outlook, what counts as new, and that only signed-in students see the section and logging
+// out forgets the connection. Nothing here goes to the network.
 //
 // With --build it also builds the app with made-up key, secret and cookie key values and checks
 // none of them is anywhere in what the browser downloads (about a minute):
@@ -21,6 +23,9 @@ import { finishConnect, readView, startConnect } from '#lib/server/blackboard/fl
 import { approve, deny, MOCK_APP_KEY, MOCK_APP_SECRET, MOCK_HOST, mockFetch } from '#lib/server/blackboard/mock.js';
 import { plainText } from '#lib/server/blackboard/read.js';
 import { verifyFirebaseIdToken } from '#lib/server/firebase-token.js';
+import { deadlineEntry, eventEntry, icsFor } from '#lib/blackboard/ics.js';
+import { dueText, topThing } from '#lib/blackboard/priority.js';
+import { closeGuide, forgetOnDevice, guideDone, markSeen, newIds } from '#lib/blackboard/seen.js';
 
 const ORIGIN = 'http://localhost:5173';
 const KEY = randomBytes(32);
@@ -237,6 +242,72 @@ const checks = [
     assert.deepEqual(await view(session, 'student-b'), { view: { connected: false, reason: 'not-connected' }, session: null });
     assert.deepEqual(await view(undefined, 'student-a'), { view: { connected: false, reason: 'not-connected' }, session: undefined });
     assert.deepEqual(await view('made-up-cookie', 'student-a'), { view: { connected: false, reason: 'not-connected' }, session: null });
+  }],
+  ['Each module\'s most important thing: a passed due date, then one due within a week, a new announcement, new content, the next deadline, or nothing new', () => {
+    const NOW = Date.parse('2026-11-17T12:00:00Z');
+    const day = (/** @type {number} */ n) => new Date(NOW + n * 86_400_000).toISOString();
+    /** @param {Partial<import('#lib/blackboard/shapes.js').Module>} parts @returns {import('#lib/blackboard/shapes.js').Module} */
+    const module = (parts) => ({ id: 'm', code: 'C', name: 'N', url: null, tasks: [], events: [], content: [], announcements: [], partial: [], ...parts });
+    const task = (/** @type {string} */ title, /** @type {number} */ days) => ({ id: title, title, due: day(days), url: null });
+    const news = { announcements: [{ id: 'a', title: 'Announced', text: '', posted: day(-1) }], content: [{ id: 'c', title: 'Released', created: day(-1), kind: /** @type {'item'} */ ('item'), url: null }] };
+    const all = new Set(['a', 'c']);
+    assert.equal(topThing(module({ tasks: [task('Late', -2), task('Soon', 2)], ...news }), all, NOW).kind, 'past-due');
+    assert.equal(topThing(module({ tasks: [task('Soon', 2), task('Later', 20)], ...news }), all, NOW).title, 'Soon');
+    assert.equal(topThing(module({ tasks: [task('Later', 20)], ...news }), all, NOW).kind, 'announcement');
+    assert.equal(topThing(module({ tasks: [task('Later', 20)], ...news }), new Set(['c']), NOW).kind, 'content');
+    assert.equal(topThing(module({ tasks: [task('Later', 20)], ...news }), new Set(), NOW).kind, 'next');
+    assert.deepEqual(topThing(module({}), new Set(), NOW), { kind: 'nothing', title: 'Nothing new', date: null });
+    assert.match(dueText(day(-2), NOW), /^was due 2 days ago$/);
+    assert.match(dueText(day(1), NOW), /^due tomorrow at \d\d:\d\d$/);
+    assert.match(dueText(day(9), NOW), /^due [A-Z][a-z]+day \d{1,2} [A-Z][a-z]{2}$/);
+  }],
+  ['Add to Outlook: a standard calendar file, in UTC, with a reminder the day before; a deadline is the half hour before it\'s due', () => {
+    const text = icsFor(deadlineEntry({ id: 't1', title: 'Essay, part 1; final', due: '2026-11-20T14:00:00.000Z', url: 'https://example.test/item' }, 'Made-Up Module'), Date.parse('2026-11-17T12:00:00Z'));
+    const lines = text.split('\r\n');
+    assert.equal(lines[0], 'BEGIN:VCALENDAR');
+    assert.equal(lines.at(-1), '', 'ends with a line break');
+    assert.ok(text.includes('\r\n') && !/[^\r]\n/.test(text), 'CRLF line ends only');
+    assert.ok(lines.includes('DTSTART:20261120T133000Z') && lines.includes('DTEND:20261120T140000Z'));
+    assert.ok(lines.includes('UID:deadline-t1@ag2-student-app'));
+    assert.ok(lines.includes('SUMMARY:Due: Essay\\, part 1\\; final (Made-Up Module)'), 'commas and semicolons escaped');
+    assert.ok(lines.includes('TRIGGER:-P1D') && lines.includes('BEGIN:VALARM'));
+    assert.ok(lines.every((line) => new TextEncoder().encode(line).length <= 75), 'long lines folded');
+    const event = icsFor(eventEntry({ id: 'e1', title: 'In-class test', start: '2026-11-22T10:00:00.000Z', end: null }, 'M'));
+    assert.ok(event.includes('DTSTART:20261122T100000Z\r\nDTEND:20261122T110000Z'), 'an hour long with no end');
+  }],
+  ['What counts as new is kept on the device per student (ids only): the first time, the last 7 days; then anything not seen; logging out or disconnecting deletes it', () => {
+    const store = new Map();
+    const storage = { getItem: (/** @type {string} */ k) => store.get(k) ?? null, setItem: (/** @type {string} */ k, /** @type {string} */ v) => void store.set(k, v), removeItem: (/** @type {string} */ k) => void store.delete(k) };
+    const NOW = Date.parse('2026-11-17T12:00:00Z');
+    const ago = (/** @type {number} */ days) => new Date(NOW - days * 86_400_000).toISOString();
+    /** @type {import('#lib/blackboard/shapes.js').Module} */
+    const module = { id: 'm1', code: 'C', name: 'N', url: null, tasks: [], events: [], partial: [],
+      content: [{ id: 'old', title: 'Old', created: ago(20), kind: 'item', url: null }, { id: 'recent', title: 'Recent', created: ago(2), kind: 'item', url: null }],
+      announcements: [{ id: 'news', title: 'News', text: 'x', posted: ago(1) }] };
+    assert.deepEqual([...newIds('student-a', module, NOW, storage)].sort(), ['news', 'recent']);
+    markSeen('student-a', module, storage);
+    assert.deepEqual([...newIds('student-a', module, NOW, storage)], []);
+    const later = { ...module, content: [...module.content, { id: 'week9', title: 'Week 9', created: ago(40), kind: /** @type {'folder'} */ ('folder'), url: null }] };
+    assert.deepEqual([...newIds('student-a', later, NOW, storage)], ['week9'], 'released later but made long ago still counts as new');
+    assert.ok(!JSON.stringify([...store.values()]).includes('Week 9'), 'no titles kept');
+    assert.deepEqual([...newIds('student-b', module, NOW, storage)].sort(), ['news', 'recent'], 'per student');
+    assert.equal(guideDone('student-a', storage), false);
+    closeGuide('student-a', storage);
+    assert.equal(guideDone('student-a', storage), true);
+    forgetOnDevice('student-a', storage);
+    assert.equal(store.size, 0);
+    const blocked = { getItem: () => { throw new Error('blocked'); }, setItem: () => { throw new Error('blocked'); }, removeItem: () => { throw new Error('blocked'); } };
+    assert.doesNotThrow(() => { newIds('student-a', module, NOW, blocked); markSeen('student-a', module, blocked); forgetOnDevice('student-a', blocked); });
+  }],
+  ['The section is only for signed-in students, logging out forgets the connection, and the browser code never handles a Blackboard token', () => {
+    const checklist = readFileSync('src/routes/checklist/+page.svelte', 'utf8');
+    assert.match(checklist, /\{#if signedIn === true\}\s*<BlackboardSection \/>\s*\{\/if\}/);
+    const logout = readFileSync('src/lib/components/LogoutButton.svelte', 'utf8');
+    assert.ok(logout.indexOf('disconnectBlackboard()') !== -1 && logout.indexOf('disconnectBlackboard()') < logout.indexOf('signOut(getFirebaseAuth())'), 'disconnect before signing out');
+    const browserCode = [...walk('src/lib/blackboard'), 'src/lib/components/BlackboardSection.svelte'].map((file) => readFileSync(file, 'utf8')).join('\n');
+    assert.doesNotMatch(browserCode, /access_token|refresh_token|BLACKBOARD_APP|\$app\/env\/private/);
+    assert.doesNotMatch(readFileSync('src/lib/components/BlackboardSection.svelte', 'utf8'), /localStorage|sessionStorage/, 'storage only through seen.js');
+    assert.match(readFileSync('src/lib/components/BlackboardSection.svelte', 'utf8'), /id="blackboard"/, 'the Late arrivals page links here');
   }],
   ['Nothing from Blackboard can reach Gemini: no chat code imports Blackboard code, and no Blackboard code imports Gemini', () => {
     const chatFiles = [...walk('src/lib/checkin'), ...walk('src/routes/check-in')];

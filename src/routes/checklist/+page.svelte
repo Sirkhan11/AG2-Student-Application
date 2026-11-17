@@ -1,6 +1,7 @@
 <script>
   import { tick } from 'svelte';
   import BottomNav from '#lib/components/BottomNav.svelte';
+  import BlackboardSection from '#lib/components/BlackboardSection.svelte';
   import { watchSignedIn } from '#lib/firebase/auth.js';
   import { loginPathFor } from '#lib/next-path.js';
   import { loadChecklist, saveChange } from '#lib/checklist/store.js';
@@ -257,6 +258,10 @@
       {/if}
       <button class="primary-button" type="submit" disabled={full}>Add task</button>
     </form>
+  {/if}
+
+  {#if signedIn === true}
+    <BlackboardSection />
   {/if}
 
   <BottomNav />

@@ -17,6 +17,15 @@ export function currentUid() {
 }
 
 /**
+ * The signed-in user's Firebase ID token, for the app's own server routes (which check it), or null.
+ * Firebase renews it when it's about to run out.
+ * @returns {Promise<string | null>}
+ */
+export async function idToken() {
+  return (await getFirebaseAuth().currentUser?.getIdToken()) ?? null;
+}
+
+/**
  * Logs in with an email and password. Firebase keeps the session in the browser, so the person stays
  * logged in across page loads until they log out.
  * A wrong email or password throws a FirebaseError with code 'auth/invalid-credential'.
