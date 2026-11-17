@@ -164,10 +164,12 @@ service cloud.firestore {
         && task.done is bool;
     }
 
-    // At most 50 tasks (MAX_TASKS in tasks.js), each valid. Rules can't loop over a list, so each
-    // of the 50 places is checked in turn; a shorter list passes the places it doesn't reach.
+    // At most 15 tasks (MAX_TASKS in tasks.js), each valid. Rules can't loop over a list, so each
+    // of the 15 places is checked in turn; a shorter list passes the places it doesn't reach. Each
+    // place costs part of the rules' per-write evaluation limit (50 places refused 20 tasks or more),
+    // so keep the number of places equal to MAX_TASKS and well under that.
     function validChecklist(tasks) {
-      return tasks is list && tasks.size() <= 50
+      return tasks is list && tasks.size() <= 15
         && (tasks.size() <= 0 || validTask(tasks[0]))
         && (tasks.size() <= 1 || validTask(tasks[1]))
         && (tasks.size() <= 2 || validTask(tasks[2]))
@@ -182,42 +184,7 @@ service cloud.firestore {
         && (tasks.size() <= 11 || validTask(tasks[11]))
         && (tasks.size() <= 12 || validTask(tasks[12]))
         && (tasks.size() <= 13 || validTask(tasks[13]))
-        && (tasks.size() <= 14 || validTask(tasks[14]))
-        && (tasks.size() <= 15 || validTask(tasks[15]))
-        && (tasks.size() <= 16 || validTask(tasks[16]))
-        && (tasks.size() <= 17 || validTask(tasks[17]))
-        && (tasks.size() <= 18 || validTask(tasks[18]))
-        && (tasks.size() <= 19 || validTask(tasks[19]))
-        && (tasks.size() <= 20 || validTask(tasks[20]))
-        && (tasks.size() <= 21 || validTask(tasks[21]))
-        && (tasks.size() <= 22 || validTask(tasks[22]))
-        && (tasks.size() <= 23 || validTask(tasks[23]))
-        && (tasks.size() <= 24 || validTask(tasks[24]))
-        && (tasks.size() <= 25 || validTask(tasks[25]))
-        && (tasks.size() <= 26 || validTask(tasks[26]))
-        && (tasks.size() <= 27 || validTask(tasks[27]))
-        && (tasks.size() <= 28 || validTask(tasks[28]))
-        && (tasks.size() <= 29 || validTask(tasks[29]))
-        && (tasks.size() <= 30 || validTask(tasks[30]))
-        && (tasks.size() <= 31 || validTask(tasks[31]))
-        && (tasks.size() <= 32 || validTask(tasks[32]))
-        && (tasks.size() <= 33 || validTask(tasks[33]))
-        && (tasks.size() <= 34 || validTask(tasks[34]))
-        && (tasks.size() <= 35 || validTask(tasks[35]))
-        && (tasks.size() <= 36 || validTask(tasks[36]))
-        && (tasks.size() <= 37 || validTask(tasks[37]))
-        && (tasks.size() <= 38 || validTask(tasks[38]))
-        && (tasks.size() <= 39 || validTask(tasks[39]))
-        && (tasks.size() <= 40 || validTask(tasks[40]))
-        && (tasks.size() <= 41 || validTask(tasks[41]))
-        && (tasks.size() <= 42 || validTask(tasks[42]))
-        && (tasks.size() <= 43 || validTask(tasks[43]))
-        && (tasks.size() <= 44 || validTask(tasks[44]))
-        && (tasks.size() <= 45 || validTask(tasks[45]))
-        && (tasks.size() <= 46 || validTask(tasks[46]))
-        && (tasks.size() <= 47 || validTask(tasks[47]))
-        && (tasks.size() <= 48 || validTask(tasks[48]))
-        && (tasks.size() <= 49 || validTask(tasks[49]));
+        && (tasks.size() <= 14 || validTask(tasks[14]));
     }
   }
 }

@@ -19,8 +19,13 @@
 /** The field in students/{uid} that holds the checklist. */
 export const CHECKLIST_FIELD = 'checklist';
 
-/** Limits, so one student can't fill their record. The rules can check the number of tasks too. */
-export const MAX_TASKS = 50;
+/**
+ * Limits, so one student can't fill their record. firestore.rules checks each task in turn, and a
+ * rule can only evaluate so much per write: the rules for 50 places refused 20 tasks or more, so the
+ * limit is 15 (the 5 standard tasks and 10 of their own), well inside what fits. check-checklist.mjs
+ * checks the rules have exactly MAX_TASKS places, and that the server accepts a full list.
+ */
+export const MAX_TASKS = 15;
 export const MAX_TITLE_LENGTH = 100;
 
 /** Every student starts with these. Their ids never change, as the check-in chat recognises them. */

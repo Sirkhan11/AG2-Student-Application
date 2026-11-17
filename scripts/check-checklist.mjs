@@ -17,6 +17,7 @@
 // (or just `node scripts/check-checklist.mjs` for parts 1 and 2 only)
 
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import {
   applyChange, applyToLatest, ChecklistError, DEFAULT_TASKS, defaultTasks, makeAdd, makeDelete,
   makeEdit, makeTick, MAX_TASKS, MAX_TITLE_LENGTH, readSaved, checklistFrom
@@ -67,6 +68,13 @@ await check(`Adding: empty and over-${MAX_TITLE_LENGTH}-character names are refu
   refuses(() => makeAdd('   '), 'Please give the task a name.');
   refuses(() => makeAdd('x'.repeat(MAX_TITLE_LENGTH + 1)), `Task names can be up to ${MAX_TITLE_LENGTH} characters.`);
   assert.equal(/** @type {any} */ (makeAdd('x'.repeat(MAX_TITLE_LENGTH))).task.title.length, MAX_TITLE_LENGTH);
+});
+await check(`firestore.rules checks exactly ${MAX_TASKS} places, so the rules and the app agree on the limit`, () => {
+  const rules = readFileSync('firestore.rules', 'utf8');
+  const body = rules.slice(rules.indexOf('function validChecklist('), rules.indexOf('}', rules.indexOf('function validChecklist(')));
+  assert.match(body, new RegExp(`tasks\\.size\\(\\) <= ${MAX_TASKS}\\n`), 'the size check');
+  const places = [...body.matchAll(/tasks\.size\(\) <= (\d+) \|\| validTask\(tasks\[(\d+)\]\)/g)].map((m) => [Number(m[1]), Number(m[2])]);
+  assert.deepEqual(places, Array.from({ length: MAX_TASKS }, (_, i) => [i, i]));
 });
 await check(`Adding: task number ${MAX_TASKS + 1} is refused`, () => {
   let list = defaultTasks();
