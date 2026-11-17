@@ -107,7 +107,7 @@ export function buildOpener({ match, tasks, justSignedUp }) {
 export function describeForGemini({ match, tasks }) {
   const lines = [];
   if (match?.status === 'matched') {
-    lines.push('Mentor: matched with a student mentor; the mentoring coordinator will introduce them. You don’t know who the mentor is.');
+    lines.push('Mentor: they have one. They’ve been matched with a student mentor, and the mentoring coordinator will introduce them. You aren’t told the mentor’s name: if they ask who it is, tell them it’s on the Your Mentor page.');
   } else if (match?.status === 'coordinator') {
     lines.push('Mentor: the mentoring coordinator is finding them a mentor by hand.');
   } else if (match === null) {

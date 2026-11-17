@@ -27,12 +27,15 @@ const CRISIS_PATTERNS = [
   /\bin danger\b(?! of)/
 ];
 
-/** What the chat shows instead of an AI reply. The same numbers as the Need help now page, plus Samaritans. */
+/**
+ * What the chat shows instead of an AI reply. The Need help now page lists 999 and NHS 111 but not
+ * Samaritans yet, so the last line only promises those two; update it once that page is updated.
+ */
 export const SAFETY_MESSAGE =
   'I’m really sorry you’re going through this, and you don’t have to deal with it on your own. ' +
   'If you’re in danger or might act on these thoughts, call 999 now. For urgent help that isn’t an ' +
   'emergency, call NHS 111. You can talk to Samaritans any time, for free, on 116 123. ' +
-  'The Need help now page has these numbers too.';
+  'The Need help now page has the 999 and NHS 111 numbers too.';
 
 /**
  * True if the message suggests the student may be at risk.

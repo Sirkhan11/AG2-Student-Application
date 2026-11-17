@@ -7,6 +7,9 @@ import { isCrisis, SAFETY_MESSAGE } from '#lib/checkin/safety.js';
  */
 const MODEL_NAME = 'gemini-3.5-flash-lite';
 
+/** Only the last this-many messages are sent each time, so a long chat can't grow without limit. */
+const MAX_HISTORY_MESSAGES = 20;
+
 /** Blanked out of a message before it's sent, as Google's free tier may keep what it's sent. */
 const EMAIL_ADDRESS = /\S+@\S+\.\S+/g;
 const UK_MOBILE = /(\+44\s?7|\b07)\d{3}\s?\d{3}\s?\d{3}\b/g;
@@ -16,8 +19,8 @@ const ERROR_MESSAGE =
 
 /**
  * Gemini's instructions: who it is, how to reply, the safety rules, and what the app knows about the
- * student. The first messages are included because they were built by the app, not by Gemini, and
- * a chat's history has to start with the student's turn.
+ * student. The first messages are included because they were built by the app, not by Gemini, and a
+ * conversation sent to Gemini has to start with the student's turn.
  * @param {string} about from describeForGemini() in opener.js
  * @param {string[]} opener the first messages, without any names
  */
@@ -31,6 +34,10 @@ What you can help with:
 - How they're settling in, how their day's been, and making friends.
 - Their settling-in checklist and their mentor match (below): encourage them and suggest one small next step.
 - Pointing them to pages in the app by name: GP and Dentist Finder, Societies, Checklist, NHS Guide, Your Mentor, Need Help Now.
+
+How to help:
+- When they ask for ideas or tips (making friends, things to do, which society to try), first ask what they're into, unless they've already said, so you can suggest something that fits them.
+- Only talk about what the app has: the pages above, their checklist and their mentor status. Don't mention events, sessions, clubs, places, dates, times, prices or other details you haven't been given here. If they need those, suggest where to look, such as the Societies page.
 
 Rules:
 - You're not a counsellor, doctor or emergency service. Don't diagnose, and don't give medical, legal or money advice; suggest who could help instead.
@@ -55,11 +62,18 @@ ${opener.map((message) => `"${message}"`).join('\n')}`;
 /**
  * Starts a check-in chat. The conversation is kept in the page only: it isn't saved anywhere, and
  * nobody else can see it.
+ *
+ * It keeps its own list of the messages that got a reply, and sends that list each time, rather than
+ * using the SDK's chat session. A chat session keeps a failed send and throws the same error for every
+ * later message, so one blip (or the 15-a-minute limit) would break the chat until the page reloads.
+ * Here a failed message is simply never added, so the next one starts again from the last good point.
  * @param {string} about from describeForGemini() in opener.js
  * @param {string[]} opener the first messages, without any names
  */
 export function startCheckinChat(about, opener) {
-  const chat = getGeminiModel({ model: MODEL_NAME, systemInstruction: instructions(about, opener) }).startChat();
+  const model = getGeminiModel({ model: MODEL_NAME, systemInstruction: instructions(about, opener) });
+  /** @type {import('firebase/ai').Content[]} the student's messages and Gemini's replies, in order */
+  const history = [];
 
   return {
     /**
@@ -70,8 +84,15 @@ export function startCheckinChat(about, opener) {
     async send(text) {
       // Layer 1: checked here, and not sent to Gemini (see safety.js).
       if (isCrisis(text)) return { kind: 'safety', text: SAFETY_MESSAGE };
+
+      /** @type {import('firebase/ai').Content} */
+      const message = {
+        role: 'user',
+        parts: [{ type: 'text', text: text.replace(EMAIL_ADDRESS, '[email]').replace(UK_MOBILE, '[phone number]') }]
+      };
       try {
-        const result = await chat.sendMessage(text.replace(EMAIL_ADDRESS, '[email]').replace(UK_MOBILE, '[phone number]'));
+        // Whole exchanges only, so what's sent always starts with one of the student's messages.
+        const result = await model.generateContent({ contents: [...history.slice(-MAX_HISTORY_MESSAGES), message] });
         // Layer 3: if Gemini's own safety filters stop the reply, the student still gets the support message.
         const response = result.response;
         if (response.promptFeedback?.blockReason || response.candidates?.[0]?.finishReason === 'SAFETY') {
@@ -79,6 +100,7 @@ export function startCheckinChat(about, opener) {
         }
         const reply = response.text().trim();
         if (reply === '') throw new Error('Gemini sent an empty reply.');
+        history.push(message, { role: 'model', parts: [{ type: 'text', text: reply }] });
         return { kind: 'reply', text: reply };
       } catch (err) {
         console.error('The check-in chat could not reply:', err);

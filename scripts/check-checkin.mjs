@@ -63,7 +63,7 @@ const checks = [
   }],
 
   // ---------- What Gemini is told ----------
-  ['Gemini is never told the mentor\'s name or the student\'s own task titles', () => {
+  ['Gemini knows they have a mentor (and to point to Your Mentor), but never the name or their own task titles', () => {
     const own = [{ id: 'own-1', title: 'Call home about rent', done: false }];
     const about = describeForGemini({ match: matched, tasks: [...tasks(['society']), ...own] });
     assert.ok(!about.includes('Alex'), 'mentor name leaked');
@@ -71,6 +71,8 @@ const checks = [
     assert.match(about, /Checklist, not done yet: Register with a GP, Collect student ID, Find a dentist, Save key contacts\./);
     assert.match(about, /Checklist, done: Join a society\./);
     assert.match(about, /1 task of their own still to do/);
+    assert.match(about, /they have one/, 'Gemini is told they have a mentor');
+    assert.match(about, /Your Mentor page/, 'and where to see who it is');
   }],
 
   // ---------- The crisis check ----------
