@@ -9,5 +9,18 @@ import { chatWith } from '#lib/checkin/chat-turns.js';
  * @param {string[]} opener the first messages, without any names
  */
 export function startCheckinChat(about, opener) {
-  return chatWith(getGeminiModel({ model: CHAT_MODEL, systemInstruction: chatInstructions(about, opener) }));
+  /** @param {string} facts */
+  const modelFor = (facts) => getGeminiModel({ model: CHAT_MODEL, systemInstruction: chatInstructions(facts, opener) });
+  const chat = chatWith(modelFor(about));
+  return {
+    send: chat.send,
+    /**
+     * Tells Gemini what the app knows now (for example after finding a mentor in the chat), keeping
+     * the conversation so far.
+     * @param {string} newAbout from describeForGemini() in opener.js
+     */
+    retell(newAbout) {
+      chat.useModel(modelFor(newAbout));
+    }
+  };
 }

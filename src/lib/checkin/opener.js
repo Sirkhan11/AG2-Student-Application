@@ -8,7 +8,11 @@ import { blankContactDetails } from '#lib/checkin/private-details.js';
 
 /** @typedef {import('#lib/matching/matches.js').Match} Match */
 /** @typedef {import('#lib/checklist/tasks.js').Task} Task */
-/** @typedef {{ label: string, href: string }} Link */
+/**
+ * A button under the first messages. action: one of the chat's own actions (chat-actions.js), which
+ * the button starts right there in the chat; href is where it goes otherwise (a plain link).
+ * @typedef {{ label: string, href: string, action?: string }} Link
+ */
 
 /** How each default checklist task reads in "you haven't … yet", by task id (see DEFAULT_TASKS in checklist/tasks.js). */
 const NOT_DONE = {
@@ -36,15 +40,16 @@ const plural = (count, noun) => `${count} ${noun}${count === 1 ? '' : 's'}`;
 
 /**
  * Builds the chat's first messages and the buttons under them.
- * @param {{ match: Match | null | undefined, tasks: Task[] | null, checklistSaved?: boolean, justSignedUp: boolean }} input
- *   match is null if they have no match record, and undefined if it couldn't be loaded;
+ * @param {{ match: Match | null | undefined, tasks: Task[] | null, checklistSaved?: boolean, justSignedUp: boolean, isMentor?: boolean }} input
+ *   match is null if they have no match record, and undefined if it couldn't be loaded; isMentor is
+ *   true for someone who signed up as a mentor, who isn't offered one;
  *   tasks is null if the checklist couldn't be loaded; checklistSaved is false when they've never
  *   changed it (tasks are then the five defaults, unticked: they may have done some without
  *   ticking them, so the message doesn't say they haven't); justSignedUp is true when they've come
  *   straight from /find-mentor
  * @returns {{ messages: string[], links: Link[] }}
  */
-export function buildOpener({ match, tasks, checklistSaved = true, justSignedUp }) {
+export function buildOpener({ match, tasks, checklistSaved = true, justSignedUp, isMentor = false }) {
   /** @type {Link[]} */
   const links = [];
   const hello = justSignedUp ? 'Thanks for answering those questions.' : 'Hi!';
@@ -56,9 +61,10 @@ export function buildOpener({ match, tasks, checklistSaved = true, justSignedUp 
     links.push({ label: 'Your mentor', href: '/mentor' });
   } else if (match?.status === 'coordinator') {
     first = `${hello} We’re finding you a mentor, and we’ll let you know soon. While you wait, how’s your day been?`;
-  } else if (match === null) {
+  } else if (match === null && !isMentor) {
     first = `${hello} How’s your day been? If you’d like a student mentor, you can answer a few questions to be matched.`;
-    links.push({ label: 'Find a mentor', href: '/find-mentor' });
+    // Starts finding a mentor right here in the chat (chat-actions.js), rather than opening the page.
+    links.push({ label: 'Find a mentor', href: '/find-mentor', action: 'mentor' });
   } else {
     first = `${hello} How’s your day been?`;
   }
@@ -147,12 +153,18 @@ export function tidyProfile(profile) {
  * the course and interests they gave at sign-up. Never names (not theirs, not their mentor's),
  * emails, their mentor's id or their availability note. Their own checklist tasks are counted but
  * not named, as they could contain anything.
+ * isMentor: they signed up as a mentor, so they're never offered one. mentorNote: what happened to
+ * finding a mentor in this chat, so Gemini doesn't offer it again ('declined': they said not now;
+ * 'stopped': they stopped part way; 'no-mentors': there were none available).
  * @param {{ match: Match | null | undefined, tasks: Task[] | null, checklistSaved?: boolean,
- *   profile?: { course?: unknown, interests?: unknown } | null }} input
+ *   profile?: { course?: unknown, interests?: unknown } | null, isMentor?: boolean,
+ *   mentorNote?: 'declined' | 'stopped' | 'no-mentors' | null }} input
  */
-export function describeForGemini({ match, tasks, checklistSaved = true, profile = null }) {
+export function describeForGemini({ match, tasks, checklistSaved = true, profile = null, isMentor = false, mentorNote = null }) {
   const lines = [];
-  if (match?.status === 'matched') {
+  if (isMentor) {
+    lines.push('Mentor: they’re a mentor themselves (they signed up as one), so don’t offer to find them one.');
+  } else if (match?.status === 'matched') {
     lines.push('Mentor: they have one. They’ve been matched with a student mentor, and the mentoring coordinator will introduce them. You aren’t told the mentor’s name: if they ask who it is, tell them it’s on the Your Mentor page.');
     const reasons = (match.reasons ?? []).map((reason) => tidyText(reason, MAX_REASON_LENGTH)).filter(Boolean).slice(0, 3);
     lines.push(
@@ -162,8 +174,12 @@ export function describeForGemini({ match, tasks, checklistSaved = true, profile
     );
   } else if (match?.status === 'coordinator') {
     lines.push('Mentor: the mentoring coordinator is finding them a mentor by hand.');
+  } else if (match === null && mentorNote === 'no-mentors') {
+    lines.push('Mentor: they asked in this chat, but there are no mentors available yet, so don’t offer again in this chat.');
   } else if (match === null) {
-    lines.push('Mentor: they haven’t asked for one yet. They can on the Find a mentor page.');
+    lines.push('Mentor: they haven’t got one yet. You can offer to find them one here in the chat ({{mentor}}).');
+    if (mentorNote === 'declined') lines.push('They said not now to finding a mentor in this chat: don’t offer it again unless they ask for a mentor. If they do, offer it as usual, with {{mentor}}.');
+    if (mentorNote === 'stopped') lines.push('They started finding a mentor in this chat and stopped: don’t offer it again unless they ask for a mentor. If they do, offer it as usual, with {{mentor}}.');
   } else {
     lines.push('Mentor: not known.');
   }

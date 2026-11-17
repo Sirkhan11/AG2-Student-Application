@@ -9,6 +9,11 @@
 //   never to the log-in page after being sent there;
 // - a student whose details were lost (no name or course): Home says "Hi there" with Finish your
 //   details, and saving them from the sign-up page greets them by name;
+// - finding a mentor in the chat: with no mentors yet it says so and saves nothing; the questions come
+//   one at a time with the focus in the message box and no Gemini; "stop" saves nothing and the chat
+//   carries on; a full run with Change and Find my mentor (Gemini can't run against the emulators, so
+//   it goes to the coordinator) shows the result in the chat; a mentor account isn't offered it; and
+//   the Find a mentor page still works through the same shared steps;
 // - the GP finder keeps "Use my location" on the phone: scripts/check-gp-finder-privacy.mjs, logged in.
 // Nothing real is touched (project demo-ag2). Typed GP searches ask postcodes.io, as the page does.
 // Run from the project folder (the emulators need Java 21 or newer):
@@ -68,9 +73,39 @@ async function seed(path, fields) {
 const password = randomBytes(18).toString('base64url');
 const sam = { email: 'sam.student@northumbria.ac.uk', password };
 const lost = { email: 'lost.details@northumbria.ac.uk', password };
+const nia = { email: 'nia.student@northumbria.ac.uk', password };
+const pat = { email: 'pat.student@northumbria.ac.uk', password };
+const mo = { email: 'mo.mentor@northumbria.ac.uk', password };
 const samUid = await verifiedStudent(sam.email, sam.password);
 await verifiedStudent(lost.email, lost.password);
+const niaUid = await verifiedStudent(nia.email, nia.password);
+await verifiedStudent(pat.email, pat.password);
+const moUid = await verifiedStudent(mo.email, mo.password);
 await seed(`students/${samUid}`, { name: 'Sam Student', course: 'BSc Law', email: sam.email, arrivalDate: '', role: 'student' });
+await seed(`students/${niaUid}`, { name: 'Nia Student', course: 'BSc Nursing', email: nia.email, arrivalDate: '', role: 'student' });
+
+/** A Firestore value as the emulator's REST API wants it. @param {unknown} value @returns {any} */
+const asValue = (value) =>
+  typeof value === 'boolean' ? { booleanValue: value }
+    : Number.isInteger(value) ? { integerValue: String(value) }
+      : typeof value === 'number' ? { doubleValue: value }
+        : Array.isArray(value) ? { arrayValue: { values: value.map(asValue) } }
+          : value && typeof value === 'object' ? { mapValue: { fields: Object.fromEntries(Object.entries(value).map(([key, v]) => [key, asValue(v)])) } }
+            : { stringValue: String(value) };
+/** Writes a document of any shape as the emulator's owner. @param {string} path @param {Record<string, unknown>} fields */
+async function seedAs(path, fields) {
+  const response = await fetch(`http://${FIRESTORE}/v1/projects/${PROJECT}/databases/(default)/documents/${path}`, {
+    method: 'PATCH', headers: { authorization: 'Bearer owner', 'content-type': 'application/json' }, body: JSON.stringify({ fields: asValue(fields).mapValue.fields })
+  });
+  assert.ok(response.ok, `seeding ${path}`);
+}
+/** A document as the emulator's owner sees it, or null. @param {string} path @returns {Promise<any>} */
+async function ownerRead(path) {
+  const response = await fetch(`http://${FIRESTORE}/v1/projects/${PROJECT}/databases/(default)/documents/${path}`, { headers: { authorization: 'Bearer owner' } });
+  return response.status === 404 ? null : response.json();
+}
+// A mentor account (it has a mentor profile), which the chat never offers a mentor.
+await seedAs(`mentors/${moUid}`, { displayName: 'Mo', approved: false, maxStudents: 2, studentCount: 0, itemVectors: { q1: [], q2: [], q3: [], q4: [], q5: [], q6: [] } });
 
 // ---------- The app, in its emulators mode ----------
 const appPort = await freePort();
@@ -114,11 +149,21 @@ try {
   await new Promise((done) => socket.addEventListener('open', done, { once: true }));
   let id = 0;
   const pending = new Map();
+  /** @type {string[]} every request the page makes */
+  const requests = [];
+  /** @type {string[]} errors on the page, shown when a check fails */
+  const problems = [];
   socket.addEventListener('message', (event) => {
     const message = JSON.parse(String(event.data));
     if (message.id && pending.has(message.id)) {
       pending.get(message.id)(message);
       pending.delete(message.id);
+    } else if (message.method === 'Network.requestWillBeSent') {
+      requests.push(message.params.request.url);
+    } else if (message.method === 'Runtime.exceptionThrown') {
+      problems.push(String(message.params.exceptionDetails?.exception?.description ?? message.params.exceptionDetails?.text).slice(0, 300));
+    } else if (message.method === 'Runtime.consoleAPICalled' && message.params.type === 'error') {
+      problems.push(message.params.args.map((/** @type {any} */ a) => a.value ?? a.description ?? '').join(' ').slice(0, 300));
     }
   });
   /** @param {string} method @param {object} [params] @returns {Promise<any>} */
@@ -130,6 +175,7 @@ try {
     });
   await send('Page.enable');
   await send('Runtime.enable');
+  await send('Network.enable');
   await send('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 2, mobile: true });
   // Every state Home's heading is shown in (its words, and whether it's visible), from the moment the page starts.
   await send('Page.addScriptToEvaluateOnNewDocument', { source: `
@@ -176,6 +222,48 @@ try {
     await evaluate(`(document.querySelector('form button[type=submit]').click(), true)`);
   };
   const heading = () => evaluate(`document.querySelector('main h1')?.textContent.trim() ?? ''`);
+
+  // Helpers for the chat and its cards.
+  /** How many chat bubbles say this. @param {string} words */
+  const bubbles = (words) => evaluate(`[...document.querySelectorAll('.bubble')].filter((b) => b.innerText.includes(${JSON.stringify(words)})).length`);
+  /** Waits for one more bubble saying this. @param {string} words @param {number} [ms] */
+  const another = async (words, ms = 15000) => {
+    const before = await bubbles(words);
+    return async () => waitFor(`[...document.querySelectorAll('.bubble')].filter((b) => b.innerText.includes(${JSON.stringify(words)})).length > ${before}`, ms);
+  };
+  /** Clicks the last working button with these words (the live card's); false if there isn't one. @param {string} words */
+  const press = (words) =>
+    evaluate(`(() => { const b = [...document.querySelectorAll('button')].filter((e) => e.textContent.trim() === ${JSON.stringify(words)} && !e.disabled).at(-1); if (!b) return false; b.click(); return true; })()`);
+  /** Types into the message box and sends it. @param {string} text */
+  const answer = async (text) => {
+    await fill('#chat-message', text);
+    await evaluate(`(document.getElementById('chat-message').form.requestSubmit(), true)`);
+  };
+  const geminiCalls = () => requests.filter((url) => /firebasevertexai|generativelanguage|aiplatform/.test(url));
+  const savedNothing = async () => !(await ownerRead(`matches/${niaUid}`)) && !(await ownerRead(`students/${niaUid}`))?.fields?.mentorRequest;
+
+
+  // 0. The Find a mentor page, with the steps it shares with the chat. First, while the browser is fresh:
+  //    the emulator speaks HTTP/1.1, so a long session can use up Chrome's connections to it.
+  await seedAs('mentors/mentor-alex', { displayName: 'Alex', approved: true, maxStudents: 2, studentCount: 0, itemVectors: { q1: Array.from({ length: 384 }, (_, i) => (i === 0 ? 1 : 0)), q2: [], q3: [], q4: [], q5: [], q6: [] } });
+  await go('/');
+  await logIn(pat);
+  await waitFor(`location.pathname === '/home'`);
+  await go('/find-mentor');
+  const formShown = await waitFor('document.querySelector("#q6")', 30000);
+  if (formShown) for (let q = 1; q <= 6; q++) await evaluate(`(() => { const el = document.querySelector('#q${q}'); Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value').set.call(el, 'Answer ${q}'); el.dispatchEvent(new Event('input', { bubbles: true })); return true; })()`);
+  if (formShown) await fill('#availability', 'Evenings');
+  if (formShown) await evaluate(`(document.querySelector('form button[type=submit]').click(), true)`);
+  const pageFailed = await waitFor(has('We can’t match you automatically right now'), 120000);
+  await press('Ask the coordinator to match me');
+  const onToChat = await waitFor(`location.pathname === '/check-in' && ${has('We’re finding you a mentor')}`, 60000);
+  report('The Find a mentor page still works with the shared steps: Gemini can’t here, so the coordinator, then on to the chat', formShown && pageFailed && onToChat);
+  await go('/home');
+  await waitFor(has('How can we help you today?'));
+  await clickText('Log out');
+  await waitFor(`location.pathname === '/'`);
+
+
 
   // 1. Sent to log in from the checklist, and back to it afterwards.
   await go('/checklist');
@@ -246,6 +334,88 @@ try {
   const saved = await waitFor(`location.pathname === '/home' && document.querySelector('main h1')?.textContent.trim() === 'Hi Alex'`);
   await sleep(800);
   report('Details lost: Home says "Hi there" and asks; the sign-up page saves them to the account, and Home then says "Hi Alex"', asked && form && saved && !(await evaluate(has('Finish your details'))));
+
+  // 6. Finding a mentor in the chat.
+  await clickText('Log out');
+  await waitFor(`location.pathname === '/'`);
+  await logIn(nia);
+  await waitFor(`location.pathname === '/home'`);
+  await go('/check-in');
+  await waitFor(`[...document.querySelectorAll('button')].some((b) => b.textContent.trim() === 'Find a mentor')`);
+  // No mentor with a free place: Alex is full for now.
+  await seedAs('mentors/mentor-alex', { displayName: 'Alex', approved: true, maxStudents: 2, studentCount: 2, itemVectors: { q1: Array.from({ length: 384 }, (_, i) => (i === 0 ? 1 : 0)), q2: [], q3: [], q4: [], q5: [], q6: [] } });
+  const noMentors = await another('There are no mentors available yet');
+  await press('Find a mentor');
+  report('In the chat, with no mentors yet: Find a mentor says so, and nothing is saved', (await (await noMentors)()) && (await savedNothing()));
+
+  // Alex has room again, so the questions come.
+  await seedAs('mentors/mentor-alex', { displayName: 'Alex', approved: true, maxStudents: 2, studentCount: 0, itemVectors: { q1: Array.from({ length: 384 }, (_, i) => (i === 0 ? 1 : 0)), q2: [], q3: [], q4: [], q5: [], q6: [] } });
+  requests.length = 0;
+  let next = await another('Question 1 of 6');
+  await press('Find a mentor');
+  const asked1 = await (await next)();
+  const focused = await evaluate(`document.activeElement?.id === 'chat-message'`);
+  next = await another('Question 2 of 6');
+  await answer('Settling in');
+  await (await next)();
+  next = await another('Question 3 of 6');
+  await answer('Climbing and films');
+  await (await next)();
+  next = await another('Nothing has been saved, and we can carry on chatting');
+  await answer('stop');
+  const stopped = await (await next)();
+  const carriesOn = await evaluate(`document.getElementById('chat-message').placeholder === 'Type your message...'`);
+  report('In the chat: the questions one at a time, focus in the message box, no Gemini; "stop" ends it, saving nothing, and the chat carries on',
+    asked1 && focused && stopped && carriesOn && (await savedNothing()) && geminiCalls().length === 0, `${asked1} ${focused} ${stopped} ${carriesOn} ${geminiCalls().length} Gemini calls`);
+
+  // A full run: the answers, Change, Find my mentor, then the coordinator (Gemini can't run here).
+  requests.length = 0;
+  next = await another('Question 1 of 6');
+  await press('Find a mentor');
+  await (await next)();
+  for (const [i, reply] of ['Settling in', 'Climbing and films', 'A long walk', 'Planning ahead, with others', 'Making friends', 'Someone patient'].entries()) {
+    next = i < 5 ? await another(`Question ${i + 2} of 6`) : await another('How often would you like to meet?');
+    await answer(reply);
+    await (await next)();
+  }
+  next = await another('When are you usually free?');
+  await press('Every two weeks');
+  await (await next)();
+  next = await another('Here are your answers');
+  await answer('Weekday afternoons');
+  await (await next)();
+  next = await another('Question 3 of 6');
+  await evaluate(`(() => { [...document.querySelectorAll('button[aria-label^="Change: What does a good weekend"]')].filter((b) => !b.disabled).at(-1).click(); return true; })()`);
+  await (await next)();
+  next = await another('Here are your answers');
+  await answer('A quiet day in');
+  const reviewAgain = await (await next)();
+  const nothingBefore = await savedNothing();
+  const quietBefore = geminiCalls().length === 0;
+  next = await another('We can’t match you automatically right now', 120000);
+  await press('Find my mentor');
+  const geminiFailed = await (await next)();
+  next = await another('We’re finding you a mentor, and we’ll let you know soon.', 60000);
+  await press('Ask the coordinator to match me');
+  const result = await (await next)();
+  const match = await ownerRead(`matches/${niaUid}`);
+  const request = (await ownerRead(`students/${niaUid}`))?.fields?.mentorRequest?.mapValue?.fields;
+  const answers = request?.answers?.arrayValue?.values?.map((/** @type {any} */ v) => v.stringValue) ?? [];
+  report('In the chat: all the answers, how often, when free, Change; nothing saved or sent to Gemini until Find my mentor; then the coordinator, and the result in the chat',
+    reviewAgain && nothingBefore && quietBefore && geminiFailed && result && match?.fields?.status?.stringValue === 'coordinator' && answers[2] === 'A quiet day in' && answers.length === 6,
+    `${reviewAgain} ${nothingBefore} ${quietBefore} ${geminiFailed} ${result} ${match?.fields?.status?.stringValue} ${answers.length}`);
+
+  // A mentor account isn't offered a mentor.
+  await go('/home');
+  await waitFor(has('How can we help you today?'));
+  await clickText('Log out');
+  await waitFor(`location.pathname === '/'`);
+  await logIn(mo);
+  await waitFor(`location.pathname === '/home'`);
+  await go('/check-in');
+  await waitFor(has('How’s your day been?'));
+  await sleep(1000);
+  report('A mentor account: the chat doesn’t offer to find them a mentor', !(await evaluate(`[...document.querySelectorAll('button')].some((b) => b.textContent.trim() === 'Find a mentor')`)) && !(await evaluate(has('If you’d like a student mentor'))));
 } finally {
   ws?.close();
   chrome.kill();
@@ -253,7 +423,7 @@ try {
   rmSync(profile, { recursive: true, force: true });
 }
 
-// 6. The GP finder's privacy check, logged in as Sam.
+// 7. The GP finder's privacy check, logged in as Sam.
 const gp = await new Promise((done) => {
   const child = spawn(process.execPath, ['scripts/check-gp-finder-privacy.mjs', BASE], { env: { ...process.env, CHECK_LOGIN_EMAIL: sam.email, CHECK_LOGIN_PASSWORD: sam.password }, stdio: ['ignore', 'pipe', 'pipe'] });
   let output = '';

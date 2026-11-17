@@ -1,6 +1,7 @@
 // The app's own pages the check-in chat can link, written [[Name]] like societies, clubs and services
-// (see reply-links.js). The chat's instructions list them by name (chat-prompt.js). No Firebase here,
-// so the checks can use it in Node.
+// (see reply-links.js), for what the chat can't do itself yet. The chat's instructions list them by
+// name (chat-prompt.js). Finding a mentor isn't one: the chat does that itself (chat-actions.js).
+// No Firebase here, so the checks can use it in Node.
 
 /**
  * A page: name is what Gemini is told to write and what the button says; also holds other ways
@@ -14,7 +15,6 @@ export const APP_PAGES = [
   { name: 'NHS Guide', href: '/nhs-guide', also: [] },
   { name: 'GP Finder', href: '/gp-finder', also: ['GP and Dentist Finder', 'Find a GP', 'Find a GP or Dentist'] },
   { name: 'Your Mentor', href: '/mentor', also: ['Mentor', 'Your Mentor page', 'Mentor page'] },
-  { name: 'Find a mentor', href: '/find-mentor', also: [] },
   { name: 'Need Help Now', href: '/need-help', also: ['Need help now page', 'Need Help'] }
 ];
 

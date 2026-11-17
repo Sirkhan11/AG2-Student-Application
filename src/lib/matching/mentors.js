@@ -6,6 +6,8 @@ import { saveMentor } from '#lib/signup/finish.js';
 import { waitingSignUp } from '#lib/signup/waiting.js';
 import { isUniEmail, notUniEmail } from '#lib/uni-email.js';
 import { questions } from '#lib/matching/questions.js';
+import { findBlankAnswer } from '#lib/matching/answers.js';
+import { hasMentorProfile } from '#lib/matching/mentor-account.js';
 import { MAX_WANTS, summariseAnswers } from '#lib/matching/summarise.js';
 import { summaryToSave } from '#lib/matching/summary-prompt.js';
 import { embedSummaries } from '#lib/matching/compare-items.js';
@@ -30,14 +32,8 @@ export function isValidMaxStudents(value) {
   return Number.isInteger(value) && /** @type {number} */ (value) >= 1 && /** @type {number} */ (value) <= 5;
 }
 
-/**
- * Finds the first answer that's empty or only spaces, and returns its position (or -1 if every answer has text).
- * The browser's `required` check accepts "   ", so this is what actually stops blank answers.
- * @param {string[]} answers
- */
-export function findBlankAnswer(answers) {
-  return answers.findIndex((answer) => answer.trim() === '');
-}
+// findBlankAnswer lives in answers.js (no Firebase there, so the checks can use it); kept here too.
+export { findBlankAnswer };
 
 /**
  * Puts one value per question under the keys q1 to q6, because Firestore can't store a list of lists.
@@ -223,19 +219,5 @@ export async function loadApprovedMentors() {
   return mentors;
 }
 
-/**
- * True if the signed-in user has a mentor profile (mentors/{uid}), so student-only pages can turn
- * mentors away. It's only a page guard: there are no roles yet, so the rules can't tell a mentor
- * account from a student one.
- */
-export async function hasMentorProfile() {
-  const user = getFirebaseAuth().currentUser;
-  if (!user) return false;
-  try {
-    return (await getDoc(doc(db, 'mentors', user.uid))).exists();
-  } catch (err) {
-    // A mentor can always read their own profile, so a refusal means there isn't one.
-    if (/** @type {{ code?: string }} */ (err).code === 'permission-denied') return false;
-    throw err;
-  }
-}
+// hasMentorProfile lives in mentor-account.js (light, so the chat can use it); kept here too.
+export { hasMentorProfile };

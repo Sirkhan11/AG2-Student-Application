@@ -2,6 +2,7 @@ import { doc, getDoc, increment, serverTimestamp, writeBatch } from 'firebase/fi
 import { db, getFirebaseAuth } from '#lib/firebase/client.js';
 import { summaryToSave } from '#lib/matching/summary-prompt.js';
 import { MAX_REASONS } from '#lib/matching/explain.js';
+import { MAX_AVAILABILITY_LENGTH, MEETING_FREQUENCIES } from '#lib/matching/meeting.js';
 
 /*
  * A student's match lives at matches/{student uid}, so each student has at most one. Only that student
@@ -16,11 +17,8 @@ import { MAX_REASONS } from '#lib/matching/explain.js';
  * matched, without a server.
  */
 
-/** How often a student would like to meet: the same choices as the mentor sign-up form. */
-export const MEETING_FREQUENCIES = ['weekly', 'every two weeks', 'monthly'];
-
-/** The longest availability text a match can store (firestore.rules checks the same number). */
-export const MAX_AVAILABILITY_LENGTH = 200;
+// The choices and the limit live in meeting.js (no Firebase there, so the checks can use them); kept here too.
+export { MAX_AVAILABILITY_LENGTH, MEETING_FREQUENCIES };
 
 /**
  * What the student says about meeting, saved with their match so the coordinator can see it.

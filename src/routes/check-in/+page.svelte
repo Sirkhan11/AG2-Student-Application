@@ -9,7 +9,21 @@
   import { loadMyMatch } from '#lib/matching/matches.js';
   import { buildOpener, describeForGemini } from '#lib/checkin/opener.js';
   import { startCheckinChat } from '#lib/checkin/chat.js';
-  import { chatSession, clearChat, clearChatOnSignOut, geminiChat, setGeminiChat } from '#lib/checkin/chat-session.svelte.js';
+  import {
+    chatFacts,
+    chatFlow,
+    chatSession,
+    clearChat,
+    clearChatOnSignOut,
+    geminiChat,
+    setChatFacts,
+    setChatFlow,
+    setGeminiChat
+  } from '#lib/checkin/chat-session.svelte.js';
+  import { createMentorFlow } from '#lib/checkin/mentor-flow.js';
+  import { hasMentorProfile } from '#lib/matching/mentor-account.js';
+  import ChatFlowCard from '#lib/components/ChatFlowCard.svelte';
+  import ChatOfferCard from '#lib/components/ChatOfferCard.svelte';
   import { startsAfresh } from '#lib/checkin/keep-chat.js';
   import SocietyCard from '#lib/components/SocietyCard.svelte';
   import ServiceCard from '#lib/components/ServiceCard.svelte';
@@ -57,9 +71,10 @@
     const conversation = chatSession.conversation;
     // If either can't be loaded, the chat still starts; it just says less.
     // The checklist comes through the same loader as the checklist page, so the two always agree.
-    const [match, record] = await Promise.all([
+    const [match, record, isMentor] = await Promise.all([
       loadMyMatch().catch((err) => (console.error(err), undefined)),
-      loadMyRecord().catch((err) => (console.error(err), null))
+      loadMyRecord().catch((err) => (console.error(err), null)),
+      hasMentorProfile().catch(() => false)
     ]);
     const tasks = record?.checklist.tasks ?? null;
     const checklistSaved = record?.checklist.saved ?? false;
@@ -67,7 +82,7 @@
     // Logged out, or started again, while those were loading.
     if (chatSession.conversation !== conversation) return;
 
-    const opener = buildOpener({ match, tasks, checklistSaved, justSignedUp });
+    const opener = buildOpener({ match, tasks, checklistSaved, justSignedUp, isMentor });
     chatSession.messages = opener.messages.map((text, i) => ({
       role: 'assistant',
       text,
@@ -75,19 +90,93 @@
       links: i === opener.messages.length - 1 ? opener.links : undefined
     }));
 
-    // Gemini is told the same facts and first messages, but without the mentor's name.
+    // Gemini is told the same facts and first messages, but without the mentor's name. The facts are
+    // kept, so Gemini can be told again when they change here (a mentor found in the chat, say).
     const withoutName = match?.status === 'matched' ? { ...match, mentorName: null } : match;
+    setChatFacts({ match, tasks, checklistSaved, profile, isMentor });
     setGeminiChat(
       startCheckinChat(
-        describeForGemini({ match, tasks, checklistSaved, profile }),
-        buildOpener({ match: withoutName, tasks, checklistSaved, justSignedUp }).messages
+        describeForGemini({ match, tasks, checklistSaved, profile, isMentor }),
+        buildOpener({ match: withoutName, tasks, checklistSaved, justSignedUp, isMentor }).messages
       )
     );
     chatSession.started = true;
   }
 
+  // ---------- The chat's own actions (chat-actions.js): for now, finding a mentor ----------
+
+  /**
+   * Tells Gemini what the app knows now, keeping the conversation (see retell in chat.js).
+   * @param {Partial<Parameters<typeof describeForGemini>[0]>} change
+   */
+  function tellGemini(change) {
+    const facts = chatFacts();
+    if (!facts) return;
+    const next = { ...facts, ...change };
+    setChatFacts(next);
+    geminiChat()?.retell(describeForGemini(next));
+  }
+
+  /** The mentor flow for this conversation, made the first time it's started. */
+  function mentorFlow() {
+    let flow = chatFlow();
+    if (!flow) {
+      const conversation = chatSession.conversation;
+      flow = createMentorFlow({
+        // The matching code (and its model) loads only when a student starts this.
+        check: async () => (await import('#lib/matching/find-match.js')).checkBeforeMatching(),
+        steps: {
+          prepareStudent: async (answers) => (await import('#lib/matching/find-match.js')).prepareStudent(answers),
+          matchAndSave: async (prepared, preferences) => (await import('#lib/matching/find-match.js')).matchAndSave(prepared, preferences),
+          askCoordinator: async (answers, preferences) => (await import('#lib/matching/find-match.js')).askCoordinator(answers, preferences)
+        },
+        post: (message) => {
+          if (chatSession.conversation !== conversation) return;
+          chatSession.messages.push({ role: message.role, text: message.text, flow: message.card });
+          showLatest(message.question);
+        },
+        changed: (state) => {
+          if (chatSession.conversation === conversation) chatSession.flow = state;
+        },
+        finished: async (result) => {
+          if (chatSession.conversation !== conversation) return;
+          // So Gemini knows how it ended, and doesn't offer it again.
+          if (result.outcome === 'stopped' || result.outcome === 'no-mentors') tellGemini({ mentorNote: result.outcome });
+          else if (result.outcome === 'is-mentor') tellGemini({ isMentor: true });
+          else tellGemini({ match: result.match ?? (await loadMyMatch().catch(() => undefined)), mentorNote: null });
+        }
+      });
+      setChatFlow(flow);
+    }
+    return flow;
+  }
+
+  /** Starts one of the chat's own actions: from an offer card's Start, or a first-message button. @param {string} action */
+  function startAction(action) {
+    if (action === 'mentor' && !chatSession.flow?.active) mentorFlow().start();
+  }
+
+  /** They tapped Not now on an offer: Gemini is told, so it doesn't offer again unless they ask. @param {string} action */
+  function declineAction(action) {
+    if (action === 'mentor') tellGemini({ mentorNote: 'declined' });
+  }
+
+  /** True while the app is running an action in the chat: what they type goes to it, not to Gemini. */
+  let flowActive = $derived(chatSession.flow?.active === true);
+  let flowBusy = $derived(chatSession.flow?.step === 'busy' || chatSession.flow?.step === 'checking');
+
   async function sendMessage() {
     const text = chatSession.draft.trim();
+    // While the app is running an action (finding a mentor), what they type is its answer: it goes to
+    // the action, never to Gemini.
+    const flow = chatFlow();
+    if (text && flowActive && flow) {
+      chatSession.messages.push({ role: 'user', text });
+      chatSession.draft = '';
+      flow.reply(text);
+      await showLatest();
+      return;
+    }
     const chat = geminiChat();
     if (!text || chatSession.waiting || chatSession.unavailable || !chat) return;
 
@@ -111,7 +200,9 @@
           : // Suggested societies and NSU services, shown as cards under the reply.
             reply.links,
       // A checklist task it suggested: a card with Add and No thanks. Nothing is added without a tap.
-      task: reply.tasks?.[0] ? { title: reply.tasks[0], state: 'offered' } : undefined
+      task: reply.tasks?.[0] ? { title: reply.tasks[0], state: 'offered' } : undefined,
+      // One of the chat's own actions it offered (finding a mentor): a card with Start and Not now.
+      offer: reply.offers?.[0] ? { action: reply.offers[0], state: 'offered' } : undefined
     });
     // Gemini's credit has run out: the message box is switched off, as trying again won't help.
     if (reply.kind === 'unavailable') chatSession.unavailable = true;
@@ -119,10 +210,16 @@
     await showLatest();
   }
 
-  /** Scrolls so the newest message and the message box are in view (handy on a phone). */
-  async function showLatest() {
+  /**
+   * Scrolls so the newest message and the message box are in view (handy on a phone). After one of
+   * the app's questions, the focus goes to the message box, so they can type the answer straight away
+   * (the question itself is read out, as the messages are a live region).
+   * @param {boolean} [question]
+   */
+  async function showLatest(question = false) {
     await tick();
     form?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    if (question) /** @type {HTMLInputElement | null} */ (document.getElementById('chat-message'))?.focus();
   }
 </script>
 
@@ -145,7 +242,9 @@
     <p class="muted">
       This chat isn’t saved: it stays while the app is open in this tab, until you log out, and nothing
       you say is passed on to the university or your mentor. If it suggests a reminder and you tap Add,
-      that task is saved to your checklist. Google doesn’t use the chat to improve its
+      that task is saved to your checklist. If you find a mentor here, your answers are only used for
+      matching and are saved when you choose Find my mentor, as on the Find a mentor page; they’re never
+      sent to Gemini as chat messages. Google doesn’t use the chat to improve its
       products, but keeps messages for a limited time, only to detect misuse, keep its services safe
       and secure, and meet legal requirements, and they may be stored or cached in any country
       (<a
@@ -161,8 +260,10 @@
       {#each chatSession.messages as item, i (i)}
         {@const buttons = (item.links ?? []).filter((link) => !link.kind)}
         {@const cards = (item.links ?? []).filter((link) => link.kind)}
+        <!-- A reply that's only an offer (its card says it all) has no bubble of its own. -->
         <div
           class="bubble"
+          hidden={item.text.trim() === '' && !buttons.length}
           class:user={item.role === 'user'}
           class:safety={item.kind === 'safety'}
           class:failed={item.kind === 'error' || item.kind === 'unavailable'}
@@ -171,7 +272,10 @@
           {#if buttons.length}
             <div class="links">
               {#each buttons as link (link.href + link.label)}
-                {#if link.external}
+                {#if link.action}
+                  <!-- One of the chat's own actions: it starts right here, rather than opening a page. -->
+                  <button class="secondary-button" type="button" disabled={flowActive} onclick={() => startAction(/** @type {string} */ (link.action))}>{link.label}</button>
+                {:else if link.external}
                   <a
                     class="secondary-button"
                     href={link.href}
@@ -210,6 +314,21 @@
             <TaskSuggestionCard bind:task={item.task} />
           </div>
         {/if}
+        {#if item.offer}
+          <div class="cards">
+            <ChatOfferCard
+              bind:offer={item.offer}
+              disabled={flowActive}
+              onstart={() => startAction(/** @type {NonNullable<typeof item.offer>} */ (item.offer).action)}
+              ondecline={() => declineAction(/** @type {NonNullable<typeof item.offer>} */ (item.offer).action)}
+            />
+          </div>
+        {/if}
+        {#if item.flow}
+          <div class="cards">
+            <ChatFlowCard card={item.flow} live={flowActive && chatSession.flow?.live === item.flow.id && !flowBusy} flow={chatFlow()} />
+          </div>
+        {/if}
       {/each}
       {#if chatSession.waiting}
         <div class="bubble typing">Typing…</div>
@@ -225,15 +344,19 @@
       <input
         id="chat-message"
         class="field"
-        placeholder={chatSession.unavailable ? 'The chat isn’t available right now' : 'Type your message...'}
+        placeholder={flowActive ? 'Type your answer, or stop to stop' : chatSession.unavailable ? 'The chat isn’t available right now' : 'Type your message...'}
         autocomplete="off"
-        disabled={chatSession.waiting || chatSession.unavailable}
+        disabled={flowActive ? flowBusy : chatSession.waiting || chatSession.unavailable}
         bind:value={chatSession.draft}
       />
 
-      <button class="primary-button" type="submit" disabled={chatSession.waiting || chatSession.unavailable}>
-        {chatSession.waiting ? 'Waiting for a reply…' : chatSession.unavailable ? 'Chat unavailable' : 'Send'}
+      <button class="primary-button" type="submit" disabled={flowActive ? flowBusy : chatSession.waiting || chatSession.unavailable}>
+        {flowActive ? 'Send answer' : chatSession.waiting ? 'Waiting for a reply…' : chatSession.unavailable ? 'Chat unavailable' : 'Send'}
       </button>
+      {#if flowActive && !flowBusy}
+        <!-- Ends finding a mentor at any point before Find my mentor, with nothing saved. -->
+        <button class="secondary-button" type="button" onclick={() => chatFlow()?.stop()}>Stop</button>
+      {/if}
     </form>
   {/if}
 

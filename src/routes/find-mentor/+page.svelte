@@ -1,17 +1,21 @@
 <script>
   import { goto } from '$app/navigation';
-  import { questions } from '#lib/matching/questions.js';
-  import { findBlankAnswer } from '#lib/matching/mentors.js';
   import { watchSignedIn } from '#lib/firebase/auth.js';
   import BottomNav from '#lib/components/BottomNav.svelte';
-  import { SUMMARISE_FAILED } from '#lib/matching/summarise.js';
-  import { MAX_AVAILABILITY_LENGTH, MEETING_FREQUENCIES } from '#lib/matching/matches.js';
+  import { askCoordinator, checkBeforeMatching, matchAndSave, prepareStudent } from '#lib/matching/find-match.js';
   import {
-    askCoordinator,
-    checkBeforeMatching,
-    matchAndSave,
-    prepareStudent
-  } from '#lib/matching/find-match.js';
+    alreadyHasText,
+    ANSWERS_NOTE,
+    ASKING_COORDINATOR_MESSAGE,
+    capitalise,
+    checkAnswers,
+    createFinder,
+    FINDING_MESSAGE,
+    MAX_AVAILABILITY_LENGTH,
+    MEETING_FREQUENCIES,
+    questions,
+    SAYS
+  } from '#lib/matching/find-mentor-steps.js';
 
   /**
    * Which part of the page is showing (only one at a time):
@@ -24,6 +28,7 @@
    *   coordinator option
    * - 'error': anything else failed, so try that step again
    * Once the result is saved, the page goes to the check-in chat instead (see showOutcome).
+   * The steps, wording and error handling are shared with the chat (find-mentor-steps.js).
    * @typedef {'checking' | 'is-mentor' | 'no-mentors' | 'has-record' | 'form' | 'busy'
    *   | 'gemini-failed' | 'gemini-unavailable' | 'error'} View
    */
@@ -43,10 +48,9 @@
   // The match record they already had when the page opened ('has-record').
   let savedMatch = $state(/** @type {import('#lib/matching/matches.js').Match | null} */ (null));
 
-  // The student's phrases and vectors, kept so that trying again never asks Gemini again.
-  // Not $state, because the page never shows it.
-  /** @type {import('#lib/matching/find-match.js').PreparedStudent | null} */
-  let prepared = null;
+  // Finding and saving, as the chat does it. It keeps what Gemini prepared, so trying again never
+  // asks Gemini again.
+  const finder = createFinder({ prepareStudent, matchAndSave, askCoordinator });
 
   // $effect only runs in the browser, where Firebase Auth runs. watchSignedIn's stop function is
   // returned, so Svelte stops listening when the student leaves the page.
@@ -84,60 +88,33 @@
 
   const preferences = () => ({ meetingFrequency, availability });
 
-  /** Step 1: Gemini and embedding, done once. Then step 2, save(). */
+  /** Gemini and embedding (once), then matching and saving. */
   async function findMentor() {
-    formError = '';
-    const blank = findBlankAnswer(answers);
-    if (blank !== -1) {
-      formError = `Please answer question ${blank + 1}.`;
-      return;
-    }
-    if (availability.trim() === '') {
-      formError = 'Please say when you’re usually free.';
-      return;
-    }
-
-    busyMessage = 'Finding your mentor… The first time, this can take a minute while the matching model downloads.';
+    formError = checkAnswers(answers, availability) ?? '';
+    if (formError) return;
+    busyMessage = FINDING_MESSAGE;
     view = 'busy';
-    try {
-      prepared = await prepareStudent(answers.map((answer) => answer.trim()));
-    } catch (err) {
-      const failure = /** @type {{ code?: string, outOfCredit?: boolean }} */ (err);
-      if (failure.code === SUMMARISE_FAILED) {
-        // Not passed to the coordinator automatically: a match record is permanent, so the student chooses.
-        view = failure.outOfCredit ? 'gemini-unavailable' : 'gemini-failed';
-        return;
-      }
-      showError("We couldn't get your answers ready to match.", findMentor, err);
-      return;
-    }
-    await save();
+    handle(await finder.find(answers, preferences()));
   }
 
-  /** Step 2: rank the mentors and save the result. Try again repeats only this step. */
-  async function save() {
+  /** Saving again with what was prepared: Try again after the save failed. */
+  async function saveAgain() {
     view = 'busy';
-    try {
-      showOutcome(
-        await matchAndSave(
-          /** @type {import('#lib/matching/find-match.js').PreparedStudent} */ (prepared),
-          preferences()
-        )
-      );
-    } catch (err) {
-      showError("We couldn't save your match.", save, err);
-    }
+    handle(await finder.save(preferences()));
   }
 
   /** For when Gemini is down and the student would rather be matched by hand. */
   async function askCoordinatorNow() {
-    busyMessage = 'Sending your answers to the coordinator…';
+    busyMessage = ASKING_COORDINATOR_MESSAGE;
     view = 'busy';
-    try {
-      showOutcome(await askCoordinator(answers.map((answer) => answer.trim()), preferences()));
-    } catch (err) {
-      showError("We couldn't send your request to the coordinator.", askCoordinatorNow, err);
-    }
+    handle(await finder.askCoordinator(answers, preferences()));
+  }
+
+  /** @param {import('#lib/matching/find-mentor-steps.js').FindResult} result */
+  function handle(result) {
+    if (result.status === 'saved') showOutcome(result.outcome);
+    else if (result.status === 'error') showError(result.message, result.step === 'prepare' ? findMentor : result.step === 'save' ? saveAgain : askCoordinatorNow, result.error);
+    else view = result.status;
   }
 
   /** @param {import('#lib/matching/find-match.js').SaveOutcome} outcome */
@@ -151,9 +128,6 @@
     // mentor"), and links to /mentor, which shows why they were matched.
     goto('/check-in?from=find-mentor');
   }
-
-  /** "every two weeks" → "Every two weeks". @param {string} text */
-  const capitalise = (text) => text.charAt(0).toUpperCase() + text.slice(1);
 </script>
 
 <main class="page">
@@ -164,34 +138,30 @@
 
   {:else if view === 'is-mentor'}
     <p>This page is for students.</p>
-    <p class="muted">You’ve signed up as a mentor, so the coordinator will match students with you.</p>
+    <p class="muted">{SAYS.isMentor}</p>
 
   {:else if view === 'no-mentors'}
-    <p>There are no mentors available yet. Please check back soon.</p>
-    <p class="muted">Nothing has been saved, so you can answer the questions once mentors are available.</p>
+    <p>{SAYS.noMentors}</p>
+    <p class="muted">{SAYS.nothingSaved}</p>
 
   {:else if view === 'has-record' && savedMatch}
-    {#if savedMatch.status === 'matched'}
-      <p>You’ve already been matched with {savedMatch.mentorName ?? 'a mentor'}.</p>
-    {:else}
-      <p>We’re already finding you a mentor, and we’ll let you know soon.</p>
-    {/if}
+    <p>{alreadyHasText(savedMatch)}</p>
     <a class="primary-button" href="/mentor">See your mentor page</a>
 
   {:else if view === 'gemini-failed'}
-    <p role="alert">We can’t match you automatically right now. Please try again in a minute.</p>
+    <p role="alert">{SAYS.geminiFailed}</p>
     <div class="actions">
       <button class="primary-button" onclick={findMentor}>Try again</button>
-      <button class="secondary-button" onclick={askCoordinatorNow}>Ask the coordinator to match me</button>
+      <button class="secondary-button" onclick={askCoordinatorNow}>{SAYS.askCoordinator}</button>
     </div>
-    <p class="muted">If you ask the coordinator, they’ll read your answers and find you a mentor themselves.</p>
+    <p class="muted">{SAYS.geminiFailedNote}</p>
 
   {:else if view === 'gemini-unavailable'}
-    <p role="alert">Sorry, automatic matching isn’t available right now.</p>
+    <p role="alert">{SAYS.geminiUnavailable}</p>
     <div class="actions">
-      <button class="primary-button" onclick={askCoordinatorNow}>Ask the coordinator to match me</button>
+      <button class="primary-button" onclick={askCoordinatorNow}>{SAYS.askCoordinator}</button>
     </div>
-    <p class="muted">The coordinator will read your answers and find you a mentor themselves.</p>
+    <p class="muted">{SAYS.geminiUnavailableNote}</p>
 
   {:else if view === 'error'}
     <p class="error" role="alert">{errorMessage}</p>
@@ -206,11 +176,7 @@
       Answer six short questions so we can match you with a student mentor who shares your interests
       and the way you like to do things.
     </p>
-    <p class="muted">
-      Google’s Gemini AI summarises your answers to find your match, and they’re only used for
-      matching. Your mentor won’t see them. If we can’t find a good match automatically, the mentoring
-      coordinator may read them to match you themselves.
-    </p>
+    <p class="muted">{ANSWERS_NOTE}</p>
 
     <form
       onsubmit={(event) => {

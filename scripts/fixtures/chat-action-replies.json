@@ -1,0 +1,36 @@
+{
+  "about": "Check-in chat replies for check-chat-actions.mjs (made-up students). Regenerate with --refresh rather than edit.",
+  "model": "gemini-3.5-flash-lite",
+  "promptFingerprint": "68393183a22a",
+  "made": "2026-11-17T21:07:43.810Z",
+  "replies": {
+    "focus and organise": {
+      "ask": "I need a mentor to help me focus and organise my work",
+      "reply": "I can find you a mentor right here who can help with that.\n\n{{mentor}}"
+    },
+    "yes to the first message": {
+      "ask": "Yes please, I’d like a mentor",
+      "reply": "That is great, I can find you a student mentor right here in the chat.\n{{mentor}}"
+    },
+    "help settling in": {
+      "ask": "I’m finding it hard to settle in. Is there someone who could help me?",
+      "reply": "It can take a little time to feel at home here, but a student mentor can help you settle in and organise your work. \n\n{{mentor}}"
+    },
+    "already has one": {
+      "ask": "Can I get a mentor?",
+      "reply": "I can see you already have a mentor assigned to you, and your coordinator will be in touch to introduce you. You can find your mentor's details on the [[Your Mentor]] page."
+    },
+    "a mentor themselves": {
+      "ask": "Can I get a mentor?",
+      "reply": "You are signed up as a mentor yourself, so you do not need one."
+    },
+    "after not now": {
+      "ask": "Are there any chess societies?",
+      "reply": "Yes, we have [[Chess]] where you can meet other players."
+    },
+    "asks after not now": {
+      "ask": "Actually, could you find me a mentor after all?",
+      "reply": "I can help you find a mentor right here in the chat.\n{{mentor}}"
+    }
+  }
+}

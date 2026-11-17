@@ -1,5 +1,6 @@
 import { getGeminiModel } from '#lib/firebase/ai.js';
 import { isOutOfCredit } from '#lib/firebase/ai-errors.js';
+import { SUMMARISE_FAILED } from '#lib/matching/errors.js';
 import {
   cleanAnswers,
   emptySummary,
@@ -17,8 +18,8 @@ export { MAX_WANTS };
 /** @typedef {import('#lib/matching/summary-prompt.js').Summary} Summary */
 /** @typedef {import('#lib/matching/summary-prompt.js').Styles} Styles */
 
-/** Error code for when Gemini couldn't summarise the answers. Pages check err.code, as with Firebase errors. */
-export const SUMMARISE_FAILED = 'matching/summarise-failed';
+// The error code lives in errors.js (no Firebase there, so the checks can use it); kept here too.
+export { SUMMARISE_FAILED };
 
 /**
  * One model per number of answers, because the reply's shape names one key per answer.

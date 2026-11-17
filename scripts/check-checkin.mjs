@@ -247,7 +247,7 @@ const checks = [
     const taken = new Set([...SOCIETIES.map((society) => key(society.name)), ...SERVICES.map((service) => key(service.name)), ...CLUBS.map((club) => key(club.name))]);
     assert.deepEqual(names.filter((name) => taken.has(key(name))), []);
   }],
-  ['The chat is told the six app pages as [[ ]] links, and never to mention, explain or show the brackets', () => {
+  ['The chat is told the app pages as [[ ]] links, and never to mention, explain or show the brackets', () => {
     const instructions = chatInstructions('(about)', ['(opener)']);
     for (const page of APP_PAGES) assert.ok(instructions.includes(`[[${page.name}]]`), page.name);
     assert.match(instructions, /Never mention, explain or show them to the student/);
@@ -374,7 +374,7 @@ const checks = [
     assert.match(instructions, /Suggest one task at a time/);
     assert.match(instructions, /Never say you've added a task or that you will: only they can, with the card's Add button\./);
     assert.match(instructions, /If it's already on their checklist .* don't suggest it again: say it's already there and point them to their \[\[Checklist\]\]\./);
-    assert.match(instructions, /The double square brackets and \{\{task: \}\} are only for the app/);
+    assert.match(instructions, /The double square brackets and the \{\{ \}\} markers are only for the app/);
   }],
   ['chatWith gives the page the suggested task without its marker, and Gemini keeps seeing its own marker (so it knows it asked)', async () => {
     /** @type {any[]} */
@@ -403,7 +403,7 @@ const checks = [
         return /** @type {any} */ ({ response: { text: () => 'Hello there.', candidates: [{ finishReason: 'STOP' }] } });
       }
     });
-    assert.deepEqual(await chat.send('Hi'), { kind: 'reply', text: 'Hello there.', links: [], tasks: [] });
+    assert.deepEqual(await chat.send('Hi'), { kind: 'reply', text: 'Hello there.', links: [], tasks: [], offers: [] });
     await chat.send('How are you?');
     assert.deepEqual(sent, [1, 3]);
   }],
