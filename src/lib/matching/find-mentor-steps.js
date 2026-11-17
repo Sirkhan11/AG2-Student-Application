@@ -16,9 +16,16 @@ export const ANSWERS_NOTE =
   'Google’s Gemini AI summarises your answers to find your match, and they’re only used for matching. ' +
   'Your mentor won’t see them. If we can’t find a good match automatically, the mentoring coordinator may read them to match you themselves.';
 
-/** What it says while finding a mentor, and while sending the answers to the coordinator. */
-export const FINDING_MESSAGE = 'Finding your mentor… The first time, this can take a minute while the matching model downloads.';
+/**
+ * What it says while finding a mentor, and while sending the answers to the coordinator. The note
+ * about the download only shows when the matching model isn't ready yet (see model-download.js).
+ */
+export const FINDING_MESSAGE = 'Finding your mentor…';
+export const FIRST_TIME_NOTE = 'The first time, this can take a minute while the matching model downloads.';
 export const ASKING_COORDINATOR_MESSAGE = 'Sending your answers to the coordinator…';
+
+/** @param {boolean} modelReady whether the matching model is loaded, or this browser has it already */
+export const findingMessage = (modelReady) => (modelReady ? FINDING_MESSAGE : `${FINDING_MESSAGE} ${FIRST_TIME_NOTE}`);
 
 /** The cases before the questions (checkBeforeMatching), and when Gemini can't help. */
 export const SAYS = Object.freeze({
@@ -78,10 +85,13 @@ export function outcomeText(outcome) {
 }
 
 /**
- * The matching steps (find-match.js in the app; made-up ones in the checks).
+ * The matching steps (find-match.js in the app; made-up ones in the checks). getReady starts loading
+ * the matching model when the questions start, and modelReady says whether it's ready, for the
+ * message while finding (model-download-browser.js); without them, the message has the note.
  * @typedef {{ prepareStudent: (answers: string[]) => Promise<any>,
  *   matchAndSave: (prepared: any, preferences: { meetingFrequency: string, availability: string }) => Promise<import('#lib/matching/find-match.js').SaveOutcome>,
- *   askCoordinator: (answers: string[], preferences: { meetingFrequency: string, availability: string }) => Promise<import('#lib/matching/find-match.js').SaveOutcome> }} MatchingSteps
+ *   askCoordinator: (answers: string[], preferences: { meetingFrequency: string, availability: string }) => Promise<import('#lib/matching/find-match.js').SaveOutcome>,
+ *   getReady?: () => void, modelReady?: () => boolean }} MatchingSteps
  */
 
 /**

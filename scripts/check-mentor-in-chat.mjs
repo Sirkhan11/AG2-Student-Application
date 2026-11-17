@@ -23,7 +23,7 @@ import { chatWith } from '#lib/checkin/chat-turns.js';
 import { createMentorFlow } from '#lib/checkin/mentor-flow.js';
 import { buildOpener, describeForGemini } from '#lib/checkin/opener.js';
 import { APP_PAGES, findPage } from '#lib/checkin/app-pages.js';
-import { ANSWERS_NOTE, checkAnswers, createFinder, FINDING_MESSAGE, MAX_AVAILABILITY_LENGTH, outcomeText, questions, SAYS } from '#lib/matching/find-mentor-steps.js';
+import { ANSWERS_NOTE, checkAnswers, createFinder, findingMessage, MAX_AVAILABILITY_LENGTH, outcomeText, questions, SAYS } from '#lib/matching/find-mentor-steps.js';
 import { SUMMARISE_FAILED } from '#lib/matching/errors.js';
 
 const ANSWERS = ['Settling in', 'Climbing and films', 'A long walk', 'Planning ahead, with others', 'Making friends', 'Someone patient'];
@@ -108,7 +108,7 @@ const checks = [
     assert.deepEqual([t.calls.prepare, t.calls.save, t.calls.coordinator], [1, 1, 0]);
     assert.deepEqual(t.calls.prepared[0], ANSWERS, 'trimmed');
     assert.deepEqual(t.calls.preferences[0], { meetingFrequency: 'every two weeks', availability: 'Weekday afternoons' });
-    assert.ok(t.posts.some((p) => p.text === FINDING_MESSAGE), 'the same progress message, first time can take a minute');
+    assert.ok(t.posts.some((p) => p.text === findingMessage(false)), 'the same progress message; these made-up steps don’t say the model is ready, so with the note');
     assert.equal(t.last().text, 'Thanks for answering those questions. You’ve been matched with Alex, and your coordinator will introduce you.');
     assert.deepEqual([t.last().card.kind, t.last().card.href], ['link', '/mentor']);
     assert.equal(t.finished[0].outcome, 'matched');

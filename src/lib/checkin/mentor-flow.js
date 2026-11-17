@@ -7,7 +7,7 @@ import {
   checkAnswers,
   checkAvailability,
   createFinder,
-  FINDING_MESSAGE,
+  findingMessage,
   MEETING_FREQUENCIES,
   outcomeText,
   questions,
@@ -157,14 +157,17 @@ export function createMentorFlow({ check, steps, post, changed, finished }) {
     }
   };
 
+  /** "Finding your mentor…", with the note about the download only if the model isn't ready yet. */
+  const finding = () => findingMessage(steps.modelReady?.() ?? false);
+
   async function find() {
     set({ step: 'busy', live: null });
-    say({ text: FINDING_MESSAGE });
+    say({ text: finding() });
     handle(await finder.find(answers, preferences()));
   }
   async function saveAgain() {
     set({ step: 'busy', live: null });
-    say({ text: FINDING_MESSAGE });
+    say({ text: finding() });
     handle(await finder.save(preferences()));
   }
   async function coordinator() {
@@ -200,6 +203,8 @@ export function createMentorFlow({ check, steps, post, changed, finished }) {
       });
       end({ outcome: 'has-record', match: before.match });
     } else {
+      // The matching model starts loading now, so it's ready by Find my mentor (model-download.js).
+      steps.getReady?.();
       say({ text: `Answer six short questions so we can match you with a student mentor who shares your interests and the way you like to do things. ${ANSWERS_NOTE} Type stop at any time to stop: nothing is saved until you choose Find my mentor.` });
       ask(0);
     }

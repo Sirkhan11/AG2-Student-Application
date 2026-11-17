@@ -11,6 +11,7 @@
   import { trail } from '#lib/back.js';
   import { finishSignUp } from '#lib/signup/finish.js';
   import { waitingSignUp } from '#lib/signup/waiting.js';
+  import { isUniEmail } from '#lib/uni-email.js';
   import NorthumbriaOnly from '#lib/components/NorthumbriaOnly.svelte';
   import VerifyEmail from '#lib/components/VerifyEmail.svelte';
 
@@ -50,6 +51,14 @@
       if (next?.verified) finish();
     })
   );
+
+  // After logging in, or coming back still logged in: a student without a mentor downloads the
+  // matching model in the background once the page has settled, so Find my mentor doesn't wait for
+  // it (model-download.js). Its code only loads now, and it says nothing if it fails.
+  $effect(() => {
+    const uid = account?.verified && isUniEmail(account.email) ? account.uid : null;
+    if (uid) import('#lib/matching/model-download-browser.js').then((model) => model.downloadAfterLogin(uid), () => {});
+  });
 
   /**
    * Saves the sign-up that waited for this account's email to be verified (signup/waiting.js), if

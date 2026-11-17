@@ -3,6 +3,7 @@
   import { watchSignedIn } from '#lib/firebase/auth.js';
   import BottomNav from '#lib/components/BottomNav.svelte';
   import { askCoordinator, checkBeforeMatching, matchAndSave, prepareStudent } from '#lib/matching/find-match.js';
+  import { getReadyForMatching, modelReady } from '#lib/matching/model-download-browser.js';
   import {
     alreadyHasText,
     ANSWERS_NOTE,
@@ -10,7 +11,7 @@
     capitalise,
     checkAnswers,
     createFinder,
-    FINDING_MESSAGE,
+    findingMessage,
     MAX_AVAILABILITY_LENGTH,
     MEETING_FREQUENCIES,
     questions,
@@ -68,6 +69,8 @@
       const state = await checkBeforeMatching();
       if (state.view === 'has-record') savedMatch = state.match;
       view = state.view;
+      // The questions are showing: the matching model starts loading, so it's ready by Find my mentor.
+      if (state.view === 'form') getReadyForMatching();
     } catch (err) {
       showError("We couldn't load this page. Please check your connection.", start, err);
     }
@@ -92,7 +95,7 @@
   async function findMentor() {
     formError = checkAnswers(answers, availability) ?? '';
     if (formError) return;
-    busyMessage = FINDING_MESSAGE;
+    busyMessage = findingMessage(modelReady());
     view = 'busy';
     handle(await finder.find(answers, preferences()));
   }

@@ -28,6 +28,9 @@ export default defineConfig(({ mode }) => {
           : {})
       })
     ],
+    // The matching model's worker (src/lib/matching/embed.worker.js) loads the model library with a
+    // dynamic import, which needs a module worker.
+    worker: { format: 'es' },
     resolve: {
       // The live site has no Blackboard yet: its section says it's coming soon, and there's nothing
       // to disconnect at log out, so none of the Blackboard code goes live.

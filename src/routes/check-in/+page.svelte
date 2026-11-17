@@ -22,6 +22,7 @@
   } from '#lib/checkin/chat-session.svelte.js';
   import { createMentorFlow } from '#lib/checkin/mentor-flow.js';
   import { hasMentorProfile } from '#lib/matching/mentor-account.js';
+  import { getReadyForMatching, modelReady } from '#lib/matching/model-download-browser.js';
   import ChatFlowCard from '#lib/components/ChatFlowCard.svelte';
   import ChatOfferCard from '#lib/components/ChatOfferCard.svelte';
   import { startsAfresh } from '#lib/checkin/keep-chat.js';
@@ -123,12 +124,14 @@
     if (!flow) {
       const conversation = chatSession.conversation;
       flow = createMentorFlow({
-        // The matching code (and its model) loads only when a student starts this.
+        // The matching code loads only when a student starts this, and its model when the questions start.
         check: async () => (await import('#lib/matching/find-match.js')).checkBeforeMatching(),
         steps: {
           prepareStudent: async (answers) => (await import('#lib/matching/find-match.js')).prepareStudent(answers),
           matchAndSave: async (prepared, preferences) => (await import('#lib/matching/find-match.js')).matchAndSave(prepared, preferences),
-          askCoordinator: async (answers, preferences) => (await import('#lib/matching/find-match.js')).askCoordinator(answers, preferences)
+          askCoordinator: async (answers, preferences) => (await import('#lib/matching/find-match.js')).askCoordinator(answers, preferences),
+          getReady: getReadyForMatching,
+          modelReady
         },
         post: (message) => {
           if (chatSession.conversation !== conversation) return;
