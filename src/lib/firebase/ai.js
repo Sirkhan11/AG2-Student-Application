@@ -18,10 +18,10 @@ function getAIService() {
   if (!ai) {
     // On localhost, a debug token stands in for reCAPTCHA (localhost must never be an allowed
     // reCAPTCHA domain). It comes from .env.development.local, which git ignores and only
-    // `vite dev` reads, and the DEV check keeps it out of production builds too.
-    const debugToken = import.meta.env.DEV ? import.meta.env.VITE_APPCHECK_DEBUG_TOKEN : undefined;
-    if (debugToken) {
-      /** @type {any} */ (self).FIREBASE_APPCHECK_DEBUG_TOKEN = debugToken;
+    // `vite dev` reads. import.meta.env.DEV is false in every build, so a build drops this whole
+    // block, token and all (check-live-build.mjs checks the live site's files for it).
+    if (import.meta.env.DEV && import.meta.env.VITE_APPCHECK_DEBUG_TOKEN) {
+      /** @type {any} */ (self).FIREBASE_APPCHECK_DEBUG_TOKEN = import.meta.env.VITE_APPCHECK_DEBUG_TOKEN;
     }
 
     // The reCAPTCHA site key isn't secret: it's sent to every visitor's browser anyway.

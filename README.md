@@ -53,7 +53,37 @@ npm run build
 
 You can preview the production build with `npm run preview`.
 
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+## The live site
+
+AG2 is live at https://ag2-dev-thomas.web.app, on Firebase Hosting, for Northumbria students only:
+sign-up and log in take only `@northumbria.ac.uk` addresses, the address must be verified before the
+app opens, and `firestore.rules` refuses every read and write from anyone else (apart from the three
+test accounts the check scripts use).
+
+```sh
+npm run build:live    # a static site in build/, then scripts/check-live-build.mjs checks it
+```
+
+The live build leaves out the server routes (Blackboard, which says "coming soon" there until IT
+register AG2, and the pretend Blackboard) and the team's pages (`/dev`, `/matching-demo`,
+`/matching-test`). Dev (`npm run dev`) is unchanged.
+
+The project's `.npmrc` is engine-strict and firebase-tools lists Node 20 to 24, so the Firebase
+commands need `--engine-strict=false` on newer Node. The emulators need Java 21 or newer.
+
+```sh
+# Preview build/ as Hosting serves it (http://127.0.0.1:5005), then check it in Chrome
+npx --engine-strict=false firebase-tools emulators:start --only hosting --project demo-ag2
+node --env-file=.env scripts/check-live-site.mjs
+
+# Check the rules and the sign-up flow in the emulators (nothing real is touched)
+npx --engine-strict=false firebase-tools emulators:exec --only auth,firestore --project demo-ag2 "node scripts/check-uni-rules.mjs"
+
+# Deploy the site and the rules together, so they always match
+npx --engine-strict=false firebase-tools login
+npx --engine-strict=false firebase-tools deploy --only hosting,firestore:rules --project ag2-dev-thomas
+node --env-file=.env scripts/check-live-site.mjs --base https://ag2-dev-thomas.web.app
+```
 
 ## Refreshing the NSU data
 

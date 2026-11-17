@@ -3,6 +3,7 @@
   import { signOut } from 'firebase/auth';
   import { getFirebaseAuth } from '#lib/firebase/client';
   import { disconnectBlackboard } from '#lib/blackboard/api.js';
+  import { LIVE } from '#lib/live.js';
   import { waitingSignUp } from '#lib/signup/waiting.js';
 
   let loading = $state(false);
@@ -14,7 +15,10 @@
 
     try {
       // Forget the Blackboard connection on this device first, so a shared computer keeps nothing.
-      await disconnectBlackboard().catch((err) => console.error('Blackboard disconnect on logout failed:', err?.message));
+      // The live site has no Blackboard yet (no server routes), so there's nothing to forget there.
+      if (!LIVE) {
+        await disconnectBlackboard().catch((err) => console.error('Blackboard disconnect on logout failed:', err?.message));
+      }
       // And a sign-up still waiting for its email to be verified.
       waitingSignUp().clear();
       await signOut(getFirebaseAuth());
