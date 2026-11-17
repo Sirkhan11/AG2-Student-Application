@@ -98,7 +98,7 @@ const checks = [
       [[], [music], [], [], [], []],
       [null, 0.5, null, null, null, null]
     );
-    assert.deepEqual(reasons, ['You both enjoy gigs']);
+    assert.deepEqual(reasons, ['You share interests: gigs']);
   }],
   ['Nothing similar enough (under 0.6): one fallback reason naming the closest question', () => {
     const halfLikeMusic = [0.5, Math.sqrt(0.75)]; // similarity 0.5 with music
@@ -118,9 +118,9 @@ const checks = [
       [1, 1, 1, 1, 1, 1]
     );
     assert.deepEqual(reasons, [
-      'They can help with making friends',
-      'You both enjoy gigs',
-      'You like to work in a similar way: planning ahead'
+      'They can help with what you need: making friends',
+      'You share interests: gigs',
+      'You work in a similar way: planning ahead'
     ]);
   }],
   ['Two shared phrases in one question become one reason', () => {
@@ -130,7 +130,7 @@ const checks = [
       [[], [music], [], [], [], []],
       [null, 1, null, null, null, null]
     );
-    assert.deepEqual(reasons, ['You both enjoy gigs and live music']);
+    assert.deepEqual(reasons, ['You share interests: gigs and live music']);
   }]
 ];
 

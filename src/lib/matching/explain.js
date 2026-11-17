@@ -1,6 +1,6 @@
 import { bestMatches } from '#lib/matching/compare-items.js';
 
-// Turns a match into short reasons a student can read, such as "You both enjoy gigs". No Firebase or
+// Turns a match into short reasons a student can read, such as "You share interests: gigs". No Firebase or
 // Gemini here, so scripts/check-compare-items.mjs can test it in Node.
 //
 // Mentors' phrases are private (mentorDetails), so reasons only ever use the STUDENT's own phrases:
@@ -9,8 +9,10 @@ import { bestMatches } from '#lib/matching/compare-items.js';
 
 /**
  * How similar a student's phrase and the mentor's closest phrase must be before a reason names it.
- * In testing, unrelated short phrases scored about 0.25 ("gigs" vs "gym"), closely related ones about
- * 0.7 ("gigs" vs "live music"), and the same phrase 1. So 0.6 only names phrases the mentor really shares.
+ * Measured with MiniLM: "gigs" vs "gym" 0.25, "gigs" vs "live music" only 0.39, "partying" vs "going
+ * clubbing" 0.58, and the same phrase 1. So 0.6 names near-identical phrases only. It can still name
+ * an opposite, as "quiet nights in" vs "nights out" scores 0.71; Stage 3 of the matching fix deals
+ * with opposites.
  * TODO(thresholds): check this on the 20 to 30 example test set along with the matching thresholds.
  */
 export const REASON_MIN_SIMILARITY = 0.6;
@@ -24,14 +26,16 @@ const MAX_PHRASES_PER_REASON = 2;
 /**
  * How each question's reason is worded, in question order (see questions.js; mentors answer
  * question 1 as what they could help with, and question 6 as the kind of mentor they want to be).
+ * Each is a label and then the phrases, because Gemini's phrases come in all shapes ("team",
+ * "football match") and fitting them into a sentence read badly ("You both care about team").
  * @type {((phrases: string) => string)[]}
  */
 const REASON_WORDING = [
-  (phrases) => `They can help with ${phrases}`,
-  (phrases) => `You both enjoy ${phrases}`,
-  (phrases) => `You both like ${phrases} at the weekend`,
-  (phrases) => `You like to work in a similar way: ${phrases}`,
-  (phrases) => `You both care about ${phrases}`,
+  (phrases) => `They can help with what you need: ${phrases}`,
+  (phrases) => `You share interests: ${phrases}`,
+  (phrases) => `You like similar weekends: ${phrases}`,
+  (phrases) => `You work in a similar way: ${phrases}`,
+  (phrases) => `You care about similar things: ${phrases}`,
   (phrases) => `They're the kind of mentor you asked for: ${phrases}`
 ];
 

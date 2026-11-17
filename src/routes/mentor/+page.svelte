@@ -65,7 +65,8 @@
         </ul>
       {/if}
       {#if match.meetingFrequency}
-        <p>You’ll meet {match.meetingFrequency}.</p>
+        <!-- The student's own choice from /find-mentor, until the coordinator confirms it. -->
+        <p>You asked to meet {match.meetingFrequency}.</p>
       {/if}
       <p>Your coordinator will introduce you.</p>
     </div>
