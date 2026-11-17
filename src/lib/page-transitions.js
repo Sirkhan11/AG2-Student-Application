@@ -1,5 +1,5 @@
-// Animations between pages. Opening the chat from Home: the chat page slides down from the top over
-// Home, which dims behind it, using the browser's View Transitions (Chrome, Edge and Safari 18 and
+// Animations between pages. Opening the chat from Home: Home fades to a plain white screen and the
+// chat page is pulled down over it from the top, using the browser's View Transitions (Chrome, Edge and Safari 18 and
 // later have them); in other browsers, or with reduced motion turned on, the chat just opens. The
 // root layout starts it; the animation itself is in app.css (data-page-transition="chat-open").
 
@@ -12,7 +12,7 @@
 export const opensChatFromHome = (from, to) => from === '/home' && to === '/check-in';
 
 /** The longest the slide waits for the chat's messages before it starts anyway. */
-export const WAIT_FOR_CHAT_MS = 350;
+export const WAIT_FOR_CHAT_MS = 200;
 
 /**
  * Waits until the chat's messages are on the page (data-chat-ready), or WAIT_FOR_CHAT_MS has

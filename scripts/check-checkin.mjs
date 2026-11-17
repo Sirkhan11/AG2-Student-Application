@@ -255,7 +255,9 @@ const checks = [
     assert.equal(opensChatFromHome('/home', '/gp-finder'), false);
     assert.equal(opensChatFromHome('/checklist', '/check-in'), false);
     assert.equal(opensChatFromHome(undefined, '/check-in'), false);
-    assert.ok(WAIT_FOR_CHAT_MS <= 400, 'never waits long for the chat before sliding');
+    assert.ok(WAIT_FOR_CHAT_MS <= 250, 'never waits long for the chat before sliding');
+    assert.match(readFileSync('src/app.css', 'utf8'), /chat-open'\]::view-transition \{\s*background: #ffffff;/, 'a plain white screen behind the slide');
+    assert.match(readFileSync('src/app.css', 'utf8'), /::view-transition-new\(root\) \{\s*animation: 800ms /, 'slow enough to look smooth');
     const css = readFileSync('src/app.css', 'utf8');
     assert.match(css, /prefers-reduced-motion: no-preference\)[\s\S]*chat-open'\]::view-transition-new\(root\)[\s\S]*ag2-slide-down/);
     assert.match(css, /@keyframes ag2-slide-down \{\s*from \{\s*transform: translateY\(-100%\);/);
