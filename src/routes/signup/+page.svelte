@@ -1,8 +1,7 @@
 <script>
   import { goto } from '$app/navigation';
-  import { createUserWithEmailAndPassword } from 'firebase/auth';
-  import { doc, setDoc } from 'firebase/firestore';
   import { getFirebaseAuth, db } from '#lib/firebase/client';
+  import { signUpStudent } from '#lib/students/signup.js';
 
   let name = $state('');
   let email = $state('');
@@ -18,22 +17,11 @@
     loading = true;
 
     try {
-      const result = await createUserWithEmailAndPassword(
-        getFirebaseAuth(),
-        email,
-        password
+      // The account and the students/{uid} record (see signup.js, which test scripts use too).
+      await signUpStudent(
+        { auth: getFirebaseAuth(), db },
+        { name, email, password, course, interests, arrivalDate }
       );
-
-      await setDoc(doc(db, 'students', result.user.uid), {
-        name,
-        email,
-        course,
-        interests: interests.split(',')
-          .map((item) => item.trim())
-          .filter(Boolean),
-        arrivalDate,
-        role: 'student'
-      });
 
       await goto('/home');
     } catch (err) {
