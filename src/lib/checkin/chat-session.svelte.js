@@ -11,11 +11,12 @@ import { watchSignedIn } from '#lib/firebase/auth.js';
 
 /**
  * One bubble. kind marks the fixed safety message or an error. links are shown under it: a
- * suggested society or NSU service as a card with its details (see reply-links.js), anything else
+ * suggested society, Northumbria Sport club or NSU service as a card with its details (see
+ * reply-links.js), anything else
  * as a button (external ones open in a new tab).
  * @typedef {{ role: 'assistant' | 'user', text: string, kind?: 'safety' | 'error',
- *   links?: { label: string, href: string, external?: boolean, kind?: 'society' | 'service',
- *     nsuId?: number, serviceId?: string }[] }} Message
+ *   links?: { label: string, href: string, external?: boolean, kind?: 'society' | 'club' | 'service',
+ *     nsuId?: number, slug?: string, serviceId?: string }[] }} Message
  */
 
 /**

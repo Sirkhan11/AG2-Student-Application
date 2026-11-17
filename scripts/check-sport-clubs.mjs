@@ -2,7 +2,12 @@
 // the data is what we expect and holds no contact details, lookups work, and no club has exactly the
 // same name as a society or an NSU service, so a name in a chat reply can only mean one thing (a
 // later refresh that adds a clash fails here). Also how a club's contacts and training times are
-// shown (src/lib/sport/display.js), with made-up people. No Gemini or Firebase.
+// shown (src/lib/sport/display.js), with made-up people, and that the chat's instructions hold no
+// "@" and only the clubs' names. No Gemini or Firebase.
+//
+// Given the private pages file (kept outside the repo), it also checks nothing from it (about text,
+// notes, contacts' names or emails) is in the chat's instructions, printing counts only:
+//   SPORT_CLUB_PAGES=~/Downloads/sport-club-pages.json node scripts/check-sport-clubs.mjs
 //
 // Run from the project folder:
 //   node scripts/check-sport-clubs.mjs
@@ -13,6 +18,15 @@ import { CLUBS, CLUBS_COLLECTED_AT, CLUBS_SOURCE, clubBySlug, findClub, searchCl
 import { findSociety, SOCIETIES } from '#lib/societies/societies.js';
 import { SERVICES } from '#lib/nsu/services.js';
 import { contactGroups, membershipBlocks } from '#lib/sport/display.js';
+import { chatInstructions, CLUB_LIST } from '#lib/checkin/chat-prompt.js';
+import { buildOpener, describeForGemini } from '#lib/checkin/opener.js';
+import { homedir } from 'node:os';
+
+/** The chat's full instructions for a made-up student, as Gemini receives them. */
+const INSTRUCTIONS = chatInstructions(
+  describeForGemini({ match: null, tasks: null }),
+  buildOpener({ match: null, tasks: null, justSignedUp: false }).messages
+);
 
 const key = (/** @type {string} */ name) => name.toLowerCase().replace(/\s+/g, ' ').trim();
 
@@ -78,6 +92,11 @@ const checks = [
       { text: 'Includes BUCS entry', items: [] }
     ]);
   }],
+  ['The chat\'s instructions hold no "@", and their club list is only the clubs\' names', () => {
+    assert.ok(!INSTRUCTIONS.includes('@'));
+    assert.ok(INSTRUCTIONS.includes(`Northumbria Sport clubs, all at the Newcastle campus (one per line):\n${CLUB_LIST}\n`));
+    assert.deepEqual(CLUB_LIST.split('\n'), CLUBS.map((club) => club.name));
+  }],
   ['Hockey is the club and Ice Hockey the society, never the other way round', () => {
     assert.equal(findClub('Hockey')?.slug, 'hockey');
     assert.equal(findClub('Ice Hockey'), null);
@@ -85,6 +104,30 @@ const checks = [
     assert.equal(findSociety('Hockey', 'Newcastle'), null);
   }]
 ];
+
+// With the private pages file: nothing from it reaches Gemini. Prints counts only, never the text.
+const pagesPath = process.env.SPORT_CLUB_PAGES?.replace(/^~(?=\/)/, homedir());
+if (pagesPath) {
+  checks.push(['Nothing from the private pages file (about text, notes, contacts\' names and emails) is in the chat\'s instructions', () => {
+    const pages = Object.values(JSON.parse(readFileSync(pagesPath, 'utf8')).clubs);
+    /** @type {string[]} */
+    const pieces = [];
+    for (const page of /** @type {any[]} */ (pages)) {
+      pieces.push(...(page.about ?? []).filter((/** @type {string} */ text) => text.trim().length >= 25));
+      for (const contact of page.contacts ?? []) {
+        if (contact.note && contact.note.trim().length >= 25) pieces.push(contact.note);
+        for (const person of contact.people ?? []) {
+          if (person.email) pieces.push(person.email);
+          // Names of 2 words or more, so a one-word name that's also a club ("Football") isn't counted.
+          if (person.name && person.name.trim().split(/\s+/).length >= 2) pieces.push(person.name);
+        }
+      }
+    }
+    const found = pieces.filter((piece) => INSTRUCTIONS.includes(piece.trim())).length;
+    console.log(`      (looked for ${pieces.length} pieces of the pages file in the instructions)`);
+    assert.equal(found, 0, `${found} piece(s) of the pages file are in the instructions`);
+  }]);
+}
 
 let failed = 0;
 for (const [name, check] of checks) {

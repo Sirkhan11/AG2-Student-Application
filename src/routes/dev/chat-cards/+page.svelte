@@ -1,4 +1,5 @@
 <script>
+  import ClubCard from '#lib/components/ClubCard.svelte';
   import ClubDetails from '#lib/components/ClubDetails.svelte';
   import ServiceCard from '#lib/components/ServiceCard.svelte';
   import SocietyCard from '#lib/components/SocietyCard.svelte';
@@ -90,6 +91,7 @@
     <div class="cards">
       <SocietyCard society={full} details={fullDetails} />
       <SocietyCard society={listOnly} details={null} />
+      <ClubCard {club} details={clubDetails} />
       {#each services as service (service.id)}
         <ServiceCard {service} />
       {/each}

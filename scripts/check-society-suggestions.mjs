@@ -1,7 +1,8 @@
 // Measures the check-in chat's suggestions of societies and NSU services on made-up students: one
 // student from each fixture group (scripts/fixtures/matching-cases.json) tells the chat what they're
 // into and asks for societies, and a few extra students ask about community societies or a worry
-// (money, food, academic misconduct, a landlord). Each reply is checked against what we'd expect.
+// (money, food, academic misconduct, a landlord) or about a sport, which should bring up the matching
+// Northumbria Sport club. Each reply is checked against what we'd expect.
 // Then a few follow-ups in two turns: a student gets a suggestion, then asks how to contact or join
 // it, or what it's like. The chat should name the same society again in [[ ]] (so the app shows its
 // card, with its details, contact buttons and how to join), never say it can't see the details, and
@@ -9,7 +10,7 @@
 //
 // The chat is asked with the app's own instructions (src/lib/checkin/chat-prompt.js) over REST, as
 // make-summary-fixtures.mjs does. Replies are saved in scripts/fixtures/society-replies.json, so by
-// default this only reads them and needs no Gemini. To ask Gemini again (about 25 requests, paced):
+// default this only reads them and needs no Gemini. To ask Gemini again (about 29 requests, paced):
 //   node --env-file=.env --env-file=.env.development.local scripts/check-society-suggestions.mjs --refresh
 // Otherwise:
 //   node scripts/check-society-suggestions.mjs
@@ -21,6 +22,10 @@ import { buildOpener, describeForGemini } from '#lib/checkin/opener.js';
 import { linksInReply, MAX_LINKS } from '#lib/checkin/reply-links.js';
 import { findService, NOT_IN_CHAT, serviceById } from '#lib/nsu/services.js';
 import { AUDIENCE, findSociety, societyById } from '#lib/societies/societies.js';
+import { CLUBS, findClub } from '#lib/sport/clubs.js';
+
+/** Every Northumbria Sport club's name, for expectations such as "some club" or "no club at all". */
+const CLUB_NAMES = CLUBS.map((club) => club.name);
 
 const REPLIES_FILE = 'scripts/fixtures/society-replies.json';
 
@@ -29,20 +34,21 @@ const REPLIES_FILE = 'scripts/fixtures/society-replies.json';
  * nothing on the list really fits, so suggesting none is right). mustNot: suggesting any of these is
  * wrong. askFirst: the chat should ask what they enjoy instead of suggesting anything. These are
  * judgement calls, written down so they can be argued about.
- * @type {Record<string, { anyOf: string[], mustNot?: string[], askFirst?: boolean, why: string }>}
+ * mustNotSay: a check on the reply's own words, giving the problem to report (or null if fine).
+ * @type {Record<string, { anyOf: string[], mustNot?: string[], askFirst?: boolean, mustNotSay?: (reply: string) => string | null, why: string }>}
  */
 const EXPECT = {
   'gigs, rules out sport': {
     anyOf: ['Music', 'Rock', 'Sync DJ', 'Gigs', 'Events'],
-    // Added with the wider Sport rule: they said "Not sport."
-    mustNot: ['Sport'],
+    // Added with the wider Sport rule, and then the clubs: they said "Not sport."
+    mustNot: ['Sport', ...CLUB_NAMES],
     why: 'live music'
   },
   'homebody, rules out partying': { anyOf: ['Book', 'Chess', 'Gaming and Roleplay'], mustNot: ['Beer'], why: 'board games, reading' },
   'sporty early riser': {
-    // Changed when the NSU services were added: before, nothing on the lists fitted (no football
-    // society), but Northumbria Sport, the Sport service, has the sports clubs.
-    anyOf: ['Sport'],
+    // Changed when the NSU services were added (the Sport service has the sports clubs), and again
+    // when the clubs themselves were listed: the Football, Futsal or Running club fits too.
+    anyOf: ['Sport', 'Football', 'Futsal', 'Running'],
     mustNot: ['Esports', 'Chess', 'Video Game', 'Girls Who Run'],
     why: 'football and the gym: the Sport service has the sports clubs; Girls Who Run is for women only'
   },
@@ -82,6 +88,19 @@ const EXPECT = {
  * an "everyone welcome" society for someone interested but not from that community, and a group
  * society for someone who says they're in that group.
  */
+/**
+ * The problem if the reply promises beginner or social sessions (the chat can't know a club has
+ * them), or null. A sentence that points to the card or hedges ("see if", "might") is fine.
+ * @param {string} reply
+ */
+function promisesSessions(reply) {
+  const sentences = reply.split(/(?<=[.!?])\s+/);
+  const promise = sentences.find((sentence) =>
+    /\b(beginner|beginners|social|taster|casual)\b[^.]*\b(session|sessions|class|classes|training|level)\b/i.test(sentence) &&
+    !/\b(if|whether|might|may|could|card|check|see|look|find out|ask)\b/i.test(sentence));
+  return promise ? `promises sessions it can't know about ("${promise.trim().slice(0, 80)}")` : null;
+}
+
 const EXTRA = [
   {
     group: 'interested in Ukrainian culture, not Ukrainian',
@@ -112,6 +131,30 @@ const EXTRA = [
     group: 'landlord won\'t fix the damp',
     message: "My landlord won't fix the damp in my flat and keeps ignoring my messages. Can I complain?",
     expect: { anyOf: ['Advice Centre', 'Rate Your Landlord'], why: 'housing and complaints: the Advice Centre' }
+  },
+  {
+    group: 'swims a lot',
+    message: "I swim a lot and I'd like to keep it up while I'm here. Any clubs or societies?",
+    expect: { anyOf: ['Swimming'], why: 'swimming: the Swimming club' }
+  },
+  {
+    group: 'played football at school',
+    message: "I played football at school and I'd like to start playing again. Where should I look?",
+    expect: { anyOf: ['Football', 'Futsal'], mustNot: ['American Football', 'Gaelic Football'], why: 'football: the Football or Futsal club' }
+  },
+  {
+    group: 'into ice hockey',
+    message: "I'm really into ice hockey. Is there anything for me here?",
+    expect: { anyOf: ['Ice Hockey'], mustNot: ['Hockey'], why: 'ice hockey: the Ice Hockey society, not the Hockey club' }
+  },
+  {
+    group: 'never done sport, wants to get fit',
+    message: "I've never really done any sport, but I want to get fitter this year. Any ideas?",
+    expect: {
+      anyOf: CLUB_NAMES,
+      mustNotSay: promisesSessions,
+      why: 'a club or two, pointing to the card for beginner or social sessions rather than promising them'
+    }
   }
 ];
 for (const extra of EXTRA) EXPECT[extra.group] = extra.expect;
@@ -177,12 +220,17 @@ let saved = existsSync(REPLIES_FILE)
   ? JSON.parse(readFileSync(REPLIES_FILE, 'utf8'))
   : { about: 'Check-in chat replies for check-society-suggestions.mjs. Regenerate with --refresh rather than edit.', model: CHAT_MODEL, promptFingerprint: fingerprint, made: '', replies: {}, followups: {} };
 
+// --only "group|group" asks Gemini again for just those groups, keeping every other saved reply
+// (and the saved prompt fingerprint), for example to add new cases without re-asking everything.
+const onlyAt = process.argv.indexOf('--only');
+const only = onlyAt === -1 ? null : process.argv[onlyAt + 1].split('|');
 if (process.argv.includes('--refresh')) {
   const { geminiFromEnv } = await import('./lib/gemini-rest.mjs');
   const gemini = geminiFromEnv(process.env);
-  saved = { ...saved, model: CHAT_MODEL, promptFingerprint: fingerprint, replies: {}, followups: {} };
+  saved = only ? { ...saved, followups: saved.followups ?? {} } : { ...saved, model: CHAT_MODEL, promptFingerprint: fingerprint, replies: {}, followups: {} };
   const system = { role: 'system', parts: [{ text: instructions }] };
   for (const asker of askers) {
+    if (only && !only.includes(asker.group)) continue;
     const reply = await gemini.generate(CHAT_MODEL, {
       contents: [{ role: 'user', parts: [{ text: asker.message }] }],
       systemInstruction: { role: 'system', parts: [{ text: instructions }] }
@@ -194,6 +242,7 @@ if (process.argv.includes('--refresh')) {
   }
   // Follow-ups: the second request carries the first reply as the app's chat does, in Gemini's own [[ ]] form.
   for (const followup of FOLLOWUPS) {
+    if (only && !only.includes(followup.group)) continue;
     const user = (/** @type {string} */ text) => ({ role: 'user', parts: [{ text }] });
     const firstReply = (await gemini.generate(CHAT_MODEL, { contents: [user(followup.first)], systemInstruction: system })).trim();
     const thenReply = (await gemini.generate(CHAT_MODEL, {
@@ -229,7 +278,7 @@ for (const asker of askers) {
   const suggested = links.map((link) => link.label);
   // Everything Gemini wrote in [[ ]]: real societies (on this campus) and services, and anything else (made up).
   const named = [...entry.reply.matchAll(/\[\[([^\]]{1,80})\]\]/g)].map((m) => m[1]);
-  const isReal = (/** @type {string} */ name) => Boolean(findService(name) || findSociety(name, CHAT_CAMPUS));
+  const isReal = (/** @type {string} */ name) => Boolean(findService(name) || findClub(name) || findSociety(name, CHAT_CAMPUS));
   const madeUp = named.filter((name) => !isReal(name));
   const realCount = new Set(named.filter(isReal).map((name) => name.toLowerCase())).size;
   const wrong = suggested.filter((name) => expect.mustNot?.includes(name));
@@ -239,6 +288,7 @@ for (const asker of askers) {
     wrong.length ? `shouldn't suggest: ${wrong.join(', ')}` : '',
     madeUp.length ? `not on the list: ${madeUp.join(', ')}` : '',
     expect.askFirst && suggested.length > 0 ? 'should ask what they enjoy before suggesting' : '',
+    expect.mustNotSay?.(entry.reply) ?? '',
     ...UNMENTIONABLE.filter((name) => entry.reply.toLowerCase().includes(name.toLowerCase())).map((name) => `mentioned ${name}, which the chat leaves out`)
   ].filter(Boolean);
   if (problems.length) failures++;

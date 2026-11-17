@@ -9,7 +9,8 @@ import assert from 'node:assert/strict';
 import { buildOpener, describeForGemini, tidyProfile } from '#lib/checkin/opener.js';
 import { blankContactDetails } from '#lib/checkin/private-details.js';
 import { isCrisis } from '#lib/checkin/safety.js';
-import { SERVICE_LIST, SOCIETY_LIST } from '#lib/checkin/chat-prompt.js';
+import { CLUB_LIST, SERVICE_LIST, SOCIETY_LIST } from '#lib/checkin/chat-prompt.js';
+import { CLUBS } from '#lib/sport/clubs.js';
 import { linksInReply, MAX_LINKS } from '#lib/checkin/reply-links.js';
 import { startsAfresh } from '#lib/checkin/keep-chat.js';
 import { SERVICES } from '#lib/nsu/services.js';
@@ -180,6 +181,25 @@ const checks = [
     const { text, links } = linksInReply('[[Music]] and [[music]], or [[Underwater Basket Weaving]]. I love music.', 'Newcastle');
     assert.equal(text, 'Music and Music, or Underwater Basket Weaving. I love music.');
     assert.deepEqual(links.map((link) => link.label), ['Music']);
+  }],
+  ['A club name gives a club card (in the app at /sport/<slug>); Hockey is the club and Ice Hockey the society', () => {
+    const { text, links } = linksInReply('Try [[Swimming]], [[Hockey]] or [[Ice Hockey]].', 'Newcastle');
+    assert.equal(text, 'Try Swimming, Hockey or Ice Hockey.');
+    assert.deepEqual(links.map((link) => [link.label, link.kind, link.href]), [
+      ['Swimming', 'club', '/sport/swimming'],
+      ['Hockey', 'club', '/sport/hockey'],
+      ['Ice Hockey', 'society', `/societies/${links[2].nsuId}`]
+    ]);
+    assert.equal(links[0].slug, 'swimming');
+  }],
+  ['Gemini\'s club list is exactly the 38 clubs\' names, one per line, and nothing else', () => {
+    assert.deepEqual(CLUB_LIST.split('\n'), CLUBS.map((club) => club.name));
+    assert.ok(!CLUB_LIST.includes('@'));
+  }],
+  [`At most ${MAX_LINKS} links (so at most ${MAX_LINKS} cards), societies, clubs and services together; made-up names give none`, () => {
+    const mixed = linksInReply('[[Swimming]], [[Climbing]], [[Food Pantry]], [[Rowing]] and [[Underwater Hockey]]', 'Newcastle');
+    assert.deepEqual(mixed.links.map((link) => link.kind), ['club', 'society', 'service']);
+    assert.ok(!mixed.links.some((link) => link.label === 'Underwater Hockey'));
   }],
   [`At most ${MAX_LINKS} links (so at most ${MAX_LINKS} cards), societies and services together`, () => {
     const { links } = linksInReply('[[Music]], [[Gigs]], [[Rock]], [[Events]], [[Film]]', 'Newcastle');

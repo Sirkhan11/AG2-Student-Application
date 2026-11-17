@@ -14,6 +14,8 @@
   import { startsAfresh } from '#lib/checkin/keep-chat.js';
   import SocietyCard from '#lib/components/SocietyCard.svelte';
   import ServiceCard from '#lib/components/ServiceCard.svelte';
+  import ClubCard from '#lib/components/ClubCard.svelte';
+  import { clubBySlug } from '#lib/sport/clubs.js';
   import { serviceById } from '#lib/nsu/services.js';
   import { societyById } from '#lib/societies/societies.js';
 
@@ -179,8 +181,11 @@
             {#each cards as link (link.href)}
               {@const society = link.kind === 'society' ? societyById(link.nsuId ?? -1) : null}
               {@const service = link.kind === 'service' ? serviceById(link.serviceId ?? '') : null}
+              {@const club = link.kind === 'club' ? clubBySlug(link.slug ?? '') : null}
               {#if society}
                 <SocietyCard {society} />
+              {:else if club}
+                <ClubCard {club} />
               {:else if service}
                 <ServiceCard {service} />
               {/if}
