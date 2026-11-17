@@ -26,7 +26,8 @@
   // Pictures that failed to load, so those cards show initials instead of a broken image.
   let failedPictures = $state(/** @type {number[]} */ ([]));
 
-  const checked = new Date(COLLECTED_AT).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+  // When the list file last changed: a refresh that finds no changes leaves the file, and this date, alone.
+  const changed = new Date(COLLECTED_AT).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/London' });
 </script>
 
 <main class="page">
@@ -103,7 +104,7 @@
   </ul>
 
   <p class="muted">
-    List from the NSU website, checked on {checked}, so it may have changed since.
+    List from the NSU website, last changed on {changed}. NSU’s own list may be newer:
     <a href={SOURCE_URL} target="_blank" rel="noopener noreferrer">See the latest list on the NSU website ↗</a>
   </p>
 

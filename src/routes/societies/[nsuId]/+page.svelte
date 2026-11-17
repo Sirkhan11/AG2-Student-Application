@@ -171,7 +171,12 @@
     </a>
   </div>
 
-  <p class="muted">Info from Northumbria Students’ Union, checked {dayText(details?.collectedAt ?? COLLECTED_AT)}.</p>
+  <!-- The page's own date when its details loaded; otherwise the list's, which only changes when the list does. -->
+  {#if details?.collectedAt}
+    <p class="muted">Info from Northumbria Students’ Union, checked {dayText(details.collectedAt)}.</p>
+  {:else}
+    <p class="muted">Info from Northumbria Students’ Union’s list, last changed {dayText(COLLECTED_AT)}.</p>
+  {/if}
 
   <BottomNav />
 </main>
