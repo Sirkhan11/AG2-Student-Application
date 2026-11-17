@@ -68,8 +68,9 @@
     <h1>Become a mentor</h1>
     <p class="muted">
       Your answers are only used to match you with students who'd get on with you. Google's Gemini
-      AI summarises them to find a match. Students will see the name you choose to show them, not
-      your answers or other details, and the coordinator checks every profile first.
+      AI summarises them to find a match. Students will see the name you choose to show them and a
+      short reason for the match, such as a shared interest, but not your answers or other details.
+      The coordinator checks every profile first.
     </p>
 
     <form onsubmit={(event) => {

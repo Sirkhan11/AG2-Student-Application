@@ -1,5 +1,6 @@
-import { doc, getDoc, increment, serverTimestamp, setDoc, writeBatch } from 'firebase/firestore';
+import { doc, getDoc, increment, serverTimestamp, writeBatch } from 'firebase/firestore';
 import { db, getFirebaseAuth } from '#lib/firebase/client.js';
+import { MAX_REASONS } from '#lib/matching/explain.js';
 
 /*
  * A student's match lives at matches/{student uid}, so each student has at most one. Only that student
@@ -17,9 +18,6 @@ import { db, getFirebaseAuth } from '#lib/firebase/client.js';
 /** How often a student would like to meet: the same choices as the mentor sign-up form. */
 export const MEETING_FREQUENCIES = ['weekly', 'every two weeks', 'monthly'];
 
-/** The most reasons a match can store (firestore.rules checks the same number). */
-export const MAX_REASONS = 3;
-
 /** The longest availability text a match can store (firestore.rules checks the same number). */
 export const MAX_AVAILABILITY_LENGTH = 200;
 
@@ -29,9 +27,16 @@ export const MAX_AVAILABILITY_LENGTH = 200;
  */
 
 /**
- * A saved match, as loadMyMatch returns it.
- * @typedef {({ status: 'matched', mentorId: string, mentorName: string, reasons: string[] }
- *   | { status: 'coordinator' }) & MeetingPreferences} Match
+ * A saved match, as loadMyMatch returns it. A match the coordinator set up by hand in the console
+ * may leave things out, so anything missing is null (or an empty list of reasons).
+ * @typedef {{ status: 'matched', mentorId: string | null, mentorName: string | null, reasons: string[],
+ *   meetingFrequency: string | null, availability: string | null }
+ *   | { status: 'coordinator', meetingFrequency: string | null, availability: string | null }} Match
+ */
+
+/**
+ * What the coordinator needs to match a student by hand, as the match record can't hold answers.
+ * @typedef {{ answers: string[], summaries: string[][] | null, reason: string, reasonText: string }} MentorRequest
  */
 
 /** The signed-in user's uid. Matches are always saved under it. */
@@ -87,23 +92,85 @@ export async function takePlace(mentor, reasons, preferences) {
 }
 
 /**
- * Saves that the signed-in student is waiting for the coordinator to find them a mentor (matching
- * couldn't pick one, or Gemini failed). No mentor's place is taken.
+ * Saves that the signed-in student is waiting for the coordinator to find them a mentor. No mentor's
+ * place is taken. Two writes, in one batch so there's never one without the other:
+ * - students/{uid}.mentorRequest: their answers, Gemini's phrases (null if Gemini failed) and why they
+ *   were passed on. Merged in, so nothing else in their student record is overwritten.
+ * - matches/{uid} with status 'coordinator', which can't hold answers (see firestore.rules).
  * @param {MeetingPreferences} preferences
+ * @param {MentorRequest} request
  */
-export async function passToCoordinator(preferences) {
-  await setDoc(doc(db, 'matches', currentUid()), {
+export async function passToCoordinator(preferences, request) {
+  const uid = currentUid();
+  const batch = writeBatch(db);
+  batch.set(
+    doc(db, 'students', uid),
+    {
+      mentorRequest: {
+        reason: request.reason,
+        reasonText: request.reasonText,
+        answers: request.answers.map((answer) => answer.trim()),
+        // Firestore can't store a list of lists, so one list of phrases per question, under q1 to q6.
+        summaries: request.summaries
+          ? Object.fromEntries(request.summaries.map((phrases, i) => [`q${i + 1}`, phrases]))
+          : null,
+        requestedAt: serverTimestamp()
+      }
+    },
+    { merge: true }
+  );
+  batch.set(doc(db, 'matches', uid), {
     status: 'coordinator',
     ...checkedPreferences(preferences),
     createdAt: serverTimestamp()
   });
+  await batch.commit();
 }
 
 /**
+ * A mentor's display name from their public profile, or null if it can't be read (for example
+ * they're not approved any more, so students can't read their profile).
+ * @param {string} mentorId
+ */
+async function displayNameOf(mentorId) {
+  try {
+    const name = (await getDoc(doc(db, 'mentors', mentorId))).data()?.displayName;
+    return typeof name === 'string' && name.trim() !== '' ? name : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * @param {unknown} value
+ * @returns {string | null} the value if it's text with something in it, otherwise null
+ */
+const textOrNull = (value) => (typeof value === 'string' && value.trim() !== '' ? value : null);
+
+/**
  * Loads the signed-in student's match, or null if they haven't got one yet.
+ *
+ * Copes with a match the coordinator set up by hand in the console: missing reasons become an empty
+ * list, a missing mentorName is looked up from the mentor's public profile, and anything else missing
+ * is null. Any status other than 'matched' counts as still waiting for the coordinator.
  * @returns {Promise<Match | null>}
  */
 export async function loadMyMatch() {
   const snapshot = await getDoc(doc(db, 'matches', currentUid()));
-  return snapshot.exists() ? /** @type {Match} */ (snapshot.data()) : null;
+  if (!snapshot.exists()) return null;
+  const data = snapshot.data();
+  const meeting = {
+    meetingFrequency: textOrNull(data.meetingFrequency),
+    availability: textOrNull(data.availability)
+  };
+  if (data.status !== 'matched') return { status: 'coordinator', ...meeting };
+
+  const mentorId = textOrNull(data.mentorId);
+  return {
+    status: 'matched',
+    mentorId,
+    mentorName: textOrNull(data.mentorName) ?? (mentorId ? await displayNameOf(mentorId) : null),
+    reasons: Array.isArray(data.reasons) ? data.reasons.filter((reason) => textOrNull(reason) !== null) : [],
+    ...meeting
+  };
 }

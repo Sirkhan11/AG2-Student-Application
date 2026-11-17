@@ -46,8 +46,17 @@ export function rankMentors(studentItems, mentors) {
 }
 
 /**
- * True when a person should pick the mentor instead: there's no scored mentor, the best score is
- * too weak, the best match was compared on too few questions, or the top two are too close to call.
+ * Why a person should pick the mentor instead of the top match:
+ * - 'no-mentors': there was nobody to compare with
+ * - 'nothing-to-compare': no question could be compared with any mentor
+ * - 'weak-match': the best score is under minScore
+ * - 'too-few-questions': the best match was compared on fewer than minQuestions questions
+ * - 'near-tie': the top two are less than minGap apart, too close to call
+ * @typedef {'no-mentors' | 'nothing-to-compare' | 'weak-match' | 'too-few-questions' | 'near-tie'} CoordinatorReason
+ */
+
+/**
+ * Says why a person should pick the mentor instead, or returns null if the top match can be used.
  *
  * The minimum number of questions matters because empty summaries are skipped: a mentor compared on
  * one question can score 1.0 from a single matching phrase and outrank one compared on all six.
@@ -56,10 +65,25 @@ export function rankMentors(studentItems, mentors) {
  * 0.3 and 0.05 were starting guesses for whole-answer vectors, and item-by-item scores run higher
  * (two unrelated single words can score about 0.25). 4 of 6 questions is also a starting guess.
  * @param {{ score: number | null, questionsCompared: number }[]} ranked best first, as rankMentors returns it
+ * @returns {CoordinatorReason | null}
  */
-export function needsCoordinator(ranked, minScore = 0.3, minGap = 0.05, minQuestions = 4) {
+export function coordinatorReason(ranked, minScore = 0.3, minGap = 0.05, minQuestions = 4) {
   const [first, second] = ranked;
-  if (!first || first.score === null || first.score < minScore) return true;
-  if (first.questionsCompared < minQuestions) return true;
-  return second !== undefined && second.score !== null && first.score - second.score < minGap;
+  if (!first) return 'no-mentors';
+  if (first.score === null) return 'nothing-to-compare';
+  if (first.score < minScore) return 'weak-match';
+  if (first.questionsCompared < minQuestions) return 'too-few-questions';
+  if (second !== undefined && second.score !== null && first.score - second.score < minGap) return 'near-tie';
+  return null;
+}
+
+/**
+ * True when a person should pick the mentor instead (see coordinatorReason).
+ * @param {{ score: number | null, questionsCompared: number }[]} ranked best first
+ * @param {number} [minScore]
+ * @param {number} [minGap]
+ * @param {number} [minQuestions]
+ */
+export function needsCoordinator(ranked, minScore, minGap, minQuestions) {
+  return coordinatorReason(ranked, minScore, minGap, minQuestions) !== null;
 }

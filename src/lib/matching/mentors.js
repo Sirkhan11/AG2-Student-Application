@@ -1,5 +1,5 @@
 import { createUserWithEmailAndPassword, deleteUser, onAuthStateChanged } from 'firebase/auth';
-import { collection, doc, getDocs, query, serverTimestamp, where, writeBatch } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, query, serverTimestamp, where, writeBatch } from 'firebase/firestore';
 import { db, getFirebaseAuth } from '#lib/firebase/client.js';
 import { questions } from '#lib/matching/questions.js';
 import { MAX_WANTS, summariseAnswers } from '#lib/matching/summarise.js';
@@ -197,6 +197,23 @@ export async function loadApprovedMentors() {
     });
   }
   return mentors;
+}
+
+/**
+ * True if the signed-in user has a mentor profile (mentors/{uid}), so student-only pages can turn
+ * mentors away. It's only a page guard: there are no roles yet, so the rules can't tell a mentor
+ * account from a student one.
+ */
+export async function hasMentorProfile() {
+  const user = getFirebaseAuth().currentUser;
+  if (!user) return false;
+  try {
+    return (await getDoc(doc(db, 'mentors', user.uid))).exists();
+  } catch (err) {
+    // A mentor can always read their own profile, so a refusal means there isn't one.
+    if (/** @type {{ code?: string }} */ (err).code === 'permission-denied') return false;
+    throw err;
+  }
 }
 
 /**
