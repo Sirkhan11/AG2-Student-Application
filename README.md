@@ -90,3 +90,39 @@ The workflow only runs when someone starts it (Actions, Refresh NSU societies li
 - `node scripts/check-collect-nsu.mjs`: the collect script's reading, repairs and safety checks, on made-up pages
 - `node scripts/check-societies.mjs`: the list
 - `node scripts/check-society-import.mjs`: the import's checks
+
+## Refreshing the Northumbria Sport data
+
+The Sport clubs pages use two copies of Northumbria Sport's club information, split the same way as the societies:
+
+- **The list** (`src/lib/sport/sport-clubs.json`): each club's name, link and picture. It's public, so it's in the repo.
+- **Each club's page** (Firestore, `sportClubs/{slug}`): about text, memberships and training times, social links, the booking link and the club contacts. The contacts are the names and emails of captains, presidents and coaches (some personal addresses), so this is personal data and never goes in the repo.
+
+Northumbria Sport's robots.txt lets crawlers read the site (it only asks them to keep off PDFs), so the list refreshes itself every week. The club pages stay a manual step, because they hold personal data and importing them needs a key.
+
+### What runs every week
+
+`.github/workflows/refresh-sport-clubs.yml` runs on Mondays at 06:00 UTC (or by hand: Actions, Refresh Northumbria Sport clubs list, Run workflow). It reads /sports and each club's page, 2 to 3 seconds apart (39 requests, about 2 minutes). The club pages are read only for their pictures, as /sports has none: the rest of each page, contacts included, is dropped as soon as it's read. If the list changed, it opens or updates a pull request with it for a person to check. It never imports anything into Firestore and holds no secrets or keys. GitHub only runs the schedule from the default branch, so it starts once the workflow is on `main`. To open pull requests, a repo admin needs to tick "Allow GitHub Actions to create and approve pull requests" in Settings, Actions, General.
+
+### What stays manual: the club pages, from a laptop
+
+Do this when the weekly pull request shows a new club, or about once a term for changed contacts and times.
+
+1. Collect, comparing with the pages file you imported last time if you still have it:
+   ```sh
+   node scripts/collect-sport-clubs.mjs --pages ~/Downloads/sport-refresh/sport-club-pages.json --compare ~/Downloads/sport-club-pages.json
+   ```
+   The pages file has to be outside the repo; a path inside it is refused. Nothing is written if the site refuses or challenges the script, if there are fewer than 30 clubs, if a club page doesn't read as expected, or if the pages fail the import's checks. It prints counts and which clubs changed (by slug, and for the pages only which parts), never names, emails or page text.
+2. Check `git diff src/lib/sport/sport-clubs.json` if the list changed, and commit it on a branch for review.
+3. Import the pages with a short-lived key, as for the society pages:
+   - Dry run: `node --env-file=.env scripts/import-sport-club-pages.mjs ~/Downloads/sport-refresh/sport-club-pages.json`
+   - Write: `GOOGLE_APPLICATION_CREDENTIALS=<key file> node --env-file=.env scripts/import-sport-club-pages.mjs ~/Downloads/sport-refresh/sport-club-pages.json --write`
+   - With the key set, it names any club in Firestore that's no longer in the file: delete those documents in the Firestore console by hand.
+   - Delete the key straight away, then the key file.
+4. Delete the old pages file once the new one is imported.
+
+### Checks
+
+- `node scripts/check-collect-sport.mjs`: the collect script's reading and safety checks, on made-up pages
+- `node scripts/check-sport-clubs.mjs`: the list (the weekly workflow runs it before opening a pull request)
+- `node scripts/check-sport-club-import.mjs`: the import's checks

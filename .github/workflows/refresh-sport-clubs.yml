@@ -1,0 +1,71 @@
+# Refreshes the public list of Northumbria Sport clubs (src/lib/sport/sport-clubs.json) every Monday
+# and, if it changed, opens or updates a pull request with it, so a person checks it before it
+# reaches the app.
+#
+# - Northumbria Sport's robots.txt lets crawlers read the site (it only asks them to keep off PDFs),
+#   so unlike the NSU one, this runs on a schedule. It reads /sports and each club's page for its
+#   picture, one request every 2 to 3 seconds: 39 requests for 38 clubs, about 2 minutes.
+# - It only collects the list (--no-pages). The rest of each club page (contacts' names and emails
+#   among it) is dropped as soon as it's read: never kept, printed or committed, and nothing is
+#   uploaded as an artifact. The club pages file and its import into Firestore stay manual, with a
+#   short-lived key (see the README).
+# - It holds no secrets and needs no service account. If the import is ever automated, use Workload
+#   Identity Federation limited to main, not a stored key.
+# - GitHub only runs the schedule from the default branch, so it starts once this file is on main.
+# - Opening the pull request needs "Allow GitHub Actions to create and approve pull requests"
+#   (Settings > Actions > General), which a repo admin turns on.
+
+name: Refresh Northumbria Sport clubs list
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 6 * * 1' # Mondays at 06:00 UTC
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: refresh-sport-clubs
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 26
+          cache: npm
+      - run: npm ci
+
+      - name: Collect the list (39 requests; club pages read only for their pictures)
+        run: node scripts/collect-sport-clubs.mjs --no-pages --summary "$RUNNER_TEMP/sport-summary.md"
+
+      - name: Check the list
+        run: node scripts/check-sport-clubs.mjs
+
+      - name: Open or update the pull request if the list changed
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BASE: ${{ github.ref_name }}
+        run: |
+          if git diff --quiet -- src/lib/sport/sport-clubs.json; then
+            echo "The list hasn't changed, so there's nothing to open."
+            exit 0
+          fi
+          branch=sport-clubs-refresh
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -C "$branch"
+          git add -- src/lib/sport/sport-clubs.json
+          git commit -m "Refresh the Northumbria Sport clubs list"
+          git push --force origin "$branch"
+          if [ "$(gh pr view "$branch" --json state --jq .state 2>/dev/null)" = "OPEN" ]; then
+            gh pr edit "$branch" --body-file "$RUNNER_TEMP/sport-summary.md"
+          else
+            gh pr create --head "$branch" --base "$BASE" --title "Refresh the Northumbria Sport clubs list" --body-file "$RUNNER_TEMP/sport-summary.md"
+          fi
