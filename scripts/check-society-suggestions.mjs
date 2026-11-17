@@ -26,6 +26,8 @@ import { CLUBS, findClub } from '#lib/sport/clubs.js';
 
 /** Every Northumbria Sport club's name, for expectations such as "some club" or "no club at all". */
 const CLUB_NAMES = CLUBS.map((club) => club.name);
+/** Societies a beginner can start getting fitter with (Recreational Sport and Dance; not the women-only Girls Who Run). */
+const FITNESS_SOCIETIES = ['Pilates', 'Yoga', 'Walking', 'Cycling', 'Climbing', 'Dance'];
 
 const REPLIES_FILE = 'scripts/fixtures/society-replies.json';
 
@@ -151,9 +153,11 @@ const EXTRA = [
     group: 'never done sport, wants to get fit',
     message: "I've never really done any sport, but I want to get fitter this year. Any ideas?",
     expect: {
-      anyOf: CLUB_NAMES,
+      // A club, or a beginner-friendly fitness society (Thomas, 2026-11-17: Pilates or Yoga is a
+      // sensible answer for a beginner).
+      anyOf: [...CLUB_NAMES, ...FITNESS_SOCIETIES],
       mustNotSay: promisesSessions,
-      why: 'a club or two, pointing to the card for beginner or social sessions rather than promising them'
+      why: 'a club or a beginner-friendly fitness society, pointing to the card for sessions rather than promising them'
     }
   }
 ];
