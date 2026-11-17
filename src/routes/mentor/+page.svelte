@@ -1,6 +1,5 @@
 <script>
   import { watchSignedIn } from '#lib/firebase/auth.js';
-  import { sendToLogin } from '#lib/login-redirect.js';
   import BottomNav from '#lib/components/BottomNav.svelte';
   import ChangeMentorRequest from '#lib/components/ChangeMentorRequest.svelte';
   import { loadMyMatch } from '#lib/matching/matches.js';
@@ -19,7 +18,7 @@
   $effect(() =>
     watchSignedIn((signedIn) => {
       if (signedIn) load();
-      else sendToLogin();
+      // Logged out: the root layout sends them to log in (see account-gate.js).
     })
   );
 

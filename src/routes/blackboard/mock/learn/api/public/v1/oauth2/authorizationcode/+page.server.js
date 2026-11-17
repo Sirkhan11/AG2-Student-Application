@@ -25,7 +25,9 @@ function request(url) {
 /** @type {import('./$types').PageServerLoad} */
 export function load({ url }) {
   const { scope } = request(url);
-  return { scope, scenarios: Object.entries(MOCK_SCENARIOS).map(([id, label]) => ({ id, label })) };
+  // publicPage: the pretend Blackboard stands in for Northumbria's own site, so the app's login
+  // doesn't apply (see account-gate.js).
+  return { scope, scenarios: Object.entries(MOCK_SCENARIOS).map(([id, label]) => ({ id, label })), publicPage: true };
 }
 
 /** @type {import('./$types').Actions} */

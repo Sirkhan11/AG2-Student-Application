@@ -1,7 +1,26 @@
 <script>
+  import { onMount } from 'svelte';
   import BottomNav from '#lib/components/BottomNav.svelte';
   import LogoutButton from '#lib/components/LogoutButton.svelte';
   import FinishDetailsCard from '#lib/components/FinishDetailsCard.svelte';
+  import { loadMyName } from '#lib/checklist/store.js';
+  import { watchAccount } from '#lib/firebase/auth.js';
+  import { greetingFor } from '#lib/students/greeting.js';
+
+  // "Hi Sam", from the name they gave at sign-up, or "Hi there". null until it's known: the heading
+  // keeps its space but stays hidden, so a wrong name never flashes.
+  let greeting = $state(/** @type {string | null} */ (null));
+  onMount(() =>
+    watchAccount(async (account) => {
+      if (!account?.verified) return;
+      try {
+        greeting = greetingFor(await loadMyName());
+      } catch (err) {
+        console.error('Loading the name failed:', /** @type {{ code?: string }} */ (err)?.code ?? 'error');
+        greeting = greetingFor(null);
+      }
+    })
+  );
 
   const features = [
     { title: 'Checklist', icon: '☑', href: '/checklist' },
@@ -16,7 +35,7 @@
 
 <main class="page">
   <header>
-    <h1>Hi Sam</h1>
+    <h1 class:waiting={greeting === null}>{greeting ?? 'Hi there'}</h1>
     <p class="muted">How can we help you today?</p>
   </header>
 
@@ -48,6 +67,10 @@
 </main>
 
 <style>
+  .waiting {
+    visibility: hidden;
+  }
+
   .search {
     display: block;
     background: #f1f6f9;

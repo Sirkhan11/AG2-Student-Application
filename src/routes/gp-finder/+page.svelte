@@ -165,9 +165,6 @@
   }
 </script>
 
-<svelte:head>
-  <title>Find a GP</title>
-</svelte:head>
 
 <main class="page">
   <a href="/more">← Back</a>

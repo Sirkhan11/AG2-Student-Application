@@ -5,7 +5,6 @@
   import { replaceState } from '$app/navigation';
   import BottomNav from '#lib/components/BottomNav.svelte';
   import { currentUid, watchSignedIn } from '#lib/firebase/auth.js';
-  import { sendToLogin } from '#lib/login-redirect.js';
   import { loadMyRecord } from '#lib/checklist/store.js';
   import { loadMyMatch } from '#lib/matching/matches.js';
   import { buildOpener, describeForGemini } from '#lib/checkin/opener.js';
@@ -35,7 +34,7 @@
     return watchSignedIn((value) => {
       signedIn = value;
       if (value) start();
-      else sendToLogin();
+      // Logged out: the root layout sends them to log in (see account-gate.js).
     });
   });
 

@@ -8,5 +8,7 @@ import { settings } from '#lib/server/blackboard/connection.js';
  */
 export function load({ params }) {
   if (settings.mode !== 'mock') error(404, 'Not found');
-  return { path: `/${params.path}` };
+  // publicPage: the pretend Blackboard stands in for Northumbria's own site, so the app's login
+  // doesn't apply (see account-gate.js).
+  return { path: `/${params.path}`, publicPage: true };
 }

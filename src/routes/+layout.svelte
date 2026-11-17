@@ -6,7 +6,8 @@
   import { chatShown, opensChatFromHome } from '#lib/page-transitions.js';
   import { gateFor } from '#lib/account-gate.js';
   import { watchAccount } from '#lib/firebase/auth.js';
-  import { db } from '#lib/firebase/client.js';
+  import { db, getFirebaseAuth } from '#lib/firebase/client.js';
+  import { sendToLogin } from '#lib/login-redirect.js';
   import { finishSignUp } from '#lib/signup/finish.js';
   import { waitingSignUp } from '#lib/signup/waiting.js';
   import NorthumbriaOnly from '#lib/components/NorthumbriaOnly.svelte';
@@ -18,8 +19,20 @@
   let account = $state(undefined);
   let finishing = $state(false);
   let finishProblem = $state('');
-  // Which screen: the app, or (for a signed-in account) check-your-inbox or Northumbria-only.
-  let screen = $derived(gateFor(account, page.url.pathname, finishing));
+  // Which screen, for every page (see account-gate.js): the app, nothing yet while Firebase checks,
+  // off to log in, or (for a signed-in account) check-your-inbox or Northumbria-only.
+  let screen = $derived(gateFor(account, page.url.pathname, finishing, page.data?.publicPage === true));
+
+  // A logged-out visitor on a page that needs an account goes to log in, which brings them back
+  // here. Only once Firebase says nobody is signed in: the moment after logging in, before that's
+  // reported, currentUser is already set, so they're never sent back to log in.
+  $effect(() => {
+    if (screen === 'login' && !getFirebaseAuth().currentUser) sendToLogin();
+  });
+
+  /** Each page's tab title; every other page is just "AG2". */
+  const TITLES = /** @type {Record<string, string>} */ ({ '/nhs-guide': 'NHS Guide', '/gp-finder': 'Find a GP', '/late-arrivals': 'Arriving late' });
+  let title = $derived(TITLES[page.url.pathname] ? `${TITLES[page.url.pathname]} · AG2` : 'AG2');
 
   onMount(() =>
     watchAccount((next) => {
@@ -66,7 +79,13 @@
   });
 </script>
 
-{#if screen === 'northumbria-only' && account}
+<svelte:head>
+  <title>{title}</title>
+</svelte:head>
+
+{#if screen === 'checking' || screen === 'login'}
+  <!-- Nothing yet: Firebase is checking for a saved login, or a logged-out visitor is on the way to log in. -->
+{:else if screen === 'northumbria-only' && account}
   <NorthumbriaOnly email={account.email} />
 {:else if screen === 'verify' && account}
   <VerifyEmail email={account.email} />

@@ -10,8 +10,12 @@
 // - a new search, valid or not, replaces the last result and message.
 // The typed searches ask postcodes.io, as the page does.
 //
-// Start the app first (npm run dev), then, from the project folder:
-//   node scripts/check-gp-finder-privacy.mjs http://localhost:5173 [screenshot.png]
+// The GP finder needs a signed-in, verified Northumbria account, so the check logs in first as the
+// account in CHECK_LOGIN_EMAIL and CHECK_LOGIN_PASSWORD (never printed). scripts/check-signed-in.mjs
+// runs it that way, against the app in its emulators mode with a made-up verified student:
+//   npx --engine-strict=false firebase-tools emulators:exec --only auth,firestore --project demo-ag2 "node scripts/check-signed-in.mjs"
+// To run it on its own against an app you've started, with an account you have:
+//   CHECK_LOGIN_EMAIL=... CHECK_LOGIN_PASSWORD=... node scripts/check-gp-finder-privacy.mjs http://localhost:5173 [screenshot.png]
 // Uses Google Chrome from its usual place on a Mac, or CHROME=<path to Chrome>.
 
 import assert from 'node:assert/strict';
@@ -220,6 +224,25 @@ const checks = [
     assert.ok(!String(await run('document.body.innerText')).includes('couldn’t find a place called'), 'the old message is gone');
   }]
 ];
+
+// Log in first: the GP finder needs a signed-in account (see account-gate.js).
+const login = { email: process.env.CHECK_LOGIN_EMAIL, password: process.env.CHECK_LOGIN_PASSWORD };
+if (!login.email || !login.password) {
+  console.log('The GP finder needs a signed-in account: set CHECK_LOGIN_EMAIL and CHECK_LOGIN_PASSWORD, or run scripts/check-signed-in.mjs.');
+  chrome.kill();
+  rmSync(profile, { recursive: true, force: true });
+  process.exit(2);
+}
+await page.send('Page.navigate', { url: new URL('/', base).href });
+assert.ok(await waitForText('Welcome back'), 'the log-in page loaded');
+await sleep(1500); // The page's own code takes over the form once it has started (as open() waits).
+await run(`(() => {
+  const set = (id, value) => { const box = document.querySelector(id); Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(box, value); box.dispatchEvent(new Event('input', { bubbles: true })); };
+  set('#email', ${JSON.stringify(login.email)}); set('#password', ${JSON.stringify(login.password)});
+  document.querySelector('form button[type=submit]').click();
+})()`);
+for (let started = Date.now(); Date.now() - started < 20_000 && (await run('location.pathname')) === '/'; await sleep(250));
+assert.notEqual(await run('location.pathname'), '/', 'logged in');
 
 let failed = 0;
 try {

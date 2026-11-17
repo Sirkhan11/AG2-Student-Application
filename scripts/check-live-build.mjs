@@ -91,6 +91,9 @@ const checks = [
     const markers = [...addresses, '/api/blackboard', '/blackboard/callback', '/blackboard/mock', 'Pretend Blackboard'];
     assert.deepEqual(markers.flatMap((marker) => filesWith(marker).map((file) => `${marker} in ${file}`)), []);
   }],
+  ['The local emulators (vite dev --mode emulators, for the browser checks) are nowhere in it', () => {
+    assert.deepEqual([...filesWith('127.0.0.1:9099'), ...filesWith('127.0.0.1:8080'), ...filesWith('demo-ag2')], []);
+  }],
   ['The checklist’s Blackboard section says it’s coming soon', () => {
     assert.ok(filesWith('Coming soon: your modules, deadlines and announcements from Blackboard').length > 0);
   }],

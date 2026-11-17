@@ -7,9 +7,6 @@
   // from nhs-costs.json, with the date they were checked.
 </script>
 
-<svelte:head>
-  <title>NHS Guide</title>
-</svelte:head>
 
 <main class="page">
   <a href="/more">← Back</a>

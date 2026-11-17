@@ -32,6 +32,15 @@ export async function loadMyRecord() {
 }
 
 /**
+ * The name the signed-in student gave at sign-up, for Home's greeting only (see greeting.js), or null.
+ * Kept apart from loadMyRecord, which the check-in chat uses, so the chat never has their name.
+ * @returns {Promise<unknown>}
+ */
+export async function loadMyName() {
+  return (await getDoc(myRecord())).data()?.name ?? null;
+}
+
+/**
  * The signed-in student's checklist, for the checklist page (see loadMyRecord).
  * @returns {Promise<Task[]>}
  */

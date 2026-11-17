@@ -3,7 +3,6 @@
   import BottomNav from '#lib/components/BottomNav.svelte';
   import BlackboardSection from '#lib/components/BlackboardSection.svelte';
   import { watchSignedIn } from '#lib/firebase/auth.js';
-  import { loginPathFor } from '#lib/next-path.js';
   import { loadChecklist, saveChange } from '#lib/checklist/store.js';
   import { createChecklistSync } from '#lib/checklist/sync.js';
   import {
@@ -43,8 +42,8 @@
   let completed = $derived(tasks.filter((task) => task.done).length);
   let full = $derived(tasks.length >= MAX_TASKS);
 
-  // null while Firebase checks for a saved login. Logged-out visitors are asked to log in (which
-  // brings them back here) rather than shown a list that couldn't be saved.
+  // null while Firebase checks for a saved login. Logged-out visitors are sent to log in by the root
+  // layout, which brings them back here.
   let signedIn = $state(/** @type {boolean | null} */ (null));
 
   $effect(() =>
@@ -149,12 +148,8 @@
 
   <p class="visually-hidden" role="status">{announcement}</p>
 
-  {#if signedIn === false}
-    <div class="card">
-      <p>Log in to keep your checklist. It’s saved to your account, so your ticks are still there next time, on any device.</p>
-      <a class="primary-button" href={loginPathFor('/checklist')}>Log in</a>
-    </div>
-  {:else if signedIn === null || loading}
+  <!-- Logged-out visitors never get here: the root layout sends them to log in (see account-gate.js). -->
+  {#if signedIn !== true || loading}
     <p class="muted">Loading your checklist…</p>
   {:else if loadFailed}
     <p class="error" role="alert">We couldn’t load your checklist. Please check your connection.</p>

@@ -6,9 +6,6 @@
   // The content is in src/lib/late-arrivals/guide.js, where each fact has its Northumbria source.
 </script>
 
-<svelte:head>
-  <title>Arriving late</title>
-</svelte:head>
 
 <main class="page">
   <a href="/more">← Back</a>

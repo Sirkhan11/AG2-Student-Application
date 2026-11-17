@@ -15,11 +15,12 @@
 // or just `node scripts/check-uni-rules.mjs` for part 1.
 
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { initializeApp } from 'firebase/app';
 import { applyActionCode, connectAuthEmulator, createUserWithEmailAndPassword, getAuth } from 'firebase/auth';
 import { collection, connectFirestoreEmulator, doc, getDoc, getDocs, getFirestore, query, setDoc, where } from 'firebase/firestore';
-import { ALWAYS_OPEN, gateFor } from '#lib/account-gate.js';
+import { ALWAYS_OPEN, gateFor, PUBLIC_PAGES } from '#lib/account-gate.js';
+import { firstName, greetingFor } from '#lib/students/greeting.js';
 import { checkVerified, sendVerification } from '#lib/firebase/verify.js';
 import { finishSignUp } from '#lib/signup/finish.js';
 import { waitingSignUp } from '#lib/signup/waiting.js';
@@ -52,19 +53,51 @@ const offline = [
     }
     assert.match(UNI_EMAIL_MESSAGE, /Northumbria email address \(ending @northumbria\.ac\.uk\)/);
   }],
-  ['The gate: signed out, the app; not a Northumbria address, told why; not verified, only check-your-inbox; Need help now always opens', () => {
+  ['The gate: logged out, only the five public pages (others go to log in, nothing shows while Firebase checks); not Northumbria, told why; not verified, only check-your-inbox; Need help always opens', () => {
     const uni = { email: 'sam@northumbria.ac.uk', verified: true };
-    assert.equal(gateFor(undefined, '/home'), 'app', 'while Firebase checks');
-    assert.equal(gateFor(null, '/checklist'), 'app', 'signed out: the pages send them to log in themselves');
-    assert.equal(gateFor(uni, '/checklist'), 'app');
+    assert.deepEqual(PUBLIC_PAGES, ['/', '/signup', '/forgot-password', '/mentor-signup', '/need-help']);
+    for (const path of PUBLIC_PAGES) {
+      assert.equal(gateFor(null, path), 'app', `${path} logged out`);
+      assert.equal(gateFor(undefined, path), 'app', `${path} while checking`);
+    }
+    for (const path of ['/home', '/check-in', '/checklist', '/gp-finder', '/nhs-guide', '/societies/15', '/sport', '/mentor', '/find-mentor', '/more', '/students-union', '/late-arrivals', '/no-such-page']) {
+      assert.equal(gateFor(null, path), 'login', `${path} logged out`);
+      assert.equal(gateFor(undefined, path), 'checking', `${path} while checking: never login before Firebase knows`);
+      assert.equal(gateFor(uni, path), 'app', `${path} signed in: never sent to log in`);
+    }
+    assert.equal(gateFor(null, '/blackboard/mock/learn/api/public/v1/oauth2/authorizationcode', false, true), 'app', 'a page that says it’s public: only the pretend Blackboard (dev only)');
+    assert.equal(gateFor(undefined, '/blackboard/mock/learn', false, true), 'app');
+    assert.equal(gateFor(null, '/blackboard/mock/learn'), 'login', 'only when the page itself says so');
     assert.equal(gateFor({ ...uni, verified: false }, '/checklist'), 'verify');
-    assert.equal(gateFor({ ...uni, verified: false }, '/home'), 'verify');
+    assert.equal(gateFor({ ...uni, verified: false }, '/'), 'verify', 'as before, on a public page too');
     assert.equal(gateFor({ email: 'sam@gmail.com', verified: true }, '/home'), 'northumbria-only');
-    assert.equal(gateFor({ email: 'sam@gmail.com', verified: false }, '/home'), 'northumbria-only');
     assert.equal(gateFor(uni, '/home', true), 'finishing');
     assert.deepEqual(ALWAYS_OPEN, ['/need-help']);
-    assert.equal(gateFor({ ...uni, verified: false }, '/need-help'), 'app');
-    assert.equal(gateFor({ email: 'sam@gmail.com', verified: true }, '/need-help'), 'app');
+    for (const account of [undefined, null, { ...uni, verified: false }, { email: 'sam@gmail.com', verified: true }]) {
+      assert.equal(gateFor(account, '/need-help'), 'app', `Need help with ${JSON.stringify(account)}`);
+    }
+    const layout = readFileSync('src/routes/+layout.svelte', 'utf8');
+    assert.match(layout, /if \(screen === 'login' && !getFirebaseAuth\(\)\.currentUser\) sendToLogin\(\);/, 'one place sends them to log in, and never someone who has just logged in');
+    assert.match(layout, /\{#if screen === 'checking' \|\| screen === 'login'\}/, 'nothing shows meanwhile');
+    for (const file of ['src/routes/check-in/+page.svelte', 'src/routes/mentor/+page.svelte', 'src/routes/find-mentor/+page.svelte', 'src/routes/checklist/+page.svelte']) {
+      assert.doesNotMatch(readFileSync(file, 'utf8'), /sendToLogin|loginPathFor/, `${file} leaves it to the layout`);
+    }
+    assert.match(readFileSync('src/lib/login-redirect.js', 'utf8'), /loginPathFor\(location\.pathname \+ location\.search\)/, 'and back to where they were');
+  }],
+  ['Home greets the student by the first name they gave ("Hi there" without one), hidden until it’s known; the chat never gets their name', () => {
+    assert.equal(greetingFor('Sam Student'), 'Hi Sam');
+    assert.equal(greetingFor('  sam  '), 'Hi sam', 'as they typed it');
+    for (const none of ['', '   ', null, undefined, 42]) assert.equal(greetingFor(none), 'Hi there', String(none));
+    assert.equal(firstName('x'.repeat(60))?.length, 40);
+    const home = readFileSync('src/routes/home/+page.svelte', 'utf8');
+    assert.doesNotMatch(home, /Hi Sam<\/h1>/, 'no name typed into the page');
+    assert.match(home, /<h1 class:waiting=\{greeting === null\}>\{greeting \?\? 'Hi there'\}<\/h1>/);
+    assert.match(home, /\.waiting \{\s*visibility: hidden;/);
+    assert.match(home, /greeting = greetingFor\(await loadMyName\(\)\);/);
+    for (const file of readdirSync('src/lib/checkin').map((name) => `src/lib/checkin/${name}`)) {
+      assert.doesNotMatch(readFileSync(file, 'utf8'), /loadMyName|greetingFor/, file);
+    }
+    assert.doesNotMatch(readFileSync('src/lib/checklist/store.js', 'utf8').match(/export async function loadMyRecord[\s\S]*?\n\}/)?.[0] ?? '', /\.name\b/, 'loadMyRecord (the chat’s) has no name');
   }],
   ['The sign-up waits in the tab only, for one account, and a storage that refuses just means nothing waits', () => {
     const waiting = waitingSignUp(memoryStorage());
@@ -91,7 +124,7 @@ const offline = [
     assert.match(readFileSync('src/lib/firebase/auth.js', 'utf8'), /if \(!isUniEmail\(email\)\) return Promise\.reject\(notUniEmail\(\)\);/);
     assert.match(readFileSync('src/lib/matching/mentors.js', 'utf8'), /if \(login && !isUniEmail\(login\.email\)\) throw notUniEmail\(\);\n  const answers/, 'before Gemini runs');
     const layout = readFileSync('src/routes/+layout.svelte', 'utf8');
-    assert.match(layout, /gateFor\(account, page\.url\.pathname, finishing\)/);
+    assert.match(layout, /gateFor\(account, page\.url\.pathname, finishing, page\.data\?\.publicPage === true\)/);
     assert.match(layout, /<NorthumbriaOnly email=\{account\.email\} \/>/);
     assert.match(layout, /<VerifyEmail email=\{account\.email\} \/>/);
     const verify = readFileSync('src/lib/components/VerifyEmail.svelte', 'utf8');

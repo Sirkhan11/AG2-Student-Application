@@ -37,12 +37,34 @@
     </a>
   </section>
 
+  <!-- Northumbria's own support, checked on 17 November 2026 against:
+       - https://www.northumbria.ac.uk/study-at-northumbria/support-for-students/counselling-and-mental-health-support/frequently-asked-questions/
+         (last reviewed 3 July 2026): "you can contact Ask4Help by telephoning 0191 227 4646", current
+         students can also use Ask4Help Online on the Student Portal, and the support "is not an
+         emergency or crisis service".
+       - https://www.northumbria.ac.uk/study-at-northumbria/support-for-students/counselling-and-mental-health-support/overview-of-support/
+         ("Overview of Mental Health Support").
+       Neither page gives Ask4Help's opening hours, so none are shown. -->
   <section class="card">
     <h2>University support</h2>
     <p>
-      Add the university's verified
-      wellbeing support contact details here.
+      For Northumbria’s mental health and wellbeing support, call Ask4Help. It isn’t an emergency or
+      crisis service: if you’re in danger, call 999.
     </p>
+
+    <a class="primary-button" href="tel:+441912274646">
+      Call Ask4Help on 0191 227 4646
+    </a>
+    <p class="muted">Current students can also ask through Ask4Help Online on the Student Portal.</p>
+
+    <a
+      class="secondary-button uni-link"
+      href="https://www.northumbria.ac.uk/study-at-northumbria/support-for-students/counselling-and-mental-health-support/overview-of-support/"
+      target="_blank"
+      rel="noopener noreferrer"
+    >
+      Counselling and mental health support<span aria-hidden="true"> ↗</span><span class="visually-hidden"> (opens in a new tab)</span>
+    </a>
   </section>
 
   <section class="card">
@@ -62,7 +84,8 @@
 </main>
 
 <style>
-  .nsu-link {
+  .nsu-link,
+  .uni-link {
     display: inline-flex;
     align-items: center;
     min-height: 44px;

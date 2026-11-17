@@ -3,7 +3,6 @@
   import { questions } from '#lib/matching/questions.js';
   import { findBlankAnswer } from '#lib/matching/mentors.js';
   import { watchSignedIn } from '#lib/firebase/auth.js';
-  import { sendToLogin } from '#lib/login-redirect.js';
   import BottomNav from '#lib/components/BottomNav.svelte';
   import { SUMMARISE_FAILED } from '#lib/matching/summarise.js';
   import { MAX_AVAILABILITY_LENGTH, MEETING_FREQUENCIES } from '#lib/matching/matches.js';
@@ -54,7 +53,7 @@
   $effect(() =>
     watchSignedIn((signedIn) => {
       if (signedIn) start();
-      else sendToLogin();
+      // Logged out: the root layout sends them to log in (see account-gate.js).
     })
   );
 

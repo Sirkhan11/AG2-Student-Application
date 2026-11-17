@@ -1,11 +1,13 @@
 // Checks the live site in a real browser (headless Chrome at phone size, over the DevTools protocol):
 // - another address is turned away on log in, both sign-ups and forgot password, before anything is
 //   sent to Firebase Auth (and, for mentors, before Gemini or the matching model);
-// - the team's pages and the pretend Blackboard aren't there; the checklist asks a logged-out visitor
-//   to log in; Need help now and the GP finder work;
+// - logged out, the five public pages open (log in, sign up, forgot password, mentor sign-up, Need
+//   help) and every other page goes to log in, with the way back (?next=); the team's pages and the
+//   pretend Blackboard never show; the tab says AG2;
+// - Need help shows Northumbria's own support (Ask4Help to call, the counselling page), no placeholder;
 // - an unverified Northumbria account sees only the check-your-inbox screen ("I've clicked it" says
-//   it isn't verified yet, Need help now still opens, Log out works), and no verification email is
-//   asked for;
+//   it isn't verified yet, Need help now still opens, Log out works) and is never sent to log in, and
+//   no verification email is asked for;
 // - the deployed Firestore rules let that unverified account, and an account made without the app's
 //   forms (a never-verified example.com address), read and write nothing.
 // For those parts it makes two throwaway accounts in the project .env points at, with made-up
@@ -15,6 +17,8 @@
 // npx --engine-strict=false firebase-tools emulators:start --only hosting --project demo-ag2) or the live site:
 //   node --env-file=.env scripts/check-live-site.mjs [--base https://ag2-dev-thomas.web.app]
 // Uses Google Chrome from its usual place on a Mac, or CHROME=<path to Chrome>.
+// Pages for a verified student (Home's greeting, the GP finder) are checked signed in against the
+// emulators by scripts/check-signed-in.mjs.
 import { spawn } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
 import { mkdtempSync, rmSync } from 'node:fs';
@@ -101,18 +105,36 @@ try {
   await fill('#email', 'someone@gmail.com'); await click('button[type=submit]');
   report('Forgot password: a Gmail address is refused, and no reset email is asked for', (await waitFor(has(UNI))) && authCalls().length === 0, authCalls().join(', '));
 
-  // 2. What's left out isn't there; the public pages work.
+  // 2. Logged out: the five public pages open; every other page goes to log in and back; what's left
+  //    out never shows; Need help has Northumbria's own support; the tab says AG2.
+  const PUBLIC = { '/': 'Welcome back', '/signup': 'Create your account', '/forgot-password': 'Reset your password', '/mentor-signup': 'Become a mentor', '/need-help': 'Need help now?' };
+  for (const [path, heading] of Object.entries(PUBLIC)) {
+    await go(path);
+    await sleep(800);
+    report(`Logged out, ${path} opens`, await waitFor(`location.pathname === ${JSON.stringify(path)} && ${has(heading)}`));
+  }
+  const PRIVATE = ['/home', '/check-in', '/checklist', '/find-mentor', '/mentor', '/more', '/nhs-guide', '/gp-finder', '/late-arrivals', '/societies', '/societies/15', '/sport', '/sport/swimming', '/students-union'];
+  /** @type {string[]} */
+  const notSent = [];
+  for (const path of PRIVATE) {
+    await go(path);
+    const sent = await waitFor(`location.pathname === '/' && location.search === ${JSON.stringify(`?next=${encodeURIComponent(path)}`)} && ${has('Welcome back')}`, 8000);
+    if (!sent) notSent.push(path);
+  }
+  report(`Logged out, the other ${PRIVATE.length} pages go to log in, with the way back (?next=)`, notSent.length === 0, notSent.join(', '));
   for (const path of ['/dev/blackboard', '/matching-demo', '/matching-test', '/blackboard/mock/learn/api/public/v1/oauth2/authorizationcode']) {
     await go(path);
-    report(`${path} is not on the site`, await waitFor(`${has('404')} && ${has('Not Found')}`, 6000));
+    report(`${path} isn’t on the site (logged out, it goes to log in)`, await waitFor(`location.pathname === '/' && ${has('Welcome back')} && !${has('Pretend Blackboard')}`, 8000));
   }
-  await go('/checklist');
-  report('The checklist asks a logged-out visitor to log in, with a link back to it', await waitFor(`${has('Log in to keep your checklist')} && document.querySelector('a[href="/?next=%2Fchecklist"]')`));
   await go('/need-help');
-  report('Need help now opens for anyone', await waitFor(has('Need help now?')));
-  await go('/gp-finder');
-  await fill('#search', 'NE1 8ST'); await click('form.search button[type=submit]');
-  report('GP finder: NE1 8ST lists practices with phone numbers', await waitFor(`document.querySelectorAll('a[href^="tel:"]').length >= 5`), `${await evaluate(`document.querySelectorAll('a[href^="tel:"]').length`)} phone links`);
+  await waitFor(has('University support'));
+  const help = await evaluate(`({ text: document.body.innerText, calls: [...document.querySelectorAll('a[href^="tel:"]')].map((a) => [a.getAttribute('href'), a.textContent.trim()]), links: [...document.querySelectorAll('a')].map((a) => a.href) })`);
+  const COUNSELLING = 'https://www.northumbria.ac.uk/study-at-northumbria/support-for-students/counselling-and-mental-health-support/overview-of-support/';
+  report('Need help: no placeholder, Ask4Help to call on 0191 227 4646, and the counselling page', !/Add the university|verified\s+wellbeing support contact/i.test(help.text)
+    && help.calls.some(([href, label]) => href === 'tel:+441912274646' && label.includes('0191 227 4646')) && help.links.includes(COUNSELLING),
+    `calls: ${help.calls.map(([href]) => href).join(' ')}`);
+  report('Need help still has 999 and 111 to call', help.calls.some(([href]) => href === 'tel:999') && help.calls.some(([href]) => href === 'tel:111'));
+  report('The tab says AG2, not the web address', (await evaluate('document.title')) === 'AG2', await evaluate('document.title'));
 
   // 3. The check-your-inbox screen, with the throwaway account (never verified).
   await go('/');
@@ -123,7 +145,14 @@ try {
   await clickText('I’ve clicked it');
   report('"I’ve clicked it" before clicking the link says it isn’t verified yet', await waitFor(has('It isn’t verified yet')));
   await go('/home');
-  report('Home still shows only the check-your-inbox screen', await waitFor(`${has('Check your uni inbox')} && !${has('Hi Sam')}`));
+  report('Home still shows only the check-your-inbox screen', await waitFor(`${has('Check your uni inbox')} && !${has('How can we help you today?')}`));
+  /** @type {string[]} */
+  const sentAway = [];
+  for (const path of ['/checklist', '/gp-finder', '/mentor', '/societies', '/check-in']) {
+    await go(path);
+    if (!(await waitFor(`location.pathname === ${JSON.stringify(path)} && ${has('Check your uni inbox')}`, 8000))) sentAway.push(path);
+  }
+  report('Signed in but not verified yet, they’re never sent to log in: every page shows check-your-inbox', sentAway.length === 0, sentAway.join(', '));
   await go('/need-help');
   report('Need help now still opens while unverified', await waitFor(`${has('Need help now?')} && !${has('Check your uni inbox')}`));
   report('No verification email was asked for (Resend wasn’t pressed)', !requests.some((u) => /sendOobCode/.test(u)));
