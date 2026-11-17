@@ -196,6 +196,13 @@ const emulated = [
       assert.deepEqual(Object.entries(can).filter(([, ok]) => ok).map(([what]) => what), [], `${who} was allowed`);
     }
   }],
+  ['A verified student whose sign-up details were lost (the tab closed before verifying) has no record, and can still use the checklist', async () => {
+    const uid = 'uni-no-record';
+    const db = firestoreAs(token(uid, 'lost.details@northumbria.ac.uk', true));
+    assert.equal((await getDoc(doc(db, 'students', uid))).exists(), false, 'no record, and reading it is allowed');
+    await setDoc(doc(db, 'students', uid), { checklist: [{ id: 'gp', title: 'Register with a GP', done: true }] }, { merge: true });
+    assert.deepEqual(Object.keys((await ownerRead(`students/${uid}`))?.fields ?? {}), ['checklist'], 'the first save makes the record');
+  }],
   ['Signing up as a student: the account and email, nothing saved until the link is clicked, then the record', async () => {
     const app = initializeApp({ projectId: PROJECT, apiKey: 'demo-key', authDomain: `${PROJECT}.firebaseapp.com` }, 'student-signup');
     const auth = getAuth(app);
