@@ -6,7 +6,7 @@
 // The chat is asked with the app's own instructions and description of the student (chat-prompt.js
 // and opener.js), over REST as make-summary-fixtures.mjs does. Replies are saved in
 // scripts/fixtures/chat-context-replies.json, so by default this only reads them and needs no Gemini.
-// To ask Gemini again (7 requests, paced):
+// To ask Gemini again (8 requests, paced):
 //   node --env-file=.env --env-file=.env.development.local scripts/check-chat-context.mjs --refresh
 // Otherwise:
 //   node scripts/check-chat-context.mjs
@@ -63,7 +63,8 @@ const CANT_KNOW = [
 /**
  * What each case asks, and what a good reply does. expect: a pattern the reply must match;
  * link: a society the reply must link.
- * @type {{ id: string, student: string, ask: string, why: string, expect?: RegExp, link?: string, noCantKnow?: boolean }[]}
+ * also: a second pattern the reply must match; noAskWhy: the reply mustn't ask why, or for a reason.
+ * @type {{ id: string, student: string, ask: string, why: string, expect?: RegExp, also?: RegExp, link?: string, noCantKnow?: boolean, noAskWhy?: boolean }[]}
  */
 const CASES = [
   { id: 'why matched', student: 'matched', ask: 'Why did you match me with my mentor?', why: 'uses the saved reasons', expect: /live music|gigs|cinema|laid[- ]back/i, noCantKnow: true },
@@ -73,8 +74,12 @@ const CASES = [
   { id: 'course society', student: 'matched', ask: 'Can you suggest a society for my course?', why: 'uses their course', link: 'English' },
   { id: 'why matched, waiting', student: 'waiting', ask: 'Why did you match me with my mentor?', why: 'the coordinator is finding one', expect: /coordinator/i },
   // Your Mentor has a Find a mentor button when there's no match, so either page is right.
-  { id: 'why matched, no mentor', student: 'no mentor', ask: 'Why did you match me with my mentor?', why: 'they haven’t asked yet', expect: /find a mentor|your mentor/i }
+  { id: 'why matched, no mentor', student: 'no mentor', ask: 'Why did you match me with my mentor?', why: 'they haven’t asked yet', expect: /find a mentor|your mentor/i },
+  { id: 'change mentor', student: 'matched', ask: 'I don’t think my mentor is right for me. Can I change?', why: 'the Your Mentor page, where only the coordinator sees the reason; never asks why', expect: /your mentor/i, also: /coordinator/i, noAskWhy: true }
 ];
+
+/** A question in the reply asking why, or for their reason. @param {string} reply */
+const asksWhy = (reply) => (reply.match(/[^.!?]*\?/g) ?? []).some((question) => /\bwhy\b|what (?:happened|went wrong|'s wrong|is wrong)|reason|tell me (?:more|about)/i.test(question));
 
 /** The instructions the app would give Gemini for this student (it never gets the mentor's name). */
 function instructionsFor(/** @type {string} */ key) {
@@ -127,6 +132,8 @@ for (const test of CASES) {
   const { text, links } = linksInReply(entry.reply, CHAT_CAMPUS);
   const problems = [
     test.expect && !test.expect.test(entry.reply) ? `doesn't do what's expected (${test.why})` : '',
+    test.also && !test.also.test(entry.reply) ? `doesn't mention ${test.also.source}` : '',
+    test.noAskWhy && asksWhy(entry.reply) ? 'asks why, or for their reason' : '',
     test.link && !links.some((link) => link.label === test.link) ? `doesn't suggest ${test.link}` : '',
     test.noCantKnow && CANT_KNOW.some((pattern) => pattern.test(entry.reply)) ? 'says it can\'t know' : '',
     ...NEVER_SHOWN.filter((pattern) => pattern.test(entry.reply)).map((pattern) => `shows something it was never told (${pattern.source})`)

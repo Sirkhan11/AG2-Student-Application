@@ -2,6 +2,7 @@
   import { watchSignedIn } from '#lib/firebase/auth.js';
   import { sendToLogin } from '#lib/login-redirect.js';
   import BottomNav from '#lib/components/BottomNav.svelte';
+  import ChangeMentorRequest from '#lib/components/ChangeMentorRequest.svelte';
   import { loadMyMatch } from '#lib/matching/matches.js';
 
   /**
@@ -70,6 +71,8 @@
       {/if}
       <p>Your coordinator will introduce you.</p>
     </div>
+    <!-- Asking the coordinator for someone else: only the coordinator sees the reason. -->
+    <ChangeMentorRequest />
   {/if}
 
   <BottomNav />

@@ -94,6 +94,18 @@ service cloud.firestore {
         && validMatch(request.resource.data);
     }
 
+    // A student asking the coordinator for a different mentor, under their own uid, so each student
+    // has at most one open request. Only that student can send, read and cancel (delete) it: never
+    // their mentor or anyone else, and only while they have a mentor. The coordinator reads it in the
+    // Firebase console and deletes it once they've moved the student. Nothing changes it from the app,
+    // and the chat never reads it.
+    match /mentorChangeRequests/{studentId} {
+      allow read, delete: if isNorthumbria() && request.auth.uid == studentId;
+      allow create: if isNorthumbria() && request.auth.uid == studentId
+        && validChangeRequest(request.resource.data)
+        && get(/databases/$(database)/documents/matches/$(studentId)).data.status == 'matched';
+    }
+
     // NSU's info for each society (description, memberships, socials, contact email), copied from
     // its NSU page by scripts/import-society-pages.mjs, which uses the Admin SDK and so ignores these
     // rules. Signed-in users can read it; nobody can change it from the app.
@@ -109,6 +121,17 @@ service cloud.firestore {
     match /sportClubs/{slug} {
       allow read: if isNorthumbria();
       allow write: if false;
+    }
+
+    // A request for a different mentor: one of the reasons on the Your Mentor page (CHANGE_REASONS in
+    // src/lib/matching/change-reasons.js), the student's own words (up to 500 characters, and needed
+    // for "something else"), and when it was sent. Nothing else, so no other details can be stored.
+    function validChangeRequest(record) {
+      return record.keys().hasOnly(['reason', 'details', 'createdAt'])
+        && record.reason in ['not-a-good-fit', 'times-dont-work', 'not-replying', 'uncomfortable', 'something-else']
+        && record.details is string && record.details.size() <= 500
+        && (record.reason != 'something-else' || record.details.size() > 0)
+        && record.createdAt == request.time;
     }
 
     // True when the mentor document being written has no fields beyond these five.
