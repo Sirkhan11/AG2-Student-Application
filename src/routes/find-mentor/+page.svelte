@@ -1,6 +1,8 @@
 <script>
+  import { goto } from '$app/navigation';
   import { questions } from '#lib/matching/questions.js';
-  import { findBlankAnswer, watchSignedIn } from '#lib/matching/mentors.js';
+  import { findBlankAnswer } from '#lib/matching/mentors.js';
+  import { watchSignedIn } from '#lib/firebase/auth.js';
   import { SUMMARISE_FAILED } from '#lib/matching/summarise.js';
   import { MAX_AVAILABILITY_LENGTH, MEETING_FREQUENCIES } from '#lib/matching/matches.js';
   import {
@@ -17,9 +19,9 @@
    * - 'form', then 'busy' while matching or saving (the form stays, disabled)
    * - 'gemini-failed': Gemini is down, so try again or ask the coordinator
    * - 'error': anything else failed, so try that step again
-   * - 'matched', 'coordinator': the result
+   * Once the result is saved, the page goes to the check-in chat instead (see showOutcome).
    * @typedef {'checking' | 'signed-out' | 'is-mentor' | 'no-mentors' | 'has-record' | 'form' | 'busy'
-   *   | 'gemini-failed' | 'error' | 'matched' | 'coordinator'} View
+   *   | 'gemini-failed' | 'error'} View
    */
   let view = $state(/** @type {View} */ ('checking'));
 
@@ -34,10 +36,8 @@
   let errorDetail = $state('');
   let retry = $state(/** @type {() => void} */ (() => {}));
 
-  // An existing match record ('has-record'), or the new match ('matched').
+  // The match record they already had when the page opened ('has-record').
   let savedMatch = $state(/** @type {import('#lib/matching/matches.js').Match | null} */ (null));
-  let mentorName = $state('');
-  let reasons = $state(/** @type {string[]} */ ([]));
 
   // The student's phrases and vectors, kept so that trying again never asks Gemini again.
   // Not $state, because the page never shows it.
@@ -137,16 +137,14 @@
 
   /** @param {import('#lib/matching/find-match.js').SaveOutcome} outcome */
   function showOutcome(outcome) {
-    if (outcome.outcome === 'matched') {
-      mentorName = outcome.mentorName;
-      reasons = outcome.reasons;
-      view = 'matched';
-    } else if (outcome.outcome === 'already-saved') {
-      savedMatch = outcome.match;
-      view = 'has-record';
-    } else {
-      view = outcome.outcome; // 'coordinator' or 'no-mentors'
+    if (outcome.outcome === 'no-mentors') {
+      view = 'no-mentors';
+      return;
     }
+    // Matched, passed to the coordinator, or already saved by an earlier try: on to the check-in chat.
+    // Its first message says what happened ("You've been matched with…" or "We're finding you a
+    // mentor"), and links to /mentor, which shows why they were matched.
+    goto('/check-in?from=find-mentor');
   }
 
   /** "every two weeks" → "Every two weeks". @param {string} text */
@@ -180,25 +178,6 @@
     {:else}
       <p>We’re already finding you a mentor, and we’ll let you know soon.</p>
     {/if}
-    <a class="primary-button" href="/mentor">See your mentor page</a>
-
-  {:else if view === 'matched'}
-    <div class="card">
-      <h2>You’ve been matched with {mentorName}</h2>
-      {#if reasons.length}
-        <p>Why we matched you:</p>
-        <ul>
-          {#each reasons as reason (reason)}
-            <li>{reason}</li>
-          {/each}
-        </ul>
-      {/if}
-      <p>Your coordinator will introduce you.</p>
-    </div>
-    <a class="primary-button" href="/mentor">See your mentor page</a>
-
-  {:else if view === 'coordinator'}
-    <p>We’ll find you a mentor ourselves and let you know soon.</p>
     <a class="primary-button" href="/mentor">See your mentor page</a>
 
   {:else if view === 'gemini-failed'}

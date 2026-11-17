@@ -1,6 +1,6 @@
 <script>
   import { questions } from '#lib/matching/questions.js';
-  import { watchSignedIn } from '#lib/matching/mentors.js';
+  import { watchSignedIn } from '#lib/firebase/auth.js';
   import { matchStudent } from '#lib/matching/find-match.js';
 
   let answers = $state(questions.map(() => ''));

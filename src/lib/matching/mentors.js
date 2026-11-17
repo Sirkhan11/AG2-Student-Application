@@ -1,4 +1,4 @@
-import { createUserWithEmailAndPassword, deleteUser, onAuthStateChanged } from 'firebase/auth';
+import { createUserWithEmailAndPassword, deleteUser } from 'firebase/auth';
 import { collection, doc, getDoc, getDocs, query, serverTimestamp, where, writeBatch } from 'firebase/firestore';
 import { db, getFirebaseAuth } from '#lib/firebase/client.js';
 import { questions } from '#lib/matching/questions.js';
@@ -214,15 +214,4 @@ export async function hasMentorProfile() {
     if (/** @type {{ code?: string }} */ (err).code === 'permission-denied') return false;
     throw err;
   }
-}
-
-/**
- * Tells the page whether someone is signed in: once Firebase has checked for a saved login, and again
- * whenever someone signs in or out. Returns a function that stops listening.
- * It's here because reading mentors is the thing that needs a signed-in user.
- * @param {(signedIn: boolean) => void} callback
- * @returns {() => void}
- */
-export function watchSignedIn(callback) {
-  return onAuthStateChanged(getFirebaseAuth(), (user) => callback(user !== null));
 }

@@ -1,5 +1,5 @@
 <script>
-  import { watchSignedIn } from '#lib/matching/mentors.js';
+  import { watchSignedIn } from '#lib/firebase/auth.js';
   import { loadMyMatch } from '#lib/matching/matches.js';
 
   /**

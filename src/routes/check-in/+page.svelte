@@ -1,31 +1,90 @@
 
 <script>
-  import BottomNav from '$lib/components/BottomNav.svelte';
+  import { tick } from 'svelte';
+  import { page } from '$app/state';
+  import BottomNav from '#lib/components/BottomNav.svelte';
+  import { watchSignedIn } from '#lib/firebase/auth.js';
+  import { loadSavedChecklist } from '#lib/checkin/saved-checklist.js';
+  import { loadMyMatch } from '#lib/matching/matches.js';
+  import { buildOpener, describeForGemini } from '#lib/checkin/opener.js';
+  import { startCheckinChat } from '#lib/checkin/chat.js';
 
+  /**
+   * One bubble. kind marks the fixed safety message or an error; links are buttons shown under it.
+   * @typedef {{ role: 'assistant' | 'user', text: string, kind?: 'safety' | 'error',
+   *   links?: { label: string, href: string }[] }} Message
+   */
+
+  // null while Firebase checks for a saved login.
+  let signedIn = $state(/** @type {boolean | null} */ (null));
+  let messages = $state(/** @type {Message[]} */ ([]));
   let message = $state('');
+  // True while waiting for a reply, so only one message is sent at a time.
+  let waiting = $state(false);
+  /** @type {HTMLFormElement | undefined} */
+  let form = $state();
 
-  let messages = $state([
-    {
+  // The Gemini conversation. Not $state, because the page never shows it directly.
+  /** @type {ReturnType<typeof startCheckinChat> | null} */
+  let chat = null;
+
+  $effect(() =>
+    watchSignedIn((value) => {
+      signedIn = value;
+      if (value) start();
+    })
+  );
+
+  /** Builds the first messages from the student's match and checklist, then starts the chat. */
+  async function start() {
+    messages = [];
+    // If either can't be loaded, the chat still starts; it just says less.
+    const [match, tasks] = await Promise.all([
+      loadMyMatch().catch((err) => (console.error(err), undefined)),
+      loadSavedChecklist().catch((err) => (console.error(err), null))
+    ]);
+    const justSignedUp = page.url.searchParams.get('from') === 'find-mentor';
+
+    const opener = buildOpener({ match, tasks, justSignedUp });
+    messages = opener.messages.map((text, i) => ({
       role: 'assistant',
-      text: 'Hi! How are you settling into university?'
-    }
-  ]);
+      text,
+      // The buttons go under the last of the first messages.
+      links: i === opener.messages.length - 1 ? opener.links : undefined
+    }));
 
-  function sendMessage() {
+    // Gemini is told the same facts and first messages, but without the mentor's name.
+    const withoutName = match?.status === 'matched' ? { ...match, mentorName: null } : match;
+    chat = startCheckinChat(
+      describeForGemini({ match, tasks }),
+      buildOpener({ match: withoutName, tasks, justSignedUp }).messages
+    );
+  }
+
+  async function sendMessage() {
     const text = message.trim();
-    if (!text) return;
+    if (!text || waiting || !chat) return;
 
-    messages.push({
-      role: 'user',
-      text
-    });
-
+    messages.push({ role: 'user', text });
     message = '';
+    waiting = true;
+    await showLatest();
 
+    const reply = await chat.send(text);
     messages.push({
       role: 'assistant',
-      text: 'Thanks for sharing. You can explore your checklist, find societies or use the Need Help Now page if you need urgent support.'
+      text: reply.text,
+      kind: reply.kind === 'reply' ? undefined : reply.kind,
+      links: reply.kind === 'safety' ? [{ label: 'Need help now', href: '/need-help' }] : undefined
     });
+    waiting = false;
+    await showLatest();
+  }
+
+  /** Scrolls so the newest message and the message box are in view (handy on a phone). */
+  async function showLatest() {
+    await tick();
+    form?.scrollIntoView({ behavior: 'smooth', block: 'end' });
   }
 </script>
 
@@ -37,34 +96,64 @@
     This is not a medical or emergency service.
   </p>
 
-  <div class="messages">
-    {#each messages as item}
-      <div
-        class="bubble"
-        class:user={item.role === 'user'}
-      >
-        {item.text}
-      </div>
-    {/each}
-  </div>
+  {#if signedIn === false}
+    <p>Please log in to use the check-in chat.</p>
+    <div class="actions">
+      <a class="primary-button" href="/">Log in</a>
+      <a class="centred" href="/signup">Create an account</a>
+    </div>
+  {:else if signedIn === null || messages.length === 0}
+    <p class="muted" role="status">Loading…</p>
+  {:else}
+    <p class="muted">
+      Replies are written by Google’s Gemini AI. This chat isn’t saved, and nothing you say is passed
+      on to the university or your mentor. Google may use messages to improve its services, so please
+      leave out names, contact details and anything you’d want kept private.
+    </p>
 
-  <form onsubmit={(event) => {
-    event.preventDefault();
-    sendMessage();
-  }}>
-    <label for="chat-message">Your message</label>
+    <div class="messages" aria-live="polite">
+      {#each messages as item, i (i)}
+        <div
+          class="bubble"
+          class:user={item.role === 'user'}
+          class:safety={item.kind === 'safety'}
+          class:failed={item.kind === 'error'}
+        >
+          {item.text}
+          {#if item.links?.length}
+            <div class="links">
+              {#each item.links as link (link.href + link.label)}
+                <a class="secondary-button" href={link.href}>{link.label}</a>
+              {/each}
+            </div>
+          {/if}
+        </div>
+      {/each}
+      {#if waiting}
+        <div class="bubble typing">Typing…</div>
+      {/if}
+    </div>
 
-    <input
-      id="chat-message"
-      class="field"
-      placeholder="Type your message..."
-      bind:value={message}
-    />
+    <form bind:this={form} onsubmit={(event) => {
+      event.preventDefault();
+      sendMessage();
+    }}>
+      <label for="chat-message">Your message</label>
 
-    <button class="primary-button" type="submit">
-      Send
-    </button>
-  </form>
+      <input
+        id="chat-message"
+        class="field"
+        placeholder="Type your message..."
+        autocomplete="off"
+        disabled={waiting}
+        bind:value={message}
+      />
+
+      <button class="primary-button" type="submit" disabled={waiting}>
+        {waiting ? 'Waiting for a reply…' : 'Send'}
+      </button>
+    </form>
+  {/if}
 
   <p><a href="/need-help">Need help now?</a></p>
 
@@ -92,5 +181,32 @@
     align-self: flex-end;
     background: #1764a1;
     color: white;
+  }
+
+  .bubble.safety {
+    background: #fdecea;
+    border: 1px solid #e8b6b1;
+  }
+
+  .bubble.failed,
+  .bubble.typing {
+    color: #647780;
+  }
+
+  .links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+  }
+
+  .actions {
+    display: grid;
+    gap: 12px;
+    margin: 16px 0;
+  }
+
+  .centred {
+    text-align: center;
   }
 </style>
