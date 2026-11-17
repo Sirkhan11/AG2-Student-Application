@@ -21,10 +21,12 @@
    * (Logged-out visitors are sent to login instead, which brings them back here.)
    * - 'form', then 'busy' while matching or saving (the form stays, disabled)
    * - 'gemini-failed': Gemini is down, so try again or ask the coordinator
+   * - 'gemini-unavailable': Gemini's credit has run out, so trying again won't help: only the
+   *   coordinator option
    * - 'error': anything else failed, so try that step again
    * Once the result is saved, the page goes to the check-in chat instead (see showOutcome).
    * @typedef {'checking' | 'is-mentor' | 'no-mentors' | 'has-record' | 'form' | 'busy'
-   *   | 'gemini-failed' | 'error'} View
+   *   | 'gemini-failed' | 'gemini-unavailable' | 'error'} View
    */
   let view = $state(/** @type {View} */ ('checking'));
 
@@ -101,9 +103,10 @@
     try {
       prepared = await prepareStudent(answers.map((answer) => answer.trim()));
     } catch (err) {
-      if (/** @type {{ code?: string }} */ (err).code === SUMMARISE_FAILED) {
+      const failure = /** @type {{ code?: string, outOfCredit?: boolean }} */ (err);
+      if (failure.code === SUMMARISE_FAILED) {
         // Not passed to the coordinator automatically: a match record is permanent, so the student chooses.
-        view = 'gemini-failed';
+        view = failure.outOfCredit ? 'gemini-unavailable' : 'gemini-failed';
         return;
       }
       showError("We couldn't get your answers ready to match.", findMentor, err);
@@ -183,6 +186,13 @@
       <button class="secondary-button" onclick={askCoordinatorNow}>Ask the coordinator to match me</button>
     </div>
     <p class="muted">If you ask the coordinator, they’ll read your answers and find you a mentor themselves.</p>
+
+  {:else if view === 'gemini-unavailable'}
+    <p role="alert">Sorry, automatic matching isn’t available right now.</p>
+    <div class="actions">
+      <button class="primary-button" onclick={askCoordinatorNow}>Ask the coordinator to match me</button>
+    </div>
+    <p class="muted">The coordinator will read your answers and find you a mentor themselves.</p>
 
   {:else if view === 'error'}
     <p class="error" role="alert">{errorMessage}</p>

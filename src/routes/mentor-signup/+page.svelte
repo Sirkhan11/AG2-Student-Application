@@ -46,6 +46,9 @@
       // Gemini runs before the account is made, so for its errors nothing has been saved yet.
       if (code === 'auth/email-already-in-use') {
         error = "We couldn't create an account with that email. If you already have one, log in instead.";
+      } else if (code === SUMMARISE_FAILED && /** @type {{ outOfCredit?: boolean }} */ (err).outOfCredit) {
+        // Gemini's credit has run out: trying again won't help until it's topped up.
+        error = "Sorry, mentor sign-up isn't available right now, so your account hasn't been created.";
       } else if (code === SUMMARISE_FAILED) {
         error = "We couldn't process your answers just now, so your account hasn't been created. Please try again in a minute.";
       } else if (code === NOTHING_TO_MATCH) {

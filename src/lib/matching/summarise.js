@@ -1,4 +1,5 @@
 import { getGeminiModel } from '#lib/firebase/ai.js';
+import { isOutOfCredit } from '#lib/firebase/ai-errors.js';
 import {
   cleanAnswers,
   emptySummary,
@@ -58,11 +59,12 @@ function getModel(count) {
  * rejected ("I'm not into sport") never count towards a match, and nor does how much they happened
  * to write. Styles are never embedded.
  *
- * One request rather than one per answer because the free tier allows 15 requests a minute:
- * that's 15 sign-ups or matches a minute, instead of 2 or 3.
+ * One request rather than one per answer: on the free tier that meant 15 sign-ups or matches a
+ * minute instead of 2 or 3, and on the paid tier every request uses credit.
  *
  * All or nothing: if the request fails or the reply is broken, it throws an error with code
- * SUMMARISE_FAILED instead of returning part of a summary.
+ * SUMMARISE_FAILED instead of returning part of a summary. Its outOfCredit is true when Gemini's
+ * prepaid credit has run out (HTTP 402), so pages say matching isn't available rather than "try again".
  *
  * Only the answers are sent, never a name or profile, and anything that looks like an email
  * address is replaced with [email] first.
@@ -81,7 +83,8 @@ export async function summariseAnswers(answers) {
   } catch (err) {
     console.error('Gemini could not summarise the answers:', err);
     throw Object.assign(new Error('Gemini could not summarise the answers.', { cause: err }), {
-      code: SUMMARISE_FAILED
+      code: SUMMARISE_FAILED,
+      outOfCredit: isOutOfCredit(err)
     });
   }
 }
