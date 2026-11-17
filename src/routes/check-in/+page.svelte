@@ -11,9 +11,10 @@
   import { startCheckinChat } from '#lib/checkin/chat.js';
 
   /**
-   * One bubble. kind marks the fixed safety message or an error; links are buttons shown under it.
+   * One bubble. kind marks the fixed safety message or an error; links are buttons shown under it
+   * (external ones, such as a society's NSU page, open in a new tab).
    * @typedef {{ role: 'assistant' | 'user', text: string, kind?: 'safety' | 'error',
-   *   links?: { label: string, href: string }[] }} Message
+   *   links?: { label: string, href: string, external?: boolean }[] }} Message
    */
 
   // null while Firebase checks for a saved login.
@@ -78,7 +79,11 @@
       role: 'assistant',
       text: reply.text,
       kind: reply.kind === 'reply' ? undefined : reply.kind,
-      links: reply.kind === 'safety' ? [{ label: 'Need help now', href: '/need-help' }] : undefined
+      links:
+        reply.kind === 'safety'
+          ? [{ label: 'Need help now', href: '/need-help' }]
+          : // Suggested societies open their page in the app, which has the details and the NSU links.
+            reply.societies?.map((society) => ({ label: society.name, href: `/societies/${society.nsuId}` }))
     });
     waiting = false;
     await showLatest();
@@ -120,7 +125,19 @@
           {#if item.links?.length}
             <div class="links">
               {#each item.links as link (link.href + link.label)}
-                <a class="secondary-button" href={link.href}>{link.label}</a>
+                {#if link.external}
+                  <a
+                    class="secondary-button"
+                    href={link.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={`${link.label} on the NSU website (opens in a new tab)`}
+                  >
+                    {link.label} ↗
+                  </a>
+                {:else}
+                  <a class="secondary-button" href={link.href}>{link.label}</a>
+                {/if}
               {/each}
             </div>
           {/if}

@@ -1,0 +1,73 @@
+{
+  "about": "Check-in chat replies for check-society-suggestions.mjs. Regenerate with --refresh rather than edit.",
+  "model": "gemini-3.5-flash-lite",
+  "promptFingerprint": "af91fcf155bf",
+  "made": "2026-11-17T12:32:37.180Z",
+  "replies": {
+    "gigs, rules out sport": {
+      "student": "s-gigs-short",
+      "message": "Gigs and live music. Not sport. A gig, then out with mates. Are there any societies you'd recommend?",
+      "reply": "If you love gigs and live music, [[Music]] could be a great one to check out. \n\nHave you had a look at the Societies page to see what else catches your eye?"
+    },
+    "homebody, rules out partying": {
+      "student": "s-home-short",
+      "message": "Board games and reading. Not partying. A quiet night in with a film. Are there any societies you'd recommend?",
+      "reply": "It sounds like you would love a cozy night in. For your interests, you could check out [[Gaming and Roleplay]], [[Book]], and [[Film]]. Have you had a look at your settling-in checklist yet?"
+    },
+    "sporty early riser": {
+      "student": "s-sport-short",
+      "message": "Football and the gym. Up early for a run, then football. Are there any societies you'd recommend?",
+      "reply": "Since you are into football and running, you might like [[Climbing]] or [[Mountaineering]] for keeping active, or [[Walking]] for getting outside. \n\nHave a look at the Societies page to see all the options available."
+    },
+    "lie-in and the cinema": {
+      "student": "s-liein-short",
+      "message": "Photography and the cinema. A lie-in, then the cinema. Are there any societies you'd recommend?",
+      "reply": "It sounds like you had a lovely, relaxing day. Since you enjoy cinema, you might like [[Film]], which is a special interest society. What kind of films do you usually enjoy watching?"
+    },
+    "gamer, last minute (near tie)": {
+      "student": "s-gamer-short",
+      "message": "Gaming, Minecraft and FIFA. Gaming online late with mates. Are there any societies you'd recommend?",
+      "reply": "For gaming, you might like [[Esports]] or [[Gaming and Roleplay]] to connect with other players. You can also have a look at the Societies page to see everything else available. What kind of games do you usually play with your mates?"
+    },
+    "clubbing (synonyms for partying)": {
+      "student": "s-clubbing-short",
+      "message": "Going clubbing and festivals. Big nights out. Are there any societies you'd recommend?",
+      "reply": "Since you are into big nights out, music and dancing, you might enjoy [[Beats Cartel Dance]] and [[Dance]] for dance styles, or [[Music]] if you are also into performing. Have a look at the Societies page for more ideas that might fit your vibe."
+    },
+    "outdoors, rules out the gym": {
+      "student": "s-outdoors-short",
+      "message": "Hiking and climbing. Not the gym. Up early for a long walk. Are there any societies you'd recommend?",
+      "reply": "Since you enjoy hiking and early morning walks, you might like [[Walking]] for outdoor strolls and [[Mountaineering]] for bigger hill trips. \n\nYou can also check out [[Outdoor Climbing]] if you prefer heading outside rather than staying in a gym. Have you had a look at the Societies page to see what else is on offer?"
+    },
+    "unrelated to every mentor": {
+      "student": "s-unrelated-short",
+      "message": "Knitting and birdwatching. A trip to a nature reserve. Are there any societies you'd recommend?",
+      "reply": "It sounds like you enjoy creative and outdoor activities. \n\nYou might like [[Hooked By Crochet]] for craft projects, or [[Walking]] if you enjoy getting outdoors. Have a look at the Societies page to browse all the options available."
+    },
+    "only says what they don't want in 3 answers": {
+      "student": "s-too-few",
+      "message": "I'm not into sport, clubbing or gaming. I don't like loud nights out. Are there any societies you'd recommend?",
+      "reply": "Thanks for letting me know what you want to avoid. What sort of hobbies or interests do you enjoy in your spare time?"
+    },
+    "quiet nights in, not nights out (opposites)": {
+      "student": "s-nights-in-short",
+      "message": "Reading and films. Quiet nights in, not nights out. Are there any societies you'd recommend?",
+      "reply": "Since you like reading and quiet nights in, [[Book]] and [[Film]] might be just right for you. \n\nHave a look at the Societies page for more details, or let me know if you would like any other ideas."
+    },
+    "live music (synonym for gigs)": {
+      "student": "s-live-music",
+      "message": "Live music, mostly indie bands. Seeing a band, then drinks with friends. Are there any societies you'd recommend?",
+      "reply": "If you enjoy listening to music and going to gigs, you might like [[Music]]. \n\nWhat kind of things do you usually like to do with your friends?"
+    },
+    "interested in Ukrainian culture, not Ukrainian": {
+      "student": "extra",
+      "message": "I'm not Ukrainian, but I'd love to learn more about Ukrainian culture and meet people. Are there any societies you'd recommend?",
+      "reply": "That sounds like a wonderful way to learn and meet new people. You might like [[Ukrainian]], which is open to everyone interested in the community. Have you had a chance to look at the Societies page to see what else catches your eye?"
+    },
+    "a mature student": {
+      "student": "extra",
+      "message": "I'm a mature student, so I'm a bit older than most people on my course. Are there any societies you'd recommend?",
+      "reply": "Being a mature student is quite common, and there's a group specifically for you called [[Mature Students]] which is great for meeting others in the same boat. You can also take a look at the Societies page to browse everything else that's on offer. Are there any particular hobbies or interests you enjoy outside of your course?"
+    }
+  }
+}

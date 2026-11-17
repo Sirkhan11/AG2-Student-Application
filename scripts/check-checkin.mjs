@@ -8,6 +8,7 @@
 import assert from 'node:assert/strict';
 import { buildOpener, describeForGemini } from '#lib/checkin/opener.js';
 import { isCrisis } from '#lib/checkin/safety.js';
+import { SOCIETY_LIST } from '#lib/checkin/chat-prompt.js';
 
 /** The five default tasks (see src/lib/checkin/saved-checklist.js), with the given ids ticked. @param {string[]} [done] */
 const tasks = (done = []) =>
@@ -86,6 +87,15 @@ const checks = [
       'I don\'t feel safe at home',
       'I think I\'m in danger'
     ]) assert.equal(isCrisis(text), true, text);
+  }],
+  // ---------- The societies Gemini may suggest ----------
+  ['Gemini\'s society list: one per line, with categories and group notes, and no women-only societies', () => {
+    const lines = SOCIETY_LIST.split('\n');
+    assert.ok(lines.includes('Climbing (Recreational Sport)'));
+    assert.ok(lines.includes('Ukrainian (International and Cultural; Ukrainian community, everyone welcome)'));
+    assert.ok(lines.includes('Christian Union (Faith and Belief; for Christians)'));
+    assert.ok(!SOCIETY_LIST.includes('Girls Who Run') && !SOCIETY_LIST.includes('Women in Business'));
+    assert.ok(!SOCIETY_LIST.includes('Nigerian (International and Cultural; for the Nigerian community)\nNigerian'), 'London societies are left out');
   }],
   ['Everyday phrases are not', () => {
     for (const text of [
