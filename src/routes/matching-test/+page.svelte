@@ -52,6 +52,22 @@
         },
         { label: 'Spelling mistakes', text: 'last minit, and i wurk best on my own' }
       ]
+    },
+    {
+      name: 'Weekend',
+      // An early riser, on purpose: if a summary drops "lie-in", only "cinema" is left, and the
+      // score moves, as well as the must-keep check failing.
+      mentor: 'Up early for a run, then football in the afternoon.',
+      note: 'Likes a lie-in, then the cinema. A lie-in is something they do, not a schedule detail, so it must be kept.',
+      mustKeep: ['lie-in'],
+      versions: [
+        { label: 'Short', text: 'A lie-in, then the cinema' },
+        {
+          label: 'Long',
+          text: "A proper lie-in is the best bit of my weekend, and then I'll usually head to the cinema in the afternoon."
+        },
+        { label: 'Spelling mistakes', text: 'a lie in, then the cinama' }
+      ]
     }
   ];
 

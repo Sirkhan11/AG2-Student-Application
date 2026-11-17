@@ -1,0 +1,278 @@
+{
+  "about": "Made-up matching test cases: no real people. Answers are in question order (src/lib/matching/questions.js); mentors answer questions 1 and 6 in the mentor wording. Each student has the result we WANT: the mentor who should come first, or \"coordinator\". Students in the same group say the same thing in different writing styles, so they should get the same result. mustKeep: phrases that must survive in that question's summary. mustNotMention: words that must not appear in any of the student's summaries (things they ruled out).",
+  "mentors": [
+    {
+      "id": "m-gigs",
+      "label": "Gig-goer: live music, nights out, last minute, with others",
+      "answers": [
+        "Finding your way round the music scene and meeting people at gigs.",
+        "Live music, going to gigs and the odd club night.",
+        "A gig on Friday, then a night out with mates on Saturday.",
+        "Last minute usually, and I work best with other people around.",
+        "Meeting new people and having fun.",
+        "A sociable mentor who'll bring you along to things."
+      ]
+    },
+    {
+      "id": "m-home",
+      "label": "Homebody: quiet nights in, board games, planning ahead, on their own",
+      "answers": [
+        "Getting organised with deadlines and settling into a routine.",
+        "Board games, baking and reading.",
+        "Quiet nights in, a film and a takeaway, nothing too loud.",
+        "I plan ahead and like working on my own.",
+        "Feeling settled and keeping on top of my work.",
+        "A calm, patient mentor who's easy to talk to."
+      ]
+    },
+    {
+      "id": "m-sport",
+      "label": "Sporty early riser: football, gym, planning ahead, with others",
+      "answers": [
+        "Joining sports clubs and finding your feet in the gym.",
+        "Football, the gym and running.",
+        "Up early for a park run, then five-a-side in the afternoon.",
+        "I plan ahead and like training and studying with others.",
+        "Staying active and being part of a team.",
+        "A motivating mentor who gets you moving."
+      ]
+    },
+    {
+      "id": "m-game1",
+      "label": "Gamer A: Minecraft and FIFA, staying in, last minute, on their own",
+      "answers": [
+        "Finding other gamers and getting a good study setup going.",
+        "Video games, especially Minecraft and FIFA, and building PCs.",
+        "Staying in and gaming online with friends until late.",
+        "Last minute, and I work best on my own.",
+        "Having a good group of mates to game with.",
+        "A laid-back mentor who's around online."
+      ]
+    },
+    {
+      "id": "m-game2",
+      "label": "Gamer B: almost the same as Gamer A, for the near-tie case",
+      "answers": [
+        "Helping you find other gamers and set up your study space.",
+        "Gaming, mostly Minecraft and FIFA, and PC building.",
+        "A night in gaming online with mates till late.",
+        "Usually last minute, and on my own.",
+        "A solid group of friends to game with.",
+        "A relaxed mentor who's easy to reach online."
+      ]
+    },
+    {
+      "id": "m-outdoors",
+      "label": "Outdoors planner: hiking, climbing, early starts, planning ahead",
+      "answers": [
+        "Finding walking and climbing groups, and planning your week.",
+        "Hiking, climbing and wild swimming.",
+        "Up early for a long walk in the hills, back in time for tea.",
+        "I plan everything ahead, and like a mix of working alone and with others.",
+        "Getting outdoors and looking after my wellbeing.",
+        "An organised, encouraging mentor."
+      ]
+    },
+    {
+      "id": "m-creative",
+      "label": "Creative: photography, cinema, lie-ins, last minute, on their own",
+      "answers": [
+        "Finding creative societies and getting used to the city.",
+        "Photography, art galleries and the cinema.",
+        "A lie-in, then the cinema or a gallery in the afternoon.",
+        "A bit last minute, and I like working on my own.",
+        "Having time to be creative and explore the city.",
+        "A friendly, laid-back mentor."
+      ]
+    },
+    {
+      "id": "m-party",
+      "label": "Party-goer: partying, clubbing, festivals, last minute, with others",
+      "answers": [
+        "Knowing the best nights out and making friends fast.",
+        "Partying, clubbing and going to festivals.",
+        "Out clubbing on Friday and Saturday, then recovering on Sunday.",
+        "Last minute, always with other people.",
+        "Making loads of friends and having a good time.",
+        "A fun mentor who'll show you the nightlife."
+      ]
+    }
+  ],
+  "students": [
+    {
+      "id": "s-gigs-short", "group": "gigs, rules out sport", "style": "short", "expect": "m-gigs",
+      "mustNotMention": ["sport", "gym"],
+      "answers": ["Making friends.", "Gigs and live music. Not sport.", "A gig, then out with mates.", "Last minute, with others.", "Meeting people.", "Someone sociable."]
+    },
+    {
+      "id": "s-gigs-long", "group": "gigs, rules out sport", "style": "long", "expect": "m-gigs",
+      "mustNotMention": ["sport", "gym"],
+      "answers": [
+        "Mostly I'd like help making friends, because I don't know anyone up here yet and it's a bit lonely.",
+        "I'm honestly not into sport or the gym at all, never have been. What I love is live music, I'd go to a gig most nights if I could afford it.",
+        "A good weekend is catching a band on Friday and then a night out with my mates on the Saturday, whoever's around.",
+        "I always leave things to the last minute, and I work much better with other people around me than on my own.",
+        "Meeting new people and actually having a social life.",
+        "Someone sociable who'd be up for bringing me along to things."
+      ]
+    },
+    {
+      "id": "s-gigs-misspelt", "group": "gigs, rules out sport", "style": "misspelt", "expect": "m-gigs",
+      "mustNotMention": ["sport", "gym"],
+      "answers": ["making frends", "gigs and live musik, not realy into sprot", "a gig then out with mates", "last minit, with other people", "meeting new peple", "someone socaible"]
+    },
+    {
+      "id": "s-home-short", "group": "homebody, rules out partying", "style": "short", "expect": "m-home",
+      "mustNotMention": ["partying", "clubbing"],
+      "answers": ["Getting organised.", "Board games and reading. Not partying.", "A quiet night in with a film.", "Plan ahead, on my own.", "Keeping on top of work.", "Someone calm."]
+    },
+    {
+      "id": "s-home-long", "group": "homebody, rules out partying", "style": "long", "expect": "m-home",
+      "mustNotMention": ["partying", "clubbing"],
+      "answers": [
+        "I'd really like help getting organised with deadlines, I'm worried about falling behind in the first term.",
+        "I'm not into partying or clubbing at all. I'm happiest playing board games, baking or curled up with a book.",
+        "A quiet night in with a film and a takeaway is my idea of a perfect weekend, nothing loud.",
+        "I like to plan everything well ahead and I concentrate best working on my own.",
+        "Keeping on top of my work and feeling settled.",
+        "Someone calm and patient who I could just talk to."
+      ]
+    },
+    {
+      "id": "s-home-misspelt", "group": "homebody, rules out partying", "style": "misspelt", "expect": "m-home",
+      "mustNotMention": ["partying", "clubbing"],
+      "answers": ["getting organsied", "bord games and reding, not into partyin", "a quiet nite in with a film", "plan ahed, on my own", "keeping on top of werk", "someone calm and pacient"]
+    },
+    {
+      "id": "s-sport-short", "group": "sporty early riser", "style": "short", "expect": "m-sport",
+      "answers": ["Finding a football club.", "Football and the gym.", "Up early for a run, then football.", "Plan ahead, with others.", "Staying active.", "Someone motivating."]
+    },
+    {
+      "id": "s-sport-long", "group": "sporty early riser", "style": "long", "expect": "m-sport",
+      "answers": [
+        "The main thing is finding a football team to join, I played every week back home.",
+        "Football, the gym and running, basically anything that keeps me moving.",
+        "I'm an early riser, so a run first thing and then a five-a-side game in the afternoon.",
+        "I plan ahead and I like training and studying with other people.",
+        "Staying active and being part of a team.",
+        "Someone who'll motivate me and get me out and about."
+      ]
+    },
+    {
+      "id": "s-liein-short", "group": "lie-in and the cinema", "style": "short", "expect": "m-creative",
+      "mustKeep": [{ "question": 3, "phrase": "lie-in" }],
+      "answers": ["Getting to know the city.", "Photography and the cinema.", "A lie-in, then the cinema.", "Last minute, on my own.", "Being creative.", "Someone laid-back."]
+    },
+    {
+      "id": "s-liein-long", "group": "lie-in and the cinema", "style": "long", "expect": "m-creative",
+      "mustKeep": [{ "question": 3, "phrase": "lie-in" }],
+      "answers": [
+        "I'd like help getting to know the city and finding creative societies.",
+        "I'm really into photography and I go to the cinema whenever I can, art galleries too.",
+        "A long lie-in, then heading to the cinema or a gallery in the afternoon.",
+        "I'm a bit last minute and I like working on my own.",
+        "Having time to be creative and explore.",
+        "Someone friendly and laid-back."
+      ]
+    },
+    {
+      "id": "s-liein-misspelt", "group": "lie-in and the cinema", "style": "misspelt", "expect": "m-creative",
+      "mustKeep": [{ "question": 3, "phrase": "lie-in" }],
+      "answers": ["getting to no the city", "fotography and the cinama", "a lie in, then the cinema", "last minit, on my own", "being creativ", "someone laid back"]
+    },
+    {
+      "id": "s-gamer-short", "group": "gamer, last minute (near tie)", "style": "short", "expect": "coordinator",
+      "mustKeep": [{ "question": 4, "phrase": "last minute" }],
+      "answers": ["Finding other gamers.", "Gaming, Minecraft and FIFA.", "Gaming online late with mates.", "Last minute, and I work best on my own.", "A good group of mates.", "Someone laid-back."]
+    },
+    {
+      "id": "s-gamer-long", "group": "gamer, last minute (near tie)", "style": "long", "expect": "coordinator",
+      "mustKeep": [{ "question": 4, "phrase": "last minute" }],
+      "answers": [
+        "I'd love to find other people who game, as none of my flatmates do.",
+        "I play a lot of games, mainly Minecraft and FIFA, and I'm saving up to build a PC.",
+        "Staying in and gaming online with my friends from home until really late.",
+        "Last minute, and I work best on my own.",
+        "Having a good group of mates to hang out and game with.",
+        "Someone laid-back who's easy to message."
+      ]
+    },
+    {
+      "id": "s-clubbing-short", "group": "clubbing (synonyms for partying)", "style": "short", "expect": "m-party",
+      "answers": ["Making friends fast.", "Going clubbing and festivals.", "Big nights out.", "Last minute, with others.", "Having a good time.", "Someone fun."]
+    },
+    {
+      "id": "s-clubbing-long", "group": "clubbing (synonyms for partying)", "style": "long", "expect": "m-party",
+      "answers": [
+        "I want to make friends quickly and find out where everyone goes out.",
+        "I love going clubbing and I'm always first to sign up for a festival.",
+        "Big nights out on Friday and Saturday, the later the better.",
+        "Always last minute, and always with other people.",
+        "Making loads of friends and having a good time.",
+        "Someone fun who knows the nightlife."
+      ]
+    },
+    {
+      "id": "s-clubbing-misspelt", "group": "clubbing (synonyms for partying)", "style": "misspelt", "expect": "m-party",
+      "answers": ["making frends fast", "going cluubing and festivles", "big nites out", "last minit, with others", "having a gud time", "someone fun"]
+    },
+    {
+      "id": "s-outdoors-short", "group": "outdoors, rules out the gym", "style": "short", "expect": "m-outdoors",
+      "mustNotMention": ["gym"],
+      "answers": ["Finding a walking group.", "Hiking and climbing. Not the gym.", "Up early for a long walk.", "Plan ahead.", "Being outdoors.", "Someone organised."]
+    },
+    {
+      "id": "s-outdoors-long", "group": "outdoors, rules out the gym", "style": "long", "expect": "m-outdoors",
+      "mustNotMention": ["gym"],
+      "answers": [
+        "I'd like help finding a walking or climbing group and planning my week around my course.",
+        "I'm not into the gym or team sports, but I love hiking and climbing, and I'd like to try wild swimming.",
+        "Getting up early for a long walk in the hills and being back in time for tea.",
+        "I plan everything ahead.",
+        "Getting outdoors and looking after myself.",
+        "Someone organised and encouraging."
+      ]
+    },
+    {
+      "id": "s-unrelated-short", "group": "unrelated to every mentor", "style": "short", "expect": "coordinator",
+      "answers": ["Learning Japanese.", "Knitting and birdwatching.", "A trip to a nature reserve.", "Depends on the day.", "My course.", "Anyone, really."]
+    },
+    {
+      "id": "s-unrelated-long", "group": "unrelated to every mentor", "style": "long", "expect": "coordinator",
+      "answers": [
+        "I'd like help finding somewhere to practise Japanese, I'm learning it on the side.",
+        "I knit a lot, and I've got into birdwatching recently.",
+        "A trip out to a nature reserve with my binoculars.",
+        "It depends on the day, honestly.",
+        "Doing well on my course.",
+        "Anyone, really, I'm not fussy."
+      ]
+    },
+    {
+      "id": "s-too-few", "group": "only says what they don't want in 3 answers", "style": "short", "expect": "coordinator",
+      "mustNotMention": ["sport", "clubbing", "gaming"],
+      "answers": ["Finding my way around campus.", "I'm not into sport, clubbing or gaming.", "I don't like loud nights out.", "I plan ahead.", "Doing well on my course.", "I don't want someone pushy."]
+    },
+    {
+      "id": "s-nights-in-short", "group": "quiet nights in, not nights out (opposites)", "style": "short", "expect": "m-home",
+      "mustNotMention": ["nights out"],
+      "answers": ["Settling in.", "Reading and films.", "Quiet nights in, not nights out.", "Plan ahead, on my own.", "Feeling settled.", "Someone patient."]
+    },
+    {
+      "id": "s-nights-in-long", "group": "quiet nights in, not nights out (opposites)", "style": "long", "expect": "m-home",
+      "mustNotMention": ["nights out"],
+      "answers": [
+        "Just settling in really, it's a big change.",
+        "I read a lot and I love films.",
+        "Quiet nights in, definitely not nights out, I find clubs really overwhelming.",
+        "I plan ahead and I like working on my own.",
+        "Feeling settled and calm.",
+        "Someone patient who doesn't mind a quiet chat."
+      ]
+    },
+    {
+      "id": "s-live-music", "group": "live music (synonym for gigs)", "style": "short", "expect": "m-gigs",
+      "answers": ["Meeting people who like music.", "Live music, mostly indie bands.", "Seeing a band, then drinks with friends.", "Last minute, with other people.", "Having a social life.", "Someone outgoing."]
+    }
+  ]
+}
