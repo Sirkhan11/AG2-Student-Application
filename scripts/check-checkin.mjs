@@ -6,7 +6,8 @@
 //   node scripts/check-checkin.mjs
 
 import assert from 'node:assert/strict';
-import { buildOpener, describeForGemini } from '#lib/checkin/opener.js';
+import { buildOpener, describeForGemini, tidyProfile } from '#lib/checkin/opener.js';
+import { blankContactDetails } from '#lib/checkin/private-details.js';
 import { isCrisis } from '#lib/checkin/safety.js';
 import { SERVICE_LIST, SOCIETY_LIST } from '#lib/checkin/chat-prompt.js';
 import { linksInReply, MAX_LINKS } from '#lib/checkin/reply-links.js';
@@ -79,6 +80,42 @@ const checks = [
     assert.match(about, /they have one/, 'Gemini is told they have a mentor');
     assert.match(about, /Your Mentor page/, 'and where to see who it is');
   }],
+  ['Gemini knows why they were matched, how often they asked to meet, and the course and interests from sign-up', () => {
+    const match = { ...matched, reasons: ['You share interests: gigs', 'You like similar weekends: cinema'], meetingFrequency: 'every two weeks' };
+    const about = describeForGemini({ match, tasks: null, profile: { course: ' BA  English ', interests: [' reading', '', 'Reading', 'gigs'] } });
+    assert.match(about, /Why the app matched them \(they see the same reasons on the Your Mentor page\): You share interests: gigs; You like similar weekends: cinema\./);
+    assert.match(about, /How often they asked to meet their mentor: every two weeks\./);
+    assert.match(about, /Their course \(from when they signed up\): BA English\./);
+    assert.match(about, /Interests they gave when they signed up: reading, gigs\./);
+    assert.match(describeForGemini({ match: { ...matched, reasons: [] }, tasks: null }), /Why the app matched them: not recorded/);
+    const waiting = describeForGemini({ match: { status: 'coordinator', meetingFrequency: 'weekly', availability: null }, tasks: null });
+    assert.match(waiting, /How often they asked to meet their mentor: weekly\./);
+    assert.ok(!/Why the app matched them/.test(waiting), 'no reasons before there\'s a match');
+  }],
+  ['Gemini is never told a name, an email, the mentor\'s id or their availability note, whatever the records hold', () => {
+    const match = {
+      ...matched,
+      mentorId: 'mentor-id-123',
+      mentorName: 'Morgan Testperson',
+      reasons: ['You share interests: gigs, write to morgan@example.org'],
+      meetingFrequency: 'weekly',
+      availability: 'Tuesday evenings, text 07700 900123'
+    };
+    const profile = /** @type {any} */ ({ course: 'Law', interests: ['chess', 'me@example.org'], name: 'Sam Student', email: 'sam@example.org' });
+    const about = describeForGemini({ match, tasks: null, profile });
+    for (const secret of ['Morgan', 'Testperson', 'mentor-id-123', 'Tuesday', '07700', 'example.org', 'Sam Student']) {
+      assert.ok(!about.includes(secret), `${secret} leaked`);
+    }
+    assert.match(about, /\[email\]/, 'an email typed into a record is blanked, not passed on');
+  }],
+  ['Sign-up details are tidied: interests from a list or a comma list, trimmed, no blanks or repeats, at most 10, kept short', () => {
+    assert.deepEqual(tidyProfile({ course: '', interests: 'chess, gigs,, Chess , films' }), { course: null, interests: ['chess', 'gigs', 'films'] });
+    assert.equal(tidyProfile({ interests: Array.from({ length: 15 }, (_, i) => `interest ${i}`) }).interests.length, 10);
+    assert.equal(tidyProfile({ interests: ['y'.repeat(100)] }).interests[0].length, 40);
+    assert.deepEqual(tidyProfile(null), { course: null, interests: [] });
+    assert.equal(blankContactDetails('call 07700 900123 or a.b@example.org'), 'call [phone number] or [email]');
+  }],
+
   // ---------- The crisis check ----------
   ['Crisis phrases are caught, including with a phone\'s curly apostrophe', () => {
     for (const text of [

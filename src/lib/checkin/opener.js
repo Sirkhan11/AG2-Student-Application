@@ -1,7 +1,10 @@
 // The check-in chat's first message, and what Gemini is told about the student. Both are built from
-// the student's own data (their match record and checklist), not written by Gemini, so the first
-// message never invents a task and doesn't use up a Gemini request just because the page opened.
-// No Firebase here, so scripts/check-checkin.mjs can test it in Node.
+// the student's own data (their match record, checklist, and the course and interests they gave at
+// sign-up), not written by Gemini, so the first message never invents a task and doesn't use up a
+// Gemini request just because the page opened. No Firebase here, so scripts/check-checkin.mjs can
+// test it in Node.
+
+import { blankContactDetails } from '#lib/checkin/private-details.js';
 
 /** @typedef {import('#lib/matching/matches.js').Match} Match */
 /** @typedef {import('#lib/checkin/saved-checklist.js').Task} Task */
@@ -98,16 +101,59 @@ export function buildOpener({ match, tasks, justSignedUp }) {
   return { messages, links };
 }
 
+/** How much of the student's sign-up details is passed on: at most this many interests, each this long. */
+const MAX_INTERESTS = 10;
+const MAX_INTEREST_LENGTH = 40;
+const MAX_COURSE_LENGTH = 80;
+const MAX_REASON_LENGTH = 160;
+
 /**
- * Describes the student for Gemini's instructions, using only what the chat needs: no names (not
- * theirs, not their mentor's), and their own checklist tasks are counted but not named, as they
- * could contain anything.
- * @param {{ match: Match | null | undefined, tasks: Task[] | null }} input
+ * Text from the student's own records, tidied for Gemini: one line, contact details blanked, kept short.
+ * @param {unknown} value
+ * @param {number} max
  */
-export function describeForGemini({ match, tasks }) {
+function tidyText(value, max) {
+  return typeof value === 'string' ? blankContactDetails(value).replace(/\s+/g, ' ').trim().slice(0, max).trim() : '';
+}
+
+/**
+ * The course and interests from a student's sign-up, tidied for Gemini. The sign-up form saves the
+ * interests as typed, split on commas, so they're trimmed, with blanks and repeats dropped, kept
+ * short, and any email address or phone number blanked.
+ * @param {{ course?: unknown, interests?: unknown } | null | undefined} profile
+ * @returns {{ course: string | null, interests: string[] }}
+ */
+export function tidyProfile(profile) {
+  const given = profile?.interests;
+  const raw = Array.isArray(given) ? given : typeof given === 'string' ? given.split(',') : [];
+  /** @type {string[]} */
+  const interests = [];
+  for (const item of raw) {
+    const interest = tidyText(item, MAX_INTEREST_LENGTH);
+    if (interest && !interests.some((known) => known.toLowerCase() === interest.toLowerCase())) interests.push(interest);
+  }
+  return { course: tidyText(profile?.course, MAX_COURSE_LENGTH) || null, interests: interests.slice(0, MAX_INTERESTS) };
+}
+
+/**
+ * Describes the student for Gemini's instructions, using only what the chat needs: their mentor
+ * match (status, the reasons saved with it, and how often they asked to meet), their checklist, and
+ * the course and interests they gave at sign-up. Never names (not theirs, not their mentor's),
+ * emails, their mentor's id or their availability note. Their own checklist tasks are counted but
+ * not named, as they could contain anything.
+ * @param {{ match: Match | null | undefined, tasks: Task[] | null,
+ *   profile?: { course?: unknown, interests?: unknown } | null }} input
+ */
+export function describeForGemini({ match, tasks, profile = null }) {
   const lines = [];
   if (match?.status === 'matched') {
     lines.push('Mentor: they have one. They’ve been matched with a student mentor, and the mentoring coordinator will introduce them. You aren’t told the mentor’s name: if they ask who it is, tell them it’s on the Your Mentor page.');
+    const reasons = (match.reasons ?? []).map((reason) => tidyText(reason, MAX_REASON_LENGTH)).filter(Boolean).slice(0, 3);
+    lines.push(
+      reasons.length
+        ? `Why the app matched them (they see the same reasons on the Your Mentor page): ${reasons.join('; ')}.`
+        : 'Why the app matched them: not recorded, so if they ask, say the Your Mentor page has what there is.'
+    );
   } else if (match?.status === 'coordinator') {
     lines.push('Mentor: the mentoring coordinator is finding them a mentor by hand.');
   } else if (match === null) {
@@ -115,6 +161,8 @@ export function describeForGemini({ match, tasks }) {
   } else {
     lines.push('Mentor: not known.');
   }
+  const frequency = match?.status === 'matched' || match?.status === 'coordinator' ? tidyText(match.meetingFrequency, 40) : '';
+  if (frequency) lines.push(`How often they asked to meet their mentor: ${frequency}.`);
 
   if (tasks) {
     const titles = (/** @type {boolean} */ done) =>
@@ -126,5 +174,9 @@ export function describeForGemini({ match, tasks }) {
   } else {
     lines.push('Checklist: not known.');
   }
+
+  const { course, interests } = tidyProfile(profile);
+  if (course) lines.push(`Their course (from when they signed up): ${course}.`);
+  if (interests.length) lines.push(`Interests they gave when they signed up: ${interests.join(', ')}.`);
   return lines.join('\n');
 }

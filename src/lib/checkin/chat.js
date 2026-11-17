@@ -2,13 +2,10 @@ import { getGeminiModel } from '#lib/firebase/ai.js';
 import { isCrisis, SAFETY_MESSAGE } from '#lib/checkin/safety.js';
 import { CHAT_CAMPUS, CHAT_MODEL, chatInstructions } from '#lib/checkin/chat-prompt.js';
 import { linksInReply } from '#lib/checkin/reply-links.js';
+import { blankContactDetails } from '#lib/checkin/private-details.js';
 
 /** Only the last this-many messages are sent each time, so a long chat can't grow without limit. */
 const MAX_HISTORY_MESSAGES = 20;
-
-/** Blanked out of a message before it's sent, as Google's free tier may keep what it's sent. */
-const EMAIL_ADDRESS = /\S+@\S+\.\S+/g;
-const UK_MOBILE = /(\+44\s?7|\b07)\d{3}\s?\d{3}\s?\d{3}\b/g;
 
 const ERROR_MESSAGE =
   'Sorry, I can’t reply right now. Please try again in a minute. If you need support now, use the Need help now page.';
@@ -49,7 +46,8 @@ export function startCheckinChat(about, opener) {
       /** @type {import('firebase/ai').Content} */
       const message = {
         role: 'user',
-        parts: [{ type: 'text', text: text.replace(EMAIL_ADDRESS, '[email]').replace(UK_MOBILE, '[phone number]') }]
+        // Emails and phone numbers are blanked first, as Google's free tier may keep what it's sent.
+        parts: [{ type: 'text', text: blankContactDetails(text) }]
       };
       try {
         // Whole exchanges only, so what's sent always starts with one of the student's messages.

@@ -13,18 +13,28 @@ import { db, getFirebaseAuth } from '#lib/firebase/client.js';
 /** @typedef {{ id: string, title: string, done: boolean }} Task */
 
 /**
- * Loads the signed-in student's saved checklist, or null if they haven't saved one (or aren't signed in).
- * null means "not known", so the chat says nothing about the checklist instead of guessing: it must
- * never claim to see a checklist that was never saved.
- * @returns {Promise<Task[] | null>}
+ * What the check-in chat reads from the signed-in student's record (students/{uid}), in one read:
+ * their saved checklist, and the course and interests they gave when they signed up. Nothing else is
+ * taken from it: not their name, email or arrival date. The course and interests are passed on as
+ * saved; describeForGemini() in opener.js tidies them.
+ * tasks is null if they haven't saved a checklist (or aren't signed in). null means "not known", so
+ * the chat says nothing about the checklist instead of guessing: it must never claim to see a
+ * checklist that was never saved.
+ * @returns {Promise<{ tasks: Task[] | null, course: unknown, interests: unknown }>}
  */
-export async function loadSavedChecklist() {
+export async function loadForChat() {
   const user = getFirebaseAuth().currentUser;
-  if (!user) return null;
-  const saved = (await getDoc(doc(db, 'students', user.uid))).data()?.checklist;
-  if (!Array.isArray(saved)) return null;
-  // Keep only well-formed tasks, in case the record was edited by hand in the console.
-  return saved
-    .filter((task) => task && typeof task.id === 'string' && typeof task.title === 'string')
-    .map((task) => ({ id: task.id, title: task.title, done: task.done === true }));
+  if (!user) return { tasks: null, course: null, interests: null };
+  const data = (await getDoc(doc(db, 'students', user.uid))).data();
+  const saved = data?.checklist;
+  return {
+    // Keep only well-formed tasks, in case the record was edited by hand in the console.
+    tasks: Array.isArray(saved)
+      ? saved
+          .filter((task) => task && typeof task.id === 'string' && typeof task.title === 'string')
+          .map((task) => ({ id: task.id, title: task.title, done: task.done === true }))
+      : null,
+    course: data?.course ?? null,
+    interests: data?.interests ?? null
+  };
 }

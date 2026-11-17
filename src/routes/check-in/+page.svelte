@@ -6,7 +6,7 @@
   import BottomNav from '#lib/components/BottomNav.svelte';
   import { currentUid, watchSignedIn } from '#lib/firebase/auth.js';
   import { sendToLogin } from '#lib/login-redirect.js';
-  import { loadSavedChecklist } from '#lib/checkin/saved-checklist.js';
+  import { loadForChat } from '#lib/checkin/saved-checklist.js';
   import { loadMyMatch } from '#lib/matching/matches.js';
   import { buildOpener, describeForGemini } from '#lib/checkin/opener.js';
   import { startCheckinChat } from '#lib/checkin/chat.js';
@@ -38,7 +38,8 @@
 
   /**
    * Shows the conversation kept from earlier, if it's theirs. Otherwise builds the first messages
-   * from the student's match and checklist, and starts a new conversation.
+   * from the student's match and checklist, and starts a new conversation, telling Gemini about
+   * their match, checklist, course and interests (see describeForGemini in opener.js).
    */
   async function start() {
     const uid = currentUid();
@@ -53,10 +54,12 @@
     clearChat(uid);
     const conversation = chatSession.conversation;
     // If either can't be loaded, the chat still starts; it just says less.
-    const [match, tasks] = await Promise.all([
+    const [match, record] = await Promise.all([
       loadMyMatch().catch((err) => (console.error(err), undefined)),
-      loadSavedChecklist().catch((err) => (console.error(err), null))
+      loadForChat().catch((err) => (console.error(err), { tasks: null, course: null, interests: null }))
     ]);
+    const tasks = record.tasks;
+    const profile = { course: record.course, interests: record.interests };
     // Logged out, or started again, while those were loading.
     if (chatSession.conversation !== conversation) return;
 
@@ -71,7 +74,7 @@
     // Gemini is told the same facts and first messages, but without the mentor's name.
     const withoutName = match?.status === 'matched' ? { ...match, mentorName: null } : match;
     setGeminiChat(
-      startCheckinChat(describeForGemini({ match, tasks }), buildOpener({ match: withoutName, tasks, justSignedUp }).messages)
+      startCheckinChat(describeForGemini({ match, tasks, profile }), buildOpener({ match: withoutName, tasks, justSignedUp }).messages)
     );
     chatSession.started = true;
   }
@@ -124,10 +127,14 @@
     <p class="muted" role="status">Loading…</p>
   {:else}
     <p class="muted">
-      Replies are written by Google’s Gemini AI. This chat isn’t saved: it stays while the app is open
-      in this tab, until you log out, and nothing you say is passed on to the university or your
-      mentor. Google may use messages to improve its services, so please leave out names, contact
-      details and anything you’d want kept private.
+      Replies are written by Google’s Gemini AI. To help, Gemini is told whether you have a mentor and
+      why you were matched, how often you asked to meet, your checklist progress, and the course and
+      interests you gave when you signed up. It’s never told your name or email, or your mentor’s.
+    </p>
+    <p class="muted">
+      This chat isn’t saved: it stays while the app is open in this tab, until you log out, and nothing
+      you say is passed on to the university or your mentor. Google may use messages to improve its
+      services, so please leave out names, contact details and anything you’d want kept private.
     </p>
 
     <div class="messages" aria-live="polite">
