@@ -14,7 +14,13 @@ export async function GET({ url, cookies }) {
   const { redirect: back, session } = await finishConnect({
     cookieKey: /** @type {Buffer} */ (settings.cookieKey),
     client: clientFor(url.origin),
-    query: { code: url.searchParams.get('code'), state: url.searchParams.get('state'), error: url.searchParams.get('error') },
+    query: {
+      code: url.searchParams.get('code'),
+      state: url.searchParams.get('state'),
+      error: url.searchParams.get('error'),
+      // Only compared with the one answer that has its own message (isNotRegistered); never shown.
+      errorDescription: url.searchParams.get('error_description')
+    },
     flowCookie,
     origin: url.origin
   });

@@ -24,6 +24,20 @@ export const SESSION_MAX_AGE = 120 * 24 * 60 * 60;
 const backToChecklist = (outcome) => `/checklist?blackboard=${outcome}#blackboard`;
 
 /**
+ * What Northumbria's Blackboard answers until IT register AG2 there (seen November 2026). Matched
+ * exactly, so only this answer gets its own message ("not-registered"); Blackboard's own words are
+ * never shown to the student.
+ */
+export const NOT_REGISTERED = { error: 'invalid_request', description: 'Application not registered with site' };
+
+/**
+ * True for Blackboard's "this app isn't registered" answer, and nothing else.
+ * @param {{ error: string | null, errorDescription?: string | null }} query
+ */
+export const isNotRegistered = (query) =>
+  query.error === NOT_REGISTERED.error && query.errorDescription?.trim() === NOT_REGISTERED.description;
+
+/**
  * Starts connecting: where to send the student to sign in to Blackboard, and the sealed flow cookie.
  * @param {{ cookieKey: Buffer, client: import('./client.js').BlackboardClient, uid: string, origin: string, now?: number }} options
  */
@@ -39,11 +53,16 @@ export function startConnect({ cookieKey, client, uid, origin, now = Date.now() 
 /**
  * Finishes connecting, from Blackboard's callback: checks the state against the flow cookie, then
  * swaps the code for tokens (server to server, with the secret and PKCE verifier).
- * @param {{ cookieKey: Buffer, client: import('./client.js').BlackboardClient, query: { code: string | null, state: string | null, error: string | null },
+ * @param {{ cookieKey: Buffer, client: import('./client.js').BlackboardClient,
+ *   query: { code: string | null, state: string | null, error: string | null, errorDescription?: string | null },
  *   flowCookie: string | undefined, origin: string, now?: number }} options
  * @returns {Promise<{ redirect: string, session?: string }>}
  */
 export async function finishConnect({ cookieKey, client, query, flowCookie, origin, now = Date.now() }) {
+  // Blackboard turning AG2 away because IT haven't registered it yet. Checked before the state, as
+  // Blackboard may not send the state back with it; nothing is connected either way, so a forged one
+  // could only show this message.
+  if (isNotRegistered(query)) return { redirect: backToChecklist('not-registered') };
   const flow = unseal(flowCookie, cookieKey);
   if (!flow || !query.state || flow.state !== query.state || now - flow.at > FLOW_MAX_AGE * 1000) return { redirect: backToChecklist('failed') };
   if (query.error) return { redirect: backToChecklist(query.error === 'access_denied' ? 'denied' : 'failed') };

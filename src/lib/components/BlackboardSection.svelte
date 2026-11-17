@@ -42,7 +42,9 @@
     connected: 'Blackboard is connected.',
     denied: 'You didn’t allow access, so nothing was connected.',
     failed: 'Connecting to Blackboard didn’t work. Please try again.',
-    unavailable: 'Blackboard isn’t answering right now. Please try again later.'
+    unavailable: 'Blackboard isn’t answering right now. Please try again later.',
+    // Until IT register AG2 with Blackboard (see isNotRegistered in flow.js).
+    'not-registered': 'Northumbria’s Blackboard hasn’t switched AG2 on yet, so it can’t connect for now. Please try again later.'
   });
 
   /** The words before a module's most important thing. */

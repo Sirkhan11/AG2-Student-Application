@@ -25,7 +25,8 @@ export const MOCK_SCENARIOS = {
   expired: 'The access token has expired (the app should refresh it)',
   revoked: 'The connection was removed in Blackboard (the app should ask to reconnect)',
   down: 'Blackboard is down (it answers 503)',
-  slow: 'Blackboard is too slow to answer'
+  slow: 'Blackboard is too slow to answer',
+  'not-registered': 'Northumbria hasn’t registered AG2 yet (Blackboard turns it away, as it does today)'
 };
 
 const DAY = 86_400_000;
@@ -46,6 +47,14 @@ const random = () => randomBytes(12).toString('hex');
 export function approve({ clientId, redirectUri, state, codeChallenge, method, scenario }) {
   if (clientId !== MOCK_APP_KEY) throw new Error('Unknown app');
   if (method !== 'S256' || !codeChallenge) throw new Error('PKCE (S256) is needed');
+  if (scenario === 'not-registered') {
+    // Word for word what Northumbria's Blackboard sends back today, without the state, as the real
+    // one may leave it out.
+    const back = new URL(redirectUri);
+    back.searchParams.set('error', 'invalid_request');
+    back.searchParams.set('error_description', 'Application not registered with site');
+    return back.href;
+  }
   const code = `mock-code-${random()}`;
   codes.set(code, { redirectUri, challenge: codeChallenge, scenario: Object.hasOwn(MOCK_SCENARIOS, scenario) ? scenario : 'normal' });
   const back = new URL(redirectUri);

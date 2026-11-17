@@ -26,7 +26,7 @@ import { parseHTML } from 'linkedom';
 import { blackboardClient, SCOPE } from '#lib/server/blackboard/client.js';
 import { blackboardSettings } from '#lib/server/blackboard/config.js';
 import { challengeFor, newState, newVerifier, seal, unseal } from '#lib/server/blackboard/crypto.js';
-import { finishConnect, FLOW_COOKIE, readView, SESSION_COOKIE, startConnect } from '#lib/server/blackboard/flow.js';
+import { finishConnect, FLOW_COOKIE, NOT_REGISTERED, readView, SESSION_COOKIE, startConnect } from '#lib/server/blackboard/flow.js';
 import { approve, deny, MOCK_APP_KEY, MOCK_APP_SECRET, MOCK_HOST, mockFetch } from '#lib/server/blackboard/mock.js';
 import { plainText } from '#lib/server/blackboard/read.js';
 import { verifyFirebaseIdToken } from '#lib/server/firebase-token.js';
@@ -387,6 +387,39 @@ const checks = [
     assert.equal(back.searchParams.get('state'), page.state);
     const done = await fetch(back, { redirect: 'manual', headers: { cookie: `${FLOW_COOKIE}=${page.flow}` } });
     assert.equal(done.headers.get('location'), '/checklist?blackboard=denied#blackboard');
+    assert.ok(!done.headers.getSetCookie().some((cookie) => cookie.startsWith(`${SESSION_COOKIE}=`)), 'no session cookie');
+  }],
+  ['Blackboard’s "Application not registered with site" (until IT register AG2) gets its own message, with or without the state; any other error stays "failed"', async () => {
+    const { url, flow } = startConnect({ cookieKey: KEY, client: client(), uid: 'student-not-registered', origin: ORIGIN });
+    const state = new URL(url).searchParams.get('state');
+    const notRegistered = { code: null, error: 'invalid_request', errorDescription: 'Application not registered with site' };
+    for (const query of [{ ...notRegistered, state }, { ...notRegistered, state: null }, { ...notRegistered, state: 'forged' }]) {
+      assert.deepEqual(await finishConnect({ cookieKey: KEY, client: client(), query, flowCookie: flow, origin: ORIGIN }), { redirect: '/checklist?blackboard=not-registered#blackboard' }, `state ${query.state}`);
+    }
+    for (const [error, errorDescription] of [['invalid_request', 'Missing redirect_uri'], ['invalid_request', null], ['server_error', 'Application not registered with site'],
+      ['invalid_request', 'application not registered with site.'], ['access_denied', 'Application not registered with site']]) {
+      const { redirect } = await finishConnect({ cookieKey: KEY, client: client(), query: { code: null, state, error, errorDescription }, flowCookie: flow, origin: ORIGIN });
+      assert.equal(redirect, error === 'access_denied' ? '/checklist?blackboard=denied#blackboard' : '/checklist?blackboard=failed#blackboard', `${error} / ${errorDescription}`);
+    }
+    assert.deepEqual(NOT_REGISTERED, { error: 'invalid_request', description: 'Application not registered with site' });
+  }],
+  ['The section says so in its own words and never shows Blackboard’s text; the callback passes the description only to compare it', () => {
+    const section = readFileSync('src/lib/components/BlackboardSection.svelte', 'utf8');
+    assert.match(section, /'not-registered': 'Northumbria’s Blackboard hasn’t switched AG2 on yet, so it can’t connect for now\. Please try again later\.'/);
+    assert.doesNotMatch(section, /error_description|errorDescription|not registered with site/i);
+    assert.match(readFileSync('src/routes/blackboard/callback/+server.js', 'utf8'), /errorDescription: url\.searchParams\.get\('error_description'\)/);
+  }],
+  ['The pretend Allow page: choosing "not registered" and pressing Allow comes back through the callback as not-registered', async () => {
+    const server = await devServer();
+    const page = await openAllowPage(server);
+    const allow = /** @type {Form} */ (page.forms.find((form) => form.button === 'Allow'));
+    allow.body.set('scenario', 'not-registered');
+    const response = await submit(server, allow);
+    assert.equal(response.status, 303);
+    const back = new URL(/** @type {string} */ (response.headers.get('location')), server.base);
+    assert.equal(back.searchParams.get('error_description'), 'Application not registered with site');
+    const done = await fetch(back, { redirect: 'manual', headers: { cookie: `${FLOW_COOKIE}=${page.flow}` } });
+    assert.equal(done.headers.get('location'), '/checklist?blackboard=not-registered#blackboard');
     assert.ok(!done.headers.getSetCookie().some((cookie) => cookie.startsWith(`${SESSION_COOKIE}=`)), 'no session cookie');
   }],
   ['The pretend Allow page: what its forms post is checked as the page is (another site\'s callback, no address, another app), and the old bare "?/allow" is refused', async () => {
