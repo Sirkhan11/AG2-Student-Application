@@ -272,11 +272,11 @@ const offline = [
     assert.deepEqual([lastReplies(declined)[0].text, declined.endings[0]?.outcome], [SAYS.declined, 'declined']);
   }],
   ['Checklist help is never just a page link: the chat never offers the Checklist page; after not now, only if they ask', () => {
-    const request = chatRequest({ about: '', opener: [], shortlist: [], options: { mentor: 'no', checklist: 'yes', hasMentor: false, tasksLeft: ['Enrol'] } });
+    const request = chatRequest({ about: '', opener: [], shortlist: [], options: { mentor: 'no', checklist: 'yes', hasMentor: false, tasks: ['Enrol'], tasksLeft: ['Enrol'] } });
     const schema = /** @type {any} */ (request.generationConfig.responseSchema);
     assert.ok(!schema.properties.page.enum.includes('Checklist'));
-    assert.deepEqual(request.actions.slice(0, 2), ['checklist', 'checklist-offer']);
-    assert.deepEqual(schema.properties.task.enum, ['none', 'Enrol']);
+    assert.ok(request.actions.includes('checklist') && request.actions.includes('checklist-offer'));
+    assert.deepEqual(schema.properties.task.enum, ['not sure', 'Enrol']);
     const asked = chatRequest({ about: '', opener: [], shortlist: [], options: { mentor: 'no', checklist: 'if-asked', hasMentor: false } });
     assert.ok(asked.actions.includes('checklist') && !asked.actions.includes('checklist-offer'));
   }],
@@ -312,7 +312,7 @@ const offline = [
     assert.match(page, /chatFlowFor\('checklist'\)\?\.stop\(\{ quietly: true \}\)/);
     assert.match(page, /if \(reply\.offers\?\.\[0\] === 'checklist'\) await checklistTalk\(\)\.start\(\{ from: reply\.startAt \}\);/);
     assert.match(page, /else if \(reply\.offers\?\.\[0\] === 'checklist-offer'\) checklistTalk\(\)\.offer\(\);/);
-    assert.match(page, /if \(opener\.asks\) await checklistTalk\(\)\.start\(\{ asked: true \}\);/);
+    assert.match(page, /if \(opener\.asks\) \{\s*await checklistTalk\(\)\.start\(\{ asked: true \}\);/);
     assert.deepEqual(QUICK.yesNo.map((reply) => reply.value), ['Yes', 'Not yet']);
   }]
 ];
@@ -420,6 +420,31 @@ async function inTheBrowser(where) {
     await page.waitFor(last('Have you joined a society yet?'));
     await page.answer('stop');
     report('Typing stop ends it', (await page.waitFor(has(SAYS.stopped))) && !(await page.evaluate(`Boolean(document.querySelector('.quick'))`)));
+
+    // 6. From any message, after it's stopped: Thomas's own words tick the society, with Undo.
+    /** Whether the society task is ticked in Firestore. */
+    const societyDone = async () =>
+      (await db.read(`students/${uid}`))?.fields?.checklist?.arrayValue?.values?.find((/** @type {any} */ value) => value.mapValue.fields.id.stringValue === 'society')?.mapValue?.fields?.done?.booleanValue;
+    gemini.replyWith({ action: 'tick', task: 'Join a society', say: 'Brilliant, I have ticked that off for you.' });
+    await page.answer('ah brill ive joined that now can you tick it off my list?');
+    const confirmed = await page.waitFor(has('Ticked: Join a society.'));
+    let saved = false;
+    for (let i = 0; i < 40 && !saved; i++) {
+      saved = (await societyDone()) === true;
+      if (!saved) await sleep(250);
+    }
+    const said = await page.bubbles();
+    report('From any message: "ah brill ive joined that now can you tick it off my list?" ticks it in Firestore, confirmed in one line with Undo, no page link',
+      confirmed && saved && !said.some((text) => /I have ticked/.test(text)) && !(await page.evaluate(`Boolean(document.querySelector('.messages a[href="/checklist"]'))`))
+        && (await page.evaluate(`[...document.querySelectorAll('.ticked button')].some((b) => b.textContent.trim() === 'Undo' && !b.disabled)`)),
+      `confirmed ${confirmed}, saved ${saved}`);
+    await page.evaluate(`([...document.querySelectorAll('.ticked button')].filter((b) => b.textContent.trim() === 'Undo').at(-1).click(), true)`);
+    let undone = false;
+    for (let i = 0; i < 40 && !undone; i++) {
+      undone = (await societyDone()) === false;
+      if (!undone) await sleep(250);
+    }
+    report('Undo puts it back in Firestore', undone && (await page.waitFor(has('Okay, I’ve put that back as it was.'))));
   } finally {
     await page.close();
     app.stop();

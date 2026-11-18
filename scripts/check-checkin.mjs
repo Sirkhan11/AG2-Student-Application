@@ -15,7 +15,8 @@ import { buildOpener, describeForGemini, tidyProfile } from '#lib/checkin/opener
 import { blankContactDetails } from '#lib/checkin/private-details.js';
 import { isCrisis } from '#lib/checkin/safety.js';
 import { chatRequest, CHAT_PAGES } from '#lib/checkin/chat-prompt.js';
-import { MAX_LINKS, readChatReply, REMINDER_OFFER, tidySay } from '#lib/checkin/chat-replies.js';
+import { MAX_LINKS, NOT_REMEMBERED, readChatReply, REMINDER_OFFER, tidySay } from '#lib/checkin/chat-replies.js';
+import { FINDER_LINES } from '#lib/checklist/how-to.js';
 import { startsAfresh } from '#lib/checkin/keep-chat.js';
 import { chatWith, ERROR_MESSAGE, UNAVAILABLE_MESSAGE } from '#lib/checkin/chat-turns.js';
 import { isOutOfCredit } from '#lib/firebase/ai-errors.js';
@@ -187,8 +188,13 @@ const checks = [
   }],
   ['Only the actions the app allows now are offered: a mentor only without one, their mentor only when matched, the checklist only with tasks left', () => {
     const actions = (/** @type {any} */ options) => chatRequest({ about: '', opener: [], shortlist: [], options }).actions;
-    assert.deepEqual(actions({ mentor: 'yes', checklist: 'yes', hasMentor: false }), ['checklist', 'checklist-offer', 'mentor', 'reminder', 'remember']);
-    assert.deepEqual(actions({ mentor: 'no', checklist: 'no', hasMentor: true }), ['your-mentor', 'change-mentor', 'reminder', 'remember']);
+    const always = ['gp-finder', 'dentist-finder', 'contacts', 'ask4help'];
+    const checklist = ['tick', 'untick', 'add-task', 'remove-task', 'reminder', 'calendar'];
+    assert.deepEqual(actions({ mentor: 'yes', checklist: 'yes', hasMentor: false }), [...checklist, 'checklist', 'checklist-offer', ...always, 'mentor', 'remember', 'offer-to-remember']);
+    assert.deepEqual(actions({ mentor: 'no', checklist: 'no', hasMentor: true, checklistKnown: false }), [...always, 'your-mentor', 'change-mentor', 'remember', 'offer-to-remember'], 'no checklist: nothing to change on it');
+    assert.ok(actions({ mentor: 'no', checklist: 'no', hasMentor: false, ownTasks: true }).includes('rename-task'), 'renaming only with tasks of their own');
+    assert.ok(actions({ mentor: 'no', checklist: 'no', hasMentor: false, notes: ['Likes salsa'] }).includes('forget'), 'forgetting only with something remembered');
+    assert.ok(actions({ mentor: 'no', checklist: 'no', hasMentor: false, howTo: ['Enrol: online'] }).includes('how-to'));
     const asked = chatRequest({ about: '', opener: [], shortlist: [], options: { mentor: 'if-asked', checklist: 'if-asked', hasMentor: false } }).systemInstruction;
     assert.equal(asked.match(/they said not now earlier, so only if they ask/gi)?.length, 2);
   }],
@@ -223,30 +229,46 @@ const checks = [
     const many = readChatReply(json({ suggest: ['Film', 'Swimming', 'Food Pantry', 'Music'], page: 'NHS Guide', say: 'Ideas.' }), { shortlist: listOf(['Film', 'Swimming', 'Food Pantry', 'Music']), actions: [] });
     assert.deepEqual(many?.links.map((link) => link.label), ['Film', 'Swimming', 'Food Pantry']);
   }],
-  ['A page is a button under the reply; the Checklist is never one (the chat goes through it itself), and nor is a made-up page', () => {
+  ['A page is a button under the reply, only for what the chat can’t show itself: never the Checklist, the GP finder, their mentor or what it knows', () => {
     const page = (/** @type {string} */ name) => readChatReply(json({ page: name, say: 'See here.' }), { shortlist: [], actions: [] })?.links ?? [];
-    assert.deepEqual(page('GP Finder'), [{ label: 'GP Finder', href: '/gp-finder', external: false }]);
-    assert.deepEqual(page('Checklist'), []);
-    assert.deepEqual(page('Find a mentor'), []);
-    assert.ok(!CHAT_PAGES.includes('Checklist'));
+    assert.deepEqual(page('NHS Guide'), [{ label: 'NHS Guide', href: '/nhs-guide', external: false }]);
+    for (const name of ['Checklist', 'GP Finder', 'Your Mentor', 'What the chat knows', 'Find a mentor']) assert.deepEqual(page(name), [], name);
+    assert.deepEqual(CHAT_PAGES, ['NHS Guide', 'Need Help Now']);
     assert.equal(findPage('  need   HELP now '), APP_PAGES.find((page) => page.href === '/need-help'));
-    assert.equal(findPage('Find a GP')?.href, '/gp-finder');
   }],
-  ['Only an action the app allowed counts; a reminder must fit on the checklist; a note must pass the screen', () => {
-    const read = (/** @type {Record<string, unknown>} */ reply, actions = ['reminder', 'remember', 'mentor']) => readChatReply(json({ say: 'Okay.', ...reply }), { shortlist: [], actions })?.action ?? null;
+  ['Only an action the app allowed counts; a task must be one really on their checklist; a reminder must fit; a note must pass the screen', () => {
+    const list = defaultTasks();
+    const read = (/** @type {Record<string, unknown>} */ reply, actions = ['reminder', 'remember', 'mentor', 'tick', 'add-task', 'forget', 'how-to']) =>
+      readChatReply(json({ say: 'Okay.', ...reply }), { shortlist: [], actions, tasks: list, notes: ['Likes salsa'] })?.action ?? null;
     assert.deepEqual(read({ action: 'mentor' }), { id: 'mentor' });
     assert.equal(read({ action: 'your-mentor' }), null, 'not allowed this turn');
-    assert.deepEqual(read({ action: 'reminder', reminder: ' "Open a bank account." ' }), { id: 'reminder', text: 'Open a bank account' });
-    assert.equal(read({ action: 'reminder', reminder: `Do ${'x'.repeat(100)}` }), null, 'too long for the checklist');
-    assert.equal(read({ action: 'reminder', reminder: 'Call [phone number]' }), null, 'a blanked contact detail');
-    assert.equal(read({ action: 'reminder', reminder: '' }), null);
-    assert.deepEqual(read({ action: 'remember', remember: 'Plans the week every Sunday' }), { id: 'remember', text: 'Plans the week every Sunday' });
-    assert.equal(read({ action: 'remember', remember: 'Worried about money' }), null, 'never money or worries');
+    assert.deepEqual(read({ action: 'tick', task: 'Join a society' }), { id: 'tick', taskId: 'society' });
+    assert.deepEqual(read({ action: 'tick', task: 'one of their own' }), { id: 'tick', own: true }, 'matched by the app, on their words');
+    assert.deepEqual(read({ action: 'tick', task: 'Learn Mandarin' }), { id: 'tick' }, 'not on their checklist: the app asks which');
+    assert.deepEqual(read({ action: 'add-task', title: ' "Open a bank account." ' }), { id: 'add-task', title: 'Open a bank account' });
+    assert.deepEqual(read({ action: 'reminder', title: ' "Buy a bus pass." ' }), { id: 'reminder', text: 'Buy a bus pass' });
+    assert.equal(read({ action: 'reminder', title: `Do ${'x'.repeat(100)}` }), null, 'too long for the checklist');
+    assert.equal(read({ action: 'reminder', title: 'Call [phone number]' }), null, 'a blanked contact detail');
+    assert.deepEqual(read({ action: 'remember', note: 'Plans the week every Sunday' }), { id: 'remember', text: 'Plans the week every Sunday' });
+    assert.equal(read({ action: 'remember', note: 'Worried about money' }), null, 'never money or worries');
+    assert.deepEqual(read({ action: 'forget', forget: 'Likes salsa' }), { id: 'forget', which: 'Likes salsa' });
+    assert.equal(read({ action: 'forget', forget: 'Something else' }), null, 'only what it remembers');
+    assert.deepEqual(read({ action: 'how-to', task: 'Enrol' }), { id: 'how-to', taskId: 'enrol' });
+    assert.equal(readChatReply(json({ action: 'remember', note: 'Has asthma', say: 'Sure!' }), { shortlist: [], actions: ['remember'] })?.say, NOT_REMEMBERED);
+  }],
+  ['Finding a GP or dentist always comes with the app’s own words on how it works, so the chat never refuses it', () => {
+    const say = (/** @type {string} */ id) => readChatReply(json({ action: id, say: 'I cannot tell you where the closest dentist is.' }), { shortlist: [], actions: [id] })?.say;
+    assert.equal(say('dentist-finder'), FINDER_LINES.dentist);
+    assert.equal(say('gp-finder'), FINDER_LINES.gp);
+    const instructions = chatRequest({ about: '', opener: [], shortlist: [], options: { mentor: 'no', checklist: 'no', hasMentor: false } }).systemInstruction;
+    assert.match(instructions, /Finding a GP, a dentist or any other service isn't medical advice: never refuse it\./);
+    assert.match(instructions, /Everything the app can do is an action below, from any message, so never send them to a page or tell them to tap something to do it\./);
+    assert.doesNotMatch(instructions, /only (when|their) (the student )?taps?|only their tap/i, 'no rule that only their tap can do it');
   }],
   ['The student never sees a marker, and a last sentence offering to remember goes (the card asks that); "Remember to…" stays', () => {
     assert.equal(tidySay('See [[Checklist and {{task: x}} [[Film]]. {{mentor}}'), 'See Checklist and Film.');
-    const say = (/** @type {string} */ text, action = 'none') => readChatReply(json({ action, remember: 'Plans on Sundays', say: text }), { shortlist: [], actions: ['remember'] })?.say;
-    assert.equal(say('Nice plan! Want me to remember that for next time?', 'remember'), 'Nice plan!');
+    const say = (/** @type {string} */ text, action = 'none') => readChatReply(json({ action, note: 'Plans on Sundays', say: text }), { shortlist: [], actions: ['offer-to-remember'] })?.say;
+    assert.equal(say('Nice plan! Want me to remember that for next time?', 'offer-to-remember'), 'Nice plan!');
     assert.equal(say('Nice plan! I can remember that if you like.'), 'Nice plan!');
     assert.equal(say('Remember to bring photo ID.'), 'Remember to bring photo ID.');
   }],
@@ -343,45 +365,46 @@ const checks = [
     assert.match(note, /This chat isn’t saved: it stays while the app is open in this tab, until you log out/);
     assert.match(note, /If it suggests a reminder and you tap Add, that task is saved to your checklist,/);
   }],
-  ['The chat is told to ask about reminders once at a natural point, to give one short task, and that only their tap adds it', () => {
+  ['Reminders: what one is (a task on their checklist), asked once at a natural point; one they ask for is added straight away; one the chat suggests has an Add card', () => {
     const { systemInstruction } = chatRequest({ about: '(about)', opener: ['(opener)'], shortlist: [], options: { mentor: 'no', checklist: 'no', hasMentor: false } });
+    assert.match(systemInstruction, /A reminder here is a task on their checklist: if they ask what reminders are, say so in one line and offer to add one now\./);
     assert.match(systemInstruction, /Once in the conversation, at a natural point .* ask whether there's anything they'd like reminding about while they settle in\. Only once\./);
-    assert.match(systemInstruction, /"reminder": they name something they'd like reminding about\. Put one short task for it in reminder/);
-    assert.match(systemInstruction, /only their tap adds it, so in say just offer it, such as "Here's a reminder you can add to your checklist\." Never say you've added or set it\./);
-    assert.match(systemInstruction, /Never say you've done something for them, or that you will\./);
+    assert.match(systemInstruction, /"add-task": they ask you to add something to their checklist, or to remind them about something/);
+    assert.match(systemInstruction, /"reminder": a task would help with what they’ve said, and they haven’t asked for one: the app shows it with an Add button\./);
+    assert.match(systemInstruction, /"calendar": they’d rather keep things in their own calendar, such as Outlook/);
   }],
-  ['Whatever Gemini says: a reminder already on their checklist says so instead of a card, and "I’ve added it" never shows', () => {
+  ['Whatever Gemini says: a suggested reminder already on their checklist says so instead of a card, and "I’ve added it" never shows with an Add card', () => {
     const read = (/** @type {Record<string, unknown>} */ reply) => readChatReply(json({ action: 'reminder', ...reply }), { shortlist: [], actions: ['reminder'], tasks: defaultTasks() });
-    const there = read({ reminder: 'Register with a GP', say: 'I have set a reminder for you to register with a GP.' });
+    const there = read({ title: 'Register with a GP', say: 'I have set a reminder for you to register with a GP.' });
     assert.deepEqual([there?.say, there?.action], ['That’s already on your checklist: “Register with a GP”.', null]);
-    assert.deepEqual([read({ reminder: 'Open a bank account', say: 'I’ve added that to your list.' })?.say], [REMINDER_OFFER]);
-    assert.equal(read({ reminder: 'Open a bank account', say: 'Good idea. I have added opening a bank account to your reminders. Anything else?' })?.say, 'Good idea. Anything else?');
-    assert.equal(read({ reminder: 'Open a bank account', say: 'Good idea. Here it is for you to add.' })?.say, 'Good idea. Here it is for you to add.');
+    assert.deepEqual([read({ title: 'Open a bank account', say: 'I’ve added that to your list.' })?.say], [REMINDER_OFFER]);
+    assert.equal(read({ title: 'Open a bank account', say: 'Good idea. I have added opening a bank account to your reminders. Anything else?' })?.say, 'Good idea. Anything else?');
   }],
-  ['No Remember card while they’re asking something, and no Your Mentor button with their mentor’s card', async () => {
+  ['No Remember card offered while they’re asking something, and no Your Mentor button with their mentor’s card', async () => {
     /** @type {any[]} */
     const requests = [];
     const chat = chatWith({ generateContent: async (/** @type {any} */ request) => (requests.push(request), /** @type {any} */ ({ response: { text: () => json({ say: 'Nice.' }), candidates: [] } })) }, { facts: noFacts, opener: ['Hi!'] });
     await chat.send('I love films. Any societies?');
     await chat.send('I plan my week every Sunday.');
-    assert.ok(!requests[0].generationConfig.responseSchema.properties.action.enum.includes('remember'));
-    assert.ok(requests[1].generationConfig.responseSchema.properties.action.enum.includes('remember'));
+    assert.ok(!requests[0].generationConfig.responseSchema.properties.action.enum.includes('offer-to-remember'));
+    assert.ok(requests[1].generationConfig.responseSchema.properties.action.enum.includes('offer-to-remember'));
+    assert.ok(requests[0].generationConfig.responseSchema.properties.action.enum.includes('remember'), 'they can always ask it to remember something');
     const card = readChatReply(json({ action: 'your-mentor', page: 'Your Mentor', say: 'Here they are.' }), { shortlist: [], actions: ['your-mentor'] });
     assert.deepEqual(card?.links, []);
   }],
-  ['chatWith gives the page the suggested task for its card, and Gemini sees only what it said', async () => {
+  ['chatWith gives the page a suggested reminder for its card, and Gemini sees only what it said', async () => {
     /** @type {any[]} */
     const requests = [];
     const chat = chatWith(
       {
         generateContent: async (/** @type {any} */ request) => {
           requests.push(structuredClone(request));
-          return /** @type {any} */ ({ response: { text: () => json({ action: 'reminder', reminder: 'Buy a winter coat', say: 'Good idea, here it is.' }), candidates: [{ finishReason: 'STOP' }] } });
+          return /** @type {any} */ ({ response: { text: () => json({ action: 'reminder', title: 'Buy a winter coat', say: 'Good idea, here it is.' }), candidates: [{ finishReason: 'STOP' }] } });
         }
       },
       { facts: { match: null, tasks: defaultTasks() }, opener: ['Hi!'] }
     );
-    const reply = await chat.send('Can you remind me to buy a coat?');
+    const reply = await chat.send('It’s getting cold up here');
     assert.equal(reply.text, 'Good idea, here it is.');
     assert.deepEqual(reply.tasks, ['Buy a winter coat']);
     await chat.send('Thanks');

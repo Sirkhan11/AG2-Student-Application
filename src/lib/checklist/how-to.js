@@ -267,3 +267,23 @@ export const TALK = Object.freeze({
 
 /** A task's conversation details, or null for one of their own. @param {string} id */
 export const talkFor = (id) => TALK[id] ?? null;
+
+/**
+ * What the chat says with its GP finder or dentist search, whenever a student asks where the nearest
+ * GP or dentist is: the app's own words, from the how-tos above (TALK.gp and TALK.dentist), so the
+ * chat never refuses to help find one and never makes anything up.
+ */
+export const FINDER_LINES = Object.freeze({
+  gp: 'Find a surgery near you below. To register, use its website if it offers it (about 15 minutes) or fill in a form at the surgery. It’s free, and you don’t need ID, though a surgery may ask for your passport and tenancy agreement.',
+  dentist: 'Find a dentist near you below, then contact the practice and ask for an NHS appointment. You may be asked to join a waiting list, and most adults pay for NHS dental appointments.'
+});
+
+/**
+ * How to do a standard task, in one line for the chat's ordinary instructions (where, and what to
+ * take), so it can answer "how do I enrol?" from any message without making anything up.
+ * @param {string} id @param {string} title
+ */
+export function howToLine(id, title) {
+  const talk = TALK[id];
+  return talk ? `${title}: ${[...talk.first.slice(0, 1), ...talk.where, ...talk.bring.slice(0, 1)].join(' ')}` : '';
+}

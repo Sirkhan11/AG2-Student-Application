@@ -1,7 +1,8 @@
 // A link that opens Outlook on the web (outlook.office.com, the student's university Microsoft 365
-// account) with a new calendar item already filled in. Made on the phone from what the page shows:
-// nothing goes to the app's server, and no Microsoft permissions are needed. The student's own tap
-// sends it to Microsoft.
+// account) with a new calendar item already filled in: a Blackboard date, or something they asked the
+// check-in chat to put in their calendar. Made on the phone from what the page shows: nothing goes to
+// the app's server, and no Microsoft permissions are needed. The student's own tap sends it to
+// Microsoft.
 //
 // On phones, a .ics file often never reaches Outlook (the Outlook app doesn't import them, and iPhones
 // hand them to Apple Calendar), hence this link next to the .ics. Microsoft doesn't document it, and
@@ -13,7 +14,7 @@ const utc = (time) => new Date(time).toISOString().replace(/\.\d{3}Z$/, 'Z');
 
 /**
  * Outlook on the web's "new event" page for a calendar entry (see ics.js for the entries).
- * @param {import('./ics.js').CalendarEntry} entry
+ * @param {import('#lib/calendar/ics.js').CalendarEntry} entry
  */
 export function outlookWebUrl(entry) {
   const query = new URLSearchParams({

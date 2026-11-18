@@ -1,4 +1,3 @@
-import { APP_PAGES } from '#lib/checkin/app-pages.js';
 
 // The check-in chat's model and instructions. The app, not Gemini, decides what kind of turn each
 // request is (a mode), and sends only that mode's instructions, after a short core that every mode
@@ -42,7 +41,7 @@ export const afterMentorNote = (outcome) =>
 export function coreInstructions(about, opener) {
   return `You are the check-in chat in AG2, an app that helps new students at Northumbria University settle in. You're talking with one student.
 Write in plain, warm, friendly UK English: one to three short sentences, plain text, no markdown, lists or emoji. Ask at most one question.
-You only write words. The app shows any cards and links, and does every action itself, only when the student taps. Never say you've done something for them, or that you will.
+You only write words: the app carries out any action you choose and shows any cards and links. Never claim to have done something yourself, and never say you can't do something the app can do.
 
 Safety (always):
 - You're not a counsellor, doctor or emergency service. Don't diagnose, and don't give medical, legal or money advice: say who could help instead.
@@ -72,34 +71,52 @@ function shortlistLines(shortlist) {
 }
 
 /**
- * What the app allows in an ordinary chat turn, decided from what it knows (chatOptions in opener.js).
- * mentor: offering to find them a mentor ('if-asked': only if they ask for one, after a not now);
- * checklist: going through their checklist ('if-asked' likewise); hasMentor: showing their mentor, or
- * the form for a different one.
- * remember: offering to remember something (not while they're asking a question, so a request for
- * suggestions never gets a Remember card). tasksLeft: the standard checklist tasks still to do, by
- * title, so going through the checklist can start at one they name.
+ * What the app allows in an ordinary chat turn, decided from what it knows (chatOptions in opener.js,
+ * and chat-turns.js for the checklist and notes). mentor: offering to find them a mentor ('if-asked':
+ * only if they ask for one, after a not now); checklist: going through their checklist ('if-asked'
+ * likewise); hasMentor: showing their mentor, or the form for a different one; remember: offering to
+ * remember something (not while they're asking a question, so a request for suggestions never gets a
+ * Remember card).
+ * checklistKnown: their checklist could be loaded, so the chat can change it; tasks: the standard tasks
+ * on it, by title (Gemini never sees their own tasks' words: "one of their own" stands for those, and
+ * the app matches them); tasksLeft: the standard ones still to do; ownTasks: whether they have any of
+ * their own; howTo: how to do the standard ones still to do (TALK in how-to.js), one line each;
+ * notes: what they asked the chat to remember, for forgetting.
  * @typedef {{ mentor: 'yes' | 'if-asked' | 'no', checklist: 'yes' | 'if-asked' | 'no', hasMentor: boolean, remember?: boolean,
- *   tasksLeft?: string[] }} ChatOptions
+ *   checklistKnown?: boolean, tasks?: string[], tasksLeft?: string[], ownTasks?: boolean, howTo?: string[], notes?: string[] }} ChatOptions
  */
 
-/** The app pages a chat reply may link to. Never the Checklist: the chat goes through that itself. */
-export const CHAT_PAGES = APP_PAGES.filter((page) => page.name !== 'Checklist').map((page) => page.name);
+/** The app pages a chat reply may link to: only content the chat can't show itself. */
+export const CHAT_PAGES = ['NHS Guide', 'Need Help Now'];
+
+/** What Gemini writes for a task it can't name: one of their own (the app matches their words), or not clear. */
+export const OWN_TASK = 'one of their own';
+export const NOT_SURE = 'not sure';
 
 /**
- * The actions allowed this turn, with the instruction for each.
+ * The actions allowed this turn, with the instruction for each. Every one is available from any
+ * message: the walkthrough and finding a mentor are guided sequences built on the same actions.
  * @param {ChatOptions} options
  * @returns {[string, string][]}
  */
 function chatActions(options) {
   /** @type {[string, string][]} */
   const actions = [];
+  if (options.checklistKnown !== false) {
+    actions.push(['tick', 'they say they’ve done something on their checklist, or ask you to tick it off (such as "ive joined that now can you tick it off my list?" after a society card). Only when they’ve said they’ve done it. task: which one.']);
+    actions.push(['untick', 'they ask you to untick a task, or say they haven’t done one after all (such as "untick that"). task: which one.']);
+    actions.push(['add-task', 'they ask you to add something to their checklist, or to remind them about something (such as "add open a bank account"). title: the task.']);
+    actions.push(['remove-task', 'they ask you to take a task off their checklist (such as "take the dentist one off"). task: which one.']);
+    if (options.ownTasks) actions.push(['rename-task', `they ask you to rename one of their own tasks. task: "${OWN_TASK}"; title: the new name.`]);
+    actions.push(['reminder', 'a task would help with what they’ve said, and they haven’t asked for one: the app shows it with an Add button. title: the task. Not when they’ve asked you to add something (that’s add-task).']);
+    actions.push(['calendar', 'they’d rather keep things in their own calendar, such as Outlook: the app shows "Add to Outlook" and a calendar file for it, and keeps nothing itself. title: what to put in their calendar.']);
+  }
   if (options.checklist !== 'no') {
     actions.push([
       'checklist',
       `they ask for help with their checklist or their tasks, or to go through them (such as "can you help me do them one by one?")${
         options.checklist === 'if-asked' ? '. They said not now earlier, so only if they ask' : ''
-      }. The app starts straight away, asking about one task at a time, so in say just a few words such as "Sure, one at a time." Don't list their tasks, ask about one yourself, or send them to a page.${
+      }. The app starts straight away, asking about one task at a time, so in say just a few words such as "Sure, one at a time." Don't list their tasks or ask about one yourself.${
         options.tasksLeft?.length ? ' If they name one task (such as "can you help me get my student ID?"), put it in task, and the app starts there.' : ''
       }`
     ]);
@@ -110,6 +127,13 @@ function chatActions(options) {
       'they ask what to do next (such as "now what?" or "what should I do?") or what’s left on their checklist. The app’s one-line offer to go through it together is the whole reply, so leave say empty. This is your answer: don’t suggest societies or other things instead.'
     ]);
   }
+  if (options.howTo?.length) {
+    actions.push(['how-to', 'they ask how to do one of their checklist tasks that’s done outside the app (enrolling, joining a society, collecting their student ID): answer in a sentence or two from "How to do their tasks" below. task: which one. The app adds the direct link and says it’ll tick it off when they tell you they’ve done it.']);
+  }
+  actions.push(['gp-finder', 'they ask where the nearest GP or doctor is, or how to find or register with one: the app shows the GP finder under your words (they type their postcode into it: never ask for it), with how registering works.']);
+  actions.push(['dentist-finder', 'they ask where the nearest dentist is, or how to find one: the app shows a dentist search under your words (they type their postcode into it: never ask for it), with how it works.']);
+  actions.push(['contacts', 'they ask for the key numbers to save, such as campus security or emergency numbers: the app shows the key contacts card.']);
+  actions.push(['ask4help', 'they need the university’s help with something you can’t answer, such as their timetable, fees, IT or a form: the app shows Ask4Help (online, or 0191 227 4646).']);
   if (options.mentor !== 'no') {
     actions.push([
       'mentor',
@@ -128,74 +152,97 @@ function chatActions(options) {
       "they want a different mentor. In say, one short, kind sentence saying they can ask the mentoring coordinator here, and only the coordinator will see why. The app shows a short form that goes only to the coordinator, never to their mentor or you. Never ask why or what went wrong. If they might be unsafe, also show the Need Help Now page."
     ]);
   }
-  actions.push([
-    'reminder',
-    "they name something they'd like reminding about. Put one short task for it in reminder: a few words starting with a verb, under 60 characters, such as \"Open a bank account\". If they name several, the first one only. The app shows it with an Add button, and only their tap adds it, so in say just offer it, such as \"Here's a reminder you can add to your checklist.\" Never say you've added or set it."
-  ]);
-  if (options.remember !== false) actions.push([
-    'remember',
-    "they've told you about a plan, a goal or how they like to do things that would help in later chats (not when they're asking for suggestions or help). Put one short line about them in remember, in their words where you can, under 100 characters. The app asks them with a card, so don't ask in say. Never anything about their health, money, worries or feelings, their safety, other people, or contact details, never while they're worried or upset, and not something already in what they asked you to remember."
-  ]);
+  actions.push(['remember', 'they ask you to remember something about them: the app saves it straight away. note: one short line about them, in their words where you can, under 100 characters.']);
+  if (options.remember !== false) {
+    actions.push([
+      'offer-to-remember',
+      "they've told you about a plan, a goal or how they like to do things that would help in later chats, without asking you to remember it (and not when they're asking for suggestions or help): the app asks them with a card, so don't ask in say. note: the line, as for remember."
+    ]);
+  }
+  if (options.notes?.length) actions.push(['forget', 'they ask you to forget something you remember about them, or everything: the app deletes it straight away. forget: which one.']);
   return actions;
 }
 
 /**
  * The request for an ordinary chat turn: the core, this mode's instructions and its JSON schema, and
- * the actions it allows (for chat-replies.js to check against).
+ * what it allows (for chat-replies.js to check against).
  * @param {{ about: string, opener: string[], shortlist: import('#lib/suggestions/shortlist.js').Shortlisted[], options: ChatOptions }} turn
  */
 export function chatRequest({ about, opener, shortlist, options }) {
   const actions = chatActions(options);
+  const ids = actions.map(([id]) => id);
+  const tasks = options.tasks ?? [];
+  const notes = ids.includes('forget') ? options.notes ?? [] : [];
   const instructions = `${coreInstructions(about, opener)}
 
 Now: an ordinary chat. Help with what they ask: settling in, how their day's been, making friends, things to do, their mentor, their checklist, and the Students' Union and Northumbria Sport. If they ask why they were matched with their mentor, use the reasons in what the app knows, in your own words, without adding others. If they ask how often they'll meet, say how often they asked to meet. If they haven't got a mentor yet, say so plainly.
+Everything the app can do is an action below, from any message, so never send them to a page or tell them to tap something to do it.
+A reminder here is a task on their checklist: if they ask what reminders are, say so in one line and offer to add one now.
+Finding a GP, a dentist or any other service isn't medical advice: never refuse it.
 
 Your reply is JSON:
-- say: what you say to them.
-- action: "none", or one thing the app can do for them now:
+- action: "none", or the one thing the app does for them now:
 ${actions.map(([id, rule]) => `  - "${id}": ${rule}`).join('\n')}
-  Choose an action only when it's what they asked for, and never instead of helping with what they asked.
+  Choose an action only when it's what they asked for, and never instead of helping with what they asked. When it changes something, the app does it straight away and confirms it in its own line, so don't confirm it in say.
+- task: for the actions that need one, which task on their checklist: its title, "${OWN_TASK}" for one they added (you aren't told those words; the app matches what they said), or "${NOT_SURE}" if you can't tell which. Otherwise "${NOT_SURE}".
+- title: for add-task, reminder, calendar and rename-task, the task in a few words starting with a verb, under 60 characters (such as "Open a bank account"). Otherwise empty.
+- note: for remember and offer-to-remember, the line. Never anything about their health, money, worries or feelings, their safety, other people, or contact details. Otherwise empty.${notes.length ? '\n- forget: for forget, which thing you remember, or "everything". Otherwise "everything".' : ''}
 - suggest: names from "You may suggest" below, at most 3, or none.
-- page: "none", or one of the app's pages, which shows as a button: "NHS Guide" when they ask how the NHS works, whether they pay to see a doctor or how to register with a GP (answer in one short sentence, without prices or other figures); "GP Finder" to find a GP or dentist near them; "Your Mentor" for their mentor's page; "Need Help Now" for urgent support; "What the chat knows" when they ask what you know or remember about them, or want something forgotten (they can see and delete it there).
+- page: "none", "NHS Guide" when they ask how the NHS works or whether they pay to see a doctor (answer in one short sentence, without prices or other figures), or "Need Help Now" for urgent support.
+- say: what you say to them.
 
 Suggesting societies, clubs and services:
 - Suggest only from "You may suggest" below (the app picked these for this message), and only ones that clearly fit what they've asked about or said they enjoy. A shared word isn't enough. It's fine to suggest none.
 - Suggest only when they ask for ideas, or when one clearly helps with what they've said; never out of the blue. If they ask for ideas but you don't know what they're into, ask what they enjoy instead. If they've only said what they don't like, ask what they do enjoy.
 - If they're worried about money, food, housing, an academic appeal or misconduct, or want to complain, don't advise: suggest the NSU service that helps and say in a few words how.
 - In say, name each one you suggest, exactly as written below, with a few words on why it suits them. Don't name any other society, club or service.
-- The app shows each one as a card with its details: what it is, how to join, who to contact, and for clubs the memberships, prices and training times. So never give those details yourself, and never say you can't see them. If they ask how to join or contact one, or what it's like, suggest it again and say its card has that.
+- The app shows each one as a card with its details: what it is, how to join, who to contact, and for clubs the memberships, prices and training times. So never give those details yourself, and never say you can't see them. If they ask how to contact one, or what it's like, suggest it again and say its card has that.
 - A society marked "only for someone who has said they are" is only for someone who's told you they're part of that group.
 - Northumbria Sport clubs need a paid membership. Never say what a club costs or when it trains, or promise beginner or social sessions: point them to the card.
 - If nothing fits, say so plainly and suggest browsing Societies or Sport, if they're below.
 
-Once in the conversation, at a natural point (when you've finished helping with what they asked, they aren't worried or upset, and you aren't asking anything else), ask whether there's anything they'd like reminding about while they settle in. Only once.
+Once in the conversation, at a natural point (when you've finished helping with what they asked, they aren't worried or upset, and you aren't asking anything else), ask whether there's anything they'd like reminding about while they settle in. Only once.${
+    options.howTo?.length ? `\n\nHow to do their tasks (only these facts):\n${options.howTo.map((line) => `- ${line}`).join('\n')}` : ''
+  }
 
 You may suggest:
 ${shortlistLines(shortlist)}`;
-  const ids = actions.map(([id]) => id);
-  const tasks = ids.includes('checklist') ? options.tasksLeft ?? [] : [];
-  return { systemInstruction: instructions, generationConfig: { responseMimeType: 'application/json', responseSchema: chatSchema(shortlist, ids, tasks) }, actions: ids, tasks };
+  return {
+    systemInstruction: instructions,
+    generationConfig: { responseMimeType: 'application/json', responseSchema: chatSchema(shortlist, ids, tasks, options.ownTasks === true, notes) },
+    actions: ids,
+    tasks,
+    notes
+  };
 }
+
+/** The actions that take a task. */
+const TAKES_TASK = ['tick', 'untick', 'remove-task', 'rename-task', 'how-to', 'checklist'];
+/** The actions that take a title. */
+const TAKES_TITLE = ['add-task', 'reminder', 'calendar', 'rename-task'];
 
 /**
  * The shape of an ordinary chat reply. The decisions come before the words (propertyOrdering), so
  * say is written knowing what the app will show under it.
  * @param {import('#lib/suggestions/shortlist.js').Shortlisted[]} shortlist
  * @param {string[]} actions
- * @param {string[]} [tasks] standard checklist tasks still to do, by title, for the checklist action
+ * @param {string[]} [tasks] the standard tasks on their checklist, by title
+ * @param {boolean} [ownTasks] whether they have any of their own
+ * @param {string[]} [notes] what the chat remembers, for forget
  * @returns {import('firebase/ai').SchemaRequest}
  */
-export function chatSchema(shortlist, actions, tasks = []) {
+export function chatSchema(shortlist, actions, tasks = [], ownTasks = false, notes = []) {
   /** @type {Record<string, import('firebase/ai').SchemaRequest>} */
   const properties = {
     action: { type: 'string', enum: ['none', ...actions] },
-    ...(tasks.length ? { task: { type: 'string', enum: ['none', ...tasks] } } : {}),
+    ...(actions.some((id) => TAKES_TASK.includes(id)) ? { task: { type: 'string', enum: [NOT_SURE, ...tasks, ...(ownTasks ? [OWN_TASK] : [])] } } : {}),
+    ...(actions.some((id) => TAKES_TITLE.includes(id)) ? { title: { type: 'string' } } : {}),
+    ...(actions.includes('remember') ? { note: { type: 'string' } } : {}),
+    ...(notes.length ? { forget: { type: 'string', enum: ['everything', ...notes] } } : {}),
     ...(shortlist.length
       ? { suggest: { type: 'array', items: { type: 'string', enum: shortlist.map(({ suggestion }) => suggestion.name) }, maxItems: 3 } }
       : {}),
     page: { type: 'string', enum: ['none', ...CHAT_PAGES] },
-    ...(actions.includes('reminder') ? { reminder: { type: 'string', description: 'With action "reminder": the task. Otherwise empty.' } } : {}),
-    ...(actions.includes('remember') ? { remember: { type: 'string', description: 'With action "remember": the line to remember. Otherwise empty.' } } : {}),
     say: { type: 'string' }
   };
   const order = Object.keys(properties);

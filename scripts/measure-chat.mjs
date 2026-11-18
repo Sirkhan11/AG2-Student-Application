@@ -25,6 +25,10 @@
 //   and "I haven't enrolled" gets help with enrolling; "not yet" to the GP shows the GP finder; a
 //   task they name starts there; "now what" gets an offer; a change of subject is answered; and no
 //   checklist help is ever just a page link.
+// - anywhere: every action from any message, with Thomas's own messages from the live site, exactly
+//   as typed: ticking after a society card, what a reminder is, keeping things in Outlook, the closest
+//   dentist, "untick that", "add open a bank account", "take the dentist one off" and an unclear
+//   "tick it off": each done in the chat, a change confirmed in one line with Undo, no page link.
 // - conversations: their first name now and then over six turns (in at least one reply, at most
 //   half, never in full), and the reminder question exactly once over a conversation.
 //
@@ -128,6 +132,9 @@ const STUDENTS = {
   'checklist, enrolled': student({ tasks: ticked(['enrol']), profile: { course: 'BSc Nursing', interests: ['dancing'] } }),
   'checklist, student ID next': student({ tasks: ticked(['enrol', 'gp']), profile: { course: 'BSc Nursing', interests: ['dancing'] } }),
   'checklist, not enrolled': student({ tasks: ticked(['gp']), profile: { course: 'BSc Nursing', interests: ['dancing'] } }),
+  // Any message: one who has just been shown the Salsa and Bachata card, and one with the society ticked.
+  anywhere: student({ tasks: ticked(['enrol']), profile: { name: 'Thomas Example', course: 'BSc Computer Science', interests: ['dancing'] } }),
+  'anywhere, society ticked': student({ tasks: ticked(['enrol', 'society']), profile: { name: 'Thomas Example', course: 'BSc Computer Science', interests: ['dancing'] } }),
   'board games': student({
     match: WAITING,
     tasks: ACTION_TASKS,
@@ -600,6 +607,109 @@ for (const test of CHECKLIST) {
   CASES.push({ group: 'checklist', ...test, asks: [], judge: (turns) => [...test.judge(turns), ...neverJustALink(turns)].filter(Boolean) });
 }
 
+// ---------- anywhere: every action from any message ----------
+
+/** The chat's lines that confirm a change, with Undo. @param {Turn[]} turns */
+const changeLines = (turns) => turns.filter((turn) => turn.line?.undo).map((turn) => turn.shown.text);
+/** Page buttons (not cards) in these turns. @param {Turn[]} turns */
+const pageButtons = (turns) => turns.flatMap((turn) => turn.shown.links.filter((link) => !link.kind)).map((link) => link.label);
+/** Shown to Thomas on the live site: the Salsa and Bachata card. */
+const SALSA = /** @type {[string, string]} */ (['I love dancing, are there any societies?', 'You might like Salsa and Bachata, a Students’ Union society for Latin dancing.']);
+/** The chat asking about reminders, as it does once in a conversation. */
+const ASKED_REMINDERS = /** @type {[string, string]} */ (['Thanks, that’s really helpful', 'Glad it helped! Is there anything you’d like reminding about while you settle in?']);
+
+/** @type {{ id: string, why: string, student: string, seed: [string, string][], say: string, judge: (turns: Turn[]) => string[] }[]} */
+const ANYWHERE = [
+  {
+    id: 'anywhere: tick after the Salsa card',
+    why: '"ah brill ive joined that now can you tick it off my list?" ticks "Join a society", one line with Undo, no page link',
+    student: 'anywhere',
+    seed: [SALSA],
+    say: 'ah brill ive joined that now can you tick it off my list?',
+    judge: (turns) => [changeLines(turns).includes('Ticked: Join a society.') ? '' : 'didn’t tick "Join a society" with Undo']
+  },
+  {
+    id: 'anywhere: what is a reminder',
+    why: '"what do you mean a reminder…" says in one line it’s a task on their checklist and offers to add one now',
+    student: 'anywhere',
+    seed: [ASKED_REMINDERS],
+    say: 'what do you mean a reminder can i set reminders on here?',
+    judge: (turns) => {
+      const text = turns.map((turn) => turn.shown.text).join(' ');
+      return [/checklist/i.test(text) ? '' : 'didn’t say it’s a task on their checklist', /\?/.test(text) ? '' : 'didn’t offer to add one'];
+    }
+  },
+  {
+    id: 'anywhere: outlook calendar',
+    why: '"nah im good i keep everything on my outlook calender" offers to add it to Outlook (the calendar card)',
+    student: 'anywhere',
+    seed: [ASKED_REMINDERS, ['what do you mean a reminder can i set reminders on here?', 'A reminder here is a task on your checklist, such as finding a dentist. Want me to add one now?']],
+    say: 'nah im good i keep everything on my outlook calender',
+    judge: (turns) => [turns.some((turn) => turn.line?.calendar !== undefined) ? '' : 'no calendar card']
+  },
+  {
+    id: 'anywhere: closest dentist',
+    why: '"sure where is the closest dentist and how does it work?" shows the dentist search with how it works, never refusing',
+    student: 'anywhere',
+    seed: [ASKED_REMINDERS],
+    say: 'sure where is the closest dentist and how does it work?',
+    judge: (turns) => [
+      turns.some((turn) => turn.line?.tool === 'dentist-finder') ? '' : 'no dentist search in the chat',
+      turns.some((turn) => /can(?:no|')?t|unable/i.test(turn.shown.text)) ? 'refused' : ''
+    ]
+  },
+  {
+    id: 'anywhere: untick that',
+    why: '"untick that" after ticking the society unticks it, one line with Undo',
+    student: 'anywhere, society ticked',
+    seed: [SALSA, ['ah brill ive joined that now can you tick it off my list?', 'Brilliant, well done! Ticked: Join a society.']],
+    say: 'untick that',
+    judge: (turns) => [changeLines(turns).includes('Unticked: Join a society.') ? '' : 'didn’t untick "Join a society" with Undo']
+  },
+  {
+    id: 'anywhere: add a bank account',
+    why: '"add open a bank account" adds it straight away, one line with Undo, no Add card',
+    student: 'anywhere',
+    seed: [],
+    say: 'add open a bank account',
+    judge: (turns) => [
+      changeLines(turns).some((line) => /^Added to your checklist: Open a bank account\.?$/i.test(line)) ? '' : 'didn’t add "Open a bank account" with Undo',
+      turns.some((turn) => turn.line?.cards?.some((card) => card.startsWith('Add card'))) ? 'showed an Add card when they asked directly' : ''
+    ]
+  },
+  {
+    id: 'anywhere: take the dentist off',
+    why: '"take the dentist one off" removes "Find a dentist", one line with Undo',
+    student: 'anywhere',
+    seed: [],
+    say: 'take the dentist one off',
+    judge: (turns) => [changeLines(turns).includes('Removed from your checklist: Find a dentist.') ? '' : 'didn’t remove "Find a dentist" with Undo']
+  },
+  {
+    id: 'anywhere: unclear tick it off',
+    why: 'an unclear "tick it off" asks which one with quick replies, ticking nothing',
+    student: 'anywhere',
+    seed: [],
+    say: 'tick it off',
+    judge: (turns) => [
+      changeLines(turns).length ? `ticked something (${changeLines(turns).join(', ')})` : '',
+      turns.some((turn) => (turn.line?.quick?.length ?? 0) > 1) ? '' : 'didn’t ask which one with quick replies'
+    ]
+  }
+];
+for (const test of ANYWHERE) {
+  CASES.push({
+    group: 'anywhere',
+    id: test.id,
+    why: test.why,
+    student: test.student,
+    seed: test.seed,
+    asks: [],
+    talk: [{ say: test.say }],
+    judge: (turns) => [...test.judge(turns), ...pageButtons(turns).map((label) => `a page link (${label})`)].filter(Boolean)
+  });
+}
+
 // ---------- conversations ----------
 
 const NAME_CONVERSATION = ['Hi!', 'Pretty good, I’ve just got back from a lecture', 'Are there any chess societies?', 'Nice, thanks', 'What could I do this weekend?', 'Thanks, have a good evening'];
@@ -692,10 +802,11 @@ if (process.argv.includes('--refresh')) {
   /**
    * Going through the checklist once, as the page does it, and what the chat showed.
    * @param {NonNullable<Case['talk']>} steps @param {ChatFacts} facts @param {string[]} opener
+   * @param {[string, string][]} [seed]
    * @returns {Promise<Turn[]>}
    */
-  const talkRun = async (steps, facts, opener) => {
-    const harness = talkHarness(restModel(gemini), facts, opener);
+  const talkRun = async (steps, facts, opener, seed = []) => {
+    const harness = talkHarness(restModel(gemini), facts, opener, seed);
     for (const step of steps) {
       if ('opened' in step) await harness.opened();
       else if ('from' in step) await harness.talk.start({ from: step.from });
@@ -717,7 +828,7 @@ if (process.argv.includes('--refresh')) {
     for (let run = 1; run <= runs; run++) {
       const { facts, opener } = STUDENTS[test.student];
       if (test.talk) {
-        saved.runs[test.id].push(await talkRun(test.talk, facts, opener));
+        saved.runs[test.id].push(await talkRun(test.talk, facts, opener, test.seed ?? []));
         saved.made = new Date().toISOString();
         writeFileSync(REPLIES_FILE, `${JSON.stringify(saved, null, 2)}\n`);
         continue;

@@ -26,13 +26,18 @@ import { watchSignedIn } from '#lib/firebase/auth.js';
  * (open until one is used, or a newer message has its own); ticked is the task just ticked, with Undo
  * (undone once used); tool is what the chat can do for the task there and then (the GP finder, a
  * dentist search, the key contacts); ask4help shows the Ask4Help card.
+ * From any message: undo is how to put back a change the chat made when asked (a checklist edit, or
+ * something remembered or forgotten), for its Undo button; calendar is a calendar card (Outlook on the
+ * web, or a file) for something they'd rather keep in their own calendar.
  * @typedef {{ role: 'assistant' | 'user', text: string, kind?: 'safety' | 'error' | 'unavailable',
  *   links?: { label: string, href: string, external?: boolean, kind?: 'society' | 'club' | 'service',
  *     nsuId?: number, slug?: string, serviceId?: string, action?: string }[],
  *   task?: SuggestedTask, offer?: Offer, note?: OfferedNote, appCard?: 'your-mentor' | 'change-mentor',
  *   flow?: import('#lib/checkin/mentor-flow.js').FlowCard & { id: number },
  *   quick?: { options: import('#lib/checkin/checklist-talk.js').QuickReply[], open: boolean },
- *   ticked?: { id: string, title: string, undone: boolean }, tool?: 'gp-finder' | 'dentist-finder' | 'contacts', ask4help?: boolean }} Message
+ *   ticked?: { id: string, title: string, undone: boolean }, tool?: 'gp-finder' | 'dentist-finder' | 'contacts', ask4help?: boolean,
+ *   undo?: { checklist?: import('#lib/checklist/tasks.js').Change, notes?: import('#lib/checkin/run-actions.js').NoteUndo, done: boolean },
+ *   calendar?: { title: string } }} Message
  */
 
 /** @typedef {{ action: string, state: 'offered' | 'started' | 'declined' }} Offer */
@@ -116,6 +121,22 @@ export function runChatFlow(kind) {
 }
 
 /**
+ * The chat's changes made when asked, from any message (checklist-edits.js and run-actions.js).
+ * @typedef {{ edits: ReturnType<typeof import('#lib/checkin/checklist-edits.js').createChecklistEdits>,
+ *   notes: ReturnType<typeof import('#lib/checkin/run-actions.js').createNoteActions> }} ChatChanges
+ */
+
+/** Made the first time they're needed in this conversation. Not $state: the page never shows them. @type {ChatChanges | null} */
+let changes = null;
+
+export const chatChanges = () => changes;
+
+/** @param {ChatChanges} next */
+export function setChatChanges(next) {
+  changes = next;
+}
+
+/**
  * What Gemini was told about the student (describeForGemini's input), kept so it can be told again
  * when that changes in the chat, such as a mentor found here. Not $state: the page never shows it.
  * @type {Parameters<typeof import('#lib/checkin/opener.js').describeForGemini>[0] | null}
@@ -167,6 +188,7 @@ export function clearChat(uid = null) {
   flows = {};
   running = null;
   facts = null;
+  changes = null;
 }
 
 let watching = false;

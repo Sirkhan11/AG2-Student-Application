@@ -1,7 +1,9 @@
 import { isCrisis, SAFETY_MESSAGE, seemsWorried } from '#lib/checkin/safety.js';
 import { afterMatchRequest, afterMentorNote, APP_NOTE_START, chatRequest, checklistAnswerRequest, checklistHelpRequest } from '#lib/checkin/chat-prompt.js';
 import { readAfterMatchReply, readChatReply, readChecklistAnswer, readChecklistHelp } from '#lib/checkin/chat-replies.js';
-import { howToFor, talkFor } from '#lib/checklist/how-to.js';
+import { howToFor, howToLine, talkFor } from '#lib/checklist/how-to.js';
+import { MAX_LINKS } from '#lib/checkin/chat-replies.js';
+import { suggestionNamed } from '#lib/suggestions/catalogue.js';
 import { blankContactDetails } from '#lib/checkin/private-details.js';
 import { isOutOfCredit } from '#lib/firebase/ai-errors.js';
 import { aboutYou } from '#lib/checkin/about-you.js';
@@ -17,6 +19,12 @@ import { shortlist } from '#lib/suggestions/shortlist.js';
 
 /** Only the last this-many messages are sent each time, so a long chat can't grow without limit. */
 const MAX_HISTORY_MESSAGES = 20;
+
+/** What the chat says after how to do a task outside the app (enrolling, joining a society…). */
+export const TICK_OFF_LINE = 'Tell me when you’ve done it and I’ll tick it off.';
+
+/** The checklist edit for each of Gemini's checklist actions. */
+const EDITS = /** @type {const} */ ({ tick: 'tick', untick: 'untick', 'add-task': 'add', 'remove-task': 'remove', 'rename-task': 'rename' });
 
 /** For a failure that may pass (a blip, or too many requests at once). */
 export const ERROR_MESSAGE =
@@ -40,9 +48,17 @@ const notFromApp = (text) => text.replace(/\[(\s*from the app)/gi, '($1');
  * thanks card; offers are the chat's own actions it chose, such as 'mentor', for the page's cards (see
  * chat-actions.js); notes is something it offered to remember, for the page's Remember / Not now card.
  * startAt: with the checklist action, the task they named, to start going through it there.
+ * tool: a card the app shows under the reply (the GP finder, a dentist search, the key contacts);
+ * ask4help: the Ask4Help card; calendar: a calendar card for this (Outlook on the web, or a file);
+ * awaitDone: a task the chat has said it'll tick off when they say they've done it;
+ * act: a change the app makes straight away, after showing the reply (a checklist edit, with what
+ * they typed, for matching their own tasks; or remembering or forgetting something), confirmed in a
+ * line of its own with Undo.
  * @typedef {{ kind: 'reply' | 'safety' | 'error' | 'unavailable' | 'skip', text: string,
  *   links?: import('#lib/suggestions/catalogue.js').ReplyLink[], tasks?: string[], offers?: string[],
- *   notes?: string[], startAt?: string }} ChatReply
+ *   notes?: string[], startAt?: string, tool?: 'gp-finder' | 'dentist-finder' | 'contacts', ask4help?: boolean,
+ *   calendar?: { title: string }, awaitDone?: string,
+ *   act?: { edit: import('#lib/checkin/checklist-edits.js').EditRequest, said: string } | { remember: string } | { forget: string } }} ChatReply
  */
 
 /**
@@ -128,6 +144,54 @@ export function chatWith(model, { facts, opener, seed = [] }) {
   }
 
   /**
+   * What the app allows in an ordinary turn: chatOptions (opener.js), with their checklist (the
+   * standard tasks by title; their own only counted), how to do the standard ones still to do, and what
+   * the chat remembers. Never a Remember card while they're asking something.
+   * @param {string} clean their message, as sent
+   * @returns {import('#lib/checkin/chat-prompt.js').ChatOptions}
+   */
+  function optionsFor(clean) {
+    const tasks = facts.tasks ?? null;
+    const standard = (tasks ?? []).filter((task) => talkFor(task.id));
+    return {
+      ...chatOptions(facts),
+      remember: !clean.includes('?'),
+      checklistKnown: tasks !== null,
+      tasks: standard.map((task) => task.title),
+      tasksLeft: standard.filter((task) => !task.done).map((task) => task.title),
+      ownTasks: (tasks ?? []).some((task) => !talkFor(task.id)),
+      howTo: standard.filter((task) => !task.done).map((task) => howToLine(task.id, task.title)).filter(Boolean),
+      notes: aboutYou(facts.profile).notes
+    };
+  }
+
+  /**
+   * How to do a task outside the app: the direct link (the Student Portal, or the society they were
+   * shown, whose card has "Join on the NSU website"), or the finder or contacts card for the ones done
+   * elsewhere, and, while it's still to do, "Tell me when you've done it and I'll tick it off".
+   * @param {string} id @param {string} say @param {import('#lib/suggestions/catalogue.js').ReplyLink[]} links
+   * @returns {Partial<ChatReply>}
+   */
+  function outside(id, say, links) {
+    const task = (facts.tasks ?? []).find((item) => item.id === id);
+    const tool = talkFor(id)?.tool;
+    const link = howToFor(id)?.link;
+    /** @type {Partial<ChatReply>} */
+    const extra = {};
+    if (tool === 'gp-finder' || tool === 'dentist-finder' || tool === 'contacts') extra.tool = tool;
+    if (tool === 'portal' && link) extra.links = [...links, { label: link.label, href: link.href, external: true }].slice(0, MAX_LINKS);
+    if (tool === 'societies' && !links.some((item) => item.kind === 'society')) {
+      const shown = suggestedBefore.map((name) => suggestionNamed(name)).find((suggestion) => suggestion?.kind === 'society');
+      extra.links = [...links, shown ? shown.link : { label: 'Browse societies', href: '/societies', external: false }].slice(0, MAX_LINKS);
+    }
+    if (task && !task.done) {
+      extra.text = `${say} ${TICK_OFF_LINE}`.trim();
+      extra.awaitDone = task.id;
+    }
+    return extra;
+  }
+
+  /**
    * Keeps an exchange that got a reply: the message, and what Gemini said.
    * @param {import('firebase/ai').Content} message @param {string} say @param {string[]} suggested
    */
@@ -158,27 +222,43 @@ export function chatWith(model, { facts, opener, seed = [] }) {
       // Emails and phone numbers are blanked first, so they're never sent to Google.
       const clean = blankContactDetails(notFromApp(text));
       const list = shortlistFor(clean);
-      // Never a Remember card while they're asking something (such as for suggestions). The standard
-      // tasks still to do, by title, so going through the checklist can start at one they name.
-      const tasksLeft = (facts.tasks ?? []).filter((task) => !task.done && talkFor(task.id)).map((task) => task.title);
-      const options = { ...chatOptions(facts), remember: !clean.includes('?'), tasksLeft };
+      const options = optionsFor(clean);
       const { actions, ...request } = chatRequest({ about: describeForGemini(facts), opener, shortlist: list, options });
       /** @type {import('firebase/ai').Content} */
       const message = { role: 'user', parts: [{ type: 'text', text: clean }] };
-      const answer = await ask(message, request, (reply) => readChatReply(reply, { shortlist: list, actions, tasks: facts.tasks }));
+      const notes = options.notes ?? [];
+      const answer = await ask(message, request, (reply) => readChatReply(reply, { shortlist: list, actions, tasks: facts.tasks, notes }));
       if (!answer.ok) return answer.reply;
       const { say, links, suggested, action } = answer.reply;
+      /** @type {ChatReply} */
+      const reply = { kind: 'reply', text: say, links, tasks: [], notes: [], offers: [] };
+      const id = action?.id;
+      if (action && id && id in EDITS) {
+        reply.act = { edit: { edit: EDITS[/** @type {keyof typeof EDITS} */ (id)], taskId: action.taskId, own: action.own, title: action.title }, said: text };
+      } else if (id === 'reminder' && action?.text) {
+        reply.tasks = [action.text];
+      } else if (id === 'offer-to-remember' && action?.text) {
+        reply.notes = [action.text];
+      } else if (id === 'remember' && action?.text) {
+        reply.act = { remember: action.text };
+      } else if (id === 'forget' && action?.which) {
+        reply.act = { forget: action.which };
+      } else if (id === 'gp-finder' || id === 'dentist-finder' || id === 'contacts') {
+        reply.tool = id;
+      } else if (id === 'ask4help') {
+        reply.ask4help = true;
+      } else if (id === 'calendar') {
+        reply.calendar = { title: action?.title ?? '' };
+      } else if (id === 'how-to' && action?.taskId) {
+        Object.assign(reply, outside(action.taskId, say, links));
+      } else if (id) {
+        reply.offers = [id];
+        if (action?.taskId) reply.startAt = action.taskId;
+      }
       said.unshift(clean);
-      keep(message, say, suggested);
-      return {
-        kind: 'reply',
-        text: say,
-        links,
-        tasks: action?.id === 'reminder' && action.text ? [action.text] : [],
-        notes: action?.id === 'remember' && action.text ? [action.text] : [],
-        offers: action && action.id !== 'reminder' && action.id !== 'remember' ? [action.id] : [],
-        ...(action?.task ? { startAt: action.task } : {})
-      };
+      // Gemini keeps what the student saw, the chat's line about ticking it off included.
+      keep(message, reply.text, suggested);
+      return reply;
     },
 
     /**

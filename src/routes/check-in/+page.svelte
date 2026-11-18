@@ -4,7 +4,7 @@
   import { page } from '$app/state';
   import { replaceState } from '$app/navigation';
   import BottomNav from '#lib/components/BottomNav.svelte';
-  import { currentUid, watchSignedIn } from '#lib/firebase/auth.js';
+  import { currentUid, signedInUid, watchSignedIn } from '#lib/firebase/auth.js';
   import { loadChecklist, loadMyRecord, saveChange } from '#lib/checklist/store.js';
   import { applyChange, makeTick } from '#lib/checklist/tasks.js';
   import { createChecklistTalk, QUICK } from '#lib/checkin/checklist-talk.js';
@@ -12,10 +12,14 @@
   import Ask4HelpLink from '#lib/components/Ask4HelpLink.svelte';
   import GpFinderCard from '#lib/components/GpFinderCard.svelte';
   import KeyContactsCard from '#lib/components/KeyContactsCard.svelte';
+  import CalendarCard from '#lib/components/CalendarCard.svelte';
+  import { createChecklistEdits } from '#lib/checkin/checklist-edits.js';
+  import { afterReply, createNoteActions } from '#lib/checkin/run-actions.js';
   import { loadMyMatch } from '#lib/matching/matches.js';
   import { buildOpener } from '#lib/checkin/opener.js';
   import { startCheckinChat } from '#lib/checkin/chat.js';
   import {
+    chatChanges,
     chatFlow,
     chatFlowFor,
     runChatFlow,
@@ -25,6 +29,7 @@
     geminiChat,
     notesChanged,
     chatFacts,
+    setChatChanges,
     setChatFacts,
     setChatFlow,
     setGeminiChat,
@@ -43,7 +48,7 @@
   import ClubCard from '#lib/components/ClubCard.svelte';
   import TaskSuggestionCard from '#lib/components/TaskSuggestionCard.svelte';
   import RememberCard from '#lib/components/RememberCard.svelte';
-  import { loadMyNotes } from '#lib/checkin/chat-notes.js';
+  import { forgetAllNotes, forgetNote, loadMyNotes, rememberNote } from '#lib/checkin/chat-notes.js';
   import { db } from '#lib/firebase/client.js';
   import { isoDate } from '#lib/checkin/about-you.js';
   import { clubBySlug } from '#lib/sport/clubs.js';
@@ -110,7 +115,8 @@
       text,
       // The buttons go under the first message; Yes and Not yet under the checklist question (the last).
       links: i === 0 ? opener.links : undefined,
-      quick: opener.asks && i === opener.messages.length - 1 ? { options: QUICK.yesNo, open: true } : undefined
+      // Closed until the checklist talk has loaded, so a tap can't arrive before it's listening.
+      quick: opener.asks && i === opener.messages.length - 1 ? { options: QUICK.yesNo, open: false } : undefined
     }));
 
     // Gemini is told the same facts and first messages, but without the mentor's name. The facts are
@@ -121,7 +127,11 @@
     setGeminiChat(startCheckinChat(facts, buildOpener({ match: withoutName, tasks, checklistSaved, justSignedUp, isMentor, forGemini: true }).messages));
     chatSession.started = true;
     // The first message asked about the first task still to do: the checklist talk waits for the answer.
-    if (opener.asks) await checklistTalk().start({ asked: true });
+    if (opener.asks) {
+      await checklistTalk().start({ asked: true });
+      const question = chatSession.messages[opener.messages.length - 1];
+      if (chatSession.conversation === conversation && question?.quick && chatSession.flow?.kind === 'checklist' && chatSession.flow.step === 'asking') question.quick.open = true;
+    }
 
     // Straight from finding a mentor on the Find a mentor page: Gemini writes the next message itself.
     const outcome = match?.status;
@@ -253,6 +263,69 @@
     return talk;
   }
 
+  /**
+   * The changes the chat makes when asked, from any message: checklist edits (checklist-edits.js:
+   * tick, untick, add, remove, rename, through the checklist's own change, as the checklist page
+   * does) and remembering or forgetting (run-actions.js, through the same notes as the Remember card
+   * and the About you page), each confirmed in one line with Undo, and Gemini told what changed.
+   * Made the first time they're needed in this conversation.
+   */
+  function changes() {
+    let made = chatChanges();
+    if (!made) {
+      const conversation = chatSession.conversation;
+      /** @param {import('#lib/checkin/run-actions.js').ActionMessage} message */
+      const post = (message) => {
+        if (chatSession.conversation !== conversation) return;
+        if (message.quick) closeQuickReplies();
+        chatSession.messages.push({
+          role: 'assistant',
+          text: message.text,
+          quick: message.quick ? { options: message.quick, open: true } : undefined,
+          undo: message.undo || message.noteUndo ? { checklist: message.undo, notes: message.noteUndo, done: false } : undefined
+        });
+        showLatest();
+      };
+      /** @param {string | null} student @param {string} text */
+      const record = (student, text) => {
+        if (chatSession.conversation === conversation) geminiChat()?.note(student, text);
+      };
+      const edits = createChecklistEdits({
+        load: loadChecklist,
+        save: async (change, list) => {
+          const onScreen = applyChange(list, change);
+          const result = await saveChange(change, onScreen);
+          const now = result.status === 'saved' ? result.list : onScreen;
+          if (chatSession.conversation === conversation) tellGemini({ tasks: now, checklistSaved: true });
+          return now;
+        },
+        post,
+        record
+      });
+      const notes = createNoteActions({
+        load: () => loadMyNotes(db, signedInUid()),
+        remember: (text) => rememberNote(db, signedInUid(), text),
+        forget: (note) => forgetNote(db, signedInUid(), note),
+        forgetAll: () => forgetAllNotes(db, signedInUid()),
+        changed: noteSaved,
+        post,
+        record
+      });
+      made = { edits, notes };
+      setChatChanges(made);
+    }
+    return made;
+  }
+
+  /** Undo on a line confirming a change the chat made. @param {import('#lib/checkin/chat-session.svelte.js').Message} message */
+  function undoChange(message) {
+    if (!message.undo || message.undo.done) return;
+    message.undo.done = true;
+    closeQuickReplies();
+    if (message.undo.checklist) void changes().edits.undo(message.undo.checklist);
+    else if (message.undo.notes) void changes().notes.undo(message.undo.notes);
+  }
+
   /** Quick replies only work under the newest question: older ones close. */
   function closeQuickReplies() {
     for (const message of chatSession.messages) if (message.quick?.open) message.quick.open = false;
@@ -316,6 +389,19 @@
       await showLatest();
       return;
     }
+    // The answer to the chat's own question about a change ("Which one?", "Have you done it?", or
+    // "done" after "tell me when you've done it"): read here, without Gemini.
+    const edits = chatChanges()?.edits;
+    if (edits?.takes(text)) {
+      chatSession.messages.push({ role: 'user', text });
+      if (typed === undefined) chatSession.draft = '';
+      closeQuickReplies();
+      await showLatest();
+      await edits.reply(text);
+      await showLatest();
+      return;
+    }
+    edits?.clear();
     if (chatSession.waiting || chatSession.unavailable || !geminiChat()) return;
     chatSession.messages.push({ role: 'user', text });
     if (typed === undefined) chatSession.draft = '';
@@ -343,6 +429,9 @@
     if (reply.kind === 'unavailable') chatSession.unavailable = true;
     chatSession.waiting = false;
     await showLatest();
+    // What they asked for, done straight away (a checklist edit, remembering or forgetting), and
+    // waiting for "done" after how to do a task outside the app.
+    if (reply.kind === 'reply') await afterReply(reply, { ...changes(), tasks: loadChecklist });
     // Going through the checklist: straight away when they asked, or a one-line offer.
     if (reply.offers?.[0] === 'checklist') await checklistTalk().start({ from: reply.startAt });
     else if (reply.offers?.[0] === 'checklist-offer') checklistTalk().offer();
@@ -366,14 +455,19 @@
           ? [{ label: 'Need help now', href: '/need-help' }]
           : // Suggested societies and NSU services, shown as cards under the reply.
             reply.links,
-      // A checklist task it suggested: a card with Add and No thanks. Nothing is added without a tap.
+      // A reminder it suggested (they didn't ask for it): a card with Add and No thanks.
       task: reply.tasks?.[0] ? { title: reply.tasks[0], state: 'offered' } : undefined,
       // One of the chat's own actions it offered (finding a mentor): a card with Start and Not now.
       offer: action && action.shows !== 'card' ? { action: action.id, state: 'offered' } : undefined,
       // Their mentor, or the form for a different one: read and sent here, never through Gemini.
       appCard: action?.shows === 'card' ? /** @type {'your-mentor' | 'change-mentor'} */ (action.id) : undefined,
-      // Something it offered to remember: a card with Remember and Not now. Nothing is saved without a tap.
-      note: reply.notes?.[0] ? { text: reply.notes[0], state: 'offered' } : undefined
+      // Something it offered to remember (they didn't ask): a card with Remember and Not now.
+      note: reply.notes?.[0] ? { text: reply.notes[0], state: 'offered' } : undefined,
+      // What the app shows for what they asked, from any message: the GP finder, a dentist search,
+      // the key contacts, Ask4Help, or a calendar card.
+      tool: reply.tool,
+      ask4help: reply.ask4help,
+      calendar: reply.calendar
     });
   }
 
@@ -558,11 +652,25 @@
             </div>
           </div>
         {/if}
+        {#if item.undo}
+          <div class="ticked">
+            {#if item.undo.done}
+              <span class="muted">Undone.</span>
+            {:else}
+              <button class="secondary-button" type="button" disabled={flowBusy || chatSession.waiting} onclick={() => undoChange(item)}>Undo</button>
+            {/if}
+          </div>
+        {/if}
+        {#if item.calendar}
+          <div class="cards">
+            <CalendarCard title={item.calendar.title} />
+          </div>
+        {/if}
         {#if item.quick?.open}
           <div class="quick" role="group" aria-label="Quick replies">
             {#each item.quick.options as option (option.value)}
-              <!-- Only while going through the checklist (not before it has loaded), and not while it saves or asks Gemini. -->
-              <button class="secondary-button" type="button" disabled={!talking || flowBusy || chatSession.waiting} onclick={() => sendMessage(option.value)}>{option.label}</button>
+              <!-- Not while something saves or Gemini is asked. -->
+              <button class="secondary-button" type="button" disabled={flowBusy || chatSession.waiting} onclick={() => sendMessage(option.value)}>{option.label}</button>
             {/each}
           </div>
         {/if}

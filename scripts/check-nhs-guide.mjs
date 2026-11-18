@@ -76,7 +76,8 @@ const checks = [
   ['The chat can link the guide, and is told to answer NHS questions briefly with no prices', () => {
     assert.equal(findPage('NHS Guide')?.href, '/nhs-guide');
     const instructions = chatRequest({ about: '(about)', opener: ['(opener)'], shortlist: [], options: { mentor: 'no', checklist: 'no', hasMentor: false } }).systemInstruction;
-    assert.match(instructions, /"NHS Guide" when they ask how the NHS works, whether they pay to see a doctor or how to register with a GP \(answer in one short sentence, without prices or other figures\)/);
+    assert.match(instructions, /"NHS Guide" when they ask how the NHS works or whether they pay to see a doctor \(answer in one short sentence, without prices or other figures\)/);
+    assert.match(instructions, /"gp-finder": they ask where the nearest GP or doctor is, or how to find or register with one/, 'registering with a GP: the finder, in the chat');
     assert.ok(CHAT_PAGES.includes('NHS Guide'));
     assert.doesNotMatch(instructions, /£/, 'the chat is never given the figures');
   }]

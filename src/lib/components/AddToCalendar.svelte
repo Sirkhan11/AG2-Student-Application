@@ -1,12 +1,12 @@
 <script>
-  import { downloadIcs } from '#lib/blackboard/ics.js';
-  import { outlookWebUrl } from '#lib/blackboard/outlook.js';
+  import { downloadIcs } from '#lib/calendar/ics.js';
+  import { outlookWebUrl } from '#lib/calendar/outlook.js';
 
   /**
    * One "Add to calendar" button for a Blackboard date, offering both ways in: Outlook on the web
    * (the university account, with the item filled in) or a calendar file (.ics) for any other
    * calendar app. Both are made on the phone; nothing goes to the app's server.
-   * @type {{ entry: import('#lib/blackboard/ics.js').CalendarEntry, label?: string }}
+   * @type {{ entry: import('#lib/calendar/ics.js').CalendarEntry, label?: string }}
    */
   let { entry, label = 'Add to calendar' } = $props();
 

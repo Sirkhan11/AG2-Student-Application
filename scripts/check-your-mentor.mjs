@@ -50,7 +50,7 @@ const offline = [
     for (const words of [
       `"your-mentor": they ask who their mentor is or how to get in touch. The app shows a card with their mentor's name, how to get in touch and how often they asked to meet. You're never told their mentor's name or contact details, so never guess them.`,
       `"change-mentor": they want a different mentor. In say, one short, kind sentence saying they can ask the mentoring coordinator here, and only the coordinator will see why. The app shows a short form that goes only to the coordinator, never to their mentor or you. Never ask why or what went wrong.`,
-      'Never say you\'ve done something for them, or that you will.'
+      'Never claim to have done something yourself'
     ]) assert.ok(instructions.includes(words), words);
   }],
   ['Gemini is never told the mentor’s name or how to reach them', () => {

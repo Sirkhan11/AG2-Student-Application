@@ -14,7 +14,9 @@
 /**
  * One change to the checklist. Saving sends changes, not whole lists, so each one can be applied
  * to the latest saved list, and an edit made on another device isn't wiped out.
- * @typedef {{ type: 'add', task: Task } | { type: 'tick', id: string, done: boolean }
+ * An add can say where the task goes (at: its place in the list), which undoing a delete uses to put
+ * the task back where it was; without it, the task goes at the end.
+ * @typedef {{ type: 'add', task: Task, at?: number } | { type: 'tick', id: string, done: boolean }
  *   | { type: 'edit', id: string, title: string } | { type: 'delete', id: string }} Change
  */
 
@@ -174,10 +176,13 @@ export function makeDelete(id) {
  */
 export function applyChange(list, change) {
   switch (change.type) {
-    case 'add':
+    case 'add': {
       if (list.some((task) => task.id === change.task.id)) return list;
       if (list.length >= MAX_TASKS) throw new ChecklistError(`You can have up to ${MAX_TASKS} tasks.`);
-      return [...list, { ...change.task, title: checkedTitle(change.task.title) }];
+      const task = { ...change.task, title: checkedTitle(change.task.title) };
+      const at = Number.isInteger(change.at) ? Math.max(0, Math.min(/** @type {number} */ (change.at), list.length)) : list.length;
+      return [...list.slice(0, at), task, ...list.slice(at)];
+    }
     case 'tick':
       return list.map((task) => (task.id === change.id ? { ...task, done: change.done } : task));
     case 'edit':

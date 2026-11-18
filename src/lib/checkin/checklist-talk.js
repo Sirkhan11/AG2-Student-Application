@@ -85,7 +85,7 @@ export const SAYS = Object.freeze({
   unticked: (/** @type {string} */ title) => `Okay, “${title}” isn’t ticked any more.`,
   ownNotYet: 'No problem. It’s one of your own, so it’ll be on your checklist when you’re ready.',
   moving: 'Shall we move on to the next one, or keep going with this?',
-  doing: 'Okay. Tell me when it’s done, or ask me anything about it.',
+  doing: 'Okay. Tell me when you’ve done it and I’ll tick it off, or ask me anything about it.',
   stuck: 'Ask4Help can sort it out with you: use Ask4Help Online, or call 0191 227 4646.',
   stopped: 'Okay, we’ll stop there. Your checklist is saved as it is, and we can pick it up next time.',
   allDone: 'That’s everything on your checklist done. Nice work!',

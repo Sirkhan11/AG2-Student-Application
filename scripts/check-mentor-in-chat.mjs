@@ -285,9 +285,9 @@ const checks = [
     assert.equal(sent[1].contents[1].parts[0].text, 'I can find you one here.');
     assert.equal(sent[1].contents.length, 3, 'only what was sent to Gemini: no flow answers');
   }],
-  ['The chat’s instructions: the app does things, only when they tap; the mentor rule; no Find a mentor page; every safety rule', () => {
+  ['The chat’s instructions: the app does the actions and confirms them; the mentor rule; no Find a mentor page; every safety rule', () => {
     const t = chatRequest({ about: '(about)', opener: ['(opener)'], shortlist: [], options: { mentor: 'yes', checklist: 'yes', hasMentor: false } }).systemInstruction;
-    assert.match(t, /You only write words\. The app shows any cards and links, and does every action itself, only when the student taps\. Never say you've done something for them, or that you will\./);
+    assert.match(t, /You only write words: the app carries out any action you choose and shows any cards and links\. Never claim to have done something yourself, and never say you can't do something the app can do\./);
     assert.match(t, /Choose an action only when it's what they asked for, and never instead of helping with what they asked\./);
     assert.match(t, /"mentor": they ask for a mentor or for someone to help them settle in or organise their work, or say yes to the mentor offer in the first messages\. In say, one short sentence saying you can find them one here\. The app then asks its own questions: never ask them yourself\. Don't offer it when they ask about something else\./);
     assert.doesNotMatch(t, /Find a mentor/);

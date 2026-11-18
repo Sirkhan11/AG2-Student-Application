@@ -30,8 +30,9 @@ import { finishConnect, FLOW_COOKIE, NOT_REGISTERED, readView, SESSION_COOKIE, s
 import { approve, deny, MOCK_APP_KEY, MOCK_APP_SECRET, MOCK_HOST, mockFetch } from '#lib/server/blackboard/mock.js';
 import { plainText } from '#lib/server/blackboard/read.js';
 import { verifyFirebaseIdToken } from '#lib/server/firebase-token.js';
-import { deadlineEntry, eventEntry, icsFor } from '#lib/blackboard/ics.js';
-import { outlookWebUrl } from '#lib/blackboard/outlook.js';
+import { deadlineEntry, eventEntry } from '#lib/blackboard/ics.js';
+import { icsFor } from '#lib/calendar/ics.js';
+import { outlookWebUrl } from '#lib/calendar/outlook.js';
 import { dueText, topThing } from '#lib/blackboard/priority.js';
 import { closeGuide, forgetOnDevice, guideDone, markSeen, newIds } from '#lib/blackboard/seen.js';
 
@@ -295,7 +296,7 @@ const checks = [
     const button = readFileSync('src/lib/components/AddToCalendar.svelte', 'utf8');
     assert.match(button, /outlookWebUrl\(entry\)/);
     assert.match(button, /downloadIcs\(entry\)/);
-    for (const file of ['src/lib/components/AddToCalendar.svelte', 'src/lib/blackboard/outlook.js', 'src/lib/blackboard/ics.js']) {
+    for (const file of ['src/lib/components/AddToCalendar.svelte', 'src/lib/calendar/outlook.js', 'src/lib/calendar/ics.js', 'src/lib/blackboard/ics.js']) {
       assert.doesNotMatch(readFileSync(file, 'utf8'), /\bfetch\(|\/api\//, `${file} sends nothing to the server`);
     }
     const section = readFileSync('src/lib/components/BlackboardSection.svelte', 'utf8');
