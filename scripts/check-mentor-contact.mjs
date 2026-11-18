@@ -103,7 +103,7 @@ const offline = [
     assert.equal(mailtoHref('a+b@northumbria.ac.uk'), 'mailto:a%2Bb@northumbria.ac.uk');
     assert.equal(mailtoHref('x?cc=y@example.org'), 'mailto:x%3Fcc%3Dy@example.org', 'nothing in it can add a copy or a subject');
   }],
-  ['A mentor shares it or stops on Your mentor, and Home’s card sends them there; Privacy says who sees it, that Gemini never does, and how to stop', () => {
+  ['A mentor shares it or stops on Your mentor, and Home’s card sends them there; Privacy and What the chat knows say who sees what, that Gemini never does, and how to stop', () => {
     const page = oneLine(source('src/routes/mentor/+page.svelte'));
     for (const words of [
       "<h1>{view === 'mentor' ? 'You’re a mentor' : 'Your mentor'}</h1>",
@@ -118,8 +118,17 @@ const offline = [
       'Your email address too, only if you chose to share it with the students matched with you.',
       'Your full name, your email address, or your mentor’s name or email address.',
       'only if you chose to share it, your email address, on their Your mentor page and in the chat. You can stop sharing it on Your mentor at any time.',
-      '<strong>Your email address, if you’re a mentor sharing it with your students:</strong> Stop sharing it, on Your mentor.'
+      '<strong>Your email address, if you’re a mentor sharing it with your students:</strong> Stop sharing it, on Your mentor.',
+      // agent1.md A10: what the mentor is told replaces the old "To confirm" line.
+      '<strong>Your mentor</strong> sees nothing of yours in the app: not your name, your email address, your answers, your checklist, the chat or a request for a different mentor. If they chose to share their email address with you, it’s on Your mentor, so you can get in touch yourself and decide what to tell them. If not, the mentoring coordinator introduces you.'
     ]) assert.ok(privacy.includes(words), words);
+    assert.doesNotMatch(privacy, /To confirm<\/span> what they’re told when the coordinator introduces you/);
+    const knows = oneLine(source('src/routes/about-you/+page.svelte'));
+    for (const words of [
+      'It’s never told your full name, your email, your mentor’s name or email address, or when you’re free to meet',
+      'It’s never told your email address, even if you share it with the students matched with you: you choose that, and can stop, on Your mentor.',
+      'Your mentor isn’t shown anything about you; if they chose to share their email address with you, it’s on Your mentor.'
+    ]) assert.ok(knows.includes(words), `What the chat knows: ${words}`);
   }]
 ];
 

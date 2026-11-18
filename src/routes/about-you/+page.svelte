@@ -59,9 +59,9 @@
    * @param {boolean} isMentor
    */
   function mentorInWords(match, isMentor) {
-    if (isMentor) return 'You’re a mentor yourself, so it doesn’t offer to find you one.';
+    if (isMentor) return 'You’re a mentor yourself, so it doesn’t offer to find you one. It’s never told your email address, even if you share it with the students matched with you: you choose that, and can stop, on Your mentor.';
     const often = match?.meetingFrequency ? ` You asked to meet ${match.meetingFrequency}.` : '';
-    if (match?.status === 'matched') return `You have one. It’s told why you were matched (as on the Your Mentor page), but not your mentor’s name or how to reach them.${often}`;
+    if (match?.status === 'matched') return `You have one. It’s told why you were matched (as on the Your Mentor page), but not your mentor’s name or how to reach them.${often} Your mentor isn’t shown anything about you; if they chose to share their email address with you, it’s on Your mentor.`;
     if (match?.status === 'coordinator') return `The mentoring coordinator is finding you one.${often}`;
     return 'You haven’t got one yet.';
   }
@@ -109,8 +109,8 @@
   <h1>What the chat knows about you</h1>
   <p class="muted">
     Each time the check-in chat starts, Google’s Gemini AI is told these things, so it can help without
-    asking again. It’s never told your full name, your email, your mentor’s name or when you’re free to
-    meet, and what you say in the chat isn’t saved.
+    asking again. It’s never told your full name, your email, your mentor’s name or email address, or when
+    you’re free to meet, and what you say in the chat isn’t saved.
   </p>
 
   {#if view === 'loading'}

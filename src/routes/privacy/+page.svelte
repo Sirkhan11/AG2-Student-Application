@@ -117,8 +117,10 @@
     <ul>
       <li><strong>You:</strong> everything in your account, through the app.</li>
       <li>
-        <strong>Your mentor</strong> doesn’t see your answers, your checklist, the chat or a request for a
-        different mentor. <span class="tbc">To confirm</span> what they’re told when the coordinator introduces you.
+        <strong>Your mentor</strong> sees nothing of yours in the app: not your name, your email address,
+        your answers, your checklist, the chat or a request for a different mentor. If they chose to share
+        their email address with you, it’s on Your mentor, so you can get in touch yourself and decide what
+        to tell them. If not, the mentoring coordinator introduces you.
       </li>
       <li>
         <strong>The mentoring coordinator</strong> uses the Firebase console, which shows what’s kept in the
@@ -154,7 +156,7 @@
       <li>Who runs AG2 and is responsible for your data, and how to contact them.</li>
       <li>How long things are kept, including after the project ends.</li>
       <li>Which country your login is kept in.</li>
-      <li>Who the mentoring coordinator is, and what your mentor is told about you.</li>
+      <li>Who the mentoring coordinator is, and what they tell your mentor about you when they introduce you.</li>
       <li>How to have your account and everything in it deleted.</li>
     </ul>
   </section>
