@@ -1,19 +1,15 @@
 <script>
   import { page } from '$app/state';
   import Icon from '#lib/components/Icon.svelte';
+  import { TABS } from '#lib/nav-tabs.js';
 
   /**
-   * The tab bar along the bottom of every signed-in page, docked above the phone's home bar. The
-   * active tab's soft highlight has its own view-transition-name, so it glides to the new tab when
-   * the page changes (see page-transitions.js); the bar itself stays still.
+   * The tab bar along the bottom of every signed-in page, docked above the phone's home bar: the tabs
+   * in nav-tabs.js (the one place to change them). The active tab's soft highlight has its own
+   * view-transition-name, so it glides to the new tab when the page changes (see page-transitions.js);
+   * the bar itself stays still.
    */
-  const links = /** @type {const} */ ([
-    { name: 'Home', icon: 'home', href: '/home' },
-    { name: 'Checklist', icon: 'checklist', href: '/checklist' },
-    { name: 'Chat', icon: 'chat', href: '/check-in' },
-    { name: 'Mentor', icon: 'mentor', href: '/mentor' },
-    { name: 'More', icon: 'more', href: '/more' }
-  ]);
+  const links = TABS;
 </script>
 
 <nav class="bottom-nav" aria-label="Main navigation">
