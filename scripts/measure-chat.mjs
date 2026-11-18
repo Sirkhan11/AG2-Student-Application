@@ -42,6 +42,7 @@ import { createHash } from 'node:crypto';
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { CHAT_MODEL } from '#lib/checkin/chat-prompt.js';
 import { SAYS as TALK_SAYS } from '#lib/checkin/checklist-talk.js';
+import { TICK_OFF_LINE } from '#lib/checkin/chat-turns.js';
 import { defaultTasks } from '#lib/checklist/tasks.js';
 import { buildOpener } from '#lib/checkin/opener.js';
 import { NOT_IN_CHAT, serviceById } from '#lib/nsu/services.js';
@@ -167,13 +168,27 @@ const UNMENTIONABLE = [
   ...NOT_IN_CHAT.map((id) => /** @type {{ name: string }} */ (serviceById(id)).name)
 ];
 
-/** Problems any reply can have. @param {Shown} shown */
-function always(shown) {
+/**
+ * A name as the chat might write it, to see whether a reply names a card it shows: lower case, "&"
+ * as "and", no punctuation, and without the words it can fairly leave off ("the", "society", "club",
+ * "NSU", "Northumbria"). So "Salsa & Bachata" names the Salsa and Bachata Society.
+ * @param {string} text
+ */
+const loose = (text) =>
+  ` ${text.toLowerCase().replace(/&/g, ' and ').replace(/[’'.,:;!?()"“”/-]/g, ' ').replace(/\b(the|society|soc|club|nsu|northumbria)\b/g, ' ').replace(/\s+/g, ' ').trim()} `;
+
+/**
+ * Problems any reply can have. before: the conversation's earlier turns, whose cards a follow-up may
+ * show again without naming them (the cards are the answer to "how do I join?").
+ * @param {Shown} shown @param {Turn[]} [before]
+ */
+function always(shown, before = []) {
+  const shownBefore = new Set(before.flatMap((turn) => suggestedIn(turn.shown)));
   if (shown.kind !== 'reply' && shown.kind !== 'skip') return [`no reply (${shown.kind})`];
   return [
     /\{\{|\}\}|\[\[|\]\]/.test(shown.text) ? 'the student would see a marker' : '',
     /\b(json|curly|braces?|brackets?)\b/i.test(shown.text) ? 'talks about the reply format' : '',
-    ...suggestedIn(shown).filter((name) => !shown.text.toLowerCase().includes(name.toLowerCase())).map((name) => `shows ${name} without mentioning it`),
+    ...suggestedIn(shown).filter((name) => !shownBefore.has(name) && !loose(shown.text).includes(loose(name))).map((name) => `shows ${name} without mentioning it`),
     ...UNMENTIONABLE.filter((name) => shown.text.toLowerCase().includes(name.toLowerCase())).map((name) => `mentioned ${name}, which the chat leaves out`),
     ...NEVER_SHOWN.filter((pattern) => pattern.test(shown.text)).map((pattern) => `shows something it was never told (${pattern.source})`)
   ].filter(Boolean);
@@ -283,7 +298,7 @@ const ACTIONS = [
   { id: 'a mentor themselves', student: 'a mentor', ask: 'Can I get a mentor?', why: 'a mentor: no offer', notOffer: ['mentor'] },
   { id: 'after not now', student: 'said not now', ask: 'Are there any chess societies?', why: 'said not now: no offer', notOffer: ['mentor'] },
   { id: 'asks after not now', student: 'said not now', ask: 'Actually, could you find me a mentor after all?', why: 'they ask: offer again', offer: 'mentor' },
-  { id: 'now what', student: 'matched', ask: 'okay great now what', why: 'offers to go through their checklist here, with no page links', offer: 'checklist', noLinks: true },
+  { id: 'now what', student: 'matched', ask: 'okay great now what', why: 'offers to go through their checklist here (the app’s one-line offer, or starts it), with no page links', offer: ['checklist', 'checklist-offer'], noLinks: true },
   { id: 'who is my mentor', student: 'matched', ask: 'Who is my mentor, and how do I get in touch?', why: 'shows the mentor card', offer: 'your-mentor' },
   { id: 'different mentor', student: 'matched', ask: 'I’d like a different mentor please', why: 'shows the form here, never asking why', offer: 'change-mentor', noAskWhy: true },
   { id: 'remember a plan', student: 'matched', ask: 'I’ve decided to plan my week every Sunday evening in a paper diary', why: 'offers to remember the plan', remember: true },
@@ -299,7 +314,7 @@ for (const test of ACTIONS) {
     student: test.student,
     asks: [test.ask],
     judge: ([{ shown }]) => [
-      test.offer && !shown.offers.includes(test.offer) ? `doesn’t show the ${test.offer} card` : '',
+      test.offer && ![test.offer].flat().some((offer) => shown.offers.includes(offer)) ? `doesn’t show the ${[test.offer].flat().join(' or ')} card` : '',
       ...(test.notOffer ?? []).filter((id) => shown.offers.includes(id)).map((id) => `shows the ${id} card when it shouldn’t`),
       test.remember === true && shown.notes.length === 0 ? 'doesn’t offer to remember it' : '',
       test.remember === false && shown.notes.length > 0 ? `offers to remember something it never should ("${shown.notes[0]}")` : '',
@@ -309,7 +324,8 @@ for (const test of ACTIONS) {
       /find a mentor page/i.test(shown.text) ? 'points to the Find a mentor page' : '',
       questionsIn(shown.text).some((question) => ASKS_MATCHING.test(question)) ? 'asks the matching questions itself' : '',
       ...CLAIMS.filter((pattern) => pattern.test(shown.text)).map((pattern) => `says it’s done or will be (${pattern.source})`),
-      shown.text.trim() === '' ? 'no words for the student, only the card' : ''
+      // The checklist offer is the app's own line, so Gemini's words are dropped on purpose.
+      shown.text.trim() === '' && !shown.offers.includes('checklist-offer') ? 'no words for the student, only the card' : ''
     ].filter(Boolean)
   });
 }
@@ -386,41 +402,6 @@ const claimsAdded = (shown) => CLAIMS_ADDED.filter((pattern) => pattern.test(sho
 /** @type {{ id: string, why: string, seed: [string, string][], ask: string, check: (shown: Shown) => string[] }[]} */
 const REMINDERS = [
   {
-    id: 'bank account',
-    why: 'one task, starting with a verb, and no claim that it was added',
-    seed: [['It’s been good thanks, just a lot to sort out', ASKED]],
-    ask: 'Yes, can you remind me to open a bank account?',
-    check: (shown) => [
-      shown.tasks.length !== 1 ? `suggests ${shown.tasks.length} tasks, not 1` : '',
-      shown.tasks[0] && !/bank/i.test(shown.tasks[0]) ? `the task isn't about a bank account ("${shown.tasks[0]}")` : '',
-      shown.tasks[0] && !/^[A-Z][a-z]+\b/.test(shown.tasks[0]) ? `the task doesn't start with a verb ("${shown.tasks[0]}")` : ''
-    ]
-  },
-  {
-    id: 'two things',
-    why: 'one task at a time, even when they name two',
-    seed: [['It’s been good thanks, just a lot to sort out', ASKED]],
-    ask: 'Yes please, opening a bank account and getting a bus pass',
-    check: (shown) => [shown.tasks.length !== 1 ? `suggests ${shown.tasks.length} tasks, not 1` : '']
-  },
-  {
-    id: 'add it for me',
-    why: 'never says it has added it: they tap Add',
-    seed: [
-      ['It’s been good thanks, just a lot to sort out', ASKED],
-      ['Yes, can you remind me to open a bank account?', 'Good idea. Here’s a reminder for that: you can add it to your checklist with one tap.']
-    ],
-    ask: 'Yes, add it for me please',
-    check: () => []
-  },
-  {
-    id: 'already there',
-    why: 'the GP task is on their checklist: says so, no copy',
-    seed: [['Fine thanks', ASKED]],
-    ask: 'Yes, can you remind me to register with a GP?',
-    check: (shown) => [shown.tasks.length ? `suggests a copy ("${shown.tasks[0]}")` : '', /checklist/i.test(shown.text) ? '' : "doesn't say it's on their checklist"]
-  },
-  {
     id: 'worried',
     why: 'not a natural point: points to support, no reminder question',
     seed: [],
@@ -433,6 +414,76 @@ const REMINDERS = [
 ];
 for (const test of REMINDERS) {
   CASES.push({ group: 'reminders', id: test.id, why: test.why, student: 'reminders', seed: test.seed, asks: [test.ask], judge: ([{ shown }]) => [...test.check(shown), ...claimsAdded(shown)].filter(Boolean) });
+}
+
+/**
+ * Asking for a reminder. Since 627cbed (Thomas: every action from any message) the app adds it
+ * straight away when they ask, confirmed in one line with Undo; the Add card is only for a reminder
+ * the chat suggests itself. So these run as the page does it, and what's judged is the app's line.
+ * @param {Turn[]} turns
+ */
+const addedLines = (turns) => changeLines(turns).filter((line) => /^Added to your checklist: /.test(line));
+/** @type {{ id: string, why: string, seed: [string, string][], say: string, judge: (turns: Turn[]) => string[] }[]} */
+const ASKED_FOR = [
+  {
+    id: 'bank account',
+    why: 'asked: adds one task straight away, starting with a verb, in one line with Undo',
+    seed: [['It’s been good thanks, just a lot to sort out', ASKED]],
+    say: 'Yes, can you remind me to open a bank account?',
+    judge: (turns) => {
+      const added = addedLines(turns);
+      return [
+        added.length !== 1 ? `added ${added.length} tasks, not 1` : '',
+        added[0] && !/bank/i.test(added[0]) ? `the task isn’t about a bank account ("${added[0]}")` : '',
+        added[0] && !/^Added to your checklist: [A-Z][a-z]+\b/.test(added[0]) ? `the task doesn’t start with a verb ("${added[0]}")` : ''
+      ];
+    }
+  },
+  {
+    id: 'two things',
+    why: 'asked for two: adds what it can straight away (one at a time), each with Undo, nothing else',
+    seed: [['It’s been good thanks, just a lot to sort out', ASKED]],
+    say: 'Yes please, opening a bank account and getting a bus pass',
+    judge: (turns) => {
+      const added = addedLines(turns);
+      return [
+        added.length === 0 ? 'added nothing' : '',
+        added.some((line) => !/bank|bus/i.test(line)) ? `added something they didn’t ask for (${added.join(' / ')})` : ''
+      ];
+    }
+  },
+  {
+    id: 'add it for me',
+    why: 'asked after an Add card: adds it straight away, with Undo',
+    seed: [
+      ['It’s been good thanks, just a lot to sort out', ASKED],
+      ['Yes, can you remind me to open a bank account?', 'Good idea. Here’s a reminder for that: you can add it to your checklist with one tap.']
+    ],
+    say: 'Yes, add it for me please',
+    judge: (turns) => [addedLines(turns).some((line) => /bank/i.test(line)) ? '' : 'didn’t add the bank account']
+  },
+  {
+    id: 'already there',
+    why: 'the GP task is on their checklist: says so, adds no copy',
+    seed: [['Fine thanks', ASKED]],
+    say: 'Yes, can you remind me to register with a GP?',
+    judge: (turns) => [
+      addedLines(turns).length ? `added a copy (${addedLines(turns).join(' / ')})` : '',
+      turns.some((turn) => /already on your checklist/i.test(turn.shown.text)) ? '' : 'doesn’t say it’s on their checklist'
+    ]
+  }
+];
+for (const test of ASKED_FOR) {
+  CASES.push({
+    group: 'reminders',
+    id: test.id,
+    why: test.why,
+    student: 'reminders',
+    seed: test.seed,
+    asks: [],
+    talk: [{ say: test.say }],
+    judge: (turns) => [...test.judge(turns), ...turns.flatMap((turn) => claimsAdded(turn.shown))].filter(Boolean)
+  });
 }
 
 // ---------- after-match ----------
@@ -578,10 +629,15 @@ const CHECKLIST = [
   },
   {
     id: 'checklist: a task they name',
-    why: '"Can you help me collect my student ID?" starts at the student ID',
+    why: '"Can you help me collect my student ID?" starts at the student ID, or helps with it from its how-to, with the link and "tell me when you’ve done it"',
     student: 'checklist, not enrolled',
     talk: [{ say: 'Can you help me collect my student ID?' }],
-    judge: (turns) => [asksAbout(turns, 'Have you collected your student ID yet?') ? '' : 'didn’t start at the student ID']
+    judge: (turns) => [
+      asksAbout(turns, 'Have you collected your student ID yet?')
+        || turns.some((turn) => turn.shown.text.includes(TICK_OFF_LINE) && /student ID|smartcard/i.test(turn.shown.text) && turn.shown.links.length > 0)
+        ? ''
+        : 'didn’t start at the student ID or help with it'
+    ]
   },
   {
     id: 'checklist: now what',
@@ -636,7 +692,8 @@ const ANYWHERE = [
     say: 'what do you mean a reminder can i set reminders on here?',
     judge: (turns) => {
       const text = turns.map((turn) => turn.shown.text).join(' ');
-      return [/checklist/i.test(text) ? '' : 'didn’t say it’s a task on their checklist', /\?/.test(text) ? '' : 'didn’t offer to add one'];
+      const offers = /\?|\b(?:I can|I(?:'|’)ll|I will|happy to)\b[^.]*\b(?:add|set)\b|\bwant me to add\b|\bjust (?:say|tell me)\b/i.test(text);
+      return [/checklist/i.test(text) ? '' : 'didn’t say it’s a task on their checklist', offers ? '' : 'didn’t offer to add one'];
     }
   },
   {
@@ -769,7 +826,8 @@ const argument = (/** @type {string} */ name) => {
   const at = process.argv.indexOf(name);
   return at === -1 ? null : process.argv[at + 1];
 };
-const only = argument('--only')?.split(',') ?? null;
+const onlyArgument = argument('--only');
+const only = onlyArgument?.split(onlyArgument.includes('|') ? '|' : ',').map((id) => id.trim()) ?? null;
 const chosen = CASES.filter((test) => !only || only.includes(test.group) || only.includes(test.id));
 
 /**
@@ -876,7 +934,7 @@ for (const test of chosen) {
     console.log(`\n-- ${group}`);
   }
   const runs = saved.runs[test.id] ?? [];
-  const results = runs.map((turns) => [...test.judge(turns), ...turns.flatMap((turn) => always(turn.shown))]);
+  const results = runs.map((turns) => [...test.judge(turns), ...turns.flatMap((turn, i) => always(turn.shown, turns.slice(0, i)))]);
   const good = results.filter((problems) => problems.length === 0).length;
   const ok = runs.length > 0 && good / runs.length >= BAR;
   if (ok) passed++;

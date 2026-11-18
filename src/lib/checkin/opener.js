@@ -112,7 +112,7 @@ export function describeForGemini({ match, tasks, checklistSaved = true, profile
         : 'Why the app matched them: not recorded, so if they ask, say the Your Mentor page has what there is.'
     );
   } else if (match?.status === 'coordinator') {
-    lines.push('Mentor: the mentoring coordinator is finding them a mentor by hand.');
+    lines.push('Mentor: they haven’t got one yet: the mentoring coordinator is finding them a mentor by hand, so there are no reasons for a match yet. If they ask why they were matched, or who their mentor is, say the coordinator is still finding one and they’ll hear soon.');
   } else if (match === null && mentorNote === 'no-mentors') {
     lines.push('Mentor: they asked in this chat, but there are no mentors available yet, so don’t offer again in this chat.');
   } else if (match === null) {
