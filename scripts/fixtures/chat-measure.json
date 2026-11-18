@@ -1,8 +1,8 @@
 {
   "about": "Check-in chat replies for measure-chat.mjs (made-up students), several runs per case. Regenerate with --refresh rather than edit.",
   "model": "gemini-3.5-flash-lite",
-  "fingerprint": "7bbf574056fd",
-  "made": "2026-11-18T01:44:47.548Z",
+  "fingerprint": "1e031b097dd0",
+  "made": "2026-11-18T02:17:01.312Z",
   "runs": {
     "gigs, rules out sport": [
       [
@@ -1040,10 +1040,10 @@
           "ask": "What's left on my checklist?",
           "shown": {
             "kind": "reply",
-            "text": "Sure, let's go through it together.",
+            "text": "",
             "links": [],
             "offers": [
-              "checklist"
+              "checklist-offer"
             ],
             "tasks": [],
             "notes": []
@@ -1481,6 +1481,471 @@
           }
         }
       ]
+    ],
+    "checklist: one by one": [
+      [
+        {
+          "ask": "can you help me do them one by one?",
+          "line": {
+            "who": "chat",
+            "text": "Sure, one at a time.",
+            "offers": [
+              "checklist"
+            ]
+          },
+          "shown": {
+            "kind": "reply",
+            "text": "Sure, one at a time.",
+            "links": [],
+            "offers": [
+              "checklist"
+            ],
+            "tasks": [],
+            "notes": []
+          }
+        },
+        {
+          "ask": "can you help me do them one by one?",
+          "line": {
+            "who": "chat",
+            "text": "Have you enrolled yet?",
+            "quick": [
+              {
+                "label": "Yes"
+              },
+              {
+                "label": "Not yet"
+              }
+            ]
+          },
+          "shown": {
+            "kind": "reply",
+            "text": "Have you enrolled yet?",
+            "links": [],
+            "offers": [],
+            "tasks": [],
+            "notes": []
+          }
+        }
+      ]
+    ],
+    "checklist: yes": [
+      [
+        {
+          "ask": "yes",
+          "line": {
+            "who": "chat",
+            "text": "Ticked: Collect student ID.",
+            "ticked": {
+              "title": "Collect student ID"
+            }
+          },
+          "shown": {
+            "kind": "reply",
+            "text": "Ticked: Collect student ID.",
+            "links": [],
+            "offers": [],
+            "tasks": [],
+            "notes": []
+          }
+        },
+        {
+          "ask": "yes",
+          "line": {
+            "who": "chat",
+            "text": "Have you joined a society yet?",
+            "quick": [
+              {
+                "label": "Yes"
+              },
+              {
+                "label": "Not yet"
+              }
+            ]
+          },
+          "shown": {
+            "kind": "reply",
+            "text": "Have you joined a society yet?",
+            "links": [],
+            "offers": [],
+            "tasks": [],
+            "notes": []
+          }
+        }
+      ]
+    ],
+    "checklist: yeah got it": [
+      [
+        {
+          "ask": "yeah got it",
+          "line": {
+            "who": "chat",
+            "text": "Ticked: Collect student ID.",
+            "ticked": {
+              "title": "Collect student ID"
+            }
+          },
+          "shown": {
+            "kind": "reply",
+            "text": "Ticked: Collect student ID.",
+            "links": [],
+            "offers": [],
+            "tasks": [],
+            "notes": []
+          }
+        },
+        {
+          "ask": "yeah got it",
+          "line": {
+            "who": "chat",
+            "text": "Have you joined a society yet?",
+            "quick": [
+              {
+                "label": "Yes"
+              },
+              {
+                "label": "Not yet"
+              }
+            ]
+          },
+          "shown": {
+            "kind": "reply",
+            "text": "Have you joined a society yet?",
+            "links": [],
+            "offers": [],
+            "tasks": [],
+            "notes": []
+          }
+        }
+      ]
+    ],
+    "checklist: sort of": [
+      [
+        {
+          "ask": "sort of",
+          "line": {
+            "who": "chat",
+            "text": "Did you manage to pick up your student ID card, or do you still need to collect it?",
+            "quick": [
+              {
+                "label": "Yes"
+              },
+              {
+                "label": "Not yet"
+              }
+            ]
+          },
+          "shown": {
+            "kind": "reply",
+            "text": "Did you manage to pick up your student ID card, or do you still need to collect it?",
+            "links": [],
+            "offers": [],
+            "tasks": [],
+            "notes": []
+          }
+        }
+      ]
+    ],
+    "checklist: no to the student ID": [
+      [
+        {
+          "ask": "(the first message)",
+          "line": {
+            "who": "chat",
+            "text": "Have you collected your student ID yet?",
+            "quick": [
+              {
+                "label": "Yes"
+              },
+              {
+                "label": "Not yet"
+              }
+            ]
+          },
+          "shown": {
+            "kind": "reply",
+            "text": "Have you collected your student ID yet?",
+            "links": [],
+            "offers": [],
+            "tasks": [],
+            "notes": []
+          }
+        },
+        {
+          "ask": "no",
+          "line": {
+            "who": "chat",
+            "text": "Have you enrolled yet? You need to do that first.",
+            "quick": [
+              {
+                "label": "Yes"
+              },
+              {
+                "label": "Not yet"
+              }
+            ]
+          },
+          "shown": {
+            "kind": "reply",
+            "text": "Have you enrolled yet? You need to do that first.",
+            "links": [],
+            "offers": [],
+            "tasks": [],
+            "notes": []
+          }
+        }
+      ]
+    ],
+    "checklist: I haven’t enrolled": [
+      [
+        {
+          "ask": "(the first message)",
+          "line": {
+            "who": "chat",
+            "text": "Have you collected your student ID yet?",
+            "quick": [
+              {
+                "label": "Yes"
+              },
+              {
+                "label": "Not yet"
+              }
+            ]
+          },
+          "shown": {
+            "kind": "reply",
+            "text": "Have you collected your student ID yet?",
+            "links": [],
+            "offers": [],
+            "tasks": [],
+            "notes": []
+          }
+        },
+        {
+          "ask": "no",
+          "line": {
+            "who": "chat",
+            "text": "Have you enrolled yet? You need to do that first.",
+            "quick": [
+              {
+                "label": "Yes"
+              },
+              {
+                "label": "Not yet"
+              }
+            ]
+          },
+          "shown": {
+            "kind": "reply",
+            "text": "Have you enrolled yet? You need to do that first.",
+            "links": [],
+            "offers": [],
+            "tasks": [],
+            "notes": []
+          }
+        },
+        {
+          "ask": "I haven’t enrolled",
+          "line": {
+            "who": "chat",
+            "text": "If you need a UK student visa, your Right to Study check comes first before you can enrol. Otherwise, log in to the Student Portal and choose Enrol from the main menu.",
+            "links": [
+              {
+                "label": "Open the Student Portal"
+              }
+            ]
+          },
+          "shown": {
+            "kind": "reply",
+            "text": "If you need a UK student visa, your Right to Study check comes first before you can enrol. Otherwise, log in to the Student Portal and choose Enrol from the main menu.",
+            "links": [
+              {
+                "label": "Open the Student Portal"
+              }
+            ],
+            "offers": [],
+            "tasks": [],
+            "notes": []
+          }
+        },
+        {
+          "ask": "I haven’t enrolled",
+          "line": {
+            "who": "chat",
+            "text": "Shall we move on to the next one, or keep going with this?",
+            "quick": [
+              {
+                "label": "Move on"
+              },
+              {
+                "label": "Keep going"
+              }
+            ]
+          },
+          "shown": {
+            "kind": "reply",
+            "text": "Shall we move on to the next one, or keep going with this?",
+            "links": [],
+            "offers": [],
+            "tasks": [],
+            "notes": []
+          }
+        }
+      ]
+    ],
+    "checklist: not yet to the GP": [
+      [
+        {
+          "ask": "not yet",
+          "line": {
+            "who": "chat",
+            "text": "It is best to register as soon as you can so you are prepared. You can use the GP finder below to find a surgery near where you live.",
+            "tool": "gp-finder"
+          },
+          "shown": {
+            "kind": "reply",
+            "text": "It is best to register as soon as you can so you are prepared. You can use the GP finder below to find a surgery near where you live.",
+            "links": [],
+            "offers": [],
+            "tasks": [],
+            "notes": []
+          }
+        },
+        {
+          "ask": "not yet",
+          "line": {
+            "who": "chat",
+            "text": "Shall we move on to the next one, or keep going with this?",
+            "quick": [
+              {
+                "label": "Move on"
+              },
+              {
+                "label": "Keep going"
+              }
+            ]
+          },
+          "shown": {
+            "kind": "reply",
+            "text": "Shall we move on to the next one, or keep going with this?",
+            "links": [],
+            "offers": [],
+            "tasks": [],
+            "notes": []
+          }
+        }
+      ]
+    ],
+    "checklist: a task they name": [
+      [
+        {
+          "ask": "Can you help me collect my student ID?",
+          "line": {
+            "who": "chat",
+            "text": "Sure, one at a time.",
+            "offers": [
+              "checklist"
+            ]
+          },
+          "shown": {
+            "kind": "reply",
+            "text": "Sure, one at a time.",
+            "links": [],
+            "offers": [
+              "checklist"
+            ],
+            "tasks": [],
+            "notes": []
+          }
+        },
+        {
+          "ask": "Can you help me collect my student ID?",
+          "line": {
+            "who": "chat",
+            "text": "Have you collected your student ID yet?",
+            "quick": [
+              {
+                "label": "Yes"
+              },
+              {
+                "label": "Not yet"
+              }
+            ]
+          },
+          "shown": {
+            "kind": "reply",
+            "text": "Have you collected your student ID yet?",
+            "links": [],
+            "offers": [],
+            "tasks": [],
+            "notes": []
+          }
+        }
+      ]
+    ],
+    "checklist: now what": [
+      [
+        {
+          "ask": "okay great now what",
+          "line": {
+            "who": "chat",
+            "text": "Want to go through your checklist together, one task at a time?",
+            "quick": [
+              {
+                "label": "Yes"
+              },
+              {
+                "label": "Not now"
+              }
+            ]
+          },
+          "shown": {
+            "kind": "reply",
+            "text": "Want to go through your checklist together, one task at a time?",
+            "links": [],
+            "offers": [],
+            "tasks": [],
+            "notes": []
+          }
+        }
+      ]
+    ],
+    "checklist: a change of subject": [
+      [
+        {
+          "ask": "Are there any chess societies?",
+          "line": {
+            "who": "chat",
+            "text": "Yes, you might like Chess, which is a Students' Union society.",
+            "links": [
+              {
+                "label": "Chess",
+                "kind": "society"
+              }
+            ]
+          },
+          "shown": {
+            "kind": "reply",
+            "text": "Yes, you might like Chess, which is a Students' Union society.",
+            "links": [
+              {
+                "label": "Chess",
+                "kind": "society"
+              }
+            ],
+            "offers": [],
+            "tasks": [],
+            "notes": []
+          }
+        }
+      ]
     ]
+  },
+  "cost": {
+    "requests": 11,
+    "input": 1380,
+    "output": 47,
+    "thinking": 0,
+    "dollarsPerRequest": 0.00053
   }
 }

@@ -19,13 +19,20 @@ import { watchSignedIn } from '#lib/firebase/auth.js';
  * offer is one of the chat's own actions Gemini offered (chat-actions.js), shown as a card with Start
  * and Not now. note is something Gemini offered to remember (remember-notes.js), shown as a card with
  * Remember and Not now. appCard is a card the chat showed straight away (its own actions with
- * shows: 'card': their mentor, or asking for a different one). flow is a card from an action the app is running in the chat (mentor-flow.js), such as
- * the meeting choices or the answers to check. A link with an action starts that action in the chat.
+ * shows: 'card': their mentor, or asking for a different one). flow is a card from an action the app is
+ * running in the chat (mentor-flow.js), such as the meeting choices or the answers to check. A link with
+ * an action starts that action in the chat.
+ * While going through the checklist (checklist-talk.js): quick is the replies under the chat's question
+ * (open until one is used, or a newer message has its own); ticked is the task just ticked, with Undo
+ * (undone once used); tool is what the chat can do for the task there and then (the GP finder, a
+ * dentist search, the key contacts); ask4help shows the Ask4Help card.
  * @typedef {{ role: 'assistant' | 'user', text: string, kind?: 'safety' | 'error' | 'unavailable',
  *   links?: { label: string, href: string, external?: boolean, kind?: 'society' | 'club' | 'service',
  *     nsuId?: number, slug?: string, serviceId?: string, action?: string }[],
  *   task?: SuggestedTask, offer?: Offer, note?: OfferedNote, appCard?: 'your-mentor' | 'change-mentor',
- *   flow?: (import('#lib/checkin/mentor-flow.js').FlowCard | import('#lib/checkin/checklist-flow.js').ChecklistCard) & { id: number } }} Message
+ *   flow?: import('#lib/checkin/mentor-flow.js').FlowCard & { id: number },
+ *   quick?: { options: import('#lib/checkin/checklist-talk.js').QuickReply[], open: boolean },
+ *   ticked?: { id: string, title: string, undone: boolean }, tool?: 'gp-finder' | 'dentist-finder' | 'contacts', ask4help?: boolean }} Message
  */
 
 /** @typedef {{ action: string, state: 'offered' | 'started' | 'declined' }} Offer */
@@ -41,9 +48,14 @@ import { watchSignedIn } from '#lib/firebase/auth.js';
  */
 
 /**
+ * The checklist talk's state, as the page reads it alongside the mentor flow's.
+ * @typedef {import('#lib/checkin/checklist-talk.js').TalkState & { kind: 'checklist' }} TalkFlowState
+ */
+
+/**
  * @typedef {{ uid: string | null, messages: Message[], draft: string, waiting: boolean,
  *   started: boolean, unavailable: boolean, conversation: number,
- *   flow: import('#lib/checkin/mentor-flow.js').FlowState | import('#lib/checkin/checklist-flow.js').ChecklistState | null }} ChatSession
+ *   flow: import('#lib/checkin/mentor-flow.js').FlowState | TalkFlowState | null }} ChatSession
  */
 
 /**
@@ -77,7 +89,7 @@ export function setGeminiChat(chat) {
  * The actions the app runs in the chat (finding a mentor, going through the checklist), each made the
  * first time it's started in this conversation, and which one is running (one at a time).
  * @type {{ mentor?: ReturnType<typeof import('#lib/checkin/mentor-flow.js').createMentorFlow>,
- *   checklist?: ReturnType<typeof import('#lib/checkin/checklist-flow.js').createChecklistFlow> }}
+ *   checklist?: ReturnType<typeof import('#lib/checkin/checklist-talk.js').createChecklistTalk> }}
  */
 let flows = {};
 /** @type {'mentor' | 'checklist' | null} */

@@ -1,183 +1,319 @@
-// Checks going through the checklist in the check-in chat (src/lib/checkin/checklist-flow.js): Gemini
-// offers it (its reply's checklist action); the app shows one task at a time with its how-to, a link or something
-// the chat can do, Done (ticked through the checklist's own change), Not yet and Ask4Help; Stop ends
-// it; while a task is on screen, Gemini answers only from its how-to.
-// 1. Offline, in Node: the walkthrough with made-up steps; what Gemini is told (never the words of one
-//    of their own tasks); the offer and the instructions; the task card; the chat page's wiring.
+// Checks going through the checklist as a conversation in the check-in chat (checklist-talk.js): one
+// plain question about one task, with Yes and Not yet; Yes ticks it (with Undo) and asks about the
+// next; Not yet helps, from the task's how-to only, with what the chat can do there and then; Stop or
+// a change of subject ends it; and it starts straight away when asked.
+// 1. Offline, in Node, with a made-up Gemini that answers in the app's JSON (the same chat code the
+//    page uses, through scripts/lib/talk-harness.mjs): every path above, that taps and plain answers
+//    never need Gemini, that Gemini is told only the task in hand and never the words of one of
+//    their own tasks, the instructions, the first message, and the chat page's wiring.
 // 2. In Chrome against the Auth and Firestore emulators (vite dev --mode emulators), with a stand-in
-//    for Gemini (scripts/lib/stand-in-gemini.mjs), so nothing reaches Google: "okay great now what"
-//    gets the offer; Start shows Enrol first; a question goes to Gemini with the task's how-to; Done
-//    ticks it in Firestore; Not yet moves on; "Suggest some for me" asks the chat; Stop ends it.
+//    for Gemini (scripts/lib/stand-in-gemini.mjs), so nothing reaches Google: the first message's
+//    question, Yes ticking the task in Firestore with Undo, Undo unticking it, Not yet's help with the
+//    Student Portal and the move-on question, and Stop.
 // Made-up people only; nothing real is touched (project demo-ag2). Run from the project folder:
 //   node scripts/check-checklist-in-chat.mjs
 //   npx --engine-strict=false firebase-tools emulators:exec --only auth,firestore --project demo-ag2 "node scripts/check-checklist-in-chat.mjs"
 // The second needs Java 21 or newer, and Google Chrome (or CHROME=<path to Chrome>). With
-// SCREENSHOTS=<folder>, it also saves a phone-size picture of a task card there.
+// SCREENSHOTS=<folder>, it also saves a phone-size picture of the conversation there.
 
 import assert from 'node:assert/strict';
 import { randomBytes } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { chatAction } from '#lib/checkin/chat-actions.js';
-import { chatRequest } from '#lib/checkin/chat-prompt.js';
-import { readChatReply } from '#lib/checkin/chat-replies.js';
-import { createChecklistFlow } from '#lib/checkin/checklist-flow.js';
-import { chatOptions, describeForGemini } from '#lib/checkin/opener.js';
-import { HOW_TO } from '#lib/checklist/how-to.js';
-import { applyChange, defaultTasks, makeTick } from '#lib/checklist/tasks.js';
+import { chatRequest, checklistAnswerRequest, checklistHelpRequest } from '#lib/checkin/chat-prompt.js';
+import { OWN_TASK_FOR_GEMINI, plainAnswer, QUICK, questionFor, SAYS } from '#lib/checkin/checklist-talk.js';
+import { buildOpener } from '#lib/checkin/opener.js';
+import { blankContactDetails } from '#lib/checkin/private-details.js';
+import { HOW_TO, KEY_CONTACTS, TALK } from '#lib/checklist/how-to.js';
+import { defaultTasks } from '#lib/checklist/tasks.js';
 import { emulators, openChrome, owner, sleep, startApp } from './lib/emulator-app.mjs';
 import { standInGemini } from './lib/stand-in-gemini.mjs';
+import { talkHarness } from './lib/talk-harness.mjs';
 
 const source = (/** @type {string} */ file) => readFileSync(file, 'utf8');
 const oneLine = (/** @type {string} */ text) => text.replace(/\s+/g, ' ');
-const tick = () => sleep(0);
+
+/** The six default tasks, with these ids ticked. @param {string[]} [done] */
+const tasks = (done = []) => defaultTasks().map((task) => ({ ...task, done: done.includes(task.id) }));
 
 /**
- * A walkthrough with made-up steps that record everything: the list, what it posts, the task on
- * screen, the ticks, and how it ended.
- * @param {{ list?: import('#lib/checklist/tasks.js').Task[], failTick?: number, failLoad?: boolean }} [setup]
+ * A made-up Gemini that answers with these JSON replies in turn, keeping every request.
+ * @param {Record<string, unknown>[]} replies
  */
-function walkthrough({ list = defaultTasks(), failTick = 0, failLoad = false } = {}) {
+function madeUpGemini(replies) {
   /** @type {any[]} */
-  const posts = [];
-  /** @type {(string | null)[]} */
-  const onScreen = [];
-  /** @type {string[]} */
-  const ticks = [];
-  /** @type {any[]} */
-  const finished = [];
-  let state = /** @type {any} */ (null);
-  let failures = failTick;
-  const flow = createChecklistFlow({
-    load: async () => {
-      if (failLoad) throw new Error('offline');
-      return list;
-    },
-    tick: async (id, current) => {
-      if (failures > 0) {
-        failures--;
-        throw new Error('network');
-      }
-      ticks.push(id);
-      return applyChange(current, makeTick(id, true));
-    },
-    post: (message) => posts.push(message),
-    changed: (next) => (state = next),
-    onTask: (task) => onScreen.push(task?.id ?? null),
-    finished: (result) => finished.push(result)
-  });
-  return { flow, posts, onScreen, ticks, finished, state: () => state, last: () => posts.at(-1) };
+  const sent = [];
+  return {
+    sent,
+    generateContent: async (/** @type {any} */ request) => {
+      sent.push(structuredClone(request));
+      const reply = replies.shift() ?? { action: 'none', page: 'none', say: 'OK.' };
+      return /** @type {any} */ ({ response: { text: () => JSON.stringify(reply), candidates: [{ finishReason: 'STOP' }] } });
+    }
+  };
 }
+
+/**
+ * A chat with the talk, as the page starts one: the first message asks about the first task still
+ * to do, and the talk waits for the answer.
+ * @param {ReturnType<typeof madeUpGemini>} gemini @param {any[]} list
+ */
+async function opened(gemini, list) {
+  const facts = { match: null, tasks: list, profile: { interests: ['dancing'] } };
+  const chat = talkHarness(gemini, facts, buildOpener({ match: null, tasks: list, justSignedUp: false, forGemini: true }).messages);
+  await chat.opened();
+  return chat;
+}
+
+/** The chat's lines since the student last spoke. @param {ReturnType<typeof talkHarness>} chat */
+const lastReplies = (chat) => chat.lines.slice(chat.lines.findLastIndex((line) => line.who === 'student') + 1);
 
 /** @type {[string, () => void | Promise<void>][]} */
 const offline = [
-  ['It goes through the tasks not done yet, in order (Enrol first), one card each with its how-to; Done ticks it and moves on, Not yet moves on, and the end says how many were ticked', async () => {
-    const list = applyChange(defaultTasks(), makeTick('gp', true));
-    const t = walkthrough({ list });
-    t.flow.start();
-    await tick();
-    assert.match(t.posts[0].text, /^Let’s go through your checklist, one task at a time: 5 tasks to go\./);
-    assert.equal(t.last().text, '1 of 5: Enrol');
-    assert.equal(t.last().card.kind, 'checklist-task');
-    assert.deepEqual(t.last().card.howTo, HOW_TO.enrol);
-    await t.flow.done();
-    assert.deepEqual(t.ticks, ['enrol']);
-    assert.equal(t.posts.at(-2).text, 'Done');
-    assert.equal(t.posts.at(-2).role, 'user');
-    assert.equal(t.last().text, '2 of 5: Collect student ID', 'the GP was already done');
-    t.flow.notYet();
-    assert.equal(t.last().text, '3 of 5: Join a society');
-    t.flow.notYet();
-    await t.flow.done();
-    t.flow.notYet();
-    assert.match(t.last().text, /^That’s everything for now, and you’ve ticked off 2 tasks\. Nice work!$/);
-    assert.deepEqual(t.last().card, { kind: 'link', label: 'Open your checklist', href: '/checklist', id: t.last().card.id });
-    assert.deepEqual([t.finished[0].outcome, t.finished[0].ticked], ['finished', ['enrol', 'dentist']]);
-    assert.deepEqual(t.onScreen, ['enrol', 'student-id', 'society', 'dentist', 'contacts', null]);
+  // ---------- The question, and Yes ----------
+  ['The first message asks about the first task still to do, as one question with Yes and Not yet; straight after finding a mentor it doesn’t', () => {
+    const { messages, asks, links } = buildOpener({ match: null, tasks: tasks(['enrol', 'gp']), justSignedUp: false });
+    assert.equal(messages.at(-1), 'Let’s go through your checklist, one task at a time. Have you collected your student ID yet?');
+    assert.equal(asks, 'student-id');
+    assert.equal(messages.join(' ').match(/\?/g)?.length, 1, 'only one question');
+    assert.ok(!links.some((link) => ['/checklist', '/gp-finder', '/societies'].includes(link.href)), 'no page buttons for tasks');
+    const matched = /** @type {const} */ ({ status: 'matched', mentorName: 'Alex', reasons: [], meetingFrequency: 'weekly', availability: null, mentorId: 'm' });
+    assert.equal(buildOpener({ match: matched, tasks: tasks(), justSignedUp: true }).asks, null);
+    const own = [...tasks(['enrol', 'gp', 'student-id', 'society', 'dentist', 'contacts']), { id: 'own-1', title: 'Ring my landlord about the boiler', done: false }];
+    assert.match(buildOpener({ match: null, tasks: own, justSignedUp: false }).messages.at(-1) ?? '', /Have you done “Ring my landlord about the boiler” yet\?/);
+    assert.doesNotMatch(buildOpener({ match: null, tasks: own, justSignedUp: false, forGemini: true }).messages.join(' '), /landlord|boiler/, 'Gemini’s copy never has their own task’s words');
   }],
-  ['Nothing is ticked without Done: Not yet and Stop tick nothing; a failed tick offers Try again, which ticks the same task', async () => {
-    const t = walkthrough({ failTick: 1 });
-    t.flow.start();
-    await tick();
-    t.flow.notYet();
-    assert.deepEqual(t.ticks, []);
-    await t.flow.done();
-    assert.deepEqual(t.ticks, []);
-    assert.equal(t.last().card.kind, 'retry');
-    assert.equal(t.last().text, 'We couldn’t tick off “Register with a GP” just now. Please try again.');
-    await t.flow.tryAgain();
-    assert.deepEqual(t.ticks, ['gp']);
-    assert.equal(t.last().text, '3 of 6: Collect student ID');
-    t.flow.stop();
-    assert.deepEqual(t.ticks, ['gp']);
-    assert.equal(t.finished[0].outcome, 'stopped');
+  ['Yes, tapped: ticks that task through the checklist’s change, says so in one line with Undo, and asks about the next; no Gemini', async () => {
+    const gemini = madeUpGemini([]);
+    const chat = await opened(gemini, tasks(['enrol', 'gp']));
+    await chat.say('Yes');
+    assert.deepEqual(lastReplies(chat).map((line) => [line.text, Boolean(line.ticked), line.quick?.map((reply) => reply.label)]), [
+      ['Ticked: Collect student ID.', true, undefined],
+      ['Have you joined a society yet?', false, ['Yes', 'Not yet']]
+    ]);
+    assert.equal(chat.tasks().find((task) => task.id === 'student-id')?.done, true);
+    assert.equal(gemini.sent.length, 0, 'a tap needs no Gemini');
   }],
-  ['Stop, or typing "stop", ends it at any point except while a tick saves; anything else typed is a question for Gemini, not for it', async () => {
-    const t = walkthrough();
-    t.flow.start();
-    await tick();
-    assert.equal(t.flow.takes('Do I need a photo?'), false);
-    assert.equal(t.flow.reply('Do I need a photo?'), false);
-    assert.equal(t.flow.takes(' Stop. '), true);
-    assert.equal(t.flow.reply('stop'), true);
-    assert.equal(t.last().text, 'Stopped. Your checklist is saved as it is, and we can carry on chatting.');
-    assert.equal(t.state().active, false);
-    assert.equal(t.flow.takes('stop'), false, 'not once it’s stopped');
+  ['Yes, typed ("yeah, got it on Monday"): Gemini reads it about that task only, and only that task is ticked', async () => {
+    const gemini = madeUpGemini([{ answer: 'yes', say: '' }]);
+    const chat = await opened(gemini, tasks(['enrol', 'gp']));
+    await chat.say('yeah, got it on Monday, and I joined the climbing society too');
+    assert.match(gemini.sent[0].systemInstruction, /The app has just asked them "Have you collected your student ID yet\?"/);
+    assert.match(gemini.sent[0].systemInstruction, /Only this task counts: anything they say about other tasks is ignored\./);
+    assert.deepEqual(chat.tasks().filter((task) => task.done).map((task) => task.id), ['enrol', 'gp', 'student-id'], 'not the society');
+    assert.equal(lastReplies(chat)[0].text, 'Ticked: Collect student ID.');
   }],
-  ['An all-done checklist just says so; one that can’t be loaded offers Try again', async () => {
-    const all = walkthrough({ list: defaultTasks().map((task) => ({ ...task, done: true })) });
-    all.flow.start();
-    await tick();
-    assert.equal(all.last().text, 'Your checklist’s all done. Nice work!');
-    assert.equal(all.finished[0].outcome, 'all-done');
-    const failing = walkthrough({ failLoad: true });
-    failing.flow.start();
-    await tick();
-    assert.equal(failing.last().card.kind, 'retry');
+  ['An unclear answer ("sort of") gets one quick question, and nothing is ticked', async () => {
+    const gemini = madeUpGemini([{ answer: 'unclear', say: 'Do you mean you’ve picked it up, or that it’s ready to collect?' }]);
+    const chat = await opened(gemini, tasks(['enrol', 'gp']));
+    await chat.say('sort of');
+    assert.deepEqual(lastReplies(chat).map((line) => line.text), ['Do you mean you’ve picked it up, or that it’s ready to collect?']);
+    assert.equal(chat.tasks().find((task) => task.id === 'student-id')?.done, false);
+    assert.equal(chat.talk.state.step, 'asking');
   }],
-  ['Gemini is told the task on screen and to answer only from its how-to; one of their own is never named; joining a society may get suggestions; after Not now or Stop it isn’t offered again', () => {
-    const base = { match: null, tasks: defaultTasks(), profile: null };
-    const enrol = describeForGemini({ ...base, walkthrough: { title: 'Enrol', steps: HOW_TO.enrol.steps } });
-    assert.match(enrol, /The task on screen now is "Enrol"\. Its how-to:\n1\. If you need a UK student visa/);
-    assert.match(enrol, /While it’s on screen, answer their questions about it only from this how-to\. If it doesn’t say, tell them you don’t know and that Ask4Help can help/);
-    assert.match(enrol, /never tick anything or say it’s done: only their Done does that\./);
-    assert.doesNotMatch(enrol, /suggest up to 3 societies/);
-    const society = describeForGemini({ ...base, walkthrough: { title: 'Join a society', steps: HOW_TO.society.steps, chatHelps: true } });
-    assert.match(society, /If they ask for suggestions, you may suggest up to 3 societies that fit them, as usual\./);
-    const own = describeForGemini({ ...base, tasks: [...defaultTasks(), { id: 'own-1', title: 'Ring my landlord about the boiler', done: false }], walkthrough: { own: true } });
-    assert.match(own, /The task on screen now is one of their own, which you aren’t told\./);
-    assert.doesNotMatch(own, /landlord|boiler/, 'their own task’s words are never sent');
-    assert.match(describeForGemini({ ...base, checklistNote: 'declined' }), /They said not now to going through their checklist here\./);
-    assert.match(describeForGemini({ ...base, checklistNote: 'stopped' }), /They went through some of their checklist here and stopped/);
+  ['The plainest answers are read without Gemini', () => {
+    for (const text of ['yes', 'Yeah!', 'yep', 'done', 'got it', 'Yes']) assert.equal(plainAnswer(text), 'yes', text);
+    for (const text of ['no', 'Not yet', 'nope', 'nah']) assert.equal(plainAnswer(text), 'not-yet', text);
+    assert.equal(plainAnswer('stop'), 'stop');
+    assert.equal(plainAnswer('Move on'), 'move-on');
+    assert.equal(plainAnswer('Keep going'), 'keep-going');
+    assert.equal(plainAnswer('I’m stuck'), 'stuck');
+    for (const text of ['yeah got it', 'sort of', 'I haven’t enrolled']) assert.equal(plainAnswer(text), null, text);
   }],
-  ['The offer: the checklist action becomes a card, only with tasks left; the instructions say when, with no Checklist page link or list', () => {
-    const reply = readChatReply(JSON.stringify({ action: 'checklist', page: 'Checklist', say: 'I can go through your checklist with you here, one task at a time.' }), { shortlist: [], actions: ['checklist'] });
-    assert.deepEqual([reply?.action, reply?.links], [{ id: 'checklist' }, []], 'the card, never the Checklist page');
-    assert.deepEqual(chatAction('checklist')?.card, { title: 'Go through your checklist here?', text: 'I’ll show one task at a time, with how to do it. Tap Done when you’ve done it, or Not yet to leave it for now.' });
-    assert.equal(chatOptions({ match: null, tasks: defaultTasks() }).checklist, 'yes');
-    assert.equal(chatOptions({ match: null, tasks: defaultTasks().map((task) => ({ ...task, done: true })) }).checklist, 'no', 'all done: never offered');
-    assert.equal(chatOptions({ match: null, tasks: defaultTasks(), checklistNote: 'declined' }).checklist, 'if-asked');
-    const instructions = oneLine(chatRequest({ about: '(about)', opener: ['(opener)'], shortlist: [], options: { mentor: 'no', checklist: 'yes', hasMentor: false } }).systemInstruction);
-    assert.ok(instructions.includes('"checklist": they ask for help with their checklist or their tasks, or to go through them, or ask what to do next or what’s left. The app then goes through it with them, one task at a time.'));
-    assert.ok(instructions.includes("Don't list their tasks, ask about one, or send them to a page."));
+
+  // ---------- Not yet ----------
+  ['Not yet to the student ID, not enrolled: "Have you enrolled yet? You need to do that first.", with no Gemini', async () => {
+    const gemini = madeUpGemini([]);
+    const chat = await opened(gemini, tasks(['gp']));
+    await chat.talk.start({ from: 'student-id' });
+    await chat.say('No');
+    assert.deepEqual(lastReplies(chat).map((line) => [line.text, line.quick?.map((reply) => reply.label)]), [['Have you enrolled yet? You need to do that first.', ['Yes', 'Not yet']]]);
+    assert.equal(gemini.sent.length, 0);
   }],
-  ['The task card: the how-to, its link (and "Suggest some for me" for societies, which asks the chat), Done, Not yet and Ask4Help; Done and Not yet only while it’s the live card', () => {
-    const card = oneLine(source('src/lib/components/ChecklistTaskCard.svelte'));
-    assert.match(card, /\{#each card\.howTo\.steps as step, i \(i\)\} <li>\{step\}<\/li> \{\/each\}/);
-    assert.match(card, /onclick=\{\(\) => onask\?\.\(/);
-    assert.match(card, /<button class="primary-button" type="button" disabled=\{!live\} onclick=\{\(\) => flow\?\.done\(\)\}>Done<\/button>/);
-    assert.match(card, /<button class="secondary-button" type="button" disabled=\{!live\} onclick=\{\(\) => flow\?\.notYet\(\)\}>Not yet<\/button>/);
-    assert.match(card, /<Ask4HelpLink about=\{card\.title\} \/>/);
-    assert.deepEqual(HOW_TO.society.chat, { label: 'Suggest some for me', ask: 'Could you suggest a society that would suit me?' });
+  ['"I haven’t enrolled": Gemini reads it about enrolling, then helps with enrolling first, from its how-to, with the Student Portal, then asks whether to move on', async () => {
+    const gemini = madeUpGemini([
+      { answer: 'not-yet', say: '' },
+      { about: 'task', ask4help: false, say: 'Enrol online in the Student Portal: choose Enrol, then Enrol on your programme, and have a passport-style photo ready.' }
+    ]);
+    const chat = await opened(gemini, tasks(['gp']));
+    await chat.talk.start({ from: 'student-id' });
+    await chat.say('No');
+    await chat.say('I haven’t enrolled');
+    assert.match(gemini.sent[0].systemInstruction, /The app has just asked them "Have you enrolled yet\? You need to do that first\."/);
+    assert.match(gemini.sent[1].systemInstruction, /They haven't done "Enrol" yet, and you're helping them with it/);
+    assert.ok(gemini.sent[1].systemInstruction.includes(HOW_TO.enrol.steps[1]), 'its how-to');
+    assert.deepEqual(lastReplies(chat).map((line) => [line.text, line.links?.map((link) => link.label), line.quick?.map((reply) => reply.label)]), [
+      ['Enrol online in the Student Portal: choose Enrol, then Enrol on your programme, and have a passport-style photo ready.', ['Open the Student Portal'], undefined],
+      [SAYS.moving, undefined, ['Move on', 'Keep going']]
+    ]);
   }],
-  ['The chat page: Start runs it, one action at a time; while it runs, "stop" goes to it and questions to Gemini; Done ticks through the checklist’s own change; Gemini is told each task and when it ends', () => {
-    const page = source('src/routes/check-in/+page.svelte');
-    assert.match(page, /if \(chatSession\.flow\?\.active\) return;\s*if \(action === 'mentor'\) mentorFlow\(\)\.start\(\);\s*else if \(action === 'checklist'\) checklistFlow\(\)\.start\(\);/);
-    assert.match(page, /if \(text && flowActive && flow\?\.takes\(text\)\) \{/);
-    assert.match(page, /const change = makeTick\(id, true\);\s*const onScreen = applyChange\(list, change\);\s*const result = await saveChange\(change, onScreen\);/);
-    assert.match(page, /tellGemini\(\{ walkthrough: !task \? null : howTo \? \{ title: task\.title, steps: howTo\.steps, chatHelps: Boolean\(howTo\.chat\) \} : \{ own: true \} \}\);/);
-    assert.match(page, /else if \(action === 'checklist'\) tellGemini\(\{ checklistNote: 'declined' \}\);/);
-    assert.match(source('src/lib/checkin/checklist-flow.js'), /takes: \(text\) => state\.active && STOP\.test\(text\)/);
+  ['Yes to "Have you enrolled yet?": ticks Enrol, then helps with the student ID (the app tells Gemini they’ve enrolled)', async () => {
+    const gemini = madeUpGemini([{ about: 'task', ask4help: false, say: 'Upload a photo in the Student Portal, then collect it from your campus with physical photo ID.' }]);
+    const chat = await opened(gemini, tasks(['gp']));
+    await chat.talk.start({ from: 'student-id' });
+    await chat.say('No');
+    await chat.say('Yes');
+    assert.equal(chat.tasks().find((task) => task.id === 'enrol')?.done, true);
+    assert.match(gemini.sent[0].contents.at(-1).parts[0].text, /^\[From the app, not the student: they've just said they've done "Enrol", so now help them with "Collect student ID"\.\]$/);
+    assert.deepEqual(lastReplies(chat).map((line) => line.text).slice(0, 2), ['Ticked: Enrol.', 'Upload a photo in the Student Portal, then collect it from your campus with physical photo ID.']);
+  }],
+  ['Not yet to the GP: help from its how-to with the GP finder in the chat; Keep going, then Done, ticks it', async () => {
+    const gemini = madeUpGemini([{ about: 'task', ask4help: false, say: 'Find a surgery near you below, then register online in about 15 minutes. It’s free.' }]);
+    const chat = await opened(gemini, tasks(['enrol']));
+    await chat.say('Not yet');
+    assert.match(gemini.sent[0].systemInstruction, /The app shows the GP finder under your words, where they type their postcode: never ask for their postcode or address yourself\./);
+    const [help, moving] = lastReplies(chat);
+    assert.equal(help.tool, 'gp-finder');
+    assert.equal(moving.text, SAYS.moving);
+    await chat.say('Keep going');
+    assert.deepEqual(lastReplies(chat).map((line) => [line.text, line.quick?.map((reply) => reply.label)]), [[SAYS.doing, ['Done', 'I’m stuck']]]);
+    await chat.say('Done');
+    assert.equal(chat.tasks().find((task) => task.id === 'gp')?.done, true);
+    assert.equal(gemini.sent.length, 1);
+  }],
+  ['"I’m stuck" shows the Ask4Help card; a dentist search and the key contacts are cards in the chat', async () => {
+    const gemini = madeUpGemini([
+      { about: 'task', ask4help: false, say: 'Find one near you with the search below, and ask for an NHS appointment.' },
+      { about: 'task', ask4help: false, say: 'The card below has them all, ready to save.' }
+    ]);
+    const chat = await opened(gemini, tasks(['enrol', 'gp', 'student-id', 'society']));
+    await chat.say('Not yet');
+    assert.equal(lastReplies(chat)[0].tool, 'dentist-finder');
+    await chat.say('Keep going');
+    await chat.say('I’m stuck');
+    assert.deepEqual(lastReplies(chat).map((line) => [line.text, Boolean(line.ask4help)]), [[SAYS.stuck, true], [SAYS.moving, false]]);
+    await chat.say('Move on');
+    await chat.say('Not yet');
+    assert.equal(lastReplies(chat)[0].tool, 'contacts');
+    assert.deepEqual(KEY_CONTACTS.map((contact) => contact.phone), ['0191 227 3200', '0191 227 3999', '0191 227 4646', '999', '101']);
+  }],
+  ['Joining a society: suggestions that fit, from the app’s short list', async () => {
+    const gemini = madeUpGemini([{ about: 'task', ask4help: false, suggest: ['Salsa and Bachata'], say: 'Since you like dancing, Salsa and Bachata could be fun.' }]);
+    const chat = await opened(gemini, tasks(['enrol', 'gp', 'student-id']));
+    await chat.say('Not yet');
+    assert.ok(gemini.sent[0].generationConfig.responseSchema.properties.suggest.items.enum.includes('Salsa and Bachata'));
+    assert.deepEqual(lastReplies(chat)[0].links, [{ label: 'Salsa and Bachata', kind: 'society' }]);
+  }],
+  ['One of their own tasks: asked with their words on screen, but Gemini never sees them; Not yet needs no Gemini', async () => {
+    const own = [...tasks(['enrol', 'gp', 'student-id', 'society', 'dentist', 'contacts']), { id: 'own-1', title: 'Ring my landlord about the boiler', done: false }];
+    const quiet = madeUpGemini([]);
+    const first = await opened(quiet, own);
+    await first.say('Not yet');
+    assert.equal(lastReplies(first)[0].text, SAYS.ownNotYet);
+    assert.equal(quiet.sent.length, 0);
+    const gemini = madeUpGemini([{ answer: 'yes', say: '' }, { action: 'none', page: 'none', say: 'Nice one!' }]);
+    const chat = await opened(gemini, own);
+    await chat.say('yes, rang them this morning');
+    await chat.say('Thanks!');
+    const everything = JSON.stringify(gemini.sent);
+    assert.doesNotMatch(everything, /Ring my landlord|boiler/, 'never the words of their own task, as the chat asked it');
+    assert.ok(everything.includes(OWN_TASK_FOR_GEMINI.ticked));
+    assert.match(gemini.sent[0].systemInstruction, /whether they’ve done one of their own checklist tasks \(you aren’t told what it is\)/);
+  }],
+  ['Undo unticks the task, says so, and asks about it again', async () => {
+    const chat = await opened(madeUpGemini([]), tasks(['enrol', 'gp']));
+    await chat.say('Yes');
+    await chat.undo();
+    assert.equal(chat.tasks().find((task) => task.id === 'student-id')?.done, false);
+    assert.deepEqual(lastReplies(chat).map((line) => line.text), ['Okay, “Collect student ID” isn’t ticked any more.', 'Have you collected your student ID yet?']);
+  }],
+
+  // ---------- Stopping, and changing the subject ----------
+  ['"stop" ends it at any point; a change of subject goes to the ordinary chat, while asking or while helping', async () => {
+    const stopping = await opened(madeUpGemini([]), tasks());
+    await stopping.say('stop');
+    assert.deepEqual([lastReplies(stopping)[0].text, stopping.endings[0]?.outcome, stopping.talk.state.active], [SAYS.stopped, 'stopped', false]);
+    const gemini = madeUpGemini([{ answer: 'other', say: '' }, { action: 'none', page: 'none', say: 'There’s a chess society!' }]);
+    const chat = await opened(gemini, tasks());
+    await chat.say('Are there any chess societies?');
+    assert.deepEqual([chat.endings[0]?.outcome, lastReplies(chat).at(-1)?.text], ['other', 'There’s a chess society!']);
+    const helper = madeUpGemini([{ about: 'task', ask4help: false, say: 'Find a surgery below.' }, { about: 'other', ask4help: false, say: '' }, { action: 'none', page: 'none', say: 'It meets weekly.' }]);
+    const helping = await opened(helper, tasks(['enrol']));
+    await helping.say('Not yet');
+    await helping.say('When does the chess society meet?');
+    assert.deepEqual([helping.endings[0]?.outcome, lastReplies(helping).at(-1)?.text], ['other', 'It meets weekly.']);
+  }],
+  ['While helping, "I’ve just registered" ticks it, and "next" moves on', async () => {
+    const gemini = madeUpGemini([{ about: 'task', ask4help: false, say: 'Find a surgery below, then register online.' }, { about: 'done', ask4help: false, say: '' }]);
+    const chat = await opened(gemini, tasks(['enrol']));
+    await chat.say('Not yet');
+    await chat.say('I’ve just registered online');
+    assert.equal(chat.tasks().find((task) => task.id === 'gp')?.done, true);
+    await chat.say('next');
+    assert.equal(chat.talk.state.task?.id, 'society');
+  }],
+
+  // ---------- Starting ----------
+  ['"can you help me do them one by one?" gets the first question straight away (no card, no page link); a named task starts there; "what now?" gets a one-line offer, and yes starts it', async () => {
+    const gemini = madeUpGemini([
+      { action: 'checklist', task: 'none', page: 'none', say: 'Sure, one at a time.' },
+      { action: 'checklist', task: 'Collect student ID', page: 'none', say: 'Sure.' },
+      { action: 'checklist-offer', page: 'none', say: 'Good question!' }
+    ]);
+    const facts = { match: null, tasks: tasks(['gp']) };
+    const one = talkHarness(gemini, facts, ['Hi!']);
+    await one.say('can you help me do them one by one?');
+    assert.deepEqual(lastReplies(one).map((line) => [line.text, line.quick?.map((reply) => reply.label)]), [['Sure, one at a time.', undefined], ['Have you enrolled yet?', ['Yes', 'Not yet']]]);
+    const asking = talkHarness(madeUpGemini([{ action: 'checklist', task: 'none', page: 'none', say: 'Shall we start with the first one?' }]), facts, ['Hi!']);
+    await asking.say('help me with my checklist');
+    assert.deepEqual(lastReplies(asking).map((line) => line.text), ['Have you enrolled yet?'], 'Gemini’s words never ask a question before the app’s');
+    assert.ok(!lastReplies(one).some((line) => line.links?.length));
+    const named = talkHarness(gemini, facts, ['Hi!']);
+    await named.say('Can you help me collect my student ID?');
+    assert.equal(lastReplies(named).at(-1)?.text, 'Have you collected your student ID yet?');
+    const offered = talkHarness(gemini, facts, ['Hi!']);
+    await offered.say('now what?');
+    assert.deepEqual(lastReplies(offered).map((line) => [line.text, line.quick?.map((reply) => reply.label)]), [[SAYS.offer, ['Yes', 'Not now']]], 'the app’s offer is the whole reply');
+    await offered.say('Yes');
+    assert.equal(lastReplies(offered).at(-1)?.text, 'Have you enrolled yet?');
+    const declined = talkHarness(madeUpGemini([{ action: 'checklist-offer', page: 'none', say: '' }]), facts, ['Hi!']);
+    await declined.say('what should I do?');
+    await declined.say('Not now');
+    assert.deepEqual([lastReplies(declined)[0].text, declined.endings[0]?.outcome], [SAYS.declined, 'declined']);
+  }],
+  ['Checklist help is never just a page link: the chat never offers the Checklist page; after not now, only if they ask', () => {
+    const request = chatRequest({ about: '', opener: [], shortlist: [], options: { mentor: 'no', checklist: 'yes', hasMentor: false, tasksLeft: ['Enrol'] } });
+    const schema = /** @type {any} */ (request.generationConfig.responseSchema);
+    assert.ok(!schema.properties.page.enum.includes('Checklist'));
+    assert.deepEqual(request.actions.slice(0, 2), ['checklist', 'checklist-offer']);
+    assert.deepEqual(schema.properties.task.enum, ['none', 'Enrol']);
+    const asked = chatRequest({ about: '', opener: [], shortlist: [], options: { mentor: 'no', checklist: 'if-asked', hasMentor: false } });
+    assert.ok(asked.actions.includes('checklist') && !asked.actions.includes('checklist-offer'));
+  }],
+
+  // ---------- What Gemini is told ----------
+  ['Help is from the task’s how-to only (never what’s still to be confirmed), and says what the app shows', () => {
+    for (const [id, talk] of Object.entries(TALK)) {
+      const howTo = HOW_TO[id];
+      const { systemInstruction } = checklistHelpRequest({ about: '(about)', opener: [], title: id, howTo, talk, first: true, shortlist: [] });
+      for (const line of [...howTo.steps, ...talk.first, ...talk.where, ...talk.bring, ...talk.after, ...talk.contact]) assert.ok(systemInstruction.includes(line), `${id}: ${line.slice(0, 40)}`);
+      for (const unsure of talk.toBeConfirmed) assert.ok(!systemInstruction.includes(unsure), `${id} never tells Gemini: ${unsure}`);
+      assert.match(systemInstruction, /Use only its how-to below: never add anything to it\. If it doesn't answer their question, say you don't know and that Ask4Help can help\./);
+      assert.ok(talk.question.endsWith('?') && talk.tool, id);
+    }
+    assert.match(checklistAnswerRequest({ about: '', opener: [], question: null }).systemInstruction, /one of their own checklist tasks \(you aren’t told what it is\)/);
+    assert.deepEqual(Object.keys(TALK), defaultTasks().map((task) => task.id), 'every standard task, in order');
+    assert.equal(questionFor({ id: 'own-2', title: 'Buy a bike lock', done: false }), 'Have you done “Buy a bike lock” yet?');
+  }],
+  ['A postcode never reaches Gemini: typed in the chat it’s blanked, and the finder card is the app’s own', () => {
+    assert.equal(blankContactDetails('My postcode is NE1 8ST'), 'My postcode is [postcode]');
+    const card = source('src/lib/components/GpFinderCard.svelte');
+    assert.match(card, /This stays in the app: it’s never sent to Gemini\./);
+    assert.doesNotMatch(card, /geminiChat|chat-turns|firebase\/ai/);
+  }],
+  ['The chat page: typed answers go to the talk while it runs; quick replies send their words; Undo, the cards; a change of subject goes on to the chat; finding a mentor ends it quietly', () => {
+    const page = oneLine(source('src/routes/check-in/+page.svelte'));
+    assert.match(page, /if \(flowActive && flow\?\.takes\(text\)\) \{.*?await flow\.reply\(text\);/);
+    assert.match(page, /onclick=\{\(\) => sendMessage\(option\.value\)\}>\{option\.label\}<\/button>/);
+    assert.match(page, /onclick=\{\(\) => undoTick\(item\)\}/);
+    assert.match(page, /<GpFinderCard kind=\{item\.tool === 'gp-finder' \? 'gp' : 'dentist'\} \/>/);
+    assert.match(page, /<KeyContactsCard \/>/);
+    assert.match(page, /if \(result\.outcome === 'other' && result\.text\) await askGemini\(result\.text\);/);
+    assert.match(page, /chatFlowFor\('checklist'\)\?\.stop\(\{ quietly: true \}\)/);
+    assert.match(page, /if \(reply\.offers\?\.\[0\] === 'checklist'\) await checklistTalk\(\)\.start\(\{ from: reply\.startAt \}\);/);
+    assert.match(page, /else if \(reply\.offers\?\.\[0\] === 'checklist-offer'\) checklistTalk\(\)\.offer\(\);/);
+    assert.match(page, /if \(opener\.asks\) await checklistTalk\(\)\.start\(\{ asked: true \}\);/);
+    assert.deepEqual(QUICK.yesNo.map((reply) => reply.value), ['Yes', 'Not yet']);
   }]
 ];
 
@@ -218,84 +354,72 @@ async function inTheBrowser(where) {
   const db = owner(where);
   const password = randomBytes(18).toString('base64url');
   const uid = await db.verifiedAccount('hal.walk@northumbria.ac.uk', password);
-  await db.seed(`students/${uid}`, { name: 'Hal Student', course: 'BSc Law', email: 'hal.walk@northumbria.ac.uk', arrivalDate: '', role: 'student', interests: ['dancing'] });
+  await db.seed(`students/${uid}`, {
+    name: 'Hal Student',
+    course: 'BSc Law',
+    email: 'hal.walk@northumbria.ac.uk',
+    arrivalDate: '',
+    role: 'student',
+    interests: ['dancing'],
+    checklist: tasks(['enrol', 'gp']),
+    checklistOffered: ['enrol']
+  });
+  /** Whether the student ID task is ticked in Firestore. */
+  const studentIdDone = async () =>
+    (await db.read(`students/${uid}`))?.fields?.checklist?.arrayValue?.values?.find((/** @type {any} */ value) => value.mapValue.fields.id.stringValue === 'student-id')?.mapValue?.fields?.done?.booleanValue;
+  /** Waits for Firestore to say this. @param {boolean} done */
+  const studentIdIs = async (done) => {
+    for (let i = 0; i < 40; i++) {
+      if ((await studentIdDone()) === done) return true;
+      await sleep(250);
+    }
+    return false;
+  };
 
   const app = await startApp();
   const page = await openChrome(app.base);
   try {
     const gemini = await standInGemini(page.send, page.listen);
-    const lastBubble = () => page.evaluate(`[...document.querySelectorAll('.bubble')].at(-1)?.innerText.trim() ?? ''`);
-    /** Sends a message and waits for the stand-in's reply to show. @param {string} text */
-    const ask = async (text) => {
-      const before = gemini.requests.length;
-      await page.answer(text);
-      for (const end = Date.now() + 20000; gemini.requests.length === before && Date.now() < end; ) await sleep(150);
-      await page.waitFor(`!document.querySelector('.typing')`);
-      await sleep(300);
-    };
+    const has = (/** @type {string} */ words) => `[...document.querySelectorAll('.bubble')].some((b) => b.innerText.trim() === ${JSON.stringify(words)})`;
+    const last = (/** @type {string} */ words) => `[...document.querySelectorAll('.bubble')].at(-1)?.innerText.trim() === ${JSON.stringify(words)}`;
     await page.logIn('hal.walk@northumbria.ac.uk', password);
     await page.go('/check-in');
     await page.waitFor(`document.querySelector('[data-chat-ready]')`, 30000);
 
-    // 1. "okay great now what" gets the offer, without a link to the Checklist page.
-    gemini.replyWith({ action: 'checklist', say: 'I can go through your checklist with you here, one task at a time.' });
-    await ask('okay great now what');
-    const offered = await page.waitFor(`document.querySelector('[aria-label="Go through your checklist here?"]')`);
-    const offerLinks = await page.evaluate(`[...document.querySelectorAll('.bubble')].at(-1)?.querySelectorAll('a').length ?? 0`);
-    await page.evaluate(`([...document.querySelectorAll('[aria-label="Go through your checklist here?"] button')].find((b) => b.textContent.trim() === 'Start').click(), true)`);
-    const firstTask = await page.waitFor(`[...document.querySelectorAll('.bubble')].some((b) => b.innerText.trim() === '1 of 6: Enrol')`);
-    const card = await page.evaluate(`(() => { const c = [...document.querySelectorAll('.task-card')].at(-1); return c ? { text: c.innerText, links: [...c.querySelectorAll('a')].map((a) => a.getAttribute('href')) } : null; })()`);
-    if (process.env.SCREENSHOTS) await page.picture(join(process.env.SCREENSHOTS, 'checklist-in-chat.png'));
-    report('"okay great now what" gets the offer card and no page link; Start shows Enrol first, with its how-to, the Student Portal and Ask4Help',
-      offered && offerLinks === 0 && firstTask && card !== null && HOW_TO.enrol.steps.every((step) => oneLine(card.text).includes(step))
-        && card.links.includes('https://myportal.northumbria.ac.uk/') && card.links.includes('https://myportal.northumbria.ac.uk/Help-and-support') && card.links.includes('tel:+441912274646'),
-      `offer ${offered}, links in the offer ${offerLinks}, first task ${firstTask}`);
+    // 1. The first message asks about the student ID, with Yes and Not yet.
+    const asked = await page.waitFor(`[...document.querySelectorAll('.bubble')].at(-1)?.innerText.includes('Have you collected your student ID yet?') && document.querySelectorAll('.quick button').length === 2`);
+    report('The first message asks about the first task still to do, with Yes and Not yet, and no page buttons for tasks',
+      asked && !(await page.evaluate(`Boolean(document.querySelector('.messages a[href="/checklist"]'))`)));
 
-    // 2. A question goes to Gemini, told the task on screen and its how-to.
-    gemini.replyWith({ say: 'Yes: have a passport-style photo ready to upload.' });
-    await ask('Do I need a photo?');
+    // 2. Yes ticks it in Firestore, with Undo, and asks about the next; no Gemini.
+    await page.press('Yes');
+    const next = await page.waitFor(last('Have you joined a society yet?'));
+    const ticked = await studentIdIs(true);
+    if (process.env.SCREENSHOTS) await page.picture(join(process.env.SCREENSHOTS, 'checklist-conversation.png'));
+    report('Yes ticks the task in Firestore, says so with Undo, and asks about the next; no Gemini request',
+      next && ticked && (await page.evaluate(`[...document.querySelectorAll('.ticked button')].some((b) => b.textContent.trim() === 'Undo')`)) && gemini.requests.length === 0,
+      `next ${next}, ticked ${ticked}, ${gemini.requests.length} request(s)`);
+
+    // 3. Undo unticks it, and asks again.
+    await page.press('Undo');
+    const again = await page.waitFor(last('Have you collected your student ID yet?'));
+    report('Undo unticks it in Firestore and asks about it again', again && (await studentIdIs(false)));
+
+    // 4. Not yet: help from Gemini (the stand-in), the Student Portal button, and the move-on question.
+    gemini.replyWith({ about: 'task', ask4help: false, say: 'Upload a passport-style photo in the Student Portal, then collect it from your campus with physical photo ID.' });
+    await page.press('Not yet');
+    const helped = await page.waitFor(has(SAYS.moving));
+    const portal = await page.evaluate(`[...document.querySelectorAll('a')].some((a) => a.href === 'https://myportal.northumbria.ac.uk/')`);
     const told = gemini.lastInstructions();
-    report('A question while Enrol is on screen goes to Gemini, which is told the task, its how-to and to answer only from it',
-      told.includes('The task on screen now is "Enrol". Its how-to:') && told.includes(HOW_TO.enrol.steps[1]) && told.includes('answer their questions about it only from this how-to')
-        && (await lastBubble()) === 'Yes: have a passport-style photo ready to upload.' && gemini.lastMessages().at(-1) === 'Do I need a photo?');
+    report('Not yet (enrolled already): Gemini helps from the task’s how-to only, with the Student Portal button, then "move on or keep going?"',
+      helped && portal && told.includes('They haven\'t done "Collect student ID" yet') && told.includes(HOW_TO['student-id'].steps[2]) && gemini.lastMessages().at(-1) === 'Not yet',
+      `helped ${helped}, portal ${portal}`);
 
-    // 3. Done ticks it in Firestore; Not yet moves on.
-    await page.press('Done');
-    const ticked = await page.waitFor(`[...document.querySelectorAll('.bubble')].some((b) => b.innerText.trim() === '2 of 6: Register with a GP')`);
-    let saved = null;
-    for (let i = 0; i < 40 && !saved; i++) {
-      const first = (await db.read(`students/${uid}`))?.fields?.checklist?.arrayValue?.values?.[0]?.mapValue?.fields;
-      if (first?.id?.stringValue === 'enrol' && first?.done?.booleanValue === true) saved = first;
-      else await sleep(250);
-    }
-    await page.press('Not yet');
-    const moved = await page.waitFor(`[...document.querySelectorAll('.bubble')].some((b) => b.innerText.trim() === '3 of 6: Collect student ID')`);
-    const gpTicked = (await db.read(`students/${uid}`))?.fields?.checklist?.arrayValue?.values?.[1]?.mapValue?.fields?.done?.booleanValue;
-    report('Done ticks the task in Firestore through the checklist’s own change; Not yet moves on and ticks nothing',
-      ticked && Boolean(saved) && moved && gpTicked === false, `ticked ${ticked}, saved ${Boolean(saved)}, moved ${moved}`);
-
-    // 4. "Suggest some for me" on joining a society asks the chat, which may suggest them.
-    await page.press('Not yet');
-    await page.waitFor(`[...document.querySelectorAll('.bubble')].some((b) => b.innerText.trim() === '4 of 6: Join a society')`);
-    gemini.replyWith({ suggest: ['Salsa and Bachata'], say: 'Since you like dancing, Salsa and Bachata could be fun.' });
-    const before = gemini.requests.length;
-    await page.press('Suggest some for me');
-    for (const end = Date.now() + 20000; gemini.requests.length === before && Date.now() < end; ) await sleep(150);
-    await page.waitFor(`!document.querySelector('.typing')`);
-    await sleep(500);
-    const suggestion = await page.evaluate(`[...document.querySelectorAll('.cards')].at(-1)?.innerText ?? ''`);
-    report('“Suggest some for me” on joining a society asks the chat, which may suggest them while the task stays on screen',
-      gemini.lastMessages().at(-1) === HOW_TO.society.chat?.ask && gemini.lastInstructions().includes('you may suggest up to 3 societies that fit them') && suggestion.includes('Salsa and Bachata')
-        && (await page.evaluate(`[...document.querySelectorAll('.task-card')].at(-1)?.querySelector('button.primary-button')?.disabled === false`)));
-
-    // 5. Stop ends it, and Gemini is told.
-    await page.press('Stop');
-    const stopped = await page.waitFor(`[...document.querySelectorAll('.bubble')].some((b) => b.innerText.includes('Stopped. Your checklist is saved as it is'))`);
-    gemini.replyWith({ say: 'Any time!' });
-    await ask('thanks');
-    const after = gemini.lastInstructions();
-    report('Stop ends it; Gemini is then told it stopped, and is no longer told a task',
-      stopped && !after.includes('The task on screen now') && after.includes('They went through some of their checklist here and stopped'));
+    // 5. Move on, then stop.
+    await page.press('Move on');
+    await page.waitFor(last('Have you joined a society yet?'));
+    await page.answer('stop');
+    report('Typing stop ends it', (await page.waitFor(has(SAYS.stopped))) && !(await page.evaluate(`Boolean(document.querySelector('.quick'))`)));
   } finally {
     await page.close();
     app.stop();

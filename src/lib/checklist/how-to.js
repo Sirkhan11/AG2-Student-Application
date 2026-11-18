@@ -138,3 +138,132 @@ export const howToFor = (id) => HOW_TO[id] ?? null;
 
 /** Whether a link leaves the app (opens in a new tab). @param {Link} link */
 export const isOutside = (link) => /^https?:\/\//.test(link.href);
+
+/**
+ * What the check-in chat may say about each standard task when it goes through the checklist as a
+ * conversation (checklist-talk.js), from the same official pages as HOW_TO (see SOURCES, and the NHS
+ * guide's REGISTERING for a GP). Gemini is given only this, and the task's steps, to help with it.
+ * - question: how the chat asks about the task, answered Yes or Not yet
+ * - needsFirst: a task that has to be done before it, and how the chat asks about that first
+ * - first, where, bring, after, contact: what's needed first; where to go, or how to do it online;
+ *   what to take; what happens next; who to contact if they're stuck. Only what the pages say.
+ * - tool: what the chat can do for it there and then: the GP finder or a dentist search (the
+ *   postcode is typed into the app's card and never goes to Gemini), the key contacts card, the
+ *   Student Portal link, or suggesting societies
+ * - toBeConfirmed: what the official pages don't confirm yet, for the team to check. It's never told
+ *   to Gemini, so the chat says it doesn't know rather than guess.
+ * @typedef {{ question: string, needsFirst?: { task: string, question: string }, first: string[], where: string[],
+ *   bring: string[], after: string[], contact: string[], tool?: 'gp-finder' | 'dentist-finder' | 'contacts' | 'portal' | 'societies',
+ *   toBeConfirmed: string[] }} Talk
+ */
+
+/** Ask4Help, as the chat says it. */
+const ASK4HELP_LINE = 'Ask4Help, the university’s student help service: Ask4Help Online on the Student Portal, or call 0191 227 4646.';
+
+/**
+ * The numbers on the key contacts card (contacts), from the pages in SOURCES (security, safety and
+ * ask4HelpPhone).
+ */
+export const KEY_CONTACTS = Object.freeze([
+  { name: 'Campus Security: emergencies on campus', phone: '0191 227 3200', tel: 'tel:+441912273200', note: 'Staffed 24 hours. Emergencies only.' },
+  { name: 'Campus Security: anything else', phone: '0191 227 3999', tel: 'tel:+441912273999', note: 'Staffed 24 hours.' },
+  { name: 'Ask4Help', phone: ASK4HELP.phone, tel: ASK4HELP.tel, note: 'The university’s student help service.' },
+  { name: 'Police, ambulance or fire in an emergency', phone: '999', tel: 'tel:999', note: null },
+  { name: 'Police, when it isn’t an emergency', phone: '101', tel: 'tel:101', note: null }
+]);
+
+/** @type {Readonly<Record<string, Talk>>} */
+export const TALK = Object.freeze({
+  enrol: {
+    question: 'Have you enrolled yet?',
+    first: [
+      'If you need a UK student visa, your Right to Study check comes first: you can’t enrol until it’s complete. It can be started before you arrive, but it’s only completed in the UK once you’ve shown proof of entry, and it can take up to 5 working days.'
+    ],
+    where: [
+      'Online: log in to the Student Portal, choose Enrol from the main menu, then “Enrol on your programme”, and follow the steps on screen.',
+      'There’s step-by-step guidance in “Understanding the Enrolment Process” in the Student Portal.'
+    ],
+    bring: ['A passport-style photo, ready to upload.'],
+    after: [
+      'A confirmation email goes to your university and personal email addresses.',
+      'It can take up to 48 hours before you can use all the university’s systems.',
+      'You need to have arrived and enrolled by your course’s start date.'
+    ],
+    contact: ['No login details yet: Applicant Services.', 'A forgotten username or password: IT Chat, open 24/7.', `Anything else: ${ASK4HELP_LINE}`],
+    tool: 'portal',
+    toBeConfirmed: []
+  },
+  gp: {
+    question: 'Have you registered with a GP yet?',
+    first: ['Nothing: register as soon as you can, and don’t wait until you’re unwell.'],
+    where: [
+      'Find a surgery near where you live: the GP finder in the chat shows the nearest.',
+      'Register online if the surgery offers it (it takes about 15 minutes), or fill in a form at the surgery.',
+      'At the Newcastle campus, Northumbria sends students to the Student GP Registration website.'
+    ],
+    bring: [
+      'Registering is free, and you don’t need ID, proof of address or proof of immigration status.',
+      'Sometimes a surgery may ask for extra documents, so take your passport and tenancy agreement if you have them.'
+    ],
+    after: ['The surgery should tell you when you’re registered, usually within 5 days.'],
+    contact: ['The surgery, about registering there.', ASK4HELP_LINE],
+    tool: 'gp-finder',
+    toBeConfirmed: []
+  },
+  'student-id': {
+    question: 'Have you collected your student ID yet?',
+    needsFirst: { task: 'enrol', question: 'Have you enrolled yet? You need to do that first.' },
+    first: [
+      'Enrol, and upload a passport-style photo: you’re asked when you enrol, or use Upload Photo in the Student Portal (My Info, then Home, then Useful Links).'
+    ],
+    where: [
+      'Your student ID is your Smartcard. Collect it from the campus where your course is taught: “Collecting your Student Smartcard from Campus” in Ask4Help Online says when and where.'
+    ],
+    bring: ['Physical photo ID: a passport, photo driving licence or PASS card. A copy on your phone won’t do.'],
+    after: ['It’s ready 2 working days after you’ve enrolled and uploaded your photo.'],
+    contact: [ASK4HELP_LINE],
+    tool: 'portal',
+    toBeConfirmed: ['Whether students book a time to collect it.']
+  },
+  society: {
+    question: 'Have you joined a society yet?',
+    first: [],
+    where: [
+      'Browse the societies in the app, by campus and category. Each one’s page has what it does, its membership prices and how to get in touch.',
+      'To join, go to its page on the Students’ Union website, choose the Student membership and add it to your basket. Associate membership is for alumni, staff and students elsewhere.'
+    ],
+    bring: [],
+    after: [],
+    contact: ['The society itself: its page in the app has how to get in touch.'],
+    tool: 'societies',
+    toBeConfirmed: ['Whether you need to log in to the Students’ Union website, or to have enrolled, before you can join.']
+  },
+  dentist: {
+    question: 'Have you found a dentist yet?',
+    first: [],
+    where: [
+      'Find a dentist near you with NHS Find a dentist: the search in the chat opens it for your postcode.',
+      'Contact the practice and ask for an NHS appointment, as some also see private patients. You may be asked to join a waiting list.'
+    ],
+    bring: [],
+    after: ['Most adults pay for NHS dental appointments: the NHS Guide in the app explains the charges.'],
+    contact: ['If you can’t find one, your local integrated care board (ICB), which runs dental services in your area, may be able to tell you where to get an appointment.'],
+    tool: 'dentist-finder',
+    toBeConfirmed: ['What to take to a first dental appointment.', 'What to do in a dental emergency.']
+  },
+  contacts: {
+    question: 'Have you saved your key contacts yet?',
+    first: [],
+    where: [
+      'The key contacts card in the chat has them, ready to save in your phone: Campus Security (0191 227 3200 for emergencies on campus, staffed 24 hours, and 0191 227 3999 for anything else), Ask4Help (0191 227 4646), 999 for police, ambulance or fire in an emergency, and 101 for the police when it isn’t an emergency.'
+    ],
+    bring: [],
+    after: [],
+    contact: [],
+    tool: 'contacts',
+    toBeConfirmed: ['Whether to add the university’s safety app (SafeZone), which wasn’t on the pages read.']
+  }
+});
+
+/** A task's conversation details, or null for one of their own. @param {string} id */
+export const talkFor = (id) => TALK[id] ?? null;

@@ -98,10 +98,13 @@ function tidyTask(value) {
  *   sentence saying the chat has added a reminder goes, as only their tap on Add can
  * - with their mentor's card or the form, no Your Mentor page button too
  * @param {string} text Gemini's reply
+ * - the checklist action may name the task to start at: only one still to do on their checklist; with
+ *   it, Gemini's words never ask a question (the app asks about the task), and with the one-line
+ *   offer (checklist-offer) the app's offer is the whole reply
  * @param {{ shortlist: import('#lib/suggestions/shortlist.js').Shortlisted[], actions: string[],
  *   tasks?: import('#lib/checklist/tasks.js').Task[] | null }} turn tasks: their checklist, if known
  * @returns {{ say: string, links: import('#lib/suggestions/catalogue.js').ReplyLink[], suggested: string[],
- *   action: { id: string, text?: string } | null } | null} null if it isn't a reply at all
+ *   action: { id: string, text?: string, task?: string } | null } | null} null if it isn't a reply at all
  */
 export function readChatReply(text, { shortlist, actions, tasks = null }) {
   const reply = parse(text);
@@ -109,7 +112,7 @@ export function readChatReply(text, { shortlist, actions, tasks = null }) {
   const suggested = pickedFrom(reply.suggest, shortlist);
   const page = typeof reply.page === 'string' && CHAT_PAGES.includes(reply.page) ? findPage(reply.page) : null;
 
-  /** @type {{ id: string, text?: string } | null} */
+  /** @type {{ id: string, text?: string, task?: string } | null} */
   let action = null;
   let say = tidySay(reply.say).replace(OFFERS_TO_REMEMBER, '').trim();
   const id = typeof reply.action === 'string' && actions.includes(reply.action) ? reply.action : null;
@@ -125,10 +128,17 @@ export function readChatReply(text, { shortlist, actions, tasks = null }) {
   } else if (id === 'remember') {
     const note = tidyTask(reply.remember);
     if (screenNote(note) === null) action = { id, text: note };
+  } else if (id === 'checklist') {
+    // The task they named, by its title, if it's one still to do.
+    const named = typeof reply.task === 'string' ? tasks?.find((task) => !task.done && task.title === reply.task) : null;
+    action = named ? { id, task: named.id } : { id };
   } else if (id) {
     action = { id };
   }
 
+  // Going through the checklist: the app asks the questions. Its one-line offer is the whole reply to
+  // "now what?", and before the first question, Gemini's words can't ask one too.
+  if (action?.id === 'checklist-offer' || (action?.id === 'checklist' && say.includes('?'))) say = '';
   // Their mentor's card or the form already link to the Your Mentor page.
   const pageShown = page && !(page.href === '/mentor' && (action?.id === 'your-mentor' || action?.id === 'change-mentor')) ? page : null;
   const links = [...suggested.map((suggestion) => suggestion.link), ...(pageShown ? [{ label: pageShown.name, href: pageShown.href, external: false }] : [])].slice(0, MAX_LINKS);
@@ -151,4 +161,40 @@ export function readAfterMatchReply(text, { shortlist }) {
   if (!say) return null;
   const suggested = pickedFrom(reply.suggest, shortlist);
   return { skip: false, say, links: suggested.map((suggestion) => suggestion.link), suggested: suggested.map((suggestion) => suggestion.name) };
+}
+
+/** What the chat asks when Gemini finds an answer unclear but gives no question of its own. */
+export const UNCLEAR_FALLBACK = 'Is that a yes, or not yet?';
+
+/**
+ * A typed answer to the chat's question about a checklist task, as Gemini read it (checklist-talk.js):
+ * what it means, and for an unclear one, the one short question to ask back.
+ * @param {string} text
+ * @returns {{ answer: 'yes' | 'not-yet' | 'unclear' | 'stop' | 'other', say: string } | null}
+ */
+export function readChecklistAnswer(text) {
+  const reply = parse(text);
+  const answer = reply?.answer;
+  if (answer !== 'yes' && answer !== 'not-yet' && answer !== 'unclear' && answer !== 'stop' && answer !== 'other') return null;
+  const say = answer === 'unclear' ? tidySay(reply?.say) || UNCLEAR_FALLBACK : '';
+  return { answer, say };
+}
+
+/**
+ * Gemini's help with a checklist task, checked: what their message was about, what to say (needed
+ * when it's about the task), whether to show Ask4Help, and any societies it suggested from the short
+ * list (for joining a society).
+ * @param {string} text
+ * @param {{ shortlist: import('#lib/suggestions/shortlist.js').Shortlisted[] }} turn
+ * @returns {{ about: 'task' | 'done' | 'move-on' | 'stop' | 'other', say: string, ask4help: boolean,
+ *   links: import('#lib/suggestions/catalogue.js').ReplyLink[], suggested: string[] } | null}
+ */
+export function readChecklistHelp(text, { shortlist }) {
+  const reply = parse(text);
+  const about = reply?.about;
+  if (about !== 'task' && about !== 'done' && about !== 'move-on' && about !== 'stop' && about !== 'other') return null;
+  const say = tidySay(reply?.say);
+  if (about === 'task' && !say) return null;
+  const suggested = pickedFrom(reply?.suggest, shortlist);
+  return { about, say, ask4help: reply?.ask4help === true, links: suggested.map((suggestion) => suggestion.link), suggested: suggested.map((suggestion) => suggestion.name) };
 }

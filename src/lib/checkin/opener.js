@@ -5,6 +5,8 @@
 // test it in Node.
 
 import { aboutYou, aboutYouForGemini, tidyText } from '#lib/checkin/about-you.js';
+import { OWN_TASK_FOR_GEMINI, questionFor } from '#lib/checkin/checklist-talk.js';
+import { talkFor } from '#lib/checklist/how-to.js';
 
 export { tidyProfile } from '#lib/checkin/about-you.js';
 
@@ -16,122 +18,63 @@ export { tidyProfile } from '#lib/checkin/about-you.js';
  * @typedef {{ label: string, href: string, action?: string }} Link
  */
 
-/** How each default checklist task reads in "you haven't … yet", by task id (see DEFAULT_TASKS in checklist/tasks.js). */
-const NOT_DONE = {
-  enrol: 'enrolled',
-  gp: 'registered with a GP',
-  'student-id': 'collected your student ID',
-  society: 'joined a society',
-  dentist: 'found a dentist',
-  contacts: 'saved your key contacts'
-};
-
-/** At most this many tasks are named in the first message; the rest are counted. */
-const MAX_TASKS_NAMED = 3;
-
-/**
- * Joins items the way a person would write them: "a", "a or b", "a, b or c".
- * @param {string[]} items
- * @param {'and' | 'or'} word
- */
-function inWords(items, word) {
-  return items.length <= 1 ? (items[0] ?? '') : `${items.slice(0, -1).join(', ')} ${word} ${items.at(-1)}`;
-}
-
 /** @param {number} count @param {string} noun */
 const plural = (count, noun) => `${count} ${noun}${count === 1 ? '' : 's'}`;
 
+/** Whether a task is one of the standard ones (with a how-to), rather than one of their own. @param {Task} task */
+const standard = (task) => talkFor(task.id) !== null;
+
 /**
- * Builds the chat's first messages and the buttons under them.
- * @param {{ match: Match | null | undefined, tasks: Task[] | null, checklistSaved?: boolean, justSignedUp: boolean, isMentor?: boolean }} input
- *   match is null if they have no match record, and undefined if it couldn't be loaded; isMentor is
- *   true for someone who signed up as a mentor, who isn't offered one;
- *   tasks is null if the checklist couldn't be loaded; checklistSaved is false when they've never
- *   changed it (tasks are then the five defaults, unticked: they may have done some without
- *   ticking them, so the message doesn't say they haven't); justSignedUp is true when they've come
- *   straight from /find-mentor
- * @returns {{ messages: string[], links: Link[] }}
+ * Builds the chat's first messages and the buttons under them. With something left on their
+ * checklist, the chat starts going through it straight away: the last message asks about the first
+ * task still to do (asks is its id), with Yes and Not yet under it (checklist-talk.js), and nothing
+ * else asks a question, so there's only ever one. Straight after finding a mentor (justSignedUp), it
+ * doesn't, as the chat's next message is about what might suit them.
+ * @param {{ match: Match | null | undefined, tasks: Task[] | null, checklistSaved?: boolean, justSignedUp: boolean, isMentor?: boolean, forGemini?: boolean }} input
+ *   match is null if they have no match record, and undefined if it couldn't be loaded; checklistSaved
+ *   no longer matters here (asking about a task claims nothing about what they've done); isMentor is
+ *   true for someone who signed up as a mentor, who isn't offered one; tasks is null if the checklist
+ *   couldn't be loaded; justSignedUp is true when they've come straight from /find-mentor;
+ *   forGemini: the version Gemini is told, which never has the words of one of their own tasks
+ * @returns {{ messages: string[], links: Link[], asks: string | null }}
  */
-export function buildOpener({ match, tasks, checklistSaved = true, justSignedUp, isMentor = false }) {
+export function buildOpener({ match, tasks, justSignedUp, isMentor = false, forGemini = false }) {
   /** @type {Link[]} */
   const links = [];
   const hello = justSignedUp ? 'Thanks for answering those questions.' : 'Hi!';
+  const next = justSignedUp ? null : (tasks ?? []).find((task) => !task.done) ?? null;
+  // Without a checklist question, the first message asks how their day's been; straight after finding
+  // a mentor, the chat's next message asks something instead.
+  const asking = !next && !justSignedUp;
+  const day = asking ? ' How’s your day been?' : '';
 
-  // 1. Their mentor, then how their day's been.
+  // 1. Their mentor.
   let first;
   if (match?.status === 'matched') {
-    first = `${hello} You’ve been matched with ${match.mentorName ?? 'a mentor'}, and your coordinator will introduce you. While you wait, how’s your day been?`;
+    first = `${hello} You’ve been matched with ${match.mentorName ?? 'a mentor'}, and your coordinator will introduce you.${asking ? ' While you wait, how’s your day been?' : ''}`;
     links.push({ label: 'Your mentor', href: '/mentor' });
   } else if (match?.status === 'coordinator') {
-    first = `${hello} We’re finding you a mentor, and we’ll let you know soon. While you wait, how’s your day been?`;
+    first = `${hello} We’re finding you a mentor, and we’ll let you know soon.${asking ? ' While you wait, how’s your day been?' : ''}`;
   } else if (match === null && !isMentor) {
-    first = `${hello} How’s your day been? If you’d like a student mentor, you can answer a few questions to be matched.`;
+    first = `${hello}${day} If you’d like a student mentor, you can answer a few questions to be matched.`;
     // Starts finding a mentor right here in the chat (chat-actions.js), rather than opening the page.
     links.push({ label: 'Find a mentor', href: '/find-mentor', action: 'mentor' });
   } else {
-    first = `${hello} How’s your day been?`;
-  }
-  const messages = [first];
-
-  // 2. Their checklist: a society first (as a question), then up to 3 other tasks by name.
-  if (tasks && tasks.length > 0 && !checklistSaved) {
-    // Never ticked anything: point them to it, without claiming what they haven't done.
-    messages.push('Your checklist has a few things that help with settling in, like enrolling, registering with a GP and joining a society. Have a look when you’re ready.');
-    links.push({ label: 'Open your checklist', href: '/checklist' });
-  } else if (tasks && tasks.length > 0) {
-    const notDone = tasks.filter((task) => !task.done);
-    if (notDone.length === 0) {
-      messages.push('I can see your checklist’s all done. Nice work!');
-    } else {
-      const societyLeft = notDone.some((task) => task.id === 'society');
-      const others = notDone.filter((task) => task.id !== 'society' && task.id in NOT_DONE);
-      const named = others.slice(0, MAX_TASKS_NAMED).map((task) => NOT_DONE[/** @type {keyof NOT_DONE} */ (task.id)]);
-      // Everything else not done: default tasks past the first 3, and tasks the student added.
-      const extra = notDone.length - named.length - (societyLeft ? 1 : 0);
-
-      const parts = [];
-      if (societyLeft) parts.push('Have you joined a society yet?');
-      if (named.length > 0) {
-        const more = extra > 0 ? `, plus ${plural(extra, 'other task')}` : '';
-        parts.push(`I can see on your checklist that you haven’t ${inWords(named, 'or')} yet${more}.`);
-      } else if (extra > 0) {
-        parts.push(`I can see you’ve got ${plural(extra, 'task')} left on your checklist.`);
-      }
-      // One thing left reads as "that" (or "finding one" for a society); more than one, "any of these".
-      const thingsLeft = (societyLeft ? 1 : 0) + named.length + extra;
-      if (thingsLeft > 1) parts.push('Would you like help with any of these?');
-      else parts.push(societyLeft ? 'Would you like help finding one?' : 'Would you like help with that?');
-      messages.push(parts.join(' '));
-
-      const gp = notDone.some((task) => task.id === 'gp');
-      const dentist = notDone.some((task) => task.id === 'dentist');
-      if (gp || dentist) {
-        links.push({ label: gp && dentist ? 'Find a GP or dentist' : gp ? 'Find a GP' : 'Find a dentist', href: '/gp-finder' });
-      }
-      if (societyLeft) links.push({ label: 'Browse societies', href: '/societies' });
-      links.push({ label: 'Open your checklist', href: '/checklist' });
-    }
+    first = next ? '' : `${hello}${day}`;
   }
 
-  return { messages, links };
-}
-
-/**
- * The task on screen while they go through their checklist in the chat: a standard task's title and
- * how-to (and whether the chat can help with it itself), or own: true for one of theirs.
- * @typedef {{ own: true } | { own?: false, title: string, steps: string[], chatHelps?: boolean }} Walkthrough
- */
-
-/** What Gemini is told while a task is on screen: to answer only from its how-to. @param {Walkthrough} walkthrough */
-function walkthroughLines(walkthrough) {
-  const going = 'Going through their checklist: they’re going through it here, one task at a time, with the app’s cards (Done and Not yet).';
-  const rules = 'Don’t bring up other tasks, pages or offers, and never tick anything or say it’s done: only their Done does that.';
-  if (walkthrough.own) {
-    return `${going} The task on screen now is one of their own, which you aren’t told. If they ask about it, say you can’t help with the details and that Ask4Help can (Stuck? on the card). ${rules}`;
+  // 2. Their checklist: the first task still to do, or well done.
+  /** @type {string[]} */
+  const messages = [];
+  if (next) {
+    const question = forGemini && !standard(next) ? OWN_TASK_FOR_GEMINI.question : questionFor(next);
+    if (first) messages.push(first);
+    messages.push(`${first ? '' : `${hello} `}Let’s go through your checklist, one task at a time. ${question}`);
+  } else {
+    messages.push(first);
+    if (!justSignedUp && tasks && tasks.length > 0) messages.push('I can see your checklist’s all done. Nice work!');
   }
-  const steps = walkthrough.steps.map((step, i) => `${i + 1}. ${step}`).join('\n');
-  const suggest = walkthrough.chatHelps ? ' If they ask for suggestions, you may suggest up to 3 societies that fit them, as usual.' : '';
-  return `${going} The task on screen now is "${walkthrough.title}". Its how-to:\n${steps}\nWhile it’s on screen, answer their questions about it only from this how-to. If it doesn’t say, tell them you don’t know and that Ask4Help can help (Stuck? on the card).${suggest} ${rules}`;
+  return { messages, links, asks: next?.id ?? null };
 }
 
 /** How long each saved reason for their match can be, as Gemini is told it. */
@@ -148,15 +91,14 @@ const MAX_REASON_LENGTH = 160;
  * finding a mentor in this chat, so Gemini doesn't offer it again ('declined': they said not now;
  * 'stopped': they stopped part way; 'no-mentors': there were none available). today, as the sign-up
  * form writes dates (2026-11-17), tells Gemini whether they've arrived yet.
- * walkthrough: the task on screen while they go through their checklist in the chat
- * (checklist-flow.js): a standard task's title and how-to, or own: true for one of their own, whose
- * words aren't shared. checklistNote: they said not now to that, or stopped it, so it isn't offered again.
+ * checklistNote: they said not now to going through their checklist in the chat, or stopped it
+ * (checklist-talk.js), so it's only started again if they ask.
  * @param {{ match: Match | null | undefined, tasks: Task[] | null, checklistSaved?: boolean,
  *   profile?: Parameters<typeof aboutYou>[0], isMentor?: boolean,
  *   mentorNote?: 'declined' | 'stopped' | 'no-mentors' | null, today?: string | null,
- *   walkthrough?: Walkthrough | null, checklistNote?: 'declined' | 'stopped' | null }} input
+ *   checklistNote?: 'declined' | 'stopped' | null }} input
  */
-export function describeForGemini({ match, tasks, checklistSaved = true, profile = null, isMentor = false, mentorNote = null, today = null, walkthrough = null, checklistNote = null }) {
+export function describeForGemini({ match, tasks, checklistSaved = true, profile = null, isMentor = false, mentorNote = null, today = null, checklistNote = null }) {
   const about = aboutYou(profile);
   const lines = [];
   if (isMentor) {
@@ -187,8 +129,8 @@ export function describeForGemini({ match, tasks, checklistSaved = true, profile
     lines.push(`Checklist: they haven’t ticked anything off yet, and may not have opened it, so don’t say they haven’t done these. It starts with: ${tasks.map((task) => task.title).join(', ')}.`);
   } else if (tasks) {
     const titles = (/** @type {boolean} */ done) =>
-      tasks.filter((task) => task.done === done && task.id in NOT_DONE).map((task) => task.title);
-    const ownLeft = tasks.filter((task) => !task.done && !(task.id in NOT_DONE)).length;
+      tasks.filter((task) => task.done === done && standard(task)).map((task) => task.title);
+    const ownLeft = tasks.filter((task) => !task.done && !standard(task)).length;
     lines.push(`Checklist, not done yet: ${titles(false).join(', ') || 'nothing from the standard list'}.`);
     lines.push(`Checklist, done: ${titles(true).join(', ') || 'nothing from the standard list yet'}.`);
     if (ownLeft > 0) lines.push(`They also have ${plural(ownLeft, 'task')} of their own still to do (not shared with you).`);
@@ -198,7 +140,6 @@ export function describeForGemini({ match, tasks, checklistSaved = true, profile
 
   if (checklistNote === 'declined') lines.push('They said not now to going through their checklist here.');
   if (checklistNote === 'stopped') lines.push('They went through some of their checklist here and stopped.');
-  if (walkthrough) lines.push(walkthroughLines(walkthrough));
   return [...aboutYouForGemini(about, today), ...lines].join('\n');
 }
 

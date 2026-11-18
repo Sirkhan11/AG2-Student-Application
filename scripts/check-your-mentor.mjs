@@ -24,7 +24,7 @@ import { CHAT_ACTIONS, chatAction } from '#lib/checkin/chat-actions.js';
 import { chatRequest } from '#lib/checkin/chat-prompt.js';
 import { readChatReply } from '#lib/checkin/chat-replies.js';
 import { chatOptions, describeForGemini } from '#lib/checkin/opener.js';
-import { emulators, openChrome, owner, sleep, startApp } from './lib/emulator-app.mjs';
+import { CHECKLIST_DONE, emulators, openChrome, owner, sleep, startApp } from './lib/emulator-app.mjs';
 import { standInGemini } from './lib/stand-in-gemini.mjs';
 
 const source = (/** @type {string} */ file) => readFileSync(file, 'utf8');
@@ -33,7 +33,7 @@ const MATCH = /** @type {const} */ ({ status: 'matched', mentorId: 'mentor-alex'
 
 /** @type {[string, () => void | Promise<void>][]} */
 const offline = [
-  ['Their mentor (your-mentor) and asking for a different one (change-mentor) show their card straight away, only for a student with a mentor; finding a mentor and the checklist still have Start and Not now', () => {
+  ['Their mentor (your-mentor) and asking for a different one (change-mentor) show their card straight away, only for a student with a mentor; finding a mentor still has Start and Not now', () => {
     const read = (/** @type {string} */ action, /** @type {string[]} */ actions) => readChatReply(JSON.stringify({ action, page: 'none', say: 'Here.' }), { shortlist: [], actions })?.action ?? null;
     assert.deepEqual(read('your-mentor', ['your-mentor', 'change-mentor']), { id: 'your-mentor' });
     assert.deepEqual(read('change-mentor', ['your-mentor', 'change-mentor']), { id: 'change-mentor' });
@@ -43,7 +43,7 @@ const offline = [
     assert.equal(chatOptions({ match: null, tasks: null }).hasMentor, false);
     assert.equal(chatAction('your-mentor')?.shows, 'card');
     assert.equal(chatAction('change-mentor')?.shows, 'card');
-    assert.deepEqual(CHAT_ACTIONS.filter((action) => action.shows !== 'card').map((action) => action.id), ['mentor', 'checklist']);
+    assert.deepEqual(CHAT_ACTIONS.filter((action) => action.shows !== 'card').map((action) => action.id), ['mentor'], 'going through the checklist has no card: it starts, or is offered in one line');
   }],
   ['The instructions: show the card when they ask who their mentor is or how to reach them, never guessing; the form when they want a different one, never asking why', () => {
     const instructions = oneLine(chatRequest({ about: '(about)', opener: ['(opener)'], shortlist: [], options: { mentor: 'no', checklist: 'no', hasMentor: true } }).systemInstruction);
@@ -121,10 +121,10 @@ async function inTheBrowser(where) {
   const db = owner(where);
   const password = randomBytes(18).toString('base64url');
   const ivy = await db.verifiedAccount('ivy.mentor@northumbria.ac.uk', password);
-  await db.seed(`students/${ivy}`, { name: 'Ivy Student', course: 'BSc Law', email: 'ivy.mentor@northumbria.ac.uk', arrivalDate: '', role: 'student' });
+  await db.seed(`students/${ivy}`, { name: 'Ivy Student', course: 'BSc Law', email: 'ivy.mentor@northumbria.ac.uk', arrivalDate: '', role: 'student', ...CHECKLIST_DONE });
   await db.seed(`matches/${ivy}`, { ...MATCH, createdAt: new Date() });
   const jo = await db.verifiedAccount('jo.mentor@northumbria.ac.uk', password);
-  await db.seed(`students/${jo}`, { name: 'Jo Student', course: 'BA History', email: 'jo.mentor@northumbria.ac.uk', arrivalDate: '', role: 'student' });
+  await db.seed(`students/${jo}`, { name: 'Jo Student', course: 'BA History', email: 'jo.mentor@northumbria.ac.uk', arrivalDate: '', role: 'student', ...CHECKLIST_DONE });
   const DETAILS = 'Made-up words for the check';
 
   const app = await startApp();

@@ -19,18 +19,26 @@
 //   they're worried.
 // - after-match: the message straight after finding a mentor: up to 3 suggestions that fit their
 //   answers and nothing they'd rather avoid, one gentle question, and nothing if they've seemed upset.
+// - checklist: going through the checklist as a conversation (checklist-talk.js), as the page does it:
+//   "can you help me do them one by one?" starts with the first question; "yes" and "yeah got it"
+//   tick it with Undo; "sort of" gets one question; "no" to the student ID asks about enrolling first,
+//   and "I haven't enrolled" gets help with enrolling; "not yet" to the GP shows the GP finder; a
+//   task they name starts there; "now what" gets an offer; a change of subject is answered; and no
+//   checklist help is ever just a page link.
 // - conversations: their first name now and then over six turns (in at least one reply, at most
 //   half, never in full), and the reminder question exactly once over a conversation.
 //
 // Replies are saved in scripts/fixtures/chat-measure.json, so by default this only reads them and
 // needs no Gemini. To ask Gemini again (about 75 requests a run, within the scripts' daily budget):
 //   node --env-file=.env --env-file=.env.development.local scripts/measure-chat.mjs --refresh [--runs 3] [--only suggestions,actions]
-// Otherwise:
-//   node scripts/measure-chat.mjs [--only ...]
+// Otherwise (--transcripts prints each checklist case as a conversation):
+//   node scripts/measure-chat.mjs [--only ...] [--transcripts]
 
 import { createHash } from 'node:crypto';
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { CHAT_MODEL } from '#lib/checkin/chat-prompt.js';
+import { SAYS as TALK_SAYS } from '#lib/checkin/checklist-talk.js';
+import { defaultTasks } from '#lib/checklist/tasks.js';
 import { buildOpener } from '#lib/checkin/opener.js';
 import { NOT_IN_CHAT, serviceById } from '#lib/nsu/services.js';
 import { AUDIENCE, societyById } from '#lib/societies/societies.js';
@@ -76,6 +84,9 @@ const MATCHED_GIGS = {
 const WAITING = { status: 'coordinator', meetingFrequency: 'weekly', availability: 'Tuesday evenings' };
 const SAM = { name: 'Sam Student', course: 'BSc Computer Science', interests: ['chess'] };
 
+/** The six default tasks, with these ticked. @param {string[]} ids */
+const ticked = (ids) => defaultTasks().map((task) => ({ ...task, done: ids.includes(task.id) }));
+
 /**
  * A student as the chat page starts one: what Gemini is told (facts), and the first messages, built
  * by the app without the mentor's name.
@@ -85,7 +96,7 @@ const SAM = { name: 'Sam Student', course: 'BSc Computer Science', interests: ['
 function student(given) {
   const facts = /** @type {ChatFacts} */ ({ match: null, tasks: null, checklistSaved: true, profile: null, isMentor: false, mentorNote: null, today: '2026-11-18', ...given });
   const withoutName = facts.match?.status === 'matched' ? { ...facts.match, mentorName: null } : facts.match;
-  return { facts, opener: buildOpener({ match: withoutName, tasks: facts.tasks, checklistSaved: facts.checklistSaved, justSignedUp: false, isMentor: facts.isMentor }).messages };
+  return { facts, opener: buildOpener({ match: withoutName, tasks: facts.tasks, checklistSaved: facts.checklistSaved, justSignedUp: false, isMentor: facts.isMentor, forGemini: true }).messages };
 }
 
 /** @type {Record<string, { facts: ChatFacts, opener: string[] }>} */
@@ -111,6 +122,12 @@ const STUDENTS = {
       matchingSummary: { likes: ['settling in', 'swimming', 'salsa dancing', 'a swim', 'a dance class', 'making friends'], avoids: ['rugby'], styles: { social: 'both', planning: 'last minute', working: 'with others' } }
     }
   }),
+  // Going through the checklist: nothing done yet; enrolled; enrolled and registered with a GP (so
+  // the student ID is next); and registered with a GP but not enrolled.
+  'checklist, nothing done': student({ tasks: defaultTasks(), profile: { course: 'BSc Nursing', interests: ['dancing'] } }),
+  'checklist, enrolled': student({ tasks: ticked(['enrol']), profile: { course: 'BSc Nursing', interests: ['dancing'] } }),
+  'checklist, student ID next': student({ tasks: ticked(['enrol', 'gp']), profile: { course: 'BSc Nursing', interests: ['dancing'] } }),
+  'checklist, not enrolled': student({ tasks: ticked(['gp']), profile: { course: 'BSc Nursing', interests: ['dancing'] } }),
   'board games': student({
     match: WAITING,
     tasks: ACTION_TASKS,
@@ -127,7 +144,7 @@ const STUDENTS = {
 /**
  * What the student sees from one reply (the page shows the same).
  * @typedef {{ kind: string, text: string, links: { label: string, kind?: string }[], offers: string[], tasks: string[], notes: string[] }} Shown
- * @typedef {{ ask: string, shown: Shown }} Turn
+ * @typedef {{ ask: string, shown: Shown, line?: import('./lib/talk-harness.mjs').Line }} Turn
  */
 
 /** @param {Shown} shown */
@@ -191,8 +208,12 @@ function suggestionProblems(expect, shown) {
 /**
  * One case: who asks (a student above), what they say in turn (or straight after finding a mentor),
  * and what's wrong with the replies.
+ * talk: going through the checklist (checklist-talk.js), as steps: the first message's question
+ * (opened), starting at a task (from), or what they say; its turns are what the chat showed, each
+ * with the talk's own parts (line: the ticked line, quick replies, a card such as the GP finder).
  * @typedef {{ group: string, id: string, why: string, student: string, seed?: [string, string][], afterMatch?: 'matched' | 'coordinator',
- *   asks: string[], then?: (turns: Turn[]) => string | null, judge: (turns: Turn[]) => string[] }} Case
+ *   asks: string[], then?: (turns: Turn[]) => string | null, judge: (turns: Turn[]) => string[],
+ *   talk?: ({ opened: true } | { from: string } | { say: string })[] }} Case
  */
 
 /** @type {Case[]} */
@@ -301,7 +322,7 @@ const OFFERS_IN_WORDS = /(?:I|we) can (?:help you )?find you (?:a |one|a student
 const CONTEXT = [
   { id: 'why matched', student: 'matched, gigs', ask: 'Why did you match me with my mentor?', why: 'uses the saved reasons', expect: /live music|gigs|cinema|laid[- ]back/i, noCantKnow: true },
   { id: 'how often', student: 'matched, gigs', ask: 'How often will we meet?', why: 'the frequency they asked for', expect: /two weeks|fortnight/i },
-  { id: 'checklist', student: 'matched, gigs', ask: "What's left on my checklist?", why: 'offers to go through it here', card: 'checklist' },
+  { id: 'checklist', student: 'matched, gigs', ask: "What's left on my checklist?", why: 'starts going through it here, or offers to', card: 'checklist' },
   { id: 'who is my mentor (context)', student: 'matched, gigs', ask: 'Who is my mentor?', why: 'shows the mentor card, never a name', card: 'your-mentor' },
   { id: 'course society', student: 'matched, gigs', ask: 'Can you suggest a society for my course?', why: 'uses their course', link: 'English' },
   { id: 'why matched, waiting', student: 'waiting', ask: 'Why did you match me with my mentor?', why: 'the coordinator is finding one', expect: /coordinator/i },
@@ -329,7 +350,7 @@ for (const test of CONTEXT) {
       test.notPage && /find a mentor page/i.test(shown.text) ? 'sends them to the Find a mentor page' : '',
       OFFERS_IN_WORDS.test(shown.text) && !shown.offers.includes('mentor') ? 'offers to find a mentor in words, without the card' : '',
       test.link && !suggestedIn(shown).includes(test.link) ? `doesn't suggest ${test.link}` : '',
-      test.card && !shown.offers.includes(test.card) ? `doesn't show the ${test.card} card` : '',
+      test.card && !shown.offers.includes(test.card) && !(test.card === 'checklist' && shown.offers.includes('checklist-offer')) ? `doesn't show the ${test.card} card` : '',
       test.noCantKnow && CANT_KNOW.some((pattern) => pattern.test(shown.text)) ? "says it can't know" : ''
     ].filter(Boolean)
   });
@@ -457,6 +478,128 @@ CASES.push(
   }
 );
 
+// ---------- checklist ----------
+
+/** The chat's lines while going through the checklist, with the talk's own parts. @param {Turn[]} turns */
+const talkLines = (turns) => turns.map((turn) => turn.line ?? { who: 'chat', text: turn.shown.text });
+/** Checklist help that's never just a page link: every line has words, and none links to the Checklist page. @param {Turn[]} turns */
+const neverJustALink = (turns) => [
+  ...turns.filter((turn) => turn.shown.text.trim() === '').map(() => 'a line with no words'),
+  ...turns.filter((turn) => turn.shown.links.some((link) => link.label === 'Checklist')).map(() => 'a Checklist page link')
+];
+/** The question about a task, with Yes and Not yet, somewhere in these turns. @param {Turn[]} turns @param {string} question */
+const asksAbout = (turns, question) => talkLines(turns).some((line) => line.text.trim().endsWith(question) && line.quick?.map((reply) => reply.label).join() === 'Yes,Not yet');
+
+/** @type {{ id: string, why: string, student: string, talk: NonNullable<Case['talk']>, judge: (turns: Turn[]) => string[] }[]} */
+const CHECKLIST = [
+  {
+    id: 'checklist: one by one',
+    why: '"can you help me do them one by one?" starts with the first question, not a page link or a card',
+    student: 'checklist, nothing done',
+    talk: [{ say: 'can you help me do them one by one?' }],
+    judge: (turns) => [asksAbout(turns, 'Have you enrolled yet?') ? '' : 'didn’t ask about the first task']
+  },
+  {
+    id: 'checklist: yes',
+    why: '"yes" ticks the student ID, with Undo, and asks about the next (no Gemini)',
+    student: 'checklist, student ID next',
+    talk: [{ opened: true }, { say: 'yes' }],
+    judge: (turns) => [
+      talkLines(turns).some((line) => line.ticked?.title === 'Collect student ID') ? '' : 'didn’t tick it with Undo',
+      asksAbout(turns, 'Have you joined a society yet?') ? '' : 'didn’t ask about the next task'
+    ]
+  },
+  {
+    id: 'checklist: yeah got it',
+    why: '"yeah got it" ticks the student ID, with Undo, and asks about the next',
+    student: 'checklist, student ID next',
+    talk: [{ opened: true }, { say: 'yeah got it' }],
+    judge: (turns) => [
+      talkLines(turns).some((line) => line.ticked?.title === 'Collect student ID') ? '' : 'didn’t tick it with Undo',
+      asksAbout(turns, 'Have you joined a society yet?') ? '' : 'didn’t ask about the next task'
+    ]
+  },
+  {
+    id: 'checklist: sort of',
+    why: '"sort of" gets one quick question, not a tick',
+    student: 'checklist, student ID next',
+    talk: [{ opened: true }, { say: 'sort of' }],
+    judge: (turns) => {
+      const last = talkLines(turns).at(-1);
+      return [
+        talkLines(turns).some((line) => line.ticked) ? 'ticked it' : '',
+        last && last.text.endsWith('?') && (last.text.match(/\?/g) ?? []).length === 1 ? '' : 'didn’t ask one quick question'
+      ];
+    }
+  },
+  {
+    id: 'checklist: no to the student ID',
+    why: '"no" to the student ID, not enrolled: "Have you enrolled yet? You need to do that first." (no Gemini)',
+    student: 'checklist, not enrolled',
+    talk: [{ from: 'student-id' }, { say: 'no' }],
+    judge: (turns) => [asksAbout(turns, 'Have you enrolled yet? You need to do that first.') ? '' : 'didn’t ask about enrolling first']
+  },
+  {
+    id: 'checklist: I haven’t enrolled',
+    why: '"I haven’t enrolled": help with enrolling first, from its how-to, with the Student Portal, then move on or keep going',
+    student: 'checklist, not enrolled',
+    talk: [{ from: 'student-id' }, { say: 'no' }, { say: 'I haven’t enrolled' }],
+    judge: (turns) => {
+      const lines = talkLines(turns);
+      const help = lines.at(-2);
+      return [
+        lines.some((line) => line.ticked) ? 'ticked something' : '',
+        help && /enrol/i.test(help.text) && /portal/i.test(help.text) ? '' : 'the help isn’t about enrolling in the Student Portal',
+        help?.links?.some((link) => link.label === 'Open the Student Portal') ? '' : 'no Student Portal button',
+        lines.at(-1)?.text === TALK_SAYS.moving ? '' : 'didn’t ask whether to move on'
+      ];
+    }
+  },
+  {
+    id: 'checklist: not yet to the GP',
+    why: '"not yet" to the GP shows the GP finder in the chat, with how to register, and never asks for a postcode',
+    student: 'checklist, enrolled',
+    talk: [{ opened: true }, { say: 'not yet' }],
+    judge: (turns) => {
+      const help = talkLines(turns).find((line) => line.tool);
+      return [
+        help?.tool === 'gp-finder' ? '' : 'no GP finder in the chat',
+        help && /regist/i.test(help.text) ? '' : 'no words on how to register',
+        help && /\b(postcode|address)\b[^.?]*\?/i.test(help.text) ? 'asked for their postcode or address' : ''
+      ];
+    }
+  },
+  {
+    id: 'checklist: a task they name',
+    why: '"Can you help me collect my student ID?" starts at the student ID',
+    student: 'checklist, not enrolled',
+    talk: [{ say: 'Can you help me collect my student ID?' }],
+    judge: (turns) => [asksAbout(turns, 'Have you collected your student ID yet?') ? '' : 'didn’t start at the student ID']
+  },
+  {
+    id: 'checklist: now what',
+    why: '"okay great now what" gets a one-line offer (or starts it), never a page link',
+    student: 'checklist, nothing done',
+    talk: [{ say: 'okay great now what' }],
+    judge: (turns) => [
+      talkLines(turns).some((line) => line.text === TALK_SAYS.offer) || asksAbout(turns, 'Have you enrolled yet?') ? '' : 'no offer and no first question'
+    ]
+  },
+  {
+    id: 'checklist: a change of subject',
+    why: 'asked about chess while going through it: it stops asking and answers, ticking nothing',
+    student: 'checklist, student ID next',
+    talk: [{ opened: true }, { say: 'Are there any chess societies?' }],
+    judge: (turns) => {
+      const lines = talkLines(turns);
+      return [lines.some((line) => line.ticked) ? 'ticked something' : '', lines.at(-1)?.quick ? 'asked about a task again' : '', /chess/i.test(lines.at(-1)?.text ?? '') ? '' : 'didn’t answer about chess'];
+    }
+  }
+];
+for (const test of CHECKLIST) {
+  CASES.push({ group: 'checklist', ...test, asks: [], judge: (turns) => [...test.judge(turns), ...neverJustALink(turns)].filter(Boolean) });
+}
+
 // ---------- conversations ----------
 
 const NAME_CONVERSATION = ['Hi!', 'Pretty good, I’ve just got back from a lecture', 'Are there any chess societies?', 'Nice, thanks', 'What could I do this weekend?', 'Thanks, have a good evening'];
@@ -503,10 +646,12 @@ const SOURCES = [
   'src/lib/checkin/about-you.js',
   'src/lib/suggestions/catalogue.js',
   'src/lib/suggestions/everyday-words.js',
-  'src/lib/suggestions/shortlist.js'
+  'src/lib/suggestions/shortlist.js',
+  'src/lib/checkin/checklist-talk.js',
+  'src/lib/checklist/how-to.js'
 ];
 const fingerprint = createHash('sha256')
-  .update([CHAT_MODEL, ...SOURCES.map((file) => readFileSync(file, 'utf8')), JSON.stringify(CASES.map(({ id, student, seed, asks, afterMatch }) => [id, student, seed, asks, afterMatch]))].join('\n'))
+  .update([CHAT_MODEL, ...SOURCES.map((file) => readFileSync(file, 'utf8')), JSON.stringify(CASES.map(({ id, student, seed, asks, afterMatch, talk }) => [id, student, seed, asks, afterMatch, talk]))].join('\n'))
   .digest('hex')
   .slice(0, 12);
 
@@ -542,12 +687,41 @@ if (process.argv.includes('--refresh')) {
   const { geminiFromEnv } = await import('./lib/gemini-rest.mjs');
   const { chatOverRest } = await import('./lib/chat-over-rest.mjs');
   const gemini = geminiFromEnv(process.env);
+  const { restModel } = await import('./lib/chat-over-rest.mjs');
+  const { talkHarness } = await import('./lib/talk-harness.mjs');
+  /**
+   * Going through the checklist once, as the page does it, and what the chat showed.
+   * @param {NonNullable<Case['talk']>} steps @param {ChatFacts} facts @param {string[]} opener
+   * @returns {Promise<Turn[]>}
+   */
+  const talkRun = async (steps, facts, opener) => {
+    const harness = talkHarness(restModel(gemini), facts, opener);
+    for (const step of steps) {
+      if ('opened' in step) await harness.opened();
+      else if ('from' in step) await harness.talk.start({ from: step.from });
+      else await harness.say(step.say);
+    }
+    /** @type {Turn[]} */
+    const turns = [];
+    let ask = '(the first message)';
+    for (const line of harness.lines) {
+      if (line.who === 'student') ask = line.text;
+      else turns.push({ ask, line, shown: { kind: line.kind ?? 'reply', text: line.text, links: line.links ?? [], offers: line.offers ?? [], tasks: [], notes: [] } });
+    }
+    return turns;
+  };
   // A full refresh starts again; --only keeps every other case's saved runs.
   saved = { ...saved, model: CHAT_MODEL, fingerprint, runs: only ? saved.runs : {} };
   for (const test of chosen) {
     saved.runs[test.id] = [];
     for (let run = 1; run <= runs; run++) {
       const { facts, opener } = STUDENTS[test.student];
+      if (test.talk) {
+        saved.runs[test.id].push(await talkRun(test.talk, facts, opener));
+        saved.made = new Date().toISOString();
+        writeFileSync(REPLIES_FILE, `${JSON.stringify(saved, null, 2)}\n`);
+        continue;
+      }
       const chat = chatOverRest(gemini, facts, opener, undefined, test.seed ?? []);
       /** @type {Turn[]} */
       const turns = [];
@@ -601,12 +775,31 @@ for (const test of chosen) {
   const failing = results.findIndex((problems) => problems.length > 0);
   const shownRun = runs[failing === -1 ? 0 : failing];
   if (failing !== -1) console.log(`      run ${failing + 1}: ${results[failing].join('; ')}`);
-  for (const turn of shownRun?.slice(-2) ?? []) {
-    const cards = [...suggestedIn(turn.shown), ...pagesIn(turn.shown).map((page) => `${page} page`), ...turn.shown.offers.map((offer) => `${offer} card`), ...turn.shown.tasks.map((task) => `reminder "${task}"`), ...turn.shown.notes.map((note) => `remember "${note}"`)];
+  for (const turn of shownRun?.slice(test.talk ? -4 : -2) ?? []) {
+    const extras = turn.line ? [turn.line.ticked ? 'Undo' : '', turn.line.tool ?? '', turn.line.ask4help ? 'Ask4Help' : '', ...(turn.line.quick ?? []).map((reply) => reply.label)].filter(Boolean) : [];
+    const cards = [...suggestedIn(turn.shown), ...pagesIn(turn.shown).map((page) => `${page} page`), ...turn.shown.offers.map((offer) => `${offer} card`), ...turn.shown.tasks.map((task) => `reminder "${task}"`), ...turn.shown.notes.map((note) => `remember "${note}"`), ...extras];
     console.log(`      "${turn.ask.slice(0, 70)}" -> ${turn.shown.kind === 'skip' ? '(nothing)' : `"${turn.shown.text}"`}${cards.length ? `   [${cards.join(', ')}]` : ''}`);
   }
 }
 console.log(`\n${passed}/${chosen.length} cases at the bar (at least ${BAR * 100}% of runs); ${runsPassed}/${runsTotal} runs as expected`);
+// --transcripts: each checklist case's first run as a conversation, for reading.
+if (process.argv.includes('--transcripts')) {
+  const { asTranscript } = await import('./lib/talk-harness.mjs');
+  for (const test of chosen.filter((item) => item.talk)) {
+    const turns = saved.runs[test.id]?.[0] ?? [];
+    /** @type {import('./lib/talk-harness.mjs').Line[]} */
+    const lines = [];
+    let ask = '(the first message)';
+    for (const turn of turns) {
+      if (turn.ask !== ask) {
+        ask = turn.ask;
+        lines.push({ who: 'student', text: ask });
+      }
+      lines.push(turn.line ?? { who: 'chat', text: turn.shown.text });
+    }
+    console.log(`\n== ${test.id}\n${asTranscript(lines)}`);
+  }
+}
 if (saved.cost) {
   const { requests, input, output, thinking, dollarsPerRequest } = saved.cost;
   console.log(`Cost on the last refresh: ${requests} requests, on average ${input} tokens in, ${output} out and ${thinking} thinking: about $${dollarsPerRequest} a request`);

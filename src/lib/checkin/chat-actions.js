@@ -22,12 +22,10 @@ export const CHAT_ACTIONS = Object.freeze([
   // record by the card, so Gemini never sees them.
   { id: 'your-mentor', shows: 'card' },
   // The form goes only to the mentoring coordinator: never to the mentor, and never to Gemini.
-  { id: 'change-mentor', shows: 'card' },
-  {
-    id: 'checklist',
-    card: { title: 'Go through your checklist here?', text: 'I’ll show one task at a time, with how to do it. Tap Done when you’ve done it, or Not yet to leave it for now.' }
-  }
+  { id: 'change-mentor', shows: 'card' }
 ]);
+// Going through the checklist (checklist and checklist-offer) has no card: the chat starts asking
+// straight away, or offers it in one line with Yes and Not now (checklist-talk.js).
 
 /** @param {string} id */
 export const chatAction = (id) => CHAT_ACTIONS.find((action) => action.id === id) ?? null;

@@ -4,6 +4,7 @@
 // DevTools protocol. Nothing real is touched (project demo-ag2). Run the checks inside
 // `firebase-tools emulators:exec --only auth,firestore --project demo-ag2`.
 
+import { DEFAULT_TASKS } from '#lib/checklist/tasks.js';
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
 import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
@@ -76,6 +77,13 @@ export function owner({ auth, firestore, project }) {
     }
   };
 }
+
+/**
+ * A checklist with every default task ticked, to add to a made-up student's record when a check is
+ * about something else: the chat's first message then asks how their day's been, rather than
+ * starting to go through their checklist (which takes what they type first).
+ */
+export const CHECKLIST_DONE = Object.freeze({ checklist: DEFAULT_TASKS.map((task) => ({ ...task, done: true })), checklistOffered: ['enrol'] });
 
 /** Starts the app in its emulators mode; returns its address and how to stop it. */
 export async function startApp() {

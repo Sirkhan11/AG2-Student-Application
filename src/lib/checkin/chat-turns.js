@@ -1,6 +1,7 @@
 import { isCrisis, SAFETY_MESSAGE, seemsWorried } from '#lib/checkin/safety.js';
-import { afterMatchRequest, afterMentorNote, chatRequest } from '#lib/checkin/chat-prompt.js';
-import { readAfterMatchReply, readChatReply } from '#lib/checkin/chat-replies.js';
+import { afterMatchRequest, afterMentorNote, APP_NOTE_START, chatRequest, checklistAnswerRequest, checklistHelpRequest } from '#lib/checkin/chat-prompt.js';
+import { readAfterMatchReply, readChatReply, readChecklistAnswer, readChecklistHelp } from '#lib/checkin/chat-replies.js';
+import { howToFor, talkFor } from '#lib/checklist/how-to.js';
 import { blankContactDetails } from '#lib/checkin/private-details.js';
 import { isOutOfCredit } from '#lib/firebase/ai-errors.js';
 import { aboutYou } from '#lib/checkin/about-you.js';
@@ -38,9 +39,10 @@ const notFromApp = (text) => text.replace(/\[(\s*from the app)/gi, '($1');
  * app page (see chat-replies.js); tasks is a checklist reminder it suggested, for the page's Add / No
  * thanks card; offers are the chat's own actions it chose, such as 'mentor', for the page's cards (see
  * chat-actions.js); notes is something it offered to remember, for the page's Remember / Not now card.
+ * startAt: with the checklist action, the task they named, to start going through it there.
  * @typedef {{ kind: 'reply' | 'safety' | 'error' | 'unavailable' | 'skip', text: string,
  *   links?: import('#lib/suggestions/catalogue.js').ReplyLink[], tasks?: string[], offers?: string[],
- *   notes?: string[] }} ChatReply
+ *   notes?: string[], startAt?: string }} ChatReply
  */
 
 /**
@@ -156,8 +158,10 @@ export function chatWith(model, { facts, opener, seed = [] }) {
       // Emails and phone numbers are blanked first, so they're never sent to Google.
       const clean = blankContactDetails(notFromApp(text));
       const list = shortlistFor(clean);
-      // Never a Remember card while they're asking something (such as for suggestions).
-      const options = { ...chatOptions(facts), remember: !clean.includes('?') };
+      // Never a Remember card while they're asking something (such as for suggestions). The standard
+      // tasks still to do, by title, so going through the checklist can start at one they name.
+      const tasksLeft = (facts.tasks ?? []).filter((task) => !task.done && talkFor(task.id)).map((task) => task.title);
+      const options = { ...chatOptions(facts), remember: !clean.includes('?'), tasksLeft };
       const { actions, ...request } = chatRequest({ about: describeForGemini(facts), opener, shortlist: list, options });
       /** @type {import('firebase/ai').Content} */
       const message = { role: 'user', parts: [{ type: 'text', text: clean }] };
@@ -172,7 +176,8 @@ export function chatWith(model, { facts, opener, seed = [] }) {
         links,
         tasks: action?.id === 'reminder' && action.text ? [action.text] : [],
         notes: action?.id === 'remember' && action.text ? [action.text] : [],
-        offers: action && action.id !== 'reminder' && action.id !== 'remember' ? [action.id] : []
+        offers: action && action.id !== 'reminder' && action.id !== 'remember' ? [action.id] : [],
+        ...(action?.task ? { startAt: action.task } : {})
       };
     },
 
@@ -196,6 +201,79 @@ export function chatWith(model, { facts, opener, seed = [] }) {
       if (answer.reply.skip) return { kind: 'skip', text: '' };
       keep(message, answer.reply.say, answer.reply.suggested);
       return { kind: 'reply', text: answer.reply.say, links: answer.reply.links, tasks: [], notes: [], offers: [] };
+    },
+
+    /**
+     * Going through the checklist (checklist-talk.js): reads a typed answer to the chat's question
+     * about one task. For one of their own tasks, Gemini isn't told its words. The exchange isn't kept
+     * here: the talk adds what the chat says next (note).
+     * @param {string} text
+     * @param {import('#lib/checklist/tasks.js').Task} task
+     * @param {string} question what the chat asked
+     * @returns {Promise<import('#lib/checkin/checklist-talk.js').Answer>}
+     */
+    async checklistAnswer(text, task, question) {
+      if (isCrisis(text)) return { kind: 'failed', reply: { kind: 'safety', text: SAFETY_MESSAGE } };
+      if (unavailable) return { kind: 'failed', reply: { kind: 'unavailable', text: UNAVAILABLE_MESSAGE } };
+      const clean = blankContactDetails(notFromApp(text));
+      const request = checklistAnswerRequest({ about: describeForGemini(facts), opener, question: talkFor(task.id) ? question : null });
+      const answer = await ask({ role: 'user', parts: [{ type: 'text', text: clean }] }, request, readChecklistAnswer);
+      if (!answer.ok) return { kind: 'failed', reply: answer.reply };
+      said.unshift(clean);
+      return { kind: 'answer', ...answer.reply };
+    },
+
+    /**
+     * Going through the checklist: Gemini's help with one standard task they haven't done, from its
+     * how-to only (never one of their own: those have none). first: the first help with it, when the
+     * app shows the task's tool. fromApp: the message is one of the app's notes (after the task that
+     * comes first is ticked), not theirs.
+     * @param {string} text
+     * @param {import('#lib/checklist/tasks.js').Task} task
+     * @param {boolean} first
+     * @param {boolean} [fromApp]
+     * @returns {Promise<import('#lib/checkin/checklist-talk.js').Help>}
+     */
+    async checklistHelp(text, task, first, fromApp = false) {
+      if (!fromApp && isCrisis(text)) return { kind: 'failed', reply: { kind: 'safety', text: SAFETY_MESSAGE } };
+      if (unavailable) return { kind: 'failed', reply: { kind: 'unavailable', text: UNAVAILABLE_MESSAGE } };
+      const howTo = howToFor(task.id);
+      const talk = talkFor(task.id);
+      if (!howTo || !talk) return { kind: 'failed', reply: { kind: 'error', text: ERROR_MESSAGE } };
+      const clean = fromApp ? text : blankContactDetails(notFromApp(text));
+      const list = talk.tool === 'societies' ? shortlistFor(fromApp ? '' : clean) : [];
+      const request = checklistHelpRequest({ about: describeForGemini(facts), opener, title: task.title, howTo, talk, first, shortlist: list });
+      /** @type {import('firebase/ai').Content} */
+      const message = { role: 'user', parts: [{ type: 'text', text: clean }] };
+      const help = await ask(message, request, (reply) => readChecklistHelp(reply, { shortlist: list }));
+      if (!help.ok) return { kind: 'failed', reply: help.reply };
+      if (!fromApp) said.unshift(clean);
+      if (help.reply.about === 'task') keep(message, help.reply.say, help.reply.suggested);
+      return { kind: 'help', about: help.reply.about, say: help.reply.say, ask4help: help.reply.ask4help, links: help.reply.links };
+    },
+
+    /**
+     * Adds what was said without Gemini to its side of the conversation, so later turns know: the
+     * student's words (a tap, or a typed answer the app read itself) and what the chat said, or with
+     * no student words, more of what the chat said in its last message.
+     * @param {string | null} student
+     * @param {string} chat
+     */
+    note(student, chat) {
+      if (student === null) {
+        const last = history.at(-1);
+        if (last?.role === 'model' && chat) {
+          const before = last.parts.map((part) => ('text' in part ? part.text : '')).join('');
+          history[history.length - 1] = { role: 'model', parts: [{ type: 'text', text: `${before} ${chat}`.trim() }] };
+        }
+        return;
+      }
+      const clean = blankContactDetails(notFromApp(student));
+      said.unshift(clean);
+      history.push({ role: 'user', parts: [{ type: 'text', text: clean }] }, { role: 'model', parts: [{ type: 'text', text: chat }] });
     }
   };
 }
+
+/** The app's note when the task that comes first is done, so Gemini helps with the one asked about. @param {string} first @param {string} then */
+export const firstDoneNote = (first, then) => `${APP_NOTE_START} they've just said they've done "${first}", so now help them with "${then}".]`;

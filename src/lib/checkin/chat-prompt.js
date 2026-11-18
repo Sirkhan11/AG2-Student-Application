@@ -77,8 +77,10 @@ function shortlistLines(shortlist) {
  * checklist: going through their checklist ('if-asked' likewise); hasMentor: showing their mentor, or
  * the form for a different one.
  * remember: offering to remember something (not while they're asking a question, so a request for
- * suggestions never gets a Remember card).
- * @typedef {{ mentor: 'yes' | 'if-asked' | 'no', checklist: 'yes' | 'if-asked' | 'no', hasMentor: boolean, remember?: boolean }} ChatOptions
+ * suggestions never gets a Remember card). tasksLeft: the standard checklist tasks still to do, by
+ * title, so going through the checklist can start at one they name.
+ * @typedef {{ mentor: 'yes' | 'if-asked' | 'no', checklist: 'yes' | 'if-asked' | 'no', hasMentor: boolean, remember?: boolean,
+ *   tasksLeft?: string[] }} ChatOptions
  */
 
 /** The app pages a chat reply may link to. Never the Checklist: the chat goes through that itself. */
@@ -95,11 +97,17 @@ function chatActions(options) {
   if (options.checklist !== 'no') {
     actions.push([
       'checklist',
-      `they ask for help with their checklist or their tasks, or to go through them${
-        options.checklist === 'yes' ? ', or ask what to do next or what’s left' : ' (they said not now earlier, so only if they ask)'
-      }. The app then goes through it with them, one task at a time. In say, just a few words such as "Sure, let's go through it together." Don't list their tasks, ask about one, or send them to a page.${
-        options.checklist === 'yes' ? ' When they ask what to do next (such as "now what?" or "what should I do?"), this is your answer: don’t suggest societies or other things instead, and don’t ask about reminders in the same reply.' : ''
+      `they ask for help with their checklist or their tasks, or to go through them (such as "can you help me do them one by one?")${
+        options.checklist === 'if-asked' ? '. They said not now earlier, so only if they ask' : ''
+      }. The app starts straight away, asking about one task at a time, so in say just a few words such as "Sure, one at a time." Don't list their tasks, ask about one yourself, or send them to a page.${
+        options.tasksLeft?.length ? ' If they name one task (such as "can you help me get my student ID?"), put it in task, and the app starts there.' : ''
       }`
+    ]);
+  }
+  if (options.checklist === 'yes') {
+    actions.push([
+      'checklist-offer',
+      'they ask what to do next (such as "now what?" or "what should I do?") or what’s left on their checklist. The app’s one-line offer to go through it together is the whole reply, so leave say empty. This is your answer: don’t suggest societies or other things instead.'
     ]);
   }
   if (options.mentor !== 'no') {
@@ -165,7 +173,8 @@ Once in the conversation, at a natural point (when you've finished helping with 
 You may suggest:
 ${shortlistLines(shortlist)}`;
   const ids = actions.map(([id]) => id);
-  return { systemInstruction: instructions, generationConfig: { responseMimeType: 'application/json', responseSchema: chatSchema(shortlist, ids) }, actions: ids };
+  const tasks = ids.includes('checklist') ? options.tasksLeft ?? [] : [];
+  return { systemInstruction: instructions, generationConfig: { responseMimeType: 'application/json', responseSchema: chatSchema(shortlist, ids, tasks) }, actions: ids, tasks };
 }
 
 /**
@@ -173,12 +182,14 @@ ${shortlistLines(shortlist)}`;
  * say is written knowing what the app will show under it.
  * @param {import('#lib/suggestions/shortlist.js').Shortlisted[]} shortlist
  * @param {string[]} actions
+ * @param {string[]} [tasks] standard checklist tasks still to do, by title, for the checklist action
  * @returns {import('firebase/ai').SchemaRequest}
  */
-export function chatSchema(shortlist, actions) {
+export function chatSchema(shortlist, actions, tasks = []) {
   /** @type {Record<string, import('firebase/ai').SchemaRequest>} */
   const properties = {
     action: { type: 'string', enum: ['none', ...actions] },
+    ...(tasks.length ? { task: { type: 'string', enum: ['none', ...tasks] } } : {}),
     ...(shortlist.length
       ? { suggest: { type: 'array', items: { type: 'string', enum: shortlist.map(({ suggestion }) => suggestion.name) }, maxItems: 3 } }
       : {}),
@@ -221,4 +232,100 @@ ${shortlistLines(shortlist)}`;
   /** @type {import('firebase/ai').SchemaRequest} */
   const schema = { type: 'object', properties, required: order, propertyOrdering: order };
   return { systemInstruction: instructions, generationConfig: { responseMimeType: 'application/json', responseSchema: schema } };
+}
+
+/**
+ * A task's how-to for Gemini: its steps, then what's needed first, where to go or how to do it
+ * online, what to take, what happens next and who to contact (HOW_TO and TALK in how-to.js). Never
+ * what's still to be confirmed.
+ * @param {import('#lib/checklist/how-to.js').HowTo} howTo
+ * @param {import('#lib/checklist/how-to.js').Talk} talk
+ */
+function howToLines(howTo, talk) {
+  /** @param {string} heading @param {string[]} lines */
+  const part = (heading, lines) => (lines.length ? `${heading}:\n${lines.map((line) => `- ${line}`).join('\n')}` : '');
+  return [
+    part('Steps', howTo.steps),
+    part('Needed first', talk.first),
+    part('Where to go, or how to do it online', talk.where),
+    part('What to take', talk.bring),
+    part('What happens next', talk.after),
+    part('Who to contact if they’re stuck', talk.contact)
+  ]
+    .filter(Boolean)
+    .join('\n');
+}
+
+/** What the app shows for a task's tool, for Gemini to mention (never to do itself). */
+const TOOL_WORDS = {
+  'gp-finder': 'The app shows the GP finder under your words, where they type their postcode: never ask for their postcode or address yourself.',
+  'dentist-finder': 'The app shows a search under your words that opens NHS Find a dentist for their postcode: never ask for their postcode or address yourself.',
+  contacts: 'The app shows the key contacts card under your words, with every number to save.',
+  portal: 'The app adds a button to the Student Portal under your words.',
+  societies: 'Suggest up to 3 societies from "You may suggest" that fit what they’re into, naming each in say with a few words on why. If you don’t know what they’re into, ask (that’s your one question).'
+};
+
+/** The JSON shape every checklist reply shares: the decision first, then the words. @param {Record<string, import('firebase/ai').SchemaRequest>} properties */
+function schemaOf(properties) {
+  const order = Object.keys(properties);
+  /** @type {import('firebase/ai').SchemaRequest} */
+  const schema = { type: 'object', properties, required: order, propertyOrdering: order };
+  return { responseMimeType: 'application/json', responseSchema: schema };
+}
+
+/**
+ * The request for reading a typed answer to the chat's question about one checklist task (going
+ * through the checklist, checklist-talk.js). For one of their own tasks, Gemini isn't told its words.
+ * @param {{ about: string, opener: string[], question: string | null }} turn question: what the app
+ *   asked, or null for one of their own tasks
+ */
+export function checklistAnswerRequest({ about, opener, question }) {
+  const asked = question ? `"${question}"` : 'whether they’ve done one of their own checklist tasks (you aren’t told what it is)';
+  const instructions = `${coreInstructions(about, opener)}
+
+Now: going through their checklist, one task at a time. The app has just asked them ${asked}. Read their answer, about this task only:
+- answer "yes": they say they've done it, in any words ("yeah, got it on Monday").
+- answer "not-yet": they haven't, or they want help with it.
+- answer "unclear": you can't tell (such as "sort of"). Then in say, ask one short question to find out, about this task only.
+- answer "stop": they want to stop going through their checklist.
+- answer "other": they're talking about something else.
+Only this task counts: anything they say about other tasks is ignored. Unless the answer is "unclear", say is empty.`;
+  return {
+    systemInstruction: instructions,
+    generationConfig: schemaOf({ answer: { type: 'string', enum: ['yes', 'not-yet', 'unclear', 'stop', 'other'] }, say: { type: 'string' } })
+  };
+}
+
+/**
+ * The request for helping with one checklist task they haven't done yet: a sentence or two from its
+ * how-to only, what the app shows for it (first time only), and what their message was about.
+ * @param {{ about: string, opener: string[], title: string, howTo: import('#lib/checklist/how-to.js').HowTo,
+ *   talk: import('#lib/checklist/how-to.js').Talk, first: boolean, shortlist: import('#lib/suggestions/shortlist.js').Shortlisted[] }} turn
+ */
+export function checklistHelpRequest({ about, opener, title, howTo, talk, first, shortlist }) {
+  const societies = talk.tool === 'societies';
+  const tool = talk.tool && (first || societies) ? ` ${TOOL_WORDS[talk.tool]}` : '';
+  const instructions = `${coreInstructions(about, opener)}
+
+Now: going through their checklist, one task at a time. They haven't done "${title}" yet, and you're helping them with it as a conversation. Use only its how-to below: never add anything to it. If it doesn't answer their question, say you don't know and that Ask4Help can help.
+
+Your reply is JSON:
+- about: what their last message was about: "task" (this task, or wanting help with it), "done" (they say they've now done it), "move-on" (they want the next task), "stop" (they want to stop going through the checklist), or "other" (something else).
+- ask4help: true if they're stuck, it isn't straightforward for them, or the how-to doesn't answer their question: the app then shows Ask4Help.${
+    societies && shortlist.length ? '\n- suggest: names from "You may suggest" below, at most 3, or none.' : ''
+  }
+- say: with "task", a sentence or two on how: what's needed first, where to go or how to do it online, what to take and who to contact if they're stuck, from the how-to, only what they need now. If the answer to one question would change your help, ask it (only one question). Don't ask whether to move on: the app asks that.${tool} Otherwise say is empty.
+
+How to do "${title}":
+${howToLines(howTo, talk)}${societies ? `\n\nYou may suggest:\n${shortlistLines(shortlist)}` : ''}`;
+  /** @type {Record<string, import('firebase/ai').SchemaRequest>} */
+  const properties = {
+    about: { type: 'string', enum: ['task', 'done', 'move-on', 'stop', 'other'] },
+    ask4help: { type: 'boolean' },
+    ...(societies && shortlist.length
+      ? { suggest: { type: 'array', items: { type: 'string', enum: shortlist.map(({ suggestion }) => suggestion.name) }, maxItems: 3 } }
+      : {}),
+    say: { type: 'string' }
+  };
+  return { systemInstruction: instructions, generationConfig: schemaOf(properties) };
 }

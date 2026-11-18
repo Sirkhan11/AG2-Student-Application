@@ -36,6 +36,7 @@ import { describeForGemini } from '#lib/checkin/opener.js';
 import { screenNote, withNote, withoutNote } from '#lib/checkin/remember-notes.js';
 import { ANSWERS_NOTE } from '#lib/matching/find-mentor-steps.js';
 import { standInGemini } from './lib/stand-in-gemini.mjs';
+import { CHECKLIST_DONE } from './lib/emulator-app.mjs';
 
 const sleep = (/** @type {number} */ ms) => new Promise((done) => setTimeout(done, ms));
 const source = (/** @type {string} */ file) => readFileSync(file, 'utf8');
@@ -315,7 +316,7 @@ async function inTheBrowser() {
   await fetch(`http://${AUTH}/identitytoolkit.googleapis.com/v1/projects/${PROJECT}/accounts:update`, {
     method: 'POST', headers: { 'content-type': 'application/json', authorization: 'Bearer owner' }, body: JSON.stringify({ localId: uid, emailVerified: true })
   });
-  await seed(`students/${uid}`, { ...RECORD, interests: ['swimming', 'salsa', RECORD.email], role: 'student' });
+  await seed(`students/${uid}`, { ...RECORD, interests: ['swimming', 'salsa', RECORD.email], role: 'student', ...CHECKLIST_DONE });
 
   // The app, and Chrome at phone size.
   const appPort = await freePort();

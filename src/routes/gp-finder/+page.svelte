@@ -2,31 +2,12 @@
   import BackLink from '#lib/components/BackLink.svelte';
   import BottomNav from '#lib/components/BottomNav.svelte';
   import { REGISTERING } from '#lib/nhs/guide.js';
-  import {
-    classifySearch,
-    distanceText,
-    findADentistUrl,
-    findAGpUrl,
-    LIST_DATE,
-    mailHref,
-    nearestAnywhere,
-    OTHER_NATIONS,
-    placeChoices,
-    practicePageUrl,
-    RESULTS,
-    telHref
-  } from '#lib/gp/finder.js';
+  import { distanceText, findADentistUrl, findAGpUrl, LIST_DATE, mailHref, OTHER_NATIONS, practicePageUrl, RESULTS, telHref } from '#lib/gp/finder.js';
+  import { GpSearch } from '#lib/gp/search.svelte.js';
 
-  // Finds the GP surgeries nearest a student, anywhere in England (see finder.js for the two lists).
-  // - The box takes a full postcode (NE1 8ST), a postcode district (NE6) or a place (Heaton), which
-  //   go to postcodes.io (open data, no key) for where they are. A place with more than one match
-  //   gets a short "which one?" list.
-  // - "Use my location" asks the phone where it is and works everything out here, on the phone. The
-  //   location is never saved, logged or sent anywhere (not to postcodes.io, our server, Firestore,
-  //   Gemini or anyone else). Searches outside the North East load the all-England list, and that
-  //   request is the same for everyone.
-  // - Outside England, the page points to that country's own GP finder.
-  // Every new search, valid or not, replaces the last result and message.
+  // Finds the GP surgeries nearest a student, anywhere in England. The search itself (and what it
+  // keeps private: the location never leaves the phone) is in src/lib/gp/search.svelte.js, which the
+  // check-in chat's GP finder card shares.
 
   /** The registering facts, shared with the NHS guide so the two pages say the same. @type {import('#lib/nhs/guide.js').Point[]} */
   const registering = [REGISTERING.free, REGISTERING.documents, REGISTERING.studentRegistration, REGISTERING.healthHub];
@@ -34,135 +15,12 @@
   let query = $state('');
   /** @type {HTMLInputElement | undefined} */
   let searchBox = $state();
-  /** What's being looked up: a typed search, the phone's location, or nothing. */
-  let busy = $state(/** @type {'' | 'search' | 'location'} */ (''));
-  /** A problem or note to show. */
-  let note = $state('');
-  /** Places with the name typed, when there's more than one. @type {import('#lib/gp/finder.js').PlaceChoice[] | null} */
-  let choices = $state(null);
-  /** A search outside England: which country, for its own GP finder. @type {keyof typeof OTHER_NATIONS | null} */
-  let nation = $state(null);
-  /**
-   * The last search's surgeries (closest first), what was searched for, the postcode or district for
-   * NHS Find a GP (null for a place or location), and whether it looked like it was outside England.
-   * @type {{ practices: import('#lib/gp/finder.js').NearbyPractice[], label: string, nhsSearch: string | null, source: 'north-east' | 'england', farFromEngland: boolean } | null}
-   */
-  let results = $state(null);
-  /** How many results are showing ("Show more" adds RESULTS more). */
-  let shown = $state(RESULTS);
-
-  /** Clears the last search's results and messages: every new search starts from nothing. */
-  function startOver() {
-    results = null;
-    choices = null;
-    nation = null;
-    note = '';
-    shown = RESULTS;
-  }
-
-  /** @param {unknown} country */
-  const otherNation = (country) => (typeof country === 'string' && Object.hasOwn(OTHER_NATIONS, country) ? /** @type {keyof typeof OTHER_NATIONS} */ (country) : null);
-
-  /**
-   * Shows the nearest surgeries to a point. The point itself isn't kept.
-   * @param {number} lat
-   * @param {number} lng
-   * @param {string} label
-   * @param {string | null} nhsSearch
-   */
-  async function showNearest(lat, lng, label, nhsSearch) {
-    try {
-      const found = await nearestAnywhere(lat, lng);
-      results = { ...found, label, nhsSearch };
-    } catch (err) {
-      console.error('The England GP list did not load:', err instanceof Error ? err.message : err);
-      note = 'We couldn’t load the list of surgeries in England just now. Please try again, or use NHS Find a GP.';
-    }
-  }
-
-  /** @param {string} path */
-  async function postcodesIo(path) {
-    const response = await fetch(`https://api.postcodes.io${path}`);
-    if (response.status === 404) return null;
-    if (!response.ok) throw new Error(`postcodes.io answered ${response.status}`);
-    return (await response.json()).result;
-  }
+  const finder = new GpSearch({ needsTyping: () => searchBox?.focus() });
 
   /** @param {SubmitEvent} event */
-  async function search(event) {
+  function search(event) {
     event.preventDefault();
-    startOver();
-    const wanted = classifySearch(query);
-    if (wanted.kind === 'empty') {
-      note = 'Type a postcode (NE1 8ST), a postcode district (NE6) or a place (Heaton).';
-      return;
-    }
-    busy = 'search';
-    try {
-      if (wanted.kind === 'postcode') {
-        const found = await postcodesIo(`/postcodes/${encodeURIComponent(wanted.value)}`);
-        if (!found) note = 'We couldn’t find that postcode. Please check it, or try just the first part (such as NE6).';
-        else if (otherNation(found.country)) nation = otherNation(found.country);
-        else await showNearest(found.latitude, found.longitude, wanted.value, wanted.value);
-      } else if (wanted.kind === 'district') {
-        const found = await postcodesIo(`/outcodes/${encodeURIComponent(wanted.value)}`);
-        const countries = Array.isArray(found?.country) ? found.country : [];
-        if (!found || typeof found.latitude !== 'number') note = 'We couldn’t find that postcode district. Please check it, or type a full postcode.';
-        else if (!countries.includes('England') && otherNation(countries[0])) nation = otherNation(countries[0]);
-        else await showNearest(found.latitude, found.longitude, wanted.value, wanted.value);
-      } else {
-        const found = placeChoices(await postcodesIo(`/places?q=${encodeURIComponent(wanted.value)}&limit=20`), wanted.value);
-        if (found.length === 0) note = `We couldn’t find a place called “${wanted.value}”. Please try a postcode or district instead.`;
-        else if (found.length === 1) await choose(found[0]);
-        else choices = found;
-      }
-    } catch (err) {
-      console.error('The search failed:', err instanceof Error ? err.message : err);
-      note = 'We couldn’t look that up just now. Please try again, or use NHS Find a GP.';
-    } finally {
-      busy = '';
-    }
-  }
-
-  /** One of the places with the name typed. @param {import('#lib/gp/finder.js').PlaceChoice} place */
-  async function choose(place) {
-    choices = null;
-    if (otherNation(place.country)) {
-      nation = otherNation(place.country);
-      return;
-    }
-    await showNearest(place.lat, place.lng, `${place.label}, ${place.county}`, null);
-  }
-
-  /** Works out the nearest surgeries from the phone's location, which never leaves the phone. */
-  function useMyLocation() {
-    startOver();
-    if (!('geolocation' in navigator)) {
-      askToType('This browser can’t share your location, so please type a postcode or place instead.');
-      return;
-    }
-    busy = 'location';
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        await showNearest(position.coords.latitude, position.coords.longitude, 'you', null);
-        busy = '';
-      },
-      (failure) => {
-        busy = '';
-        askToType(
-          failure.code === failure.PERMISSION_DENIED
-            ? 'Your location wasn’t shared, so please type a postcode or place instead.'
-            : 'We couldn’t get your location, so please type a postcode or place instead.'
-        );
-      },
-      { enableHighAccuracy: false, timeout: 15_000, maximumAge: 300_000 }
-    );
-  }
-
-  /** @param {string} message */
-  function askToType(message) {
-    note = message;
-    searchBox?.focus();
+    void finder.search(query);
   }
 </script>
 
@@ -180,14 +38,14 @@
     <label for="search">Postcode, district or place</label>
     <div class="row">
       <input id="search" class="field" bind:this={searchBox} bind:value={query} autocomplete="postal-code" placeholder="NE1 8ST, NE6 or Heaton" />
-      <button class="primary-button" type="submit" disabled={busy !== ''}>
-        {busy === 'search' ? 'Searching…' : 'Find GPs'}
+      <button class="primary-button" type="submit" disabled={finder.busy !== ''}>
+        {finder.busy === 'search' ? 'Searching…' : 'Find GPs'}
       </button>
     </div>
   </form>
 
-  <button class="secondary-button location" type="button" onclick={useMyLocation} disabled={busy !== ''}>
-    {busy === 'location' ? 'Finding where you are…' : 'Use my location'}
+  <button class="secondary-button location" type="button" onclick={() => finder.useMyLocation()} disabled={finder.busy !== ''}>
+    {finder.busy === 'location' ? 'Finding where you are…' : 'Use my location'}
   </button>
   <p class="muted small">
     Your location stays on your phone: it isn’t saved or sent anywhere. A postcode or place you type is
@@ -195,17 +53,17 @@
   </p>
 
   <div aria-live="polite">
-    {#if note}
-      <p class="note" role="alert">{note}</p>
+    {#if finder.note}
+      <p class="note" role="alert">{finder.note}</p>
     {/if}
 
-    {#if choices}
+    {#if finder.choices}
       <div class="card">
-        <h2>Which {choices[0].label}?</h2>
+        <h2>Which {finder.choices[0].label}?</h2>
         <ul class="choices">
-          {#each choices as place (`${place.label}|${place.county}`)}
+          {#each finder.choices as place (`${place.label}|${place.county}`)}
             <li>
-              <button class="secondary-button" type="button" onclick={() => choose(place)}>
+              <button class="secondary-button" type="button" onclick={() => finder.choose(place)}>
                 {place.label}, {place.county}
               </button>
             </li>
@@ -214,17 +72,17 @@
       </div>
     {/if}
 
-    {#if nation}
+    {#if finder.nation}
       <div class="card">
-        <p>That’s in {nation}. We only list surgeries in England, so use {nation}’s own GP finder:</p>
-        <a class="primary-button" href={OTHER_NATIONS[nation].href} target="_blank" rel="noopener noreferrer" aria-label={`${OTHER_NATIONS[nation].label} (opens in a new tab)`}>
-          {OTHER_NATIONS[nation].label} ↗
+        <p>That’s in {finder.nation}. We only list surgeries in England, so use {finder.nation}’s own GP finder:</p>
+        <a class="primary-button" href={OTHER_NATIONS[finder.nation].href} target="_blank" rel="noopener noreferrer" aria-label={`${OTHER_NATIONS[finder.nation].label} (opens in a new tab)`}>
+          {OTHER_NATIONS[finder.nation].label} ↗
         </a>
       </div>
     {/if}
 
-    {#if results}
-      {#if results.farFromEngland}
+    {#if finder.results}
+      {#if finder.results.farFromEngland}
         <div class="card nations">
           <p>You look to be outside England. If you’re in Scotland, Wales or Northern Ireland, use its own GP finder:</p>
           <ul>
@@ -236,12 +94,12 @@
         </div>
       {/if}
 
-      <h2>Nearest GP surgeries to {results.label}</h2>
-      {#if results.source === 'england'}
+      <h2>Nearest GP surgeries to {finder.results.label}</h2>
+      {#if finder.results.source === 'england'}
         <p class="muted small">Each surgery’s NHS page has its email address and website.</p>
       {/if}
       <ol class="results">
-        {#each results.practices.slice(0, shown) as practice (practice.code)}
+        {#each finder.results.practices.slice(0, finder.shown) as practice (practice.code)}
           <li class="card practice">
             <h3>{practice.name}</h3>
             <p>{practice.address}, {practice.postcode}</p>
@@ -282,13 +140,13 @@
           </li>
         {/each}
       </ol>
-      {#if results.practices.length > shown}
-        <button class="secondary-button more" type="button" onclick={() => (shown += RESULTS)}>
-          Show {Math.min(RESULTS, results.practices.length - shown)} more
+      {#if finder.results.practices.length > finder.shown}
+        <button class="secondary-button more" type="button" onclick={() => (finder.shown += RESULTS)}>
+          Show {Math.min(RESULTS, finder.results.practices.length - finder.shown)} more
         </button>
       {/if}
       <p>
-        <a href={findAGpUrl(results.nhsSearch)} target="_blank" rel="noopener noreferrer" aria-label="More surgeries on NHS Find a GP (opens in a new tab)">
+        <a href={findAGpUrl(finder.results.nhsSearch)} target="_blank" rel="noopener noreferrer" aria-label="More surgeries on NHS Find a GP (opens in a new tab)">
           More surgeries on NHS Find a GP ↗
         </a>
       </p>
@@ -322,7 +180,7 @@
     <p>NHS dentists are separate from GP surgeries. The NHS website lists the ones near you.</p>
     <a
       class="secondary-button"
-      href={findADentistUrl(results?.nhsSearch)}
+      href={findADentistUrl(finder.results?.nhsSearch)}
       target="_blank"
       rel="noopener noreferrer"
       aria-label="NHS Find a dentist (opens in a new tab)"

@@ -326,7 +326,7 @@ const checks = [
   ['The chat page sends what’s typed during it to the flow, never to Gemini; Stop is there; questions move focus to the box; it’s a live region', () => {
     const page = readFileSync('src/routes/check-in/+page.svelte', 'utf8');
     const send = page.slice(page.indexOf('async function sendMessage('), page.indexOf('const chat = geminiChat();', page.indexOf('async function sendMessage(')));
-    assert.match(send, /if \(text && flowActive && flow\?\.takes\(text\)\) \{[\s\S]*flow\.reply\(text\);[\s\S]*return;\s*\}/, 'the flow takes it and returns before Gemini');
+    assert.match(send, /if \(flowActive && flow\?\.takes\(text\)\) \{[\s\S]*await flow\.reply\(text\);[\s\S]*return;\s*\}/, 'the flow takes it and returns before Gemini');
     assert.match(source('src/lib/checkin/mentor-flow.js'), /const takes = \(_text\) => state\.active;/, 'finding a mentor takes everything typed while it runs');
     assert.doesNotMatch(send, /chat\.send/);
     assert.match(page, /onclick=\{\(\) => chatFlow\(\)\?\.stop\(\)\}>Stop<\/button>/);

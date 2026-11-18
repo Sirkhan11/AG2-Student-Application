@@ -51,39 +51,45 @@ const noFacts = { match: null, tasks: null };
 /** @type {[string, () => void | Promise<void>][]} */
 const checks = [
   // ---------- The first message ----------
-  ['Just matched, nothing ticked: mentor news, then a society question and 3 tasks by name', () => {
-    const { messages, links } = buildOpener({ match: matched, tasks: tasks(), justSignedUp: true });
-    assert.equal(messages[0], 'Thanks for answering those questions. You’ve been matched with Alex, and your coordinator will introduce you. While you wait, how’s your day been?');
-    assert.equal(messages[1], 'Have you joined a society yet? I can see on your checklist that you haven’t registered with a GP, collected your student ID or found a dentist yet, plus 1 other task. Would you like help with any of these?');
-    assert.deepEqual(links.map((link) => link.label), ['Your mentor', 'Find a GP or dentist', 'Browse societies', 'Open your checklist']);
+  ['Matched, with tasks left: the mentor news, then the first task still to do as the only question, with no task page buttons', () => {
+    const { messages, links, asks } = buildOpener({ match: matched, tasks: tasks(), justSignedUp: false });
+    assert.deepEqual(messages, ['Hi! You’ve been matched with Alex, and your coordinator will introduce you.', 'Let’s go through your checklist, one task at a time. Have you registered with a GP yet?']);
+    assert.equal(asks, 'gp');
+    assert.deepEqual(links.map((link) => link.label), ['Your mentor']);
   }],
-  ['Waiting for the coordinator, only the GP left: "help with that", one GP button', () => {
-    const { messages, links } = buildOpener({ match: waiting, tasks: tasks(['student-id', 'society', 'dentist', 'contacts']), justSignedUp: false });
-    assert.equal(messages[0], 'Hi! We’re finding you a mentor, and we’ll let you know soon. While you wait, how’s your day been?');
-    assert.equal(messages[1], 'I can see on your checklist that you haven’t registered with a GP yet. Would you like help with that?');
-    assert.deepEqual(links.map((link) => link.label), ['Find a GP', 'Open your checklist']);
+  ['Straight after finding a mentor: no checklist question (the chat’s next message asks something), and no day question', () => {
+    const { messages, asks } = buildOpener({ match: matched, tasks: tasks(), justSignedUp: true });
+    assert.deepEqual(messages, ['Thanks for answering those questions. You’ve been matched with Alex, and your coordinator will introduce you.']);
+    assert.equal(asks, null);
   }],
-  ['Only a society left: "help finding one"', () => {
-    const { messages } = buildOpener({ match: waiting, tasks: tasks(['gp', 'student-id', 'dentist', 'contacts']), justSignedUp: false });
-    assert.equal(messages[1], 'Have you joined a society yet? Would you like help finding one?');
+  ['Waiting for the coordinator, only a society left: the question about it', () => {
+    const { messages, links, asks } = buildOpener({ match: waiting, tasks: tasks(['gp', 'student-id', 'dentist', 'contacts']), justSignedUp: false });
+    assert.deepEqual(messages, ['Hi! We’re finding you a mentor, and we’ll let you know soon.', 'Let’s go through your checklist, one task at a time. Have you joined a society yet?']);
+    assert.deepEqual([links, asks], [[], 'society']);
   }],
-  ['Everything ticked: well done, and no task buttons', () => {
-    const { messages, links } = buildOpener({ match: waiting, tasks: tasks(allDone), justSignedUp: false });
-    assert.equal(messages[1], 'I can see your checklist’s all done. Nice work!');
-    assert.deepEqual(links, []);
+  ['Everything ticked: well done, how’s your day been, and no task buttons', () => {
+    const { messages, links, asks } = buildOpener({ match: waiting, tasks: tasks(allDone), justSignedUp: false });
+    assert.deepEqual(messages, ['Hi! We’re finding you a mentor, and we’ll let you know soon. While you wait, how’s your day been?', 'I can see your checklist’s all done. Nice work!']);
+    assert.deepEqual([links, asks], [[], null]);
   }],
-  ['Only their own tasks left: counted, not named', () => {
-    const own = [{ id: 'own-1', title: 'Call home about rent', done: false }, { id: 'own-2', title: 'Buy a desk lamp', done: false }];
-    const { messages } = buildOpener({ match: waiting, tasks: [...tasks(allDone), ...own], justSignedUp: false });
-    assert.equal(messages[1], 'I can see you’ve got 2 tasks left on your checklist. Would you like help with any of these?');
+  ['Only their own tasks left: asked about the first, in their words on screen, never in Gemini’s copy', () => {
+    const own = [...tasks(allDone), { id: 'own-1', title: 'Call home about rent', done: false }];
+    assert.equal(buildOpener({ match: waiting, tasks: own, justSignedUp: false }).messages.at(-1), 'Let’s go through your checklist, one task at a time. Have you done “Call home about rent” yet?');
+    assert.doesNotMatch(buildOpener({ match: waiting, tasks: own, justSignedUp: false, forGemini: true }).messages.join(' '), /rent/);
   }],
-  ['No mentor request yet: suggests one, with a Find a mentor button', () => {
-    const { messages, links } = buildOpener({ match: null, tasks: tasks(allDone), justSignedUp: false });
-    assert.equal(messages[0], 'Hi! How’s your day been? If you’d like a student mentor, you can answer a few questions to be matched.');
-    assert.equal(links[0].href, '/find-mentor');
+  ['No mentor request yet: suggests one, with a Find a mentor button, and no second question when there’s a task to ask about', () => {
+    const done = buildOpener({ match: null, tasks: tasks(allDone), justSignedUp: false });
+    assert.equal(done.messages[0], 'Hi! How’s your day been? If you’d like a student mentor, you can answer a few questions to be matched.');
+    assert.equal(done.links[0].href, '/find-mentor');
+    const left = buildOpener({ match: null, tasks: tasks(), justSignedUp: false });
+    assert.equal(left.messages[0], 'Hi! If you’d like a student mentor, you can answer a few questions to be matched.');
+    assert.equal(left.messages.join(' ').match(/\?/g)?.length, 1);
   }],
   ['Nothing could be loaded: just a greeting', () => {
-    assert.deepEqual(buildOpener({ match: undefined, tasks: null, justSignedUp: false }), { messages: ['Hi! How’s your day been?'], links: [] });
+    assert.deepEqual(buildOpener({ match: undefined, tasks: null, justSignedUp: false }), { messages: ['Hi! How’s your day been?'], links: [], asks: null });
+  }],
+  ['Not a mentor, nothing known about a match, but tasks left: one message with the question', () => {
+    assert.deepEqual(buildOpener({ match: undefined, tasks: tasks(), justSignedUp: false }).messages, ['Hi! Let’s go through your checklist, one task at a time. Have you registered with a GP yet?']);
   }],
 
   // ---------- What Gemini is told ----------
@@ -98,11 +104,10 @@ const checks = [
     assert.match(about, /they have one/, 'Gemini is told they have a mentor');
     assert.match(about, /Your Mentor page/, 'and where to see who it is');
   }],
-  ['A checklist they\'ve never saved: the first message points to it, and Gemini is told not to say they haven\'t done things', () => {
-    const { messages, links } = buildOpener({ match: null, tasks: tasks(), checklistSaved: false, justSignedUp: false });
-    assert.match(messages[1], /Your checklist has a few things/);
+  ['A checklist they\'ve never saved: the first message asks about the first task (claiming nothing), and Gemini is told not to say they haven\'t done things', () => {
+    const { messages } = buildOpener({ match: null, tasks: tasks(), checklistSaved: false, justSignedUp: false });
+    assert.equal(messages.at(-1), 'Let’s go through your checklist, one task at a time. Have you registered with a GP yet?');
     assert.ok(!messages.join(' ').includes('haven’t registered'), 'no claim about what they haven\'t done');
-    assert.ok(links.some((link) => link.href === '/checklist'));
     const about = describeForGemini({ match: null, tasks: tasks(), checklistSaved: false });
     assert.match(about, /haven’t ticked anything off yet, and may not have opened it/);
     assert.ok(!about.includes('Checklist, not done yet'));
@@ -182,10 +187,10 @@ const checks = [
   }],
   ['Only the actions the app allows now are offered: a mentor only without one, their mentor only when matched, the checklist only with tasks left', () => {
     const actions = (/** @type {any} */ options) => chatRequest({ about: '', opener: [], shortlist: [], options }).actions;
-    assert.deepEqual(actions({ mentor: 'yes', checklist: 'yes', hasMentor: false }), ['checklist', 'mentor', 'reminder', 'remember']);
+    assert.deepEqual(actions({ mentor: 'yes', checklist: 'yes', hasMentor: false }), ['checklist', 'checklist-offer', 'mentor', 'reminder', 'remember']);
     assert.deepEqual(actions({ mentor: 'no', checklist: 'no', hasMentor: true }), ['your-mentor', 'change-mentor', 'reminder', 'remember']);
     const asked = chatRequest({ about: '', opener: [], shortlist: [], options: { mentor: 'if-asked', checklist: 'if-asked', hasMentor: false } }).systemInstruction;
-    assert.equal(asked.match(/they said not now earlier, so only if they ask/g)?.length, 2);
+    assert.equal(asked.match(/they said not now earlier, so only if they ask/gi)?.length, 2);
   }],
 
   // ---------- Keeping the conversation when they visit another page ----------
