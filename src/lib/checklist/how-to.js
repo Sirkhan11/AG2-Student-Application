@@ -308,6 +308,29 @@ export const TALK = Object.freeze({
 export const talkFor = (id) => TALK[id] ?? null;
 
 /**
+ * The chat's lines (TALK) that only apply to students who need a UK student visa, by task: the same
+ * thing as VISA_ONLY_STEPS, as the chat says it. Each must be one of that task's lines:
+ * check-chat-tools.mjs checks.
+ */
+export const VISA_ONLY_TALK = Object.freeze({ enrol: Object.freeze([TALK.enrol.first[0]]) });
+
+/**
+ * A task's conversation details for this student, or null for one of their own: for a home student,
+ * without the visa-only lines (VISA_ONLY_TALK), the way howToFor leaves them out of the steps on their
+ * checklist page, so the chat and the page tell them the same thing.
+ * @param {string} id
+ * @param {import('#lib/students/student-type.js').StudentType | null} [studentType]
+ * @returns {Talk | null}
+ */
+export function talkForStudent(id, studentType = null) {
+  const talk = talkFor(id);
+  const visaOnly = VISA_ONLY_TALK[/** @type {keyof typeof VISA_ONLY_TALK} */ (id)] ?? [];
+  if (!talk || studentType !== 'home' || visaOnly.length === 0) return talk;
+  const keep = (/** @type {string[]} */ lines) => lines.filter((line) => !visaOnly.includes(line));
+  return { ...talk, first: keep(talk.first), where: keep(talk.where), bring: keep(talk.bring), after: keep(talk.after), contact: keep(talk.contact) };
+}
+
+/**
  * What the chat says with its GP finder or dentist search, whenever a student asks where the nearest
  * GP or dentist is: the app's own words, from the how-tos above (TALK.gp and TALK.dentist), so the
  * chat never refuses to help find one and never makes anything up.

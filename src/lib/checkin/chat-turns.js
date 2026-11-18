@@ -7,6 +7,7 @@ import { talkFor } from '#lib/checklist/how-to.js';
 import { blankContactDetails } from '#lib/checkin/private-details.js';
 import { isOutOfCredit } from '#lib/firebase/ai-errors.js';
 import { chatOptions, describeForGemini } from '#lib/checkin/opener.js';
+import { aboutYou } from '#lib/checkin/about-you.js';
 
 // The check-in chat's conversation with Gemini. Every message goes with the conversation so far and
 // one set of instructions (chat-prompt.js); Gemini writes the reply in its own words, and when it needs
@@ -133,7 +134,8 @@ export function chatWith(model, { facts, act, seed = [] }) {
         if (tool === 'gp-finder' || tool === 'dentist-finder' || tool === 'contacts') reply.tool = tool;
         const link = linkFor(id);
         if (link && !reply.links?.some((shown) => shown.href === link.href)) reply.links = [...(reply.links ?? []), link];
-        return howTo(String(args.task));
+        // Their checklist page's version: home or international, as the chat is told (about-you.js).
+        return howTo(String(args.task), aboutYou(facts.profile).studentType);
       }
       case 'change_checklist': {
         if (!act) return { done: false, why: "The app can't change the checklist from here." };

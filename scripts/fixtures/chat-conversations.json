@@ -1,7 +1,7 @@
 {
  "about": "Whole conversations with the check-in chat (made-up students; Thomas’s own messages from the live site). Remade by try-chat.mjs.",
  "model": "gemini-3.5-flash-lite",
- "made": "2026-11-18T11:25:44.679Z",
+ "made": "2026-11-18T12:21:16.078Z",
  "conversations": [
   {
    "name": "thomas",
@@ -448,6 +448,167 @@
      "reply": {
       "kind": "reply",
       "text": "Glad to help. Give me a shout whenever you're ready for the next thing.",
+      "links": []
+     }
+    }
+   ]
+  },
+  {
+   "name": "home",
+   "about": "A home student (said so at sign-up): enrolling (no Right to Study check for them), the GP, a club",
+   "turns": [
+    {
+     "says": "",
+     "reply": {
+      "kind": "reply",
+      "text": "Alright Ellie, welcome to AG2! How are you settling in so far?",
+      "links": []
+     }
+    },
+    {
+     "says": "hiya, how do i enrol?",
+     "reply": {
+      "kind": "reply",
+      "text": "You just need to hop onto the Student Portal, pick Enrol from the main menu, and follow the steps on screen with a passport-style photo ready to upload. Have you managed to log into your portal yet?",
+      "links": [
+       {
+        "label": "Open the Student Portal",
+        "href": "https://myportal.northumbria.ac.uk/",
+        "external": true
+       }
+      ]
+     }
+    },
+    {
+     "says": "do i need to do a right to study check?",
+     "reply": {
+      "kind": "reply",
+      "text": "Since you're a home student from the UK, you won't need to do the visa or right to study checks that international students have to sort. Did you get your enrolment sorted out okay?",
+      "links": []
+     }
+    },
+    {
+     "says": "and do i have to pay to see a gp?",
+     "reply": {
+      "kind": "reply",
+      "text": "Seeing a GP through the NHS is totally free, though you'll still have to pay for things like prescriptions or dental work. All the details are on that NHS guide card for you. Have you had a chance to register with a surgery in Newcastle yet?",
+      "links": [
+       {
+        "label": "NHS guide",
+        "href": "/nhs-guide",
+        "external": false
+       }
+      ]
+     }
+    },
+    {
+     "says": "is there a netball club?",
+     "reply": {
+      "kind": "reply",
+      "text": "There is indeed a Netball club with Northumbria Sport. It's a proper club so it has a membership fee, but their card shows all the training times and how to get involved. Are you thinking of trying out for it?",
+      "links": [
+       {
+        "label": "Netball",
+        "href": "/sport/netball",
+        "external": false,
+        "kind": "club",
+        "slug": "netball"
+       },
+       {
+        "label": "Sport",
+        "href": "https://northumbriasport.com/sports",
+        "external": true,
+        "kind": "service",
+        "serviceId": "sport"
+       }
+      ]
+     }
+    },
+    {
+     "says": "cheers",
+     "reply": {
+      "kind": "reply",
+      "text": "No worries at all! Let me know if you want to look into baking societies or anything else while you're getting settled.",
+      "links": []
+     }
+    }
+   ]
+  },
+  {
+   "name": "international",
+   "about": "An international student (said so at sign-up), arriving next week: enrolling (the Right to Study check first), arriving late, the GP, a club",
+   "turns": [
+    {
+     "says": "",
+     "reply": {
+      "kind": "reply",
+      "text": "Hey Wei, welcome to the app. How are things going with getting ready for Newcastle?",
+      "links": []
+     }
+    },
+    {
+     "says": "hello, how do i enrol?",
+     "reply": {
+      "kind": "reply",
+      "text": "You'll need to do your Right to Study check first if you're on a student visa, Wei. Once that's done, just log into the Student Portal, pick Enrol from the main menu, and follow the steps on screen with a passport-style photo ready.",
+      "links": [
+       {
+        "label": "Open the Student Portal",
+        "href": "https://myportal.northumbria.ac.uk/",
+        "external": true
+       }
+      ]
+     }
+    },
+    {
+     "says": "my flight is next week, is that a problem?",
+     "reply": {
+      "kind": "reply",
+      "text": "That page should give you the details on what to do, Wei. Are you all packed and ready for the move over?",
+      "links": [
+       {
+        "label": "Arriving late",
+        "href": "/late-arrivals",
+        "external": false
+       }
+      ]
+     }
+    },
+    {
+     "says": "how does the doctor work here, do i pay?",
+     "reply": {
+      "kind": "reply",
+      "text": "Seeing a GP is free, but you'll still pay for things like prescriptions, dental treatment and eye tests, and the NHS guide has all the details.",
+      "links": [
+       {
+        "label": "NHS guide",
+        "href": "/nhs-guide",
+        "external": false
+       }
+      ]
+     }
+    },
+    {
+     "says": "is there a badminton club?",
+     "reply": {
+      "kind": "reply",
+      "text": "Yep, there's the Badminton club.",
+      "links": [
+       {
+        "label": "Badminton",
+        "href": "/sport/badminton",
+        "external": false,
+        "kind": "club",
+        "slug": "badminton"
+       }
+      ]
+     }
+    },
+    {
+     "says": "thanks",
+     "reply": {
+      "kind": "reply",
+      "text": "No worries at all, Wei. Let me know if you need a hand with anything else.",
       "links": []
      }
     }

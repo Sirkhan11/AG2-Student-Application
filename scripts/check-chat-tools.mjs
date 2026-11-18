@@ -14,6 +14,7 @@ import { askedFor, createChatDo, NOTE_SAYS, saidIt, saysDone } from '#lib/checki
 import { cardsFor, chatTools, searchCatalogue, OWN_TASK } from '#lib/checkin/chat-tools.js';
 import { chatInstructions } from '#lib/checkin/chat-prompt.js';
 import { describeForGemini } from '#lib/checkin/opener.js';
+import { howToFor, TALK, VISA_ONLY_TALK } from '#lib/checklist/how-to.js';
 import { SAFETY_MESSAGE } from '#lib/checkin/safety.js';
 import { scriptedGemini } from './lib/scripted-gemini.mjs';
 import { unknownFields } from './lib/stand-in-gemini.mjs';
@@ -223,6 +224,29 @@ const checks = [
     assert.ok(Array.isArray(toldBack(gemini.requests[1]).how_to.steps));
     const gp = await chat.send('and the GP?');
     assert.equal(gp.tool, 'gp-finder');
+  }],
+  ['how_to is their checklist page’s version: a home student isn’t told the visa-only lines (Right to Study), an international one is, with Arriving late too; one who hasn’t said gets every line', async () => {
+    for (const [task, lines] of Object.entries(VISA_ONLY_TALK)) {
+      const talk = /** @type {Record<string, any>} */ (TALK)[task];
+      for (const line of lines) assert.ok(['first', 'where', 'bring', 'after', 'contact'].some((key) => talk[key].includes(line)), `${task}: ${line.slice(0, 40)}`);
+    }
+    /** @param {unknown} studentType */
+    const enrolFor = async (studentType) => {
+      const gemini = scriptedGemini([{ calls: [{ name: 'how_to', args: { task: 'Enrol' } }] }, { text: 'Log in to the Student Portal and choose Enrol.' }]);
+      const chat = chatWith(gemini.model, { facts: facts({ profile: { ...PROFILE, studentType } }), act: stores().do });
+      await chat.send('how do I enrol?');
+      return toldBack(gemini.requests[1]).how_to;
+    };
+    const home = await enrolFor('home');
+    const international = await enrolFor('international');
+    const notSaid = await enrolFor(undefined);
+    assert.ok(!/Right to Study|visa/i.test(JSON.stringify(home)), 'nothing about visas for a home student');
+    assert.deepEqual(home.steps, howToFor('enrol', 'home')?.steps, 'the same steps as their checklist page');
+    assert.match(JSON.stringify(international), /Right to Study/);
+    assert.match(international.also_for_them, /Arriving late/);
+    assert.match(JSON.stringify(notSaid), /Right to Study/);
+    assert.equal(notSaid.also_for_them, undefined);
+    assert.equal(home.also_for_them, undefined);
   }],
   ['Mentor: offered only when it fits: find and offer without one, change only with one, never for a mentor; find starts the questions after the reply', async () => {
     const actions = (/** @type {any} */ given) => chatTools(facts(given))[0].functionDeclarations.find((/** @type {any} */ tool) => tool.name === 'mentor').parameters.properties.action.enum;

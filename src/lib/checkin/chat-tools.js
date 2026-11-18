@@ -8,7 +8,7 @@
 // No Firebase here, so the checks run it in Node.
 
 import { chatOptions } from '#lib/checkin/opener.js';
-import { FINDER_LINES, HOW_TO, talkFor, TALK } from '#lib/checklist/how-to.js';
+import { FINDER_LINES, HOW_TO, howToFor, talkFor, talkForStudent } from '#lib/checklist/how-to.js';
 import { defaultTasks } from '#lib/checklist/tasks.js';
 import { SUGGESTIONS, suggestionNamed } from '#lib/suggestions/catalogue.js';
 import { shortlist } from '#lib/suggestions/shortlist.js';
@@ -106,7 +106,7 @@ export function chatTools(facts) {
         declare('show_calendar', "Shows a card to put one specific thing in their own calendar (Outlook on the web, or a calendar file), such as a task from their checklist. The app keeps nothing. When they'd rather keep things in their own calendar (such as Outlook), offer it in words; show it when there's a specific thing to put in.", {
           title: string('The thing to put in, as the calendar entry is called (such as "Register with a GP")')
         }),
-        declare('show_page', "Shows a button to one of the app's pages, when the page itself is what helps: the NHS guide when they ask how the NHS works or whether they pay to see a doctor (answer in one short sentence yourself, without prices or other figures: seeing a GP is free, but they'll still pay for some things, such as prescriptions, dental treatment and eye tests, and the guide has the details); Need help now when they might be in danger.", {
+        declare('show_page', "Shows a button to one of the app's pages, when the page itself is what helps: the NHS guide when they ask how the NHS works or whether they pay to see a doctor (answer in one short sentence yourself, without prices or other figures: seeing a GP is free, but they'll still pay for some things, such as prescriptions, dental treatment and eye tests, and the guide has the details); Arriving late when an international student might arrive after their CAS deadline or after teaching has started (the app knows neither date, so never tell them they'll be fine or that they're late: the page says what to do and who to ask); Need help now when they might be in danger.", {
           page: string('Which page', Object.keys(CHAT_PAGES))
         }),
         declare(
@@ -157,24 +157,28 @@ const describe = (item) => ({ name: item.name, what: `${KIND_WORDS[item.kind]}: 
 /**
  * A standard task's how-to, for Gemini to explain in its own words: the steps, and what's needed
  * first, where, what to take, what happens next and who to contact. The task's link goes under the
- * reply as a button (linkFor).
+ * reply as a button (linkFor). It's the version their checklist page shows them: a home student isn't
+ * told the visa-only lines (howToFor, talkForStudent), and an international student also hears about
+ * the page that helps them (Arriving late, for enrolling).
  * @param {string} title
+ * @param {import('#lib/students/student-type.js').StudentType | null} [studentType] what they said at sign-up
  * @returns {Record<string, unknown>}
  */
-export function howTo(title) {
+export function howTo(title, studentType = null) {
   const task = STANDARD_TITLES.find((item) => item.title === title);
   if (!task) return { error: 'Not one of the standard tasks.' };
-  const talk = TALK[task.id];
-  const steps = HOW_TO[task.id]?.steps ?? [];
+  const talk = /** @type {import('#lib/checklist/how-to.js').Talk} */ (talkForStudent(task.id, studentType));
+  const forThem = howToFor(task.id, studentType);
   return {
     task: task.title,
-    steps,
+    steps: forThem?.steps ?? [],
     first: talk.first,
     where: talk.where,
     bring: talk.bring,
     after: talk.after,
     contact: talk.contact,
     ...(talk.needsFirst ? { needs_first: talk.needsFirst.task } : {}),
+    ...(forThem?.pointer ? { also_for_them: `${forThem.pointer.label}: the app's Arriving late page (show_page), if it fits. The app doesn't know their CAS deadline or when teaching starts, so never say whether they're late or fine.` } : {}),
     shown_with_your_reply:
       talk.tool === 'gp-finder' ? 'the GP finder' : talk.tool === 'dentist-finder' ? 'the dentist search' : talk.tool === 'contacts' ? 'the key contacts card' : linkFor(task.id) ? `a button: ${linkFor(task.id)?.label}` : 'nothing'
   };

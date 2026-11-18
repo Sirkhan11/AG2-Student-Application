@@ -83,6 +83,18 @@ const CONVERSATIONS = [
       'thanks, can you remind me to sort my bank account',
       'brilliant'
     ]
+  },
+  {
+    name: 'home',
+    about: 'A home student (said so at sign-up): enrolling (no Right to Study check for them), the GP, a club',
+    facts: { profile: { name: 'Ellie', course: 'BSc Psychology', interests: ['netball', 'baking'], arrivalDate: '', notes: [], studentType: 'home' }, tasks: defaultTasks() },
+    says: ['hiya, how do i enrol?', 'do i need to do a right to study check?', 'and do i have to pay to see a gp?', 'is there a netball club?', 'cheers']
+  },
+  {
+    name: 'international',
+    about: 'An international student (said so at sign-up), arriving next week: enrolling (the Right to Study check first), arriving late, the GP, a club',
+    facts: { profile: { name: 'Wei', course: 'MSc Finance', interests: ['badminton', 'cooking'], arrivalDate: '2026-11-25', notes: [], studentType: 'international' }, tasks: defaultTasks() },
+    says: ['hello, how do i enrol?', 'my flight is next week, is that a problem?', 'how does the doctor work here, do i pay?', 'is there a badminton club?', 'thanks']
   }
 ];
 
