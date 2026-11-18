@@ -7,7 +7,7 @@
     "DH",
     "SR"
   ],
-  "count": 198,
+  "count": 191,
   "practices": [
     {
       "code": "V01350",
@@ -674,14 +674,6 @@
       "lng": -1.4005
     },
     {
-      "code": "V14120",
-      "name": "Dunelm Orthodontics",
-      "address": "The Cross Gate Centre, Alexandria Crescent, Durham",
-      "postcode": "DH1 4HF",
-      "lat": 54.77554,
-      "lng": -1.58482
-    },
-    {
       "code": "V04687",
       "name": "Durham Road (Dental Surgery)",
       "address": "307 Durham Road, Consett",
@@ -696,14 +688,6 @@
       "postcode": "NE6 1SG",
       "lat": 54.97751,
       "lng": -1.58349
-    },
-    {
-      "code": "V213970",
-      "name": "Falchion Orthodontics Limited",
-      "address": "Harrison House, Hawthorn Terrace, Durham",
-      "postcode": "DH1 4EL",
-      "lat": 54.77523,
-      "lng": -1.58667
     },
     {
       "code": "V01700",
@@ -1010,14 +994,6 @@
       "lng": -1.72676
     },
     {
-      "code": "V14784",
-      "name": "Neo Orthodontics",
-      "address": "98 -100 Close, Newcastle upon Tyne",
-      "postcode": "NE1 3RF",
-      "lat": 54.96768,
-      "lng": -1.61107
-    },
-    {
       "code": "V18143",
       "name": "Netherby Drive (Dental Surgery)",
       "address": "18 Netherby Drive, Newcastle upon Tyne",
@@ -1224,14 +1200,6 @@
       "postcode": "NE42 5PU",
       "lat": 54.96136,
       "lng": -1.85224
-    },
-    {
-      "code": "V158193",
-      "name": "Queensway Orthodontics (North) Limited",
-      "address": "33-35 Middle Street, Consett",
-      "postcode": "DH8 5QP",
-      "lat": 54.85191,
-      "lng": -1.83331
     },
     {
       "code": "V01723",
@@ -1538,22 +1506,6 @@
       "lng": -1.51243
     },
     {
-      "code": "V01734",
-      "name": "Wearside Orthodontic Centre",
-      "address": "49 Frederick Street, Sunderland",
-      "postcode": "SR1 1NF",
-      "lat": 54.90603,
-      "lng": -1.37916
-    },
-    {
-      "code": "V285148",
-      "name": "Wearside Orthodontic Centre (South Shiel",
-      "address": "8 Thomas Street, South Shields",
-      "postcode": "NE33 1PU",
-      "lat": 54.99688,
-      "lng": -1.43135
-    },
-    {
       "code": "V01638",
       "name": "Westgate Dental Practice",
       "address": "7 Graingerville North, Westgate Road, Newcastle upon Tyne",
@@ -1584,14 +1536,6 @@
       "postcode": "NE15 6TB",
       "lat": 54.97348,
       "lng": -1.67522
-    },
-    {
-      "code": "V41194",
-      "name": "Windmill Orthodontics",
-      "address": "37A Heaton Road, Newcastle upon Tyne",
-      "postcode": "NE6 1SB",
-      "lat": 54.97903,
-      "lng": -1.58013
     }
   ]
 }

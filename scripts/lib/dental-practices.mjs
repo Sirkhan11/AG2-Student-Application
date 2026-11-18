@@ -57,6 +57,14 @@ export function listedOnNhs(xml) {
   return new Set([...xml.matchAll(/\/services\/dentist\/[^/<\s]+\/V(\d{6})(?:_\d+)?\s*</g)].map((m) => m[1]));
 }
 
+/**
+ * True for a specialist a student can't register with, going by the name: orthodontists and oral
+ * surgeons (agent1.md A11; "Neo Orthodontics" was fifth near the campus). The report doesn't say which
+ * practices are specialists, so one whose name doesn't say so stays in.
+ * @param {string} name
+ */
+export const isSpecialist = (name) => /orthodont|oral surg|maxillofacial/i.test(name);
+
 /** True if the NHS website has a page for the practice. @param {{ code: string }} practice @param {Set<string>} listed */
 export const hasNhsPage = (practice, listed) => listed.has(practice.code.slice(1).padStart(6, '0'));
 

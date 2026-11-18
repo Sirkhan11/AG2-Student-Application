@@ -86,7 +86,7 @@ const offline = [
     // dental practices, each with its NHS page (whether it's taking new NHS patients).
     const dentistOrder = ['id="dentist-search"', 'Find dentists', 'Use my location', 'Your location stays on your phone: it isn’t saved or sent anywhere.', 'Nearest NHS dentists to', 'New NHS patients? ↗', 'More dentists on NHS Find a dentist ↗', 'Phone the practice to check before you visit', '{#each dentistHowTo.steps as step, i (i)}'];
     for (let i = 1; i < dentistOrder.length; i++) assert.ok(dentistTab.indexOf(dentistOrder[i - 1]) !== -1 && dentistTab.indexOf(dentistOrder[i - 1]) < dentistTab.indexOf(dentistOrder[i]), `dentist tab: ${dentistOrder[i - 1]} comes before ${dentistOrder[i]}`);
-    assert.match(dentistTab, /href=\{dentistPageUrl\(practice\)\}[\s\S]{0,400}New NHS patients\? ↗/, 'each dentist opens its NHS page');
+    assert.match(dentistTab, /href=\{newPatientsUrl\(practice\)\}[\s\S]{0,400}New NHS patients\? ↗/, 'each dentist opens its NHS page’s appointments section');
     assert.match(page, /const dentistHowTo = HOW_TO\.dentist;/, 'the checklist’s steps, not a second copy');
     assert.match(page, /const dentists = new GpSearch\(\{ needsTyping: \(\) => dentistBox\?\.focus\(\), nearest: nearestDentists, words: DENTIST_WORDS \}\);/, 'the GP tab’s search, with the dental lists');
     assert.doesNotMatch(page, /localStorage|sessionStorage|indexedDB|document\.cookie/, 'nothing typed is stored');

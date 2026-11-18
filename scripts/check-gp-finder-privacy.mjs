@@ -228,11 +228,11 @@ const checks = [
     assert.equal(await run(`document.querySelectorAll('.note').length`), 1, 'only the new message');
     assert.ok(!String(await run('document.body.innerText')).includes('couldn’t find a place called'), 'the old message is gone');
   }],
-  ['Dentist tab, Use my location in Newcastle: 10 NHS dentists, each opening its NHS page, with nothing sent at all; the location is in no request, storage or console', async () => {
+  ['Dentist tab, Use my location in Newcastle: 10 NHS dentists, each opening its NHS appointments section, with nothing sent at all; the location is in no request, storage or console', async () => {
     const urls = await useLocationAt(NEWCASTLE, { url: DENTIST_URL, results: 'Nearest NHS dentists to you' });
     assert.deepEqual(urls, [], 'no request after the tap');
     assert.equal(await practices(), 10);
-    assert.equal(await run(`[...document.querySelectorAll('.practice a')].filter((a) => /^https:\\/\\/www\\.nhs\\.uk\\/services\\/dentist\\/dentist\\/XV\\d{6}$/.test(a.href)).length`), 10, 'each one’s NHS page');
+    assert.equal(await run(`[...document.querySelectorAll('.practice a')].filter((a) => /^https:\\/\\/www\\.nhs\\.uk\\/services\\/dentist\\/dentist\\/XV\\d{6}\\/appointments$/.test(a.href)).length`), 10, 'each one’s NHS page');
   }],
   ['Dentist tab, Use my location in London: the all-England dentist list, one request that\'s the same for everyone, and still no location in any request, storage or console', async () => {
     const urls = await useLocationAt(LONDON, { url: DENTIST_URL, results: 'Nearest NHS dentists to you' });

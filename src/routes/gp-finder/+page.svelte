@@ -4,7 +4,7 @@
   import BottomNav from '#lib/components/BottomNav.svelte';
   import { HOW_TO } from '#lib/checklist/how-to.js';
   import { REGISTERING } from '#lib/nhs/guide.js';
-  import { dentistPageUrl } from '#lib/dentists/england.js';
+  import { newPatientsUrl } from '#lib/dentists/england.js';
   import { DENTIST_LIST_DATE, DENTIST_NATIONS, DENTIST_WORDS, nearestDentists } from '#lib/dentists/finder.js';
   import { distanceText, findADentistUrl, findAGpUrl, LIST_DATE, mailHref, OTHER_NATIONS, practicePageUrl, RESULTS, telHref } from '#lib/gp/finder.js';
   import { GpSearch } from '#lib/gp/search.svelte.js';
@@ -291,13 +291,13 @@
               <h3>{practice.name}</h3>
               <p>{practice.address}, {practice.postcode}</p>
               <p class="muted">{distanceText(practice.distanceKm)} away in a straight line</p>
-              <!-- The practice's NHS page: whether it's taking new NHS patients, and its phone number. -->
+              <!-- The appointments section of the practice's NHS page: whether it's taking new NHS patients. -->
               <a
                 class="secondary-button register"
-                href={dentistPageUrl(practice)}
+                href={newPatientsUrl(practice)}
                 target="_blank"
                 rel="noopener noreferrer"
-                aria-label={`Whether ${practice.name} is taking new NHS patients, and its phone number, on the NHS website (opens in a new tab)`}
+                aria-label={`Whether ${practice.name} is taking new NHS patients, on the NHS website (opens in a new tab)`}
               >
                 New NHS patients? ↗
               </a>
@@ -338,9 +338,9 @@
     </section>
 
     <p class="muted small">
-      Every active NHS dental practice in England, from NHS England’s Organisation Data Service (list last
-      changed on {DENTIST_LIST_DATE}). Contains NHS England data, under the Open Government Licence.
-      Distances are worked out on your phone.
+      NHS dental practices in England, from NHS England’s Organisation Data Service (list last changed on
+      {DENTIST_LIST_DATE}), leaving out orthodontists and oral surgeons, as you can’t register with them.
+      Contains NHS England data, under the Open Government Licence. Distances are worked out on your phone.
     </p>
   {/if}
 

@@ -1,6 +1,6 @@
 <script>
   import { untrack } from 'svelte';
-  import { dentistPageUrl } from '#lib/dentists/england.js';
+  import { newPatientsUrl } from '#lib/dentists/england.js';
   import { DENTIST_NATIONS, DENTIST_WORDS, nearestDentists } from '#lib/dentists/finder.js';
   import { distanceText, findADentistUrl, findAGpUrl, OTHER_NATIONS, practicePageUrl } from '#lib/gp/finder.js';
   import { GpSearch } from '#lib/gp/search.svelte.js';
@@ -27,7 +27,7 @@
   const finder = new GpSearch({ needsTyping: () => box?.focus(), ...(dentist ? { nearest: nearestDentists, words: DENTIST_WORDS } : {}) });
   const nations = dentist ? DENTIST_NATIONS : OTHER_NATIONS;
   /** @param {import('#lib/gp/finder.js').NearbyPractice} practice */
-  const pageOf = (practice) => (dentist ? dentistPageUrl(practice) : practicePageUrl(practice));
+  const pageOf = (practice) => (dentist ? newPatientsUrl(practice) : practicePageUrl(practice));
 
   /** @param {SubmitEvent} event */
   function search(event) {

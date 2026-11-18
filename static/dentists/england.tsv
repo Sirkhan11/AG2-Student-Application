@@ -49,7 +49,6 @@ V00073	Park Avenue (Dental Surgery)	15 Park Avenue, Redcar	TS10 3LA	54.6148	-1.0
 V00075	Dental Surgery	83-85 Church Street, Guisborough	TS14 6HG	54.5365	-1.0502
 V00077	Malpass Dental Practice	11 Dundas Street, Saltburn-by-the-Sea	TS12 1AH	54.5833	-0.9725
 V00078	Roseberry Dental Surgery	118 Westgate, Guisborough	TS14 6AW	54.5342	-1.0584
-V00081	Orthodontic Clinic	34-36 Baker Street, Middlesbrough	TS1 2LH	54.5735	-1.2365
 V00082	Dental Surgery	222 Linthorpe Road, Middlesbrough	TS1 3QW	54.5703	-1.2384
 V00094	Dental Surgery	Parkway Centre, Middlesbrough	TS8 0TJ	54.5244	-1.2163
 V00097	Dental Surgery	18 the Viewley Centre, Middlesbrough	TS8 9JH	54.5253	-1.2404
@@ -65,7 +64,6 @@ V00113	Melcombe Avenue Dental Practice	Weymouth Community Hospital, Weymouth	DT4
 V00114	Bishopton Lane Dental Practice	21 Bishopton Lane, Stockton-on-Tees	TS18 1PS	54.5679	-1.3142
 V00115	C Wenham Dental Centre	111 High Street, Stockton-on-Tees	TS20 1AA	54.5909	-1.3126
 V00117	Dental Surgery	19A Windlestone Road, Billingham	TS23 3JW	54.6136	-1.2783
-V00118	Queensway Orthodontics	156-170 Queensway, Billingham	TS23 2NT	54.6070	-1.2920
 V00123	Oasis Dental Care Ltd	4 Healaugh Park, Yarm	TS15 9XN	54.4977	-1.3443
 V00124	Station Road Dental Practice	13 Station Road, Stockton-on-Tees	TS16 0BU	54.5297	-1.3479
 V00125	Ingleby Meadow Dental Practice	19 Greenside, Stockton on Tees	TS17 0RR	54.5236	-1.3094
@@ -189,7 +187,6 @@ V00348	Berners Dental Surgery	40 Berners Street, Ipswich	IP1 3LU	52.0618	1.1497
 V00349	Dental Surgery	383 Hawthorn Drive, Ipswich	IP2 0RD	52.0439	1.1172
 V00350	Dental Surgery	53 Stoke Park Drive, Ipswich	IP2 9TH	52.0379	1.1365
 V00352	Dental Surgery	365 Hawthorn Drive, Ipswich	IP2 0QY	52.0447	1.1207
-V00353	Ipswich Orthodontic Centre	72 Berners Street, Ipswich	IP1 3LU	52.0618	1.1497
 V00354	Dental Surgery	69 Berners Street, Ipswich	IP1 3LN	52.0612	1.1487
 V00355	Staffa Lodge Dental Group	326 Norwich Road, Ipswich	IP1 4HD	52.0687	1.1365
 V00356	3A Windsor Court [The Dental Practice]	3A Windsor Court, Leeds	LS27 9BG	53.7453	-1.6022
@@ -264,8 +261,6 @@ V00493	Dental Surgery	264 New Church Road, Hove	BN3 4EB	50.8325	-0.2054
 V00494	First Dental Grove Park	139 Marvels Lane, London	SE12 9PP	51.4328	0.0303
 V00496	Eaton Road Dental Practice	30 Eaton Road, Hove	BN3 3QA	50.8294	-0.1641
 V00497	Sussex Dental Group Portslade Village	39 High Street, Brighton	BN41 2LH	50.8433	-0.2196
-V00500	Oral Surgery Ltd - Maxident	161 Bromley Road, London	SE6 2NZ	51.4366	-0.0180
-V00501	Oral Surgery Ltd - Family Dental	59A Dartmouth Road, London	SE23 3HN	51.4378	-0.0542
 V00502	Dental Surgery	40 Norfolk Square, Brighton	BN1 2PE	50.8246	-0.1544
 V00504	My Dentist (Sydenham)	201 Sydenham Road, London	SE26 5HF	51.4258	-0.0447
 V00505	Dental Beauty Forest Hill	138 Stanstead Road, London	SE23 1BX	51.4421	-0.0456
@@ -308,7 +303,6 @@ V00564	Dental Surgery	109 St. Georges Road, Brighton	BN2 1EA	50.8191	-0.1235
 V00570	Magpies Dental Practice	High Street, Heathfield	TN21 0EJ	50.9344	0.2438
 V00571	North Street Dental Practice	19 North Street, Lewes	BN7 2PF	50.8776	0.0109
 V00573	Oak Lodge Dental Practice	Oak Lodge, Heathfield	TN21 8AE	50.9652	0.2554
-V00574	Chestnut House Orthodontics	Chestnut House, Uckfield	TN22 1EH	50.9749	0.0979
 V00575	Whitehouse Dental Practice	2 Clermont Road, Brighton	BN1 6SG	50.8462	-0.1539
 V00576	Peacehaven Dental Surgery	216 South Coast Road, Peacehaven	BN10 8JR	50.7914	-0.0012
 V00578	Dental Surgery	Lewes Road, Lewes	BN8 5QE	50.8938	0.0574
@@ -363,7 +357,6 @@ V00675	Dental Surgery	82 Camberwell Church Street, London	SE5 8QZ	51.4736	-0.088
 V00676	The Lacey Dental Practice	591 Old Kent Road, London	SE15 1LA	51.4836	-0.0649
 V00677	Dental Surgery	276B Camberwell Road, London	SE5 0DL	51.4759	-0.0941
 V00679	Dental Beauty Dulwich Ltd	1 Townley Road, London	SE22 8SW	51.4532	-0.0780
-V00681	East Grinstead Orthodontic	67 Cantelupe Road, East Grinstead	RH19 3BL	51.1263	-0.0076
 V00682	Mr D Power	106 High Street, Redcar	TS11 7BA	54.5910	-1.0193
 V00685	Linden Grove Dental Care	42 Linden Grove, London	SE15 3LF	51.4632	-0.0595
 V00688	Dulwich Dental Office	43-45 North Cross Road, London	SE22 9ET	51.4574	-0.0731
@@ -371,7 +364,6 @@ V00689	Dulwich Dental Clinic	78 Lordship Lane, London	SE22 8HF	51.4575	-0.0757
 V00690	The Dental Surgery	179 Denmark Hill, London	SE5 8DX	51.4604	-0.0937
 V00691	Berwick Hills Dental Practice	9 Norfolk Place, Middlesbrough	TS3 7PB	54.5613	-1.2050
 V00693	Dulwich Wood Dental Practice	142 Gipsy Hill, London	SE19 1PW	51.4250	-0.0834
-V00695	Dulwich Orthodontic Centre	82 Park Hall Road, London	SE21 8BW	51.4359	-0.0906
 V00696	Rookwood Dental Surgery	Connaught Road, Attleborough	NR17 2BN	52.5163	1.0158
 V00699	Dental Surgery	56 High Street, Dereham	NR19 1DR	52.6797	0.9410
 V00701	Gwersylt Villas (Dental Surgery)	1 Gwersylt Villas, Dereham	NR19 2BY	52.6818	0.9441
@@ -528,7 +520,6 @@ V01027	Castle View House (Dental Surgery)	Castle View House, Ludlow	SY8 2LS	52.3
 V01028	The Bridges Dental Practice	23 Gloucester Street, Weymouth	DT4 7AW	50.6132	-2.4555
 V01029	Bramley Dental Practice	95 Main Street, Rotherham	S66 2SE	53.4256	-1.2657
 V01030	Brinsworth Dental Surgery	40 Bonet Lane, Rotherham	S60 5NE	53.4071	-1.3785
-V01031	Orthodontic Practice	1 Poplar Drive, Rotherham	S60 5BP	53.4040	-1.3747
 V01032	Brinsworth Lane Dental Care	4A Brinsworth Lane, Rotherham	S60 5BS	53.4037	-1.3743
 V01033	Laughton Road Dental Surgery	62 Laughton Road, Sheffield	S25 2PS	53.3694	-1.2103
 V01034	Michael Naylor and Associates	The Dental Practice, Sheffield	S25 2EX	53.3700	-1.2073
@@ -569,7 +560,6 @@ V01102	Tresillian	5 Kings Avenue, St. Austell	PL25 4TT	50.3384	-4.7874
 V01103	St Agnes Dental Practice	York House, St. Agnes	TR5 0TX	50.3106	-5.2019
 V01105	Threemilestone Dental Practice	Pengelly Way, Truro	TR3 6DP	50.2618	-5.1153
 V01108	Gentle Dental	Castle View, Newquay	TR7 3DH	50.4185	-5.0603
-V01110	West Face Orthodontics	33 North Street, St. Austell	PL25 5QE	50.3401	-4.7935
 V01119	Mylor Dental Practice	Passage Hill, Falmouth	TR11 5SN	50.1880	-5.0751
 V01122	The Dental Surgery Trevelyan	Pentreve, Perranporth	TR6 0EY	50.3444	-5.1514
 V01123	House of Dental	31 Redhill Road, Birmingham	B31 3JS	52.3982	-1.9598
@@ -735,7 +725,6 @@ V01443	3 West Street	3-4 West Street, Ware	SG12 9EE	51.8115	-0.0322
 V01444	Rooprai-Rooprai & Associates	68 Northfield Road, Birmingham	B17 0SU	52.4543	-1.9663
 V01445	Buda Dental Care Bude	April Lodge, Bude	EX23 8AF	50.8267	-4.5263
 V01452	Castle Rise Dental Practice	Madford Lane, Launceston	PL15 9EB	50.6360	-4.3605
-V01453	Herts Orthodontics	3 St. Marys Courtyard, Ware	SG12 9EF	51.8126	-0.0336
 V01456	Wadebridge Dental Care	8 Park Place, Wadebridge	PL27 7EA	50.5156	-4.8399
 V01459	Morwenna Dental Surgery	5 Morwenna Terrace, Bude	EX23 8BU	50.8317	-4.5458
 V01460	The Surgery	60 High Street, Hertford	SG14 3SY	51.8593	-0.1158
@@ -902,7 +891,6 @@ V01719	Dental Surgery	18 Denton Park Centre, Newcastle upon Tyne	NE5 2QZ	54.9930
 V01720	St Mary's Dental Practice	3 St. Marys Place, Newcastle upon Tyne	NE1 7PG	54.9777	-1.6125
 V01723	Ramshaw & Silver Dental Surgery	1 Atkinson Road, Sunderland	SR6 9AR	54.9286	-1.3803
 V01724	Dental Surgery	59-61 Great North Road, Newcastle upon Tyne	NE3 2DQ	55.0158	-1.6220
-V01734	Wearside Orthodontic Centre	49 Frederick Street, Sunderland	SR1 1NF	54.9060	-1.3792
 V01736	Church Street Dental Practice	10-12 Church Street, Pulborough	RH20 4LA	50.9172	-0.4547
 V01738	Colosseum Dental (Horsham)	22 Carfax, Horsham	RH12 1EB	51.0631	-0.3272
 V01739	Dental Surgery	81A Lower Street, Pulborough	RH20 2BP	50.9572	-0.5005
@@ -977,7 +965,6 @@ V01874	Oaklands Dental Surgery	378 Tag Lane, Preston	PR2 7AA	53.7857	-2.7459
 V01876	Moor Park Dental Surgery	67 Garstang Road, Preston	PR1 1LB	53.7709	-2.7058
 V01878	Dental Surgery	72 Petts Hill, Northolt	UB5 4NN	51.5539	-0.3597
 V01882	Dental Practice	295 New Hall Lane, Preston	PR1 5XE	53.7654	-2.6700
-V01885	The Beeches Orthodontic Practice	114 Watling Street Road, Preston	PR2 8AH	53.7786	-2.6900
 V01886	The High Street Dental Practice	21 High Street, Normanton	WF6 2AD	53.6998	-1.4196
 V01887	Dental Surgery	105 Station Lane, Pontefract	WF7 5BA	53.6784	-1.3582
 V01890	Ropergate Dental Practice	47 Ropergate, Pontefract	WF8 1JY	53.6898	-1.3135
@@ -1010,8 +997,6 @@ V01933	Cambridge Dencare	45 Glisson Road, Cambridge	CB1 2HA	52.1974	0.1313
 V01935	Buckinghamshire Priority Dental	Eaglestone Health Centre, Milton Keynes	MK6 5AZ	52.0254	-0.7372
 V01939	Cambridge Smile Studio	27 Milton Road, Cambridge	CB4 1UZ	52.2159	0.1255
 V01942	The Surgery	102A Cricklewood Broadway, London	NW2 3EJ	51.5553	-0.2131
-V01947	St Marks Dental Surgery and Orthodontics	6 Chapel Street, Cambridge	CB4 1DY	52.2174	0.1403
-V01948	Only Orthodontics	40 Alumhurst Road, Bournemouth	BH4 8ER	50.7216	-1.9055
 V01949	Westbourne Dental Surgery	116A Poole Road, Bournemouth	BH4 9EF	50.7235	-1.9044
 V01950	Whitecross Dental Care Limited	The Village Surgery, Poole	BH12 5BF	50.7411	-1.8966
 V01953	D J Shah and Associates	Willesden Dental Centre, London	NW10 2NX	51.5481	-0.2370
@@ -1068,7 +1053,6 @@ V02057	Dental Surgery	39-41 Prices Lane, Reigate	RH2 8BA	51.2228	-0.2029
 V02064	Dental Beauty Battersea	Dental Surgery, London	SW11 4PR	51.4730	-0.1644
 V02065	Together Dental Clapham	88-90 St. John's Road, London	SW11 1PX	51.4611	-0.1674
 V02068	Lavender Hill Dental Practice	255A Lavender Hill, London	SW11 1JD	51.4641	-0.1638
-V02070	The Orthodontic Practice	17-19 Woodhouse Road, Mansfield	NG18 2AF	53.1498	-1.1939
 V02071	Queenstown Dental Practice	53-55 Queenstown Road, London	SW8 3RG	51.4683	-0.1505
 V02073	Jackson & Rigby Dental Practice	86 Leeming Street, Mansfield	NG18 1NG	53.1460	-1.1940
 V02074	Dental Surgery	579 Garratt Lane, London	SW18 4ST	51.4395	-0.1866
@@ -1105,7 +1089,6 @@ V02113	Care Dental Practice	Dental Surgery, London	E1 2LP	51.5139	-0.0625
 V02114	Patchway Dental Practice	19-21 Coniston Road, Bristol	BS34 5JN	51.5333	-2.5715
 V02115	Idh Ltd	1071 Garratt Lane, London	SW17 0LN	51.4289	-0.1696
 V02116	Downend Dental Practice	37 Badminton Road, Bristol	BS16 6BP	51.4906	-2.5031
-V02120	Bristol Orthodontics	63 High Street, Bristol	BS15 4AD	51.4625	-2.5030
 V02121	Gatehouse Dental Practice	128 Station Road, Addlestone	KT15 2BQ	51.3715	-0.4873
 V02122	Broadway Dental Centre	96 Tooting High Street, London	SW17 0RR	51.4263	-0.1701
 V02124	Trinity Dental & Implant Centre	104 Trinity Road, London	SW17 7RL	51.4391	-0.1631
@@ -1264,7 +1247,6 @@ V02431	Sharma	7 Coleshill Street, Sutton Coldfield	B72 1SD	52.5645	-1.8213
 V02432	Dental Surgery	Sandy Lane, Skelmersdale	WN8 8LA	53.5502	-2.8067
 V02434	Church End Dental Centre	192 Church Road, Northolt	UB5 5AE	51.5441	-0.3756
 V02435	Digmour Dental Practice	156 Birkrig, Skelmersdale	WN8 9HP	53.5369	-2.7577
-V02436	Midland Orthodontists	7 Penns Lane, Sutton Coldfield	B72 1AY	52.5366	-1.8235
 V02437	Dental Surgery	1552 Greenford Road, Greenford	UB6 0HR	51.5553	-0.3363
 V02438	Belwell Dental	14 Belwell Lane, Sutton Coldfield	B74 4AL	52.5868	-1.8343
 V02439	Dental Health Centre	643 Kingstanding Road, Birmingham	B44 9SU	52.5523	-1.8838
@@ -1446,7 +1428,6 @@ V02756	Ash Dental Practice	228-230 Liverpool Road, Manchester	M30 0PF	53.4829	-2
 V02757	The Crown Dental Practice	107 Church Street, Manchester	M30 0EJ	53.4827	-2.3383
 V02758	Revive Dental Practice	72 Rocky Lane, Manchester	M30 9LY	53.4952	-2.3503
 V02760	Parkside Dental Care	610 Liverpool Road, Manchester	M44 5AA	53.4374	-2.4292
-V02761	Orthodontic Practice	56 Chorley Road, Manchester	M27 5AD	53.5097	-2.3353
 V02762	Balham High Road (Dental Surgery)	40 Balham High Road, London	SW12 9AQ	51.4473	-0.1494
 V02763	Swinton Dental Centre	63 Chorley Road, Manchester	M27 4AF	53.5092	-2.3337
 V02765	B C Kelly and Associates	Dental Surgery, Manchester	M27 0EJ	53.5035	-2.3608
@@ -1455,7 +1436,6 @@ V02770	Montreal Dental Care	8 Montreal Avenue, Leeds	LS7 4LF	53.8269	-1.5339
 V02771	Cleggs Lane Dental Practice	34 Cleggs Lane, Manchester	M38 9WT	53.5318	-2.4228
 V02772	Hewitt, Higgins, Sadler & Hamburger	10 - 12 Memorial Road, Manchester	M28 3AQ	53.5228	-2.3985
 V02773	Leigh Road (Dental Surgery)	51 Leigh Road, Manchester	M28 1HP	53.5025	-2.4209
-V02775	Battersea Orthodontic Practice	104 Battersea Rise, London	SW11 1EJ	51.4607	-0.1688
 V02778	Liverpool Road (Dental Surgery)	276 Liverpool Road, Manchester	M44 6NA	53.4463	-2.4216
 V02780	Battersea Dental Practice	33 Queenstown Road, London	SW8 3RE	51.4676	-0.1509
 V02781	High Street Dental Practice	47 High Street, Cambridge	CB22 3BG	52.1231	0.1695
@@ -1485,7 +1465,6 @@ V02822	M C Dentistry Ltd	Dental Surgery, Barking	IG11 8SY	51.5448	0.0920
 V02823	The Orchard Health Centre	Gascoigne Road, Barking	IG11 7RS	51.5314	0.0814
 V02824	Wessex House Dental Practice	Wessex House, Sherborne	DT9 3EH	50.9456	-2.5167
 V02826	Haverhill Dental Centre	35 Queen Street, Haverhill	CB9 9DZ	52.0837	0.4373
-V02827	Regent Road Orthodontic Clinic	6 Regent Road, Lowestoft	NR32 1PA	52.4779	1.7529
 V02829	Oulton Village Dental Surgery	Meadow Road, Lowestoft	NR32 3AZ	52.4944	1.7214
 V02831	Inspire Dental Dagenham Practice	228 Oxlow Lane, Dagenham	RM10 7YX	51.5510	0.1548
 V02832	East Street Dental Practice	63 East Street, Barking	IG11 8EJ	51.5377	0.0790
@@ -1497,7 +1476,6 @@ V02843	Cheadle Heath Dental Practice	242 Stockport Road, Stockport	SK3 0LX	53.40
 V02844	Albert Road (Dental Surgery)	1 Albert Road, Cheadle	SK8 5DB	53.3774	-2.1930
 V02845	Chesterton Road Dental Surgery	36 Chesterton Road, Cambridge	CB4 1EN	52.2143	0.1263
 V02848	Dental Surgery	38 Ack Lane West, Cheadle	SK8 7EL	53.3657	-2.1828
-V02850	The Orthodontic Centre	91 Tomlinson Avenue, Luton	LU4 0QL	51.8999	-0.4938
 V02855	Canterbury Cosmetics	Dental Surgery, Sheerness	ME12 1UN	51.4373	0.7652
 V02856	Dental Surgery	120 Hartington Street, Barrow-in-Furness	LA14 5TW	54.1198	-3.2334
 V02858	Arundel Lodge Dental Surgery	20-21 Howard Road, Dorking	RH4 3HR	51.2306	-0.3371
@@ -1674,7 +1652,6 @@ V03193	Dental Surgery	21 Marsh Lane, Huddersfield	HD8 8AQ	53.5835	-1.7137
 V03194	Kirkburton Dental Care	125-127 North Road, Huddersfield	HD8 0RN	53.6113	-1.7029
 V03195	Dental Surgery	30 Highgate Lane, Huddersfield	HD8 0HB	53.6331	-1.7109
 V03200	Honley Dental Practice	12 Southgate, Holmfirth	HD9 6NT	53.6033	-1.7905
-V03202	Phoenix Orthodontic Practice	Over Units 10 & 11 Units 13 &14, London	E6 5LX	51.5145	0.0576
 V03204	Colosseum Dental (Church Hill)	Church Hill, Midhurst	GU29 9NX	50.9863	-0.7381
 V03205	East Mews Dental Surgery	Unit 2, Horsham	RH12 1HJ	51.0617	-0.3262
 V03209	Mill Road Dental Surgery	27 Mill Road, Crawley	RH10 1ND	51.1198	-0.1638
@@ -1705,7 +1682,6 @@ V03246	Bosden Farm Dental Practice	8 Fulmar Drive, Stockport	SK2 5JL	53.3911	-2.
 V03247	Dental Surgery	28-30 Turncroft Lane, Stockport	SK1 4AB	53.4090	-2.1462
 V03248	Dental Surgery	1 Marple Road, Stockport	SK2 5EH	53.4010	-2.1290
 V03250	Fir Tree Dental Practice	268 Gorton Road, Stockport	SK5 6RN	53.4459	-2.1570
-V03251	Grove Green Orthodontic Centre	Penhurst Close, Maidstone	ME14 5BT	51.2758	0.5586
 V03252	1 Wheatley Street	Wheatley Street, Doncaster	DN12 4AT	53.4887	-1.2512
 V03253	Albion Place (Dental Surgery)	5 Albion Place, Maidstone	ME14 5DY	51.2742	0.5296
 V03255	Dental Surgery	345 Reddish Road, Stockport	SK5 7EN	53.4328	-2.1566
@@ -1785,7 +1761,6 @@ V03403	Louise Lunness-Barnes Dental Clinic	4 the Parade, Rochester	ME2 3ST	51.40
 V03404	The Plains Dental Practice	49-51 Plains Road, Nottingham	NG3 5JU	52.9853	-1.1203
 V03405	Westdale Dental	406 Westdale Lane, Nottingham	NG3 6DG	52.9851	-1.1171
 V03406	Calverton Dental Practice	15 St. Wilfrids Square, Nottingham	NG14 6FP	53.0372	-1.0820
-V03407	Rochester Orthodontic Centre	227 Frindsbury Hill, Rochester	ME2 4JS	51.4048	0.5056
 V03408	Dental Surgery	88 London Street, Fleetwood	FY7 6JY	53.9231	-3.0132
 V03409	Maple Dental Clinic	29 Upper George Street, Luton	LU1 2RD	51.8797	-0.4198
 V03410	Dental Surgery	40 Victoria Road East, Thornton-Cleveleys	FY5 5BT	53.8709	-3.0042
@@ -1794,7 +1769,6 @@ V03412	Amblecote Dental Practice	181 Amblecote Road, Brierley Hill	DY5 2PR	52.46
 V03413	Leagrave Dental	696 Dunstable Road, Luton	LU4 8SE	51.8927	-0.4624
 V03414	The Dental Surgery	96 Bells Lane, Rochester	ME3 9HU	51.4235	0.5627
 V03417	Petrie Tucker and Partners	1 Croston Villa, Preston	PR3 1EA	53.9016	-2.7742
-V03419	Derwent House Orthodontics	1ST Floor, Cockermouth	CA13 0HS	54.6660	-3.3683
 V03422	Church Street Dental Practice	25 Church Street, London	N9 9DY	51.6258	-0.0636
 V03423	Premier Dental Care	93A High Street, Chatham	ME4 4DL	51.3839	0.5215
 V03424	Dental Surgery	128 Queen Street, Whitehaven	CA28 7QF	54.5482	-3.5866
@@ -1955,7 +1929,6 @@ V03748	Oaktree Dental Practice	Gerrards Place, Newbury	RG14 5JB	51.4006	-1.3280
 V03750	Pimlico Dental Care	124 Regency Street, London	SW1P 4AP	51.4903	-0.1323
 V03752	Queensway Dental Practice	82 Queensway, London	W2 3RL	51.5126	-0.1873
 V03754	20/20 Dental Practice	20 Cheap Street, Newbury	RG14 5DD	51.3986	-1.3216
-V03757	St Johns Wood Orthodontic Clinic	61-63 Queens Grove, London	NW8 6ER	51.5369	-0.1755
 V03760	The Archangel Dental Surgery	8 Westbourne Grove, London	W2 5RA	51.5158	-0.1889
 V03761	Covent Garden Dental Clinic	48A Chandos Place, London	WC2N 4HS	51.5097	-0.1259
 V03763	The London Dental Studio	27-29 Warwick Way, London	SW1V 1QT	51.4926	-0.1394
@@ -1986,7 +1959,6 @@ V03816	Allerton Dental Care	121A Allerton Road, Liverpool	L18 2DD	53.3854	-2.907
 V03819	Dental Practice	10 Derby Lane, Liverpool	L13 3DL	53.4146	-2.9140
 V03823	Menlove Dental Surgery	1 Menlove Avenue, Liverpool	L18 1LS	53.3883	-2.9106
 V03824	Esperance Oral Health Care	Esperance, Tunbridge Wells	TN3 0ET	51.1311	0.2085
-V03827	Grosvenor House Orthodontic Practice	7 Upper Grosvenor Road, Tunbridge Wells	TN1 2DU	51.1367	0.2634
 V03831	Prudhoe Dental Practice	78 Front Street, Prudhoe	NE42 5PU	54.9614	-1.8522
 V03832	Hyde Park Dental Centre	61 Bayswater Road, London	W2 3PH	51.5117	-0.1768
 V03833	Aspen Dental Care	20 Mount Ephraim, Tunbridge Wells	TN4 8AS	51.1368	0.2610
@@ -2146,7 +2118,6 @@ V04232	Raval Dental Surgery	86 Cromer Street, London	WC1H 8DG	51.5279	-0.1223
 V04235	Q Dental	318 Kilburn Lane, London	W9 3EF	51.5328	-0.2053
 V04236	Beulah Hill Dental Centre	1 Beulah Hill, London	SE19 3LQ	51.4101	-0.0873
 V04237	Lovat House Dental Practice	32 Christchurch Road, Cheltenham	GL50 2PL	51.8962	-2.0923
-V04238	The Orthodontic Centre	The Dental Surgery, Newbury	RG14 7PB	51.3976	-1.3149
 V04239	Shape Dental Clinic	44 Kilburn High Road, London	NW6 4HJ	51.5377	-0.1927
 V04242	Colosseum Dental (Halford House)	West Street, Newbury	RG14 1BE	51.4026	-1.3265
 V04243	Da Clinics Ltd	Dental Surgery, Thatcham	RG18 3HH	51.4049	-1.2716
@@ -2162,7 +2133,6 @@ V04266	Mistry and Others Dental Surgery	19 Reservoir Road, London	N14 4BB	51.646
 V04268	Chase Side Dental Practice	117 Chase Side, London	N14 5HD	51.6343	-0.1343
 V04273	Sterling Way Dental Surgery	40 Sterling Way, London	N18 2XZ	51.6145	-0.0660
 V04275	Dental Surgery	17 Kendal Parade, London	N18 1ND	51.6167	-0.0855
-V04276	Angle House Orthodontics	Edmonton, London	N18 1JX	51.6208	-0.0839
 V04277	Risley Hill Dental Practice	98 Derby Road, Nottingham	NG10 5HU	52.9221	-1.2930
 V04283	Bond Dental London (Bloomsbury)	96 Marchmont Street, London	WC1N 1AG	51.5260	-0.1255
 V04285	Fore Street (Dental Surgery)	91 Fore Street, London	N18 2TW	51.6111	-0.0658
@@ -2308,7 +2278,6 @@ V04561	Surrey Dental Spa	421 London Road, Sutton	SM3 8JN	51.3697	-0.2299
 V04562	Dental Practice & Dental Hygiene	593 London Road, Sutton	SM3 9AG	51.3736	-0.2256
 V04564	Confident Dental Practice	18 Pepys Road, London	SW20 8PF	51.4123	-0.2280
 V04565	Ninety 2 Dental	92 Epsom Road, Sutton	SM3 9ES	51.3870	-0.2105
-V04569	Sutton Orthodontic Practice	103 Brighton Road, Sutton	SM2 5SJ	51.3527	-0.1917
 V04570	Dental Surgery	96 Westmead Road, Sutton	SM1 4HX	51.3659	-0.1817
 V04571	Approach Dentistry	5 the Approach, London	NW4 2HS	51.5846	-0.2174
 V04572	Benhill Dental Practice	62 Benhill Avenue, Sutton	SM1 4DW	51.3666	-0.1899
@@ -2362,21 +2331,18 @@ V04678	Tiptree Dental Surgery	93 Church Road, Colchester	CO5 0HB	51.8102	0.7513
 V04679	The Wealden Dental Practice	25 Station Road, Ashford	TN27 9SB	51.1670	0.6268
 V04680	Burnopfield Dental Practice	2-4 Busty Bank, Newcastle upon Tyne	NE16 6NF	54.9068	-1.7223
 V04681	Dental Surgery	41 Prettygate Road, Colchester	CO3 4EQ	51.8799	0.8648
-V04682	St Albans Orthodontic Centre	3A Holywell Hill, St. Albans	AL1 1ER	51.7504	-0.3395
 V04683	Dental Surgery	1 Keelers Way, Colchester	CO6 4EE	51.9262	0.8792
 V04686	Smile in Durham	3 New Durham Road, Stanley	DH9 7UQ	54.8562	-1.7333
 V04687	Durham Road (Dental Surgery)	307 Durham Road, Consett	DH8 5NW	54.8618	-1.8320
 V04689	Bergholt Road (Dental Surgery)	236 Bergholt Road, Colchester	CO4 5AS	51.9048	0.8856
 V04691	Dental Surgery	6 Front Street, Consett	DH8 5AQ	54.8509	-1.8325
 V04695	Dedham Dental Surgery	Princel Lane, Colchester	CO7 6HE	51.9590	0.9912
-V04696	Hightown Orthodontic Practice	38-42 Hightown, Crewe	CW1 3BY	53.1002	-2.4474
 V04697	Country Park Dental Practice Ltd	Unit 5, Colchester	CO4 9SR	51.9111	0.9183
 V04698	Bupa Dental Care	316 Ipswich Road, Colchester	CO4 0ET	51.9051	0.9238
 V04701	Dental Surgery	11 Russell Avenue, St. Albans	AL3 5ES	51.7540	-0.3401
 V04703	Dental Surgery	49 Kingsway, Harwich	CO12 3JT	51.9364	1.2817
 V04706	Cranleigh Dental Centre	232 High Street, Cranleigh	GU6 8RL	51.1425	-0.4940
 V04708	Dental Surgery	76 Castle Street, Farnham	GU9 7LP	51.2155	-0.7990
-V04709	West Street Orthodontic Practice	69 West Street, Farnham	GU9 7EH	51.2128	-0.8062
 V04711	East Street (Dental Surgery)	28 East Street, Farnham	GU9 7SW	51.2173	-0.7943
 V04712	Notley Dental Surgery	17 Ockford Road, Godalming	GU7 1QU	51.1841	-0.6178
 V04713	Lakeside Dental Practice	1 Shackstead Lane, Godalming	GU7 1RL	51.1797	-0.6203
@@ -2390,7 +2356,6 @@ V04723	Woodbridge Hill Dental Practice	49A Woodbridge Hill, Guildford	GU2 9ZD	51
 V04726	Dental Practice	17 London Road, Guildford	GU1 2AA	51.2395	-0.5649
 V04727	Dene Lodge Dental Practice	9 London Road, Guildford	GU1 2AA	51.2395	-0.5649
 V04729	Dental Surgery	42A London Road, Guildford	GU1 2AF	51.2384	-0.5652
-V04735	Guildford Orthodontics	8 Waterden Road, Guildford	GU1 2AP	51.2391	-0.5631
 V04738	Colosseum Dental (Vicarage Lane)	Vicarage Lane, Haslemere	GU27 1LQ	51.0890	-0.7332
 V04742	Hurst Farm Dental Practice	Chapel Lane, Godalming	GU8 5HU	51.1730	-0.6454
 V04744	Dental Surgery	383 Archway Road, London	N6 4ER	51.5783	-0.1490
@@ -2411,7 +2376,6 @@ V04778	Market Place Dental Health Practice	9 Market Place, Oakham	LE15 9QH	52.58
 V04782	Heddons Croft Dental Surgery	Exeter Road, Braunton	EX33 2JL	51.1069	-4.1605
 V04783	Dental Surgery	27 St. Marys Road, Market Harborough	LE16 7DS	52.4782	-0.9184
 V04785	Dental Surgery	16 Asfordby Road, Melton Mowbray	LE13 0HR	52.7670	-0.8927
-V04786	Melton Orthodontics	3 Nottingham Street, Melton Mowbray	LE13 1NN	52.7659	-0.8881
 V04787	Dental Surgery	1148 Melton Road, Leicester	LE7 2HA	52.6953	-1.0788
 V04788	Great Ayton Dental Practice	119 High Street, Middlesbrough	TS9 6BW	54.4885	-1.1336
 V04791	West Road Dental Practice	71 West Road, Oakham	LE15 6LT	52.6697	-0.7368
@@ -2547,7 +2511,6 @@ V04993	Disley Dental Centre	5 Buxton Old Road, Stockport	SK12 2BB	53.3580	-2.038
 V04996	Dental Surgery	51 Goodwyn Avenue, London	NW7 3RJ	51.6156	-0.2471
 V04998	Altrincham Road (Dental Surgery)	12 Altrincham Road, Wilmslow	SK9 5ND	53.3270	-2.2403
 V05001	Dental Surgery	256A Edleston Road, Crewe	CW2 7EH	53.0956	-2.4420
-V05008	Angle House Orthodontics	Elizabeth House, Edgware	HA8 7EJ	51.6104	-0.2784
 V05012	Victoria Road Dental Care	37 Victoria Road, Deal	CT14 7AY	51.2202	1.4023
 V05023	Mydentist	38 St. Mildreds Road, Westgate-on-Sea	CT8 8RF	51.3821	1.3372
 V05034	Dental Surgery	4 Burns Avenue, Basildon	SS13 3AG	51.5656	0.5032
@@ -2585,7 +2548,6 @@ V05103	Dental Surgery	113A Burnt Oak Broadway, Edgware	HA8 5EN	51.6018	-0.2693
 V05106	Ladbroke Grove Dental Care	118 Ladbroke Grove, London	W10 5NE	51.5174	-0.2098
 V05107	Chelsea Dental Practice	4 World's End Place, London	SW10 0HE	51.4815	-0.1798
 V05110	Dental Surgery	157 Midland Road, Barnsley	S71 4BY	53.6011	-1.4457
-V05111	Trinity House Orthodontics	46-50 Shambles Street, Barnsley	S70 2SH	53.5531	-1.4840
 V05112	Family Dental Care	160 Marsh Lane, Stanmore	HA7 4HT	51.6120	-0.3048
 V05113	Cheriton Dental Practice	55 Cheriton High Street, Folkestone	CT19 4EZ	51.0879	1.1435
 V05114	Khiroya Dentist	218 Pinner Road, Harrow	HA1 4JU	51.5833	-0.3545
@@ -2788,9 +2750,7 @@ V05511	Cherwell Heights Dental Care	83 Chatsworth Drive, Banbury	OX16 9YJ	52.048
 V05517	Bloxham Dental Practice	Godswell Stables, Banbury	OX15 4ES	52.0181	-1.3730
 V05522	Cornhill Dental Clinic	22 Cornhill, Banbury	OX16 5NG	52.0627	-1.3364
 V05524	Broad Street (Dental Surgery)	9 Broad Street, Ely	CB7 4AJ	52.3965	0.2679
-V05532	Crystal Peaks Orthodontic Centre	15 Peaks Mount, Sheffield	S20 7HZ	53.3429	-1.3544
 V05535	Nagi and Rattan Dental Surgery	2 Rose Hill, Oxford	OX4 4HS	51.7313	-1.2273
-V05536	The Windmill Orthodontic Centre	The Old Bank House, Oxford	OX3 9AE	51.7602	-1.2116
 V05537	Dental Surgery	26 St. Marys Street, Ely	CB7 4ES	52.4000	0.2611
 V05538	Dental Surgery	1A Elms Parade, Oxford	OX2 9LG	51.7516	-1.2980
 V05541	Oasis Dental Care	22 Beaumont Street, Oxford	OX1 2NA	51.7548	-1.2614
@@ -2895,7 +2855,6 @@ V05727	Precinct Dental Practice	28A Bury Street, Abingdon	OX14 3QX	51.6707	-1.28
 V05728	Dental Surgery	Hope Cottage, Macclesfield	SK10 4BW	53.2865	-2.1507
 V05738	Dental Surgery	40 Chorley New Road, Bolton	BL1 4AP	53.5822	-2.4429
 V05739	West Park Dental Practice	156 Cumberland Street, Macclesfield	SK10 1BP	53.2623	-2.1335
-V05741	Cheshire Cat Orthodontics	45 Great King Street, Macclesfield	SK11 6PN	53.2596	-2.1305
 V05742	Dental Surgery	757 Blackburn Road, Bolton	BL1 7JJ	53.6068	-2.4316
 V05744	Bromley Cross Dental Practice	227 Darwen Road, Bolton	BL7 9BS	53.6153	-2.4202
 V05745	Little Lever Dental Practice	100 High Street, Bolton	BL3 1LR	53.5612	-2.3684
@@ -2941,7 +2900,6 @@ V05811	Dental Surgery	1279 High Road, London	N20 9HS	51.6308	-0.1755
 V05814	Dental Surgery	19 Longmore Avenue, Barnet	EN4 8AE	51.6432	-0.1677
 V05815	Aron Marcus Dental Surgery	19 Oakleigh Road North, London	N20 9HE	51.6301	-0.1740
 V05816	Dental Surgery	32 Bradford Street, Bolton	BL2 1JJ	53.5768	-2.4173
-V05817	Chesterfield Orthodontics	South Place, Chesterfield	S40 1SZ	53.2338	-1.4275
 V05818	Woodhouse Dental Practice	229A Woodhouse Road, London	N12 9BD	51.6129	-0.1592
 V05819	Grove Dental Practice	236 High Street, Barnet	EN5 5TD	51.6579	-0.2009
 V05820	The Westhoughton Dental Centre	53 Park Road, Bolton	BL5 3BX	53.5481	-2.5183
@@ -2977,7 +2935,6 @@ V05887	Carmelite Dental Practice	40 White Horse Lane, Maldon	CM9 5QP	51.7310	0.6
 V05888	Sandon Dental Surgery	34 Hoole Road, Chester	CH2 3NJ	53.2005	-2.8753
 V05889	White Friars House Dental Practice	14 White Friars, Chester	CH1 1NZ	53.1886	-2.8926
 V05893	Golders Green Dental Care	192 Golders Green Road, London	NW11 9AL	51.5766	-0.2048
-V05896	Total Orthodontics - Hull	940 Anlaby Road, Hull	HU4 6AH	53.7447	-0.4036
 V05899	Cavendish House Dental Surgery	240 East End Road, London	N2 8AX	51.5896	-0.1667
 V05902	Dental Surgery	15 the Pantiles, Billericay	CM12 0UA	51.6373	0.4138
 V05909	Dental Surgery	393 Nether Street, London	N3 1QG	51.6023	-0.1936
@@ -2992,7 +2949,6 @@ V05922	Dental Surgery	43A High Street, Billericay	CM12 9AX	51.6265	0.4182
 V05924	Chelsfield Dental Practice	17 Windsor Drive, Orpington	BR6 6EY	51.3563	0.1053
 V05928	Wilmslow Dental Practice	26 Chapel Lane, Wilmslow	SK9 5HZ	53.3228	-2.2403
 V05929	Dental Surgery	27 High Street, Burntwood	WS7 3XE	52.6715	-1.9343
-V05930	Overleigh Orthodontics	The Old Forge, Chester	CH4 7HL	53.1823	-2.8897
 V05931	Dale House Dental Practice	15-16 Albert Road, Tamworth	B79 7JN	52.6366	-1.6930
 V05932	Liverpool Road (Dental Surgery)	4 Liverpool Road, Chester	CH2 1AE	53.1981	-2.8941
 V05934	Dental Surgery	152 Brentwood Road, Brentwood	CM13 3PD	51.5972	0.3486
@@ -3016,7 +2972,6 @@ V05962	Merseyside Dental Centre	45A Stockbridge Lane, Liverpool	L36 3SA	53.4240	
 V05965	Dental Surgery	80 St. Chads Parade, Liverpool	L32 8UG	53.4822	-2.8889
 V05967	The Croft Dental Surgery	Unit 10, Liverpool	L28 1NR	53.4356	-2.8686
 V05969	Dental Surgery	1 Victoria Square, St. Helens	WA10 1HQ	53.4537	-2.7359
-V05973	Rainford Orthodontic Practice	13 Church Road, St. Helens	WA11 8HE	53.5012	-2.7878
 V05974	The Corners Dental Surgery	146 Duke Street, St. Helens	WA10 2JL	53.4567	-2.7436
 V05977	Talking Teeth Dental Practice	162 Parr Stocks Road, St. Helens	WA9 1PB	53.4506	-2.7106
 V05980	Dental Surgery	252 Church Road, St. Helens	WA11 0LE	53.4688	-2.6582
@@ -3091,7 +3046,6 @@ V06112	Dental Practice	93 Abbey End, Kenilworth	CV8 1LS	52.3449	-1.5811
 V06113	Dental Surgery	37 High Street, Kenilworth	CV8 1LY	52.3497	-1.5833
 V06114	Dental Surgery	12A Eastcheap, Letchworth Garden City	SG6 3DE	51.9786	-0.2280
 V06115	Kenilworth Dental Practice	26 Station Road, Kenilworth	CV8 1JJ	52.3429	-1.5748
-V06116	Leamington Spa Orthodontics	21 Waterloo Place, Leamington Spa	CV32 5LA	52.2921	-1.5388
 V06119	Church Road Dental Practice	4A Church Road, Welwyn Garden City	AL8 6NE	51.8001	-0.2056
 V06123	Whetstone Dental Surgery	3 Grove Road, Leicester	LE8 6LN	52.5677	-1.1766
 V06124	Dental Surgery	7 Crown Way, Leamington Spa	CV32 7SF	52.3030	-1.5201
@@ -3194,7 +3148,6 @@ V06322	The Queens Dental Practice	11 Queens Road, Buckhurst Hill	IG9 5BZ	51.6253
 V06324	Dental Surgery	2 Roding View, Buckhurst Hill	IG9 6AQ	51.6308	0.0493
 V06326	Dental Surgery	83 Loughton Way, Buckhurst Hill	IG9 6AS	51.6313	0.0521
 V06328	Alan C Goldman Dental Practice	188 Manor Road, Chigwell	IG7 5PZ	51.6126	0.0883
-V06330	Specialist Orthodontic Practice	117 High Street, Epping	CM16 4BD	51.6979	0.1091
 V06331	Dental Surgery	20 Farm Hill Road, Waltham Abbey	EN9 1NN	51.6860	0.0026
 V06332	The Market Square Dental Surgery	2A Market Square, Waltham Abbey	EN9 1DL	51.6871	-0.0025
 V06333	Cobbins Brook Dental Practice	28 Honey Lane, Waltham Abbey	EN9 3BT	51.6861	0.0109
@@ -3274,7 +3227,6 @@ V06451	157 Dental Group	157 Broadway, Peterborough	PE1 4DD	52.5814	-0.2364
 V06452	Bilston Dental Practice	218 Wellington Road, Bilston	WV14 6RL	52.5714	-2.0928
 V06459	Dental Surgery	6 Kimbolton Road, Bedford	MK40 2NR	52.1404	-0.4626
 V06461	Dental Care Centre	60 High Street, Bedford	MK41 6DN	52.1604	-0.4930
-V06462	Contour Orthodontists	25 High Street, Petersfield	GU32 3JR	51.0036	-0.9350
 V06469	Hillton Dental Surgery	Nortide House, Faversham	ME13 8PH	51.3140	0.8898
 V06471	Dental Surgery	76 Widney Road, Solihull	B93 9AW	52.3828	-1.7539
 V06473	Church Street Dental Surgery	104 Church Street, Hull	HU7 4TD	53.7800	-0.3026
@@ -3308,7 +3260,6 @@ V06518	Oasis Dental Care	33 the Strait, Lincoln	LN2 1JD	53.2319	-0.5392
 V06519	Armada Dental Surgery	14 Greenbank Avenue, Plymouth	PL4 8PT	50.3737	-4.1265
 V06520	Shortlands Dental Practice	98 Martins Road, Bromley	BR2 0EF	51.4057	0.0044
 V06523	Confidental Care	207 Southborough Lane, Bromley	BR2 8AR	51.3899	0.0495
-V06525	Gosal Orthodontics Ltd	168 Leicester Road, Loughborough	LE11 2AH	52.7632	-1.1965
 V06527	Hafren House Dental Practice	1 Cressy Road, Alfreton	DE55 7BR	53.0967	-1.3853
 V06532	Anele De Novo Dental Practice	143 Reculver Road, Herne Bay	CT6 6PD	51.3700	1.1547
 V06535	St Stephens Dental Practice	4 Hales Drive, Canterbury	CT2 7AB	51.2916	1.0786
@@ -3323,7 +3274,6 @@ V06549	Kelvin House Dental Practice	2 Nelson Road, Whitstable	CT5 1DP	51.3558	1.
 V06551	Dental Surgery	35 Cecil Street, Plymouth	PL1 5HW	50.3735	-4.1505
 V06552	Dental Surgery	18 Beckenham Road, Beckenham	BR3 4LS	51.4090	-0.0403
 V06553	Hillcrest Dental Surgery	1 Hillcrest, Stafford	ST17 9YA	52.7931	-2.1293
-V06554	The Orthodontic Practice	5 St. James Court, Derby	DE1 1BT	52.9243	-1.4888
 V06557	Asquith House Dental Practice	5 Lion Court, Lichfield	WS13 6HL	52.6822	-1.8276
 V06559	Littleover Dental Practice	Dental Surgery, Derby	DE23 6JJ	52.9004	-1.4973
 V06563	Milehouse Dental Care	42 Milehouse Road, Plymouth	PL3 4DA	50.3843	-4.1610
@@ -3338,7 +3288,6 @@ V06597	Miss S Khan	26 Ellerbeck, Tamworth	B77 4JA	52.6177	-1.6512
 V06598	St Marys Dental Practice	7A St. Marys Street, Market Drayton	TF9 1AA	52.9034	-2.4840
 V06603	Dental Surgery	188 Scarborough Avenue, Stevenage	SG1 2HW	51.9139	-0.2212
 V06612	Dental Surgery	Poynton House, Market Drayton	TF9 3DD	52.9030	-2.4860
-V06614	Harpenden Orthodontics Llp	Harpenden Orthodontic Practice, Harpenden	AL5 2SP	51.8178	-0.3579
 V06631	Oasis Dental Care	14 Wolverhampton Road, Stafford	ST17 4BP	52.8016	-2.1137
 V06635	Regency House Dental Practice	Station Road, Stone	ST15 8JP	52.9036	-2.1491
 V06645	Dental Surgery	36 Church Street, Oswestry	SY11 2SP	52.8585	-3.0563
@@ -3379,7 +3328,6 @@ V06721	Drayton Primary Care Centre	Maer Lane, Market Drayton	TF9 3AL	52.9087	-2.
 V06722	Dental Surgery	88 Manor Park Road, West Wickham	BR4 0JZ	51.3786	-0.0221
 V06724	Bowdlers House Dental Practice	Bowdlers House, Shrewsbury	SY1 1TP	52.7060	-2.7510
 V06727	Greenfields Dental Surgery	114 Ellesmere Road, Shrewsbury	SY1 2QT	52.7224	-2.7516
-V06728	Cambridge Orthodontic Practice	43 Long Road, Cambridge	CB2 8PP	52.1794	0.1373
 V06729	Mill Street Dental Practice	16 Mill Street, Kingsbridge	TQ7 1ED	50.2836	-3.7778
 V06731	Harwood Dental Surgery	8 Watts Road, Tavistock	PL19 8LF	50.5486	-4.1529
 V06734	Ambleside Dental Practice	1 Ambleside, Shrewsbury	SY1 4ET	52.7350	-2.7288
@@ -3417,7 +3365,6 @@ V06793	Downall Green Road (Dental Surgery)	8 Downall Green Road, Wigan	WN4 0DH	5
 V06795	A1 Dental Surgery	52 London Road, Canterbury	CT2 8LF	51.2830	1.0668
 V06796	Central Ortho	Ankerside Shopping Centre, Tamworth	B79 7LQ	52.6327	-1.6934
 V06797	Sixteen A Dental Care	16A High Street, Swadlincote	DE11 8HY	52.7734	-1.5562
-V06800	Smiles Orthodontic Practice	6 Station Road, Biggleswade	SG18 8AL	52.0850	-0.2620
 V06801	Stretton Dental Practice	2 Central Avenue, Church Stretton	SY6 6EE	52.5375	-2.8049
 V06802	Guys Dental Surgery	11 Church Street, Lichfield	WS13 6DZ	52.6842	-1.8218
 V06803	Victoria Dental Practice	68 Victoria Road, Stoke-on-Trent	ST4 2JX	53.0018	-2.1619
@@ -3429,11 +3376,9 @@ V06810	Modwena Dental	1 Liverpool Road, Stoke-on-Trent	ST4 1AR	53.0050	-2.1863
 V06811	Stoke Dental	3 Campbell Road, Stoke-on-Trent	ST4 4EA	52.9996	-2.1837
 V06812	Thomas Dental Practice	Dental Surgery, Oswestry	SY11 2HG	52.8564	-3.0570
 V06816	Davenport House Dental Practice	Davenport House, Harpenden	AL5 4HX	51.8162	-0.3545
-V06820	Unit 8 (Peachcroft Orthodontics)	Unit 8, Abingdon	OX14 2QA	51.6846	-1.2658
 V06821	Thirty Three Dental	33 Market Square, Witney	OX28 6AD	51.7836	-1.4847
 V06822	33 - 35 Duke Street	33-35 Duke Street, Henley-on-Thames	RG9 1UR	51.5369	-0.9040
 V06824	80 Kensington Dental Clinic	80 Kensington High Street, London	W8 4SG	51.5017	-0.1922
-V06828	Ashlow Orthodontic Practice	Ashlow, Stoke-on-Trent	ST4 6BN	53.0084	-2.2075
 V06833	Portway Dental Practice	41A Portway, Frome	BA11 1QS	51.2276	-2.3145
 V06834	Shelton Dental Centre	26 Stoke Road, Stoke-on-Trent	ST4 2QX	53.0124	-2.1835
 V06854	Blurton Dental Centre	89 Blurton Road, Stoke-on-Trent	ST3 2BS	52.9894	-2.1607
@@ -3497,7 +3442,6 @@ V06964	Priory Dental Practice	21 Portland Road, Walsall	WS9 8NS	52.6027	-1.9176
 V06966	Dental Surgery	166-168 High Street, Walsall	WS3 3JT	52.6147	-2.0041
 V06968	First Dental	124 High Street, Walsall	WS3 2DG	52.6132	-2.0029
 V06971	Dental Surgery	150-152 Caldmore Road, Walsall	WS1 3RF	52.5775	-1.9820
-V06975	Soho Orthodontic Clinic	29-30 Soho Square, London	W1D 3QS	51.5145	-0.1319
 V06976	Dental Surgery	2A Oaken Drive, Willenhall	WV12 5NU	52.6076	-2.0304
 V06977	Dental Surgery	179 Watling Street, Radlett	WD7 7NQ	51.6875	-0.3191
 V06978	Priory Dental Practice (Leamore) Limited	652 Bloxwich Road, Walsall	WS3 2BA	52.6091	-1.9956
@@ -3528,15 +3472,11 @@ V07019	Pulteney Dental Practice	14 Argyle Street, Bath	BA2 4BQ	51.3832	-2.3571
 V07021	Dental Surgery	32 Chiltern Avenue, Bushey	WD23 4QB	51.6447	-0.3514
 V07022	Fauchard House Dental Surgery	53 North Hill, Plymouth	PL4 8HB	50.3779	-4.1358
 V07023	Dental Surgery	109 Scotland Road, Nelson	BB9 7XH	53.8400	-2.2140
-V07024	Orthodontic Practice	Suite E, Basildon	SS14 1BN	51.5699	0.4583
-V07029	Purely Orthodontics	Pembroke House, Basildon	SS13 3DU	51.5662	0.5041
 V07030	Edgware Road (Dental Surgery)	234 Edgware Road, London	W2 1DW	51.5191	-0.1683
 V07031	Oxon Dental Care	Roselyn, Shrewsbury	SY3 5AH	52.7140	-2.8058
 V07033	Bellstone Dental Practice	3 Bellstone Court, Shrewsbury	SY1 1JB	52.7075	-2.7572
 V07034	St Johns Hill Dental Practice	30 St. Johns Hill, Shrewsbury	SY1 1JJ	52.7070	-2.7576
-V07035	Bath Orthodontics	Sydney Road, Bath	BA2 6NR	51.3851	-2.3488
 V07038	Dental Care Bath	15A Charlotte Street, Bath	BA1 2ND	51.3832	-2.3663
-V07040	Circus Orthodontic Practice	20 the Circus, Bath	BA1 2EU	51.3857	-2.3634
 V07041	Combe Down Dental Practice	8 Combe Road, Bath	BA2 5HX	51.3595	-2.3513
 V07043	Gay Street Dental Surgery	25 Gay Street, Bath	BA1 2PD	51.3851	-2.3635
 V07044	Green Park Dental Surgery	40 Green Park, Bath	BA1 1HZ	51.3807	-2.3677
@@ -3558,7 +3498,6 @@ V07072	Willenhall Dental Care	Remembrance Road, Coventry	CV3 3DG	52.3877	-1.4600
 V07073	Chapelfields Dental Practice	2 Sir Thomas Whites Road, Coventry	CV5 8DQ	52.4073	-1.5358
 V07074	Dental Surgery	1 Light Lane, Coventry	CV1 4BQ	52.4148	-1.5144
 V07075	Bhandal Dental Practice	298 A-C, Coventry	CV6 5AH	52.4255	-1.5014
-V07077	Coventry Orthodontics Limited T/a Pinnacle Orthodontics	13 Park Road, Coventry	CV1 2LE	52.4027	-1.5098
 V07080	Alton Dental	54 Anstey Road, Alton	GU34 2RE	51.1539	-0.9678
 V07083	Dental Perfection	7 Grosvenor House, Coventry	CV1 3FE	52.4035	-1.5170
 V07085	Associated Dental Practices	Brighton Hill Parade, Basingstoke	RG22 4EH	51.2450	-1.1140
@@ -3638,7 +3577,6 @@ V07203	City Bridge Dental Care	187 Southmead Road, Bristol	BS10 5DX	51.4952	-2.6
 V07205	Monks Park Dental Care	94-96 Filton Road, Bristol	BS7 0PD	51.4977	-2.5801
 V07207	St Pauls Dental Care	Unit 2, Bristol	BS6 5NW	51.4661	-2.5807
 V07208	Dental Surgery	6 Bywood Avenue, Croydon	CR0 7RA	51.3889	-0.0530
-V07209	Whitetree Orthodontic Practice	1-3 North View, Bristol	BS6 7PT	51.4795	-2.6142
 V07211	Lawley Dental Practice	Birchfield House, Telford	TF4 2LL	52.6749	-2.4802
 V07212	Whitecross Dental Care Ltd	Dental Surgery, Bristol	BS4 2QB	51.4347	-2.5671
 V07213	Clare Street Dental Centre	Clare Street, Bristol	BS1 1YA	51.4538	-2.5956
@@ -3658,7 +3596,6 @@ V07243	Paddington Dental Practice	17 Craven Road, London	W2 3BP	51.5148	-0.1766
 V07244	Queens Park Health Centre	Dart Street, London	W10 4LD	51.5306	-0.2076
 V07246	Stirchley Dental Practice	Stirchley Health Centre, Telford	TF3 1FB	52.6552	-2.4338
 V07247	Dental Surgery	Carlton Chambers, Telford	TF1 1EW	52.7024	-2.5205
-V07248	Manor Orthodontic Clinic	9A Queen Street, Telford	TF1 1EH	52.7024	-2.5211
 V07249	Dental Surgery	Tyrone House, Telford	TF1 1DR	52.7029	-2.5185
 V07250	Oasis Dental Care Ltd	22 Church Street, Telford	TF1 1DG	52.7024	-2.5186
 V07252	Integrated Dental Holdings	Unit 2, Telford	TF3 3DE	52.6797	-2.4351
@@ -3692,10 +3629,8 @@ V07312	Broadway Dental Surgery	221-225 Lower Blandford Road, Broadstone	BH18 8DN
 V07317	Dental Surgery	107 Archer Road, Redditch	B98 8DJ	52.3072	-1.9366
 V07318	Dental Surgery	111 Hewell Road, Birmingham	B45 8NW	52.3597	-1.9906
 V07320	Dental Surgery	67 Callowbrook Lane, Birmingham	B45 9HP	52.3937	-2.0220
-V07321	Pinnacle Orthodontics	343 Birchfield Road, Redditch	B97 4NE	52.2989	-1.9664
 V07322	Smilecraft Dental Care	64 High Street, Stevenage	SG1 3EA	51.9114	-0.2084
 V07323	Dental Surgery	98 Mauldeth Road West, Manchester	M20 1AB	53.4387	-2.2326
-V07325	Orthodontics for You	15 Churchfields, Bromsgrove	B61 8DS	52.3375	-2.0635
 V07326	Dental Surgery	2 College Road, Bromsgrove	B60 2NE	52.3340	-2.0577
 V07327	Dental Surgery	68 New Road, Bromsgrove	B60 2LA	52.3282	-2.0513
 V07328	Damani Dental Practice	5 Trinity Court, Bromsgrove	B60 3EQ	52.3228	-2.0492
@@ -3733,7 +3668,6 @@ V07388	Dental Surgery	233 Leeds Road, Nelson	BB9 8EH	53.8419	-2.2052
 V07389	Dental Surgery	72 Leeds Road, Nelson	BB9 9TD	53.8378	-2.2114
 V07390	The Dental Practice	29 Burnley Road, Nelson	BB9 5JL	53.8211	-2.2357
 V07392	Ringwood Dental	36 Southampton Road, Ringwood	BH24 1JD	50.8476	-1.7894
-V07394	Wigan Orthodontic Centre	2-6 King Street, Wigan	WN1 1BS	53.5447	-2.6316
 V07395	Wentworth Villa (Dental Surgery)	Wentworth Villa, Wilmslow	SK9 1PA	53.3231	-2.2352
 V07396	Earby Dental Practice	13 Albion Road, Barnoldswick	BB18 6PZ	53.9166	-2.1451
 V07397	Dental Surgery	28 Market Street, Wigan	WN1 1HX	53.5477	-2.6336
@@ -3742,7 +3676,6 @@ V07405	Bucknall Dental Practice	237 Dividy Road, Stoke-on-Trent	ST2 0BJ	53.0171	
 V07407	Dental Surgery	125 Hanley Road, Stoke-on-Trent	ST1 6BG	53.0383	-2.1697
 V07408	The Boulevard Dental Practice	Dental Surgery, Stoke-on-Trent	ST6 6BD	53.0590	-2.2088
 V07409	Waterloo Dental Practice	239 Waterloo Road, Stoke-on-Trent	ST6 2JB	53.0370	-2.1887
-V07410	Stoke Orthodontic Services	Unit 7, Stoke-on-Trent	ST1 2QE	53.0326	-2.1720
 V07412	Dental Surgery	386 Edenfield Road, Rochdale	OL12 7NH	53.6230	-2.1881
 V07418	Red Rose Dental Group	50 New Market Street, Wigan	WN1 1SJ	53.5502	-2.6319
 V07420	The Limes Dental Practice	The Limes, Doncaster	DN9 1ES	53.5258	-0.8192
@@ -3945,7 +3878,6 @@ V07778	Matford Dental Clinic	Unit 1, Exeter	EX2 8LP	50.6958	-3.5147
 V07779	The Dental Surgery	Half Moon Lane, Wigton	CA7 9BF	54.8240	-3.1614
 V07781	Bursledon Dental Clinic	Hamble Cottage, Southampton	SO31 8ER	50.8889	-1.3214
 V07783	Clay Cross Dental	87-89 Market Street, Chesterfield	S45 9LS	53.1671	-1.4100
-V07790	Exeter Orthodontic Practice	1 Richmond Road, Exeter	EX4 4JA	50.7265	-3.5366
 V07793	Fen House Dental Practice Spalding	Bourne Road, Spalding	PE11 1JW	52.7840	-0.1698
 V07794	Dental Surgery	18 Endless Street, Salisbury	SP1 1DP	51.0709	-1.7945
 V07798	Dental Surgery	40 Castle Street, Salisbury	SP1 3TS	51.0716	-1.7961
@@ -4030,13 +3962,11 @@ V07957	Dental Surgery	66 Church Road, Wirral	CH63 3EB	53.3462	-3.0040
 V07959	Glencairn Dental Practice	13 the Village, Wirral	CH63 7PJ	53.3536	-3.0048
 V07960	Heathfield Dental Practice	106 Meols Drive, Wirral	CH48 5DA	53.3746	-3.1858
 V07961	Heswall Dental Practice	The Mount, Wirral	CH60 4RE	53.3274	-3.0995
-V07968	Wallasey Orthodontic Practice	154 Belvidere Road, Wallasey	CH45 4PT	53.4255	-3.0551
 V07969	Maycroft Dental Practice	Maycroft, Wirral	CH46 8TQ	53.4016	-3.1077
 V07970	Holmlands Dental Practice	1 Holmlands Drive, Prenton	CH43 0TY	53.3718	-3.0612
 V07972	The Arno Dental Practice	350 Woodchurch Road, Birkenhead	CH42 8PG	53.3734	-3.0497
 V07973	Park Road North Dental Surgery	Dental Surgery, Birkenhead	CH41 0DA	53.3969	-3.0524
 V07975	Woodchurch Dental Surgery	65 Hoole Road, Wirral	CH49 8EQ	53.3766	-3.0861
-V07977	Purely Orthodontics	Kingsthorpe Health Clinic, Northampton	NN2 8AG	52.2647	-0.9020
 V07978	Hose Side Dental Surgery	Dental Surgery, Wallasey	CH45 0LA	53.4289	-3.0526
 V07979	Dental Surgery	29 Balls Road, Prenton	CH43 5RF	53.3845	-3.0390
 V07981	Hamilton Square Dental Practice	31 Hamilton Square, Birkenhead	CH41 6AZ	53.3937	-3.0174
@@ -4117,7 +4047,6 @@ V08108	Dental Surgery	7 Local Centre, Runcorn	WA7 2NZ	53.3226	-2.6901
 V08109	Dental Surgery	49 Festival Way, Runcorn	WA7 5JU	53.3294	-2.7172
 V08110	Cresta Drive (Dental Surgery)	1 Cresta Drive, Runcorn	WA7 4RS	53.3209	-2.7404
 V08113	Dental Surgery	163 Peel House Lane, Widnes	WA8 9UH	53.3807	-2.7258
-V08126	Redcliffe Orthodontics	Redcliffe, Worcester	WR5 2HN	52.1806	-2.2042
 V08127	5 Danescroft [The Dental Practice]	5 Danescroft, Widnes	WA8 4NS	53.3785	-2.7710
 V08130	Halton Road Family Dental Practice	254 Halton Road, Runcorn	WA7 5RL	53.3378	-2.7073
 V08137	The Bull Ring Dental Surgery	1 Bull Ring, Worcester	WR2 5AA	52.1886	-2.2329
@@ -4125,7 +4054,6 @@ V08138	Dental Surgery	13 Waterloo Road, Smethwick	B66 4JX	52.4864	-1.9609
 V08141	Trafford Dental Centre	86 Davyhulme Road East, Manchester	M32 0DJ	53.4520	-2.3091
 V08145	Dental Surgery	132C Flixton Road, Manchester	M41 5BG	53.4483	-2.3627
 V08146	Heath Dental	32 Main Street, Solihull	B90 1UA	52.3850	-1.8369
-V08148	Central Orthodontics	341 Bearwood Road, Smethwick	B66 4DB	52.4805	-1.9694
 V08150	Firswood Dental Practice	90-92 Warwick Road South, Manchester	M16 0HU	53.4523	-2.2816
 V08153	Dental Surgery	5-7 Lostock Road, Manchester	M41 0SU	53.4580	-2.3545
 V08155	Shire Dentist	45 Three Shires Oak Road, Smethwick	B67 5BS	52.4774	-1.9744
@@ -4147,7 +4075,6 @@ V08196	Dental Surgery	32 Chipper Lane, Salisbury	SP1 1BG	51.0704	-1.7949
 V08202	Dental Surgery	1381 Stratford Road, Birmingham	B28 9HS	52.4253	-1.8409
 V08203	Smile Manchester	331 Washway Road, Sale	M33 4EE	53.4134	-2.3380
 V08205	Grays Dental Care	62 Manchester Road, Altrincham	WA14 4PJ	53.3950	-2.3519
-V08209	Turret Orthodontist	258 Washway Road, Sale	M33 4RZ	53.4166	-2.3359
 V08210	Dental Surgery	203 Marsland Road, Sale	M33 3ND	53.4173	-2.3205
 V08211	Myers and Campbell and Associate	36 Doncaster Road, Scunthorpe	DN15 7RQ	53.5909	-0.6582
 V08212	Gorse Hill Dental Practice	Dental Surgery, Swindon	SN2 1AD	51.5732	-1.7774
@@ -4162,7 +4089,6 @@ V08224	Dental Surgery	39 Awsworth Road, Ilkeston	DE7 8JD	52.9811	-1.3070
 V08229	Cedar Lawn Avenue (Dental Surgery)	87 Cedar Lawn Avenue, Barnet	EN5 2LP	51.6470	-0.2057
 V08231	Dental Surgery	273 Stockport Road, Altrincham	WA15 7SP	53.3956	-2.3232
 V08232	Blagreaves Dental Practice	168 Blagreaves Lane, Derby	DE23 1PX	52.8908	-1.5050
-V08237	Lotus Orthodontics	12A Market Street, Altrincham	WA14 1QB	53.3884	-2.3513
 V08239	Dental Surgery	23 Metchley Lane, Birmingham	B17 0HP	52.4598	-1.9435
 V08241	Regent Dental Centre	22 Regent Road, Altrincham	WA14 1RP	53.3861	-2.3523
 V08243	Dental Surgery	Hill Street, Lydney	GL15 5HH	51.7261	-2.5315
@@ -4173,7 +4099,6 @@ V08250	Dental Surgery	70 Ellesmere Road, Altrincham	WA14 1JD	53.3948	-2.3492
 V08251	Greenwood Dental Practice	16 Greenwood Street, Altrincham	WA14 1RZ	53.3867	-2.3522
 V08252	Ms N Shahid	Dental Surgery, Manchester	M26 3QP	53.5627	-2.3435
 V08254	Dental Surgery	3-5 Deansgate, Manchester	M26 2SH	53.5596	-2.3248
-V08255	Whitefield Orthodontic Clinic	208 Bury New Road, Manchester	M45 6GG	53.5492	-2.2944
 V08256	Knowsley Dental Practice	37 Knowsley Street, Bury	BL9 0ST	53.5885	-2.3006
 V08259	Dental Surgery	10 Tenterden Street, Bury	BL9 0EG	53.5913	-2.3010
 V08262	Inglewood Dental Practice	223-225 Bury New Road, Manchester	M45 8GW	53.5508	-2.2960
@@ -4193,7 +4118,6 @@ V08282	A I Kirsh's Dental Surgery	Dental Surgery, Manchester	M24 5TF	53.5502	-2.
 V08285	Children's Dental Surgery	Rocky Lane, Wirral	CH60 0BY	53.3268	-3.0965
 V08286	Dental Surgery	14 Bromley Road, Beckenham	BR3 5JE	51.4084	-0.0241
 V08287	Dental Surgery	27 York Street, Heywood	OL10 4NN	53.5936	-2.2178
-V08294	Phoenix Orthodontics	20 Clarence Street, Gloucester	GL1 1DP	51.8648	-2.2418
 V08295	Rock Castle Dental Practice	32 Newland Street, Coleford	GL16 8AL	51.7923	-2.6207
 V08297	St James Dental Practice	St. James, Gloucester	GL2 4WD	51.8270	-2.2808
 V08298	Westbury Dental Surgery	The Village, Westbury-on-Severn	GL14 1PA	51.8248	-2.4131
@@ -4217,7 +4141,6 @@ V08339	S N H Dental	2 Crown Close, Chesterfield	S43 2AH	53.2742	-1.4078
 V08340	High Street Dental Clinic	38 High Street, Chesterfield	S43 3UX	53.2672	-1.3523
 V08342	Oasis Surgery	2 Dudley Road, Brigg	DN20 8AE	53.5532	-0.4885
 V08343	Backwell Dental Care	17 West Town Road, Bristol	BS48 3HA	51.4132	-2.7403
-V08344	Saltaire Orthodontics	3-4 Victoria Road, Shipley	BD18 3LA	53.8383	-1.7877
 V08347	Coly House Dental Surgery	39 Old Church Road, Clevedon	BS21 6NP	51.4361	-2.8561
 V08354	Grendon Lodge	22 St. Johns Road, Clevedon	BS21 7TG	51.4374	-2.8568
 V08355	Crankhall Lane Dental Practice	136 Crankhall Lane, Wednesbury	WS10 0ED	52.5510	-1.9953
@@ -4349,7 +4272,6 @@ V08648	Mm Dental Care Uppingham Road	193 Uppingham Road, Leicester	LE5 4BQ	52.64
 V08649	Crystal Palace Dental Centre	88 Westow Hill, London	SE19 1SB	51.4196	-0.0793
 V08650	Oasis Dental Care Ltd	76 Welland Vale Road, Leicester	LE5 6PW	52.6296	-1.0613
 V08651	Dental Department	Bitterne Health Centre, Southampton	SO18 6BT	50.9156	-1.3546
-V08652	Croydon Orthodontic Practice	2 Blunt Road, South Croydon	CR2 7PA	51.3629	-0.0941
 V08655	Dental Surgery	223 East Park Road, Leicester	LE5 5HJ	52.6286	-1.1082
 V08657	Knighton Dental and Cosmetic Clinic	316-318 Welford Road, Leicester	LE2 6EG	52.6135	-1.1242
 V08659	Gentle Dental Care	29A Whitehorse Road, Croydon	CR0 2JH	51.3840	-0.0983
@@ -4364,14 +4286,12 @@ V08677	Killamarsh Dental Centre	107 Bridge Street, Sheffield	S21 1AL	53.3236	-1.
 V08678	Dietsch Dental Surgery	133B High Street, Rickmansworth	WD3 1AN	51.6388	-0.4700
 V08679	Dental Beauty	100-102 William Barefoot Drive, London	SE9 3BB	51.4294	0.0570
 V08681	St Kildas Dental Practice	93 High Street, Tring	HP23 4AB	51.7933	-0.6635
-V08682	Watford Orthodontic Practice	42 Hempstead Road, Watford	WD17 4ER	51.6617	-0.4066
 V08683	Charlton Park (Dental Surgery)	30 Charlton Park, Bristol	BS31 2ND	51.4112	-2.5054
 V08684	Berkeley Clinic	15 Nightingale Road, Rickmansworth	WD3 7DE	51.6387	-0.4789
 V08686	Crysalis Dental Surgery	161 Leavesden Road, Watford	WD24 5EP	51.6719	-0.4019
 V08687	Dental Surgery	14 Hillfield Road, Hemel Hempstead	HP2 4AB	51.7530	-0.4664
 V08688	Birchfield Dental Practice	23 Spencer Road, New Milton	BH25 6BZ	50.7526	-1.6531
 V08689	Harptree Dental Surgery	Bristol Road, Bristol	BS40 6HF	51.3103	-2.6322
-V08693	Watford Orthodontic Centre	Apex House, Watford	WD24 5DN	51.6701	-0.4001
 V08695	Bathampton Surgery	29 Holcombe Lane, Bath	BA2 6UL	51.3933	-2.3224
 V08697	Sidcup Dental Practice	150 Halfway Street, Sidcup	DA15 8DG	51.4401	0.0885
 V08698	Sidcup Hill Dental Care	10A Sidcup Hill, Sidcup	DA14 6HH	51.4243	0.1071
@@ -4457,7 +4377,6 @@ V08958	Worcs Dental Access Centre	Waterside, Evesham	WR11 1JT	52.0862	-1.9486
 V08959	Dental Access Centre	Osborne Road, Malvern	WR14 1JE	52.1259	-2.3207
 V08962	Evesham Dental Health Team	16 Broadway Road, Evesham	WR11 1BG	52.0880	-1.9326
 V08963	Dental Surgery	2-4 Hartington Street, Barrow-in-Furness	LA14 5SL	54.1168	-3.2293
-V08964	Rickmansworth Orthodontic Practice Ltd	11 Mount View, Rickmansworth	WD3 7BA	51.6376	-0.4844
 V08969	Blue Cross Dental Care	10 the Parade, Watford	WD17 1AA	51.6569	-0.3987
 V08972	Family Dental Care	3 Nottingham Road, Nottingham	NG16 2NB	52.9962	-1.2519
 V08975	Dental Surgery	49 Victoria Street, Nottingham	NG16 2NH	52.9976	-1.2555
@@ -4497,7 +4416,6 @@ V09142	Dental Practice	Victoria Place, Carlisle	CA1 1EX	54.8956	-2.9305
 V09145	Smile 360 Dental Care	404 Alexandra Avenue, Harrow	HA2 9TR	51.5728	-0.3709
 V09147	Dental & Physiotherapy Practice	10 Railway Street, Beverley	HU17 0DX	53.8418	-0.4250
 V09169	Dental Surgery	Doseley Road North, Telford	TF4 3AL	52.6638	-2.4706
-V09173	Manchester Orthodontic Centre	Constable House, Manchester	M20 3HN	53.4343	-2.2305
 V09178	Huntingdon Dental Access Centre	Hinchingbrooke Park, Huntingdon	PE29 6NT	52.3334	-0.2027
 V09179	Woodside Dental Clinic	Park Lane, Telford	TF7 5QZ	52.6381	-2.4670
 V09180	22 Northfield Avenue	Northfield Avenue, London	W13 9RL	51.5046	-0.3192
@@ -4571,7 +4489,6 @@ V09833	Norwich Dental Care	88 Hall Road, Norwich	NR1 3HP	52.6185	1.2974
 V09849	Old Court House Dental Practice	The Old Court House, Dorking	RH4 1RY	51.2344	-0.3276
 V09893	Sutton Park Dental Centre	43 Sutton Park Road, Kidderminster	DY11 6LD	52.3754	-2.2643
 V09895	Colchester Community Dental	Colchester Primary Care Centre, Colchester	CO4 5JR	51.9069	0.9030
-V09898	Colchester Orthodontic Centre	872 the Crescent, Colchester	CO4 9YQ	51.9238	0.9216
 V09905	Dental Suite	Stantonbury Health Centre, Milton Keynes	MK14 6BL	52.0614	-0.7739
 V09910	Dental Access Centre	Lothian Way, Hull	HU7 5DD	53.8056	-0.3265
 V09913	Salaried Dental Service	Upper Huntbach Street, Stoke-on-Trent	ST1 2BN	53.0272	-2.1705
@@ -4585,7 +4502,6 @@ V09986	Health Centre	Alfred Squire Road, Wolverhampton	WV11 1XU	52.5994	-2.0808
 V09990	17 Denehurst Gardens	Langdon Hills, Basildon	SS16 6TX	51.5657	0.3997
 V09995	Opal Centre Dental Suite	St Catherines Hospital, Doncaster	DN4 8QN	53.4948	-1.1460
 V10004	Swindon Dental Anaesteic Clinic	Broadcasting House, Swindon	SN1 3RW	51.5539	-1.7776
-V10005	Anglia Orthodontics	Hinchingbrooke Hospital, Huntingdon	PE29 6NT	52.3334	-0.2027
 V10011	Carl Godfrey & Associates	32 West Street, Retford	DN22 6ES	53.3201	-0.9435
 V10017	Market Square Dental Practice	16 Red Lion Street, Chesham	HP5 1EZ	51.7030	-0.6123
 V10024	Princess Alexandra Wing	Kingston Hospital, Kingston upon Thames	KT2 7QB	51.4148	-0.2826
@@ -4607,7 +4523,6 @@ V10196	Warrior House Health Centre	Warrior House, Southend-on-Sea	SS1 2LZ	51.539
 V10207	Dental Clinic	Mexborough Health Centre, Mexborough	S64 0DB	53.4946	-1.2811
 V10208	Midvale Clinic	14 Midvale Road, Devon	TQ4 5BD	50.4338	-3.5681
 V10209	Barton Surgery	Lymington House, Torquay	TQ2 8JG	50.4870	-3.5430
-V10233	Cygnet Orthodontics	The Malthouse, Staines	TW18 4XP	51.4359	-0.5157
 V10267	Salaried Dental Service	Riverside Health Centre, Bath	BA1 2BT	51.3823	-2.3675
 V10298	Stoke Aldermoor Clinic	Aldermoor Lane, Coventry	CV3 1BN	52.4022	-1.4796
 V10317	Dental Surgery	1B Saundergate Lane, Boston	PE21 7BX	52.9519	-0.0413
@@ -4732,7 +4647,6 @@ V11438	Staniforth Road (Dental Surgery)	652-654 Staniforth Road, Sheffield	S9 4L
 V11450	Adp Dental Co Ltd Dental Surgery	17-18 Meadway Precint, Reading	RG30 4AA	51.4497	-1.0171
 V11464	The Forum	Vanessa Drive, Gainsborough	DN21 2UQ	53.4118	-0.7806
 V11467	Mile Lane Dental Practice	80 Mile Lane, Bury	BL8 2JR	53.5878	-2.3352
-V11469	David Gale - the Specialist Orthodontic Referral Centre	37 East Street, Fareham	PO16 0DF	50.8532	-1.1704
 V11486	Brownley Green Dental Practice	Benchill Court Road, Manchester	M22 4GJ	53.3880	-2.2555
 V11489	Doctors Surgery	3 Birling Avenue, Gillingham	ME8 7HB	51.3658	0.6005
 V11513	Pewsey Dental Practice	15 North Street, Pewsey	SN9 5ES	51.3402	-1.7669
@@ -4764,7 +4678,6 @@ V11616	Dental Care Clinic Limited	3 Loughborough Road, Leicester	LE4 5LJ	52.6522
 V11617	Rotherham Road (Dental Surgery)	234A Rotherham Road, Rotherham	S66 8ND	53.4220	-1.2099
 V11619	Britannia Buildings	St Georges Square, Huddersfield	HD1 1JF	53.6476	-1.7849
 V11630	The Dental Surgery	Unit 24, Wilmslow	SK9 3HQ	53.3499	-2.2162
-V11631	Beverley Orthodontic Centre	114 Norwood, Beverley	HU17 9HL	53.8474	-0.4273
 V11632	Queens Drive (Dental Surgery)	60 Queens Drive, Liverpool	L4 6SH	53.4462	-2.9617
 V11636	2 Market Square (Dental Practice)	2 Market Square, Daventry	NN11 4BH	52.2586	-1.1599
 V11641	Priory House Dental Care	1133 Hessle High Road, Hull	HU4 6SB	53.7283	-0.4043
@@ -4837,16 +4750,12 @@ V12132	Nayland Road (Dental Surgery)	13A Nayland Road, Colchester	CO4 5EG	51.912
 V12134	143 Durnsford Road [Dental Practice]	143 Durnsford Road, London	N11 2EL	51.6025	-0.1305
 V12146	Springfield Road (Dental Surgery)	2 Springfield Road, Leeds	LS20 8AL	53.8735	-1.7112
 V12151	Oakmoor Dental Practice	8 Fairfield Road, Braintree	CM7 3HF	51.8772	0.5533
-V12152	Malmin Orthodontics	300 Finchley Road, London	NW3 7AG	51.5564	-0.1944
 V12163	High Street (Dental Surgery)	34-34A High Street, Petersfield	GU32 3JL	51.0039	-0.9353
 V12174	Buckinghamshire Priority Dental	Shipley Court, Newport Pagnell	MK16 8EA	52.0845	-0.7290
 V12178	Buckinghamshire Priority Dental	Walk-in-Centre, Milton Keynes	MK6 5NG	52.0264	-0.7358
 V12179	Buckinghamshire Priority Dental	Amersham Health Centre, Amersham	HP6 5AY	51.6750	-0.6042
 V12195	Alchemy Dental Practice	Penton House, Stoke-on-Trent	ST4 2EQ	53.0105	-2.1822
-V12196	Southsea Orthodontic Practice	7 Victoria Road South, Southsea	PO5 2DD	50.7891	-1.0824
 V12201	Hallgate House	1ST Floor, Cottingham	HU16 4BB	53.7819	-0.4157
-V12220	Shrewsbury Orthodontic Centre	9 St Marys Place, Shrewsbury	SY1 1DZ	52.7083	-2.7513
-V12221	Total Orthodontics Tonbridge	20 Lyons Crescent, Tonbridge	TN9 1EY	51.1961	0.2787
 V122231	74- 76 Stagelands	74-76 Stagelands, Crawley	RH11 7PF	51.1267	-0.2000
 V12231	Dereham Road (Dental Surgery)	154A Dereham Road, Norwich	NR2 3AB	52.6338	1.2761
 V12234	Ora Dental Group	97 St Albans Road, Watford	WD17 1SJ	51.6638	-0.4001
@@ -4855,22 +4764,18 @@ V12241	Fairlands Dental Centre	Fairlands Medical Centre, Guildford	GU3 3NA	51.26
 V12252	St Michaels Dental Surgery	Walwyn Close, Bath	BA2 1SX	51.3816	-2.3996
 V12256	Dolphin Dental Care	216C Wareham Road, Wimborne	BH21 3LN	50.7637	-2.0230
 V12257	Victoria Road (Dental Surgery)	37 Victoria Road, Bolton	BL6 5ND	53.5959	-2.5426
-V12268	Angle House Orthodontic Chingford	237 Hall Lane, London	E4 8HX	51.6151	-0.0286
 V12273	Cheadle High Street D P	Aisa House, Cheadle	SK8 1AX	53.3948	-2.2141
 V12276	Green Lanes (Dental Surgery)	627 Green Lanes, London	N8 0RE	51.5850	-0.1006
 V12285	The Lakes Medical Centre	Mainwood Road, Altrincham	WA15 7JW	53.3924	-2.3128
-V12289	Modwena Orthodontics	Modwena House, Burton-on-Trent	DE14 1HA	52.8017	-1.6302
 V12299	Euro Dental Practice	61 London Road, Oxford	OX3 7RD	51.7595	-1.2140
 V12300	Walsall Road (Dental Surgery)	289 Walsall Road, Birmingham	B42 1TY	52.5257	-1.9044
 V12306	Atlantic Dental Practice	Picton Neighbourhood, Liverpool	L7 6HD	53.3989	-2.9430
 V12309	Bear Cross Dental Practice	28 Fulwood Avenue, Bournemouth	BH11 9NJ	50.7676	-1.9233
 V12310	Dental Beauty Croydon	69 Addiscombe Road, Croydon	CR0 6SE	51.3754	-0.0862
 V12313	Colosseum Dental (Crowborough)	Harley House, Crowborough	TN6 2JD	51.0457	0.1848
-V12315	Saltaire Orthodontics	84 New North Road, Huddersfield	HD1 5NE	53.6516	-1.7929
 V12316	Perfect Smilr Surgery Limited	50 Ashburnham Road, Richmond	TW10 7NF	51.4381	-0.3138
 V12320	High Street (Dental Surgery)	107-109 High Street, Warrington	WA3 3BZ	53.4774	-2.5961
 V12322	28 Argyle Street [Dental Practice]	28 Argyle Street, Liverpool	L1 5DL	53.4018	-2.9850
-V12327	Clearly Orthodontics	The Old Coach House, Leicester	LE5 1AE	52.6470	-1.0752
 V12330	Dental Suite	Martinwell Centre, Doncaster	DN12 1JD	53.4808	-1.1940
 V12336	Dental Surgery	Hanwell Mews, Banbury	OX16 1AP	52.0790	-1.3473
 V12356	North Huyton Primary Care Trust (Dental Practice)	Woolfall Heath Avenue, Liverpool	L36 3TN	53.4229	-2.8559
@@ -4993,7 +4898,6 @@ V12930	New Park House Dental Centre	New Park House, Shrewsbury	SY3 7FA	52.7029	-
 V12931	1A Peel Street [Dental Practice]	1A Peel Street, Luton	LU1 2QR	51.8791	-0.4184
 V12932	The Crewkerne Dental Centre	4 Bere Court, Crewkerne	TA18 7BN	50.8908	-2.7949
 V12939	Burton Dental Care	125 Burton Road, Manchester	M20 1JP	53.4294	-2.2391
-V12942	Anglia Orthodontics	Lammas Field Pavilion, Cambridge	CB3 9PA	52.1962	0.1112
 V12951	Terminus Buildings (Dental Surgery)	2 Terminus Buildings, Eastbourne	BN21 1BA	50.7693	0.2794
 V12959	The Surgery	Station Road, Lewes	BN8 4HD	50.9720	-0.0170
 V12963	1 Church Street (Dentalpractice)	1 Church Street, Epsom	KT17 4PF	51.3335	-0.2626
@@ -5005,11 +4909,9 @@ V12980	Pennypot Dental Practice	17 Littlestone Road, New Romney	TN28 8LN	50.9848
 V12981	Pennypot Dental Practice	90 Canterbury Road, Folkestone	CT18 7BN	51.1165	1.1644
 V12982	Pennypot Dental Practice	234 Dover Road, Deal	CT14 7NE	51.2041	1.3934
 V12986	Marylebone House Dental Practice	152 Marylebone Road, London	NW1 5PN	51.5221	-0.1592
-V129901	Orthodontic Care Ltd	The Old Pumping Station, Brentford	TW8 0AP	51.4835	-0.3027
 V12999	15 High Street (Dental Practice)	15 High Street, Middlesbrough	TS9 5AD	54.4697	-1.1919
 V13003	Burmantofts Dental Practice	7 & 8 Skinner Lane, Leeds	LS7 1BB	53.8034	-1.5318
 V13004	Mydentist Faversham	Faversham Dental Care, Faversham	ME13 8GD	51.3113	0.8985
-V13005	Southampton Orthodontic Centre L	43-44 Bedford Place, Southampton	SO15 2DG	50.9133	-1.4062
 V13014	4 Hull Road (Dental Practice)	4 Hull Road, Withernsea	HU19 2DZ	53.7313	0.0295
 V13020	Northdown Road Dental Practice	165-167 Northdown Road, Margate	CT9 2PA	51.3877	1.3983
 V13021	High Street Dental Practice	35 High Street, Broadstairs	CT10 1JR	51.3588	1.4398
@@ -5020,7 +4922,6 @@ V13034	Revive Dental Practice	Revive Healthy Living Centre, Derby	DE21 6ET	52.93
 V13036	1 Riverview Office Park [Dental Surgery]	1 Riverview Office Park, Forest Row	RH18 5DW	51.0986	0.0382
 V13038	Putney Dental Care	389 Tildesley Road, London	SW15 3BD	51.4551	-0.2290
 V13043	S & S Care Limited	46-48 Bradford Road, Huddersfield	HD6 1RY	53.7043	-1.7784
-V13047	Dorchester Orthodontic Clinic	15 Cornwall Road, Dorchester	DT1 1RU	50.7131	-2.4425
 V13049	Mr P Martin	20 Barrow Street, St. Helens	WA10 1RX	53.4532	-2.7369
 V13054	7 High Street (Dental Practice)	7 High Street, Buckingham	MK18 1NT	52.0013	-0.9852
 V13055	Milehouse Dental Practice	Unit 8B, Newcastle	ST5 6AZ	53.0173	-2.2542
@@ -5043,7 +4944,6 @@ V131696	Portman Healthcare Limited (Bicester)	Unit 4B, Bicester	OX26 6FA	51.8982
 V131711	Circle Dental Practice	Barton Road, Manchester	M32 9TR	53.4566	-2.3365
 V13173	The Phoenix Centre	Phoenix Centre, Heywood	OL10 1LR	53.5922	-2.2187
 V13174	Citrine House	Borough Road, Wakefield	WF1 3AZ	53.6857	-1.4987
-V13175	Christchurch Orthodontics	67 Stour Road, Christchurch	BH23 1LN	50.7354	-1.7858
 V13178	Snaith Dental Care	Aire View, Goole	DN14 0AA	53.6930	-1.0308
 V13179	Shirebrook Dental Care	29 Station Road, Mansfield	NG20 8TA	53.2043	-1.2054
 V13180	Derby House Dental Practice	63-65 Green Lane, Derby	DE1 1RS	52.9207	-1.4776
@@ -5101,18 +5001,7 @@ V13486	Staveley Dental Care	9A Church Street, Chesterfield	S43 3TL	53.2686	-1.35
 V13487	Charlestown Health Centre	Charlestown Road, Manchester	M9 7ED	53.5227	-2.1869
 V13489	The Smiles Studio	144 Bournemouth Road, Eastleigh	SO53 3AL	50.9769	-1.3876
 V13491	Iosis Clinic Ltd	39A Southgate Street, Winchester	SO23 9EH	51.0609	-1.3179
-V134969	Angle House Orthodontics Whetstone	1379 High Road, London	N20 9LN	51.6330	-0.1761
-V134970	Malmin Orthodontic (Farringdon Road)	47 Farringdon Road, London	EC1M 3JB	51.5203	-0.1062
-V134972	Malmin Orthodontic (High Holborn)	79-80 High Holborn, London	WC1V 6LS	51.5181	-0.1171
-V134976	Angle House Orthodontics Enfield	39 the Ridgeway, Enfield	EN2 8PD	51.6576	-0.0987
-V134977	Angle House Orthodontic (New Road)	71 New Road, London	N8 8TA	51.5817	-0.1248
-V134978	Angle House Orthodontics Islington	51 - 55 Copenhagen Street, London	N1 0JH	51.5362	-0.1124
-V134979	Manor Orthodontic & Implant Clinic	48 Woodberry Grove, London	N4 1SN	51.5726	-0.0933
-V134980	Malmin Orthodontic Group Ltd	544 Green Lane, Ilford	IG3 9LL	51.5622	0.1061
-V134986	Soho Orthodontics	Willesden Centre for Health & Care, London	NW10 3RY	51.5428	-0.2355
 V134987	Ealing Dental Specialists Limited	42 the Mall, London	W5 3TJ	51.5133	-0.2981
-V134988	Southwest Orthodontists Limited (Shepherds Bush)	1-3 Wormholdt Road, London	W12 0LU	51.5082	-0.2409
-V134989	Angle House Orthodontics Edgeware	334 Whitchurch Lane, Edgware	HA8 6QX	51.6071	-0.2973
 V134993	Precision Smiles	112 Pinner Road, Northwood	HA6 1BS	51.6046	-0.4158
 V13506	Orthoworld 2000 Ltd	11 East Street, St. Ives	PE27 5PD	52.3253	-0.0745
 V13508	Quest Dental Care	129 High Street, Maldon	CM9 5BS	51.7303	0.6830
@@ -5144,7 +5033,6 @@ V13686	Bridge Street (Dental Surgery)	15 17 Bridge Street, Winchester	SO23 0HL	5
 V13688	Whitecross Dental Care	Castle Yard, Knaresborough	HG5 8AS	54.0073	-1.4680
 V13694	30 Percy Street (Dental Surgery)	30 Percy Street, Hull	HU2 8HL	53.7476	-0.3423
 V13695	Mid Essex Dental Care	215-217 High Street, Colchester	CO5 9JT	51.8399	0.7040
-V136955	Simply Orthodontics	11 Station Road, Orpington	BR6 0RZ	51.3725	0.0945
 V13705	Station Avenue (Dental Surgery)	2 Station Avenue, Durham	DH7 9HW	54.7694	-1.7040
 V13713	Royton Health & Wellbeing Centre	Park Street, Oldham	OL2 6QW	53.5661	-2.1216
 V13715	Dental Suite	Docklands Medical Centre, London	E14 9WU	51.4912	-0.0211
@@ -5161,14 +5049,11 @@ V13795	124 126 Main Street (Dental Practice)	124-126 Main Street, Nottingham	NG6
 V13852	Dyas Road (Dental Surgery)	352 Dyas Road, Birmingham	B44 8TB	52.5434	-1.9022
 V13853	78 Soho Road (Dental Practice)	78 Soho Road, Birmingham	B21 9BN	52.5022	-1.9278
 V13866	East Meon Village Hall	Workhouse Lane, Petersfield	GU32 1PD	50.9948	-1.0342
-V138701	Orchard Orthodontics	8 Brixton Hill, London	SW2 1EG	51.4593	-0.1173
 V13879	Beaumont House Dental Practice	Unit 15, Leicester	LE4 1ET	52.6690	-1.1578
 V13880	Kew Dental Surgery	85 Town Lane, Southport	PR8 6RG	53.6318	-2.9835
 V13885	Gloucester Dental Care	65 London Road, Gloucester	GL1 3HF	51.8681	-2.2368
 V13889	Suite 1 (Dental Practice)	Suite 1, Carlisle	CA1 1NL	54.8926	-2.9303
 V13898	Sands House Dental Practice	43 Mill End Road, High Wycombe	HP12 4JN	51.6354	-0.7809
-V139020	Chadwell Heath Orthodontics Ltd	165 High Road, Romford	RM6 6NL	51.5722	0.1379
-V139058	Richmond Hill Orthodontics Limited (Sheen Road)	64 Sheen Road, Richmond	TW9 1UF	51.4619	-0.2967
 V13926	10 Linnet Court (Dental Practice)	10 Linnet Court, Alnwick	NE66 2GD	55.3977	-1.6921
 V13936	Genix Healthcare Whitley Bay Ltd	271-275 Whitley Road, Whitley Bay	NE26 2SS	55.0421	-1.4450
 V13944	Braintree Dental Studio	Unit 4, Braintree	CM77 7WW	51.8576	0.5224
@@ -5199,7 +5084,6 @@ V14093	Rodericks	43 Station Parade, Maidenhead	SL6 9BR	51.5572	-0.7216
 V14098	Phoenix Dental Staple Hill	38 Victoria Street, Bristol	BS16 5JS	51.4823	-2.5064
 V14099	Ivybridge Dental Centre	Cedar Rise, Ivybridge	PL21 9AE	50.3893	-3.9220
 V14118	Horton Road (Dental Surgery)	1 Horton Road, Slough	SL3 9EN	51.4838	-0.5770
-V14120	Dunelm Orthodontics	The Cross Gate Centre, Durham	DH1 4HF	54.7755	-1.5848
 V14123	Fremantle Road (Dental Surgery)	6 Fremantle Road, Ilford	IG6 2AZ	51.5908	0.0800
 V14134	2 London Road (Dental Practice)	2 London Road, Hook	RG27 9DJ	51.2825	-0.9632
 V14139	Taunton Dental Access Centre	Park Gate House, Taunton	TA1 3ES	51.0157	-3.0929
@@ -5216,9 +5100,6 @@ V14187	Aston Customer Service Centre	Dental Department, Sheffield	S26 4WD	53.363
 V141871	St. Margarets Street (Dental Surgery)	5 St Margarets Street, Bradford-on-Avon	BA15 1DA	51.3459	-2.2516
 V14205	Dental Perfection @ Branston	Unit 4, Burton-on-Trent	DE14 3DW	52.7883	-1.6496
 V14207	Marton Dental Practice	2B Marton Estate Square, Middlesbrough	TS7 8DU	54.5312	-1.1989
-V142237	Knightsbridge Orthodontics	1ST Floor, London	SW3 1HW	51.4983	-0.1671
-V142248	The Orthodontic Suite	13 Croxted Road, London	SE21 8SZ	51.4366	-0.0912
-V142269	Richmond Hill Orthodontics Limited (High Street)	53 High Street, Teddington	TW11 8HD	51.4275	-0.3312
 V14242	Norton Way South (Dental Surgery)	107 Norton Way South, Letchworth Garden City	SG6 1NY	51.9798	-0.2243
 V14253	Unit 34 - 35 1ST Floor	34-35 1ST Floor, Havant	PO9 1UN	50.8525	-0.9824
 V14273	56 Market Street (Dental Surgery)	56 Market Street, Oldham	OL2 8NH	53.5771	-2.0939
@@ -5275,12 +5156,10 @@ V14755	Colosseum Dental (Dale Road)	10 Portland Street, Southampton	SO14 7EB	50.
 V14761	Drake Street Dental Surgery	107 Drake Street, Rochdale	OL16 1PZ	53.6124	-2.1557
 V14765	Tooth Booth	22 the Hornet, Chichester	PO19 7JG	50.8362	-0.7721
 V14772	Warmsworth Road Dental Surgery	196 Warmsworth Road, Doncaster	DN4 0TS	53.5011	-1.1673
-V14784	Neo Orthodontics	98 -100 Close, Newcastle upon Tyne	NE1 3RF	54.9677	-1.6111
 V14790	Brook Lane Dental Surgery	4 Brook Lane, Felixstowe	IP11 7EG	51.9668	1.3572
 V14813	M.c. Reece & Associates	22A Chester Road, Sutton Coldfield	B73 5DA	52.5475	-1.8586
 V14816	Lower Kirklington Road Surgery	70 Lower Kirklington Road, Southwell	NG25 0BH	53.0832	-0.9548
 V14830	Lostwithiel Dental Surgery	The Old Carriage Works, Lostwithiel	PL22 0EN	50.4060	-4.6680
-V14837	Isle of Wight Orthodontics	30 Dover Street, Ryde	PO33 2AG	50.7298	-1.1571
 V14853	Retford Dental Care Ltd	DENTAL22, Retford	DN22 6NX	53.3243	-0.9400
 V14858	Rodericks Ltd	74 Queensmead, Farnborough	GU14 7SB	51.2917	-0.7562
 V14865	Bateman Street (Dental Surgery)	1 Bateman Street, Bradford	BD8 7DH	53.8059	-1.7601
@@ -5303,12 +5182,10 @@ V150155	The Dental Clinic, Portishead	78 High Street, Bristol	BS20 6EH	51.4831	-
 V15018	438 Muswell Hill (Dental Practice)	438 Muswell Hill Broadway, London	N10 1BS	51.5926	-0.1430
 V15024	Merton Park Dental Surgery	143 Cannon Hill Lane, London	SW20 9BZ	51.4032	-0.2145
 V15042	The Tooth Booth	422B Finchampstead Road, Wokingham	RG40 3RB	51.3763	-0.8563
-V15052	Weybridge Orthodontics	2ND Floor, Weybridge	KT13 8RN	51.3721	-0.4534
 V15084	Northiam Dental Practice	Main Street, Rye	TN31 6NA	50.9922	0.6038
 V153975	St. Owen Street (Dental Surgery)	4 St Owen Street, Hereford	HR1 2PH	52.0557	-2.7134
 V154605	Bip Dental Ltd	18 South Lodge Avenue, Mitcham	CR4 1LU	51.3998	-0.1325
 V158025	Confidental Dental Care	33 Abbey Parade, London	SW19 1DG	51.4159	-0.1855
-V158193	Queensway Orthodontics (North) Limited	33-35 Middle Street, Consett	DH8 5QP	54.8519	-1.8333
 V16016	Genix Healthcare Ltd	16 the Wynd, Redcar	TS11 7LA	54.5921	-1.0191
 V16019	Sunningdale Dental Practice	Station Chambers, Ascot	SL5 0EP	51.3915	-0.6326
 V16024	Colosseum Dental (Preston Park)	6TH Floor Park House, Brighton	BN1 6AG	50.8384	-0.1483
@@ -5316,9 +5193,7 @@ V16048	Desford Dental Care	18 Manor Road, Leicester	LE9 9JR	52.6261	-1.2969
 V16050	Standard House (Dental Surgery)	Standard House, Northallerton	DL7 8EQ	54.3433	-1.4370
 V16056	Moopen Dental Care	54-56 Kingsley Road, Northampton	NN2 7BL	52.2519	-0.8819
 V161117	Portman Smile Clinic Sevenoaks	49 London Road, Sevenoaks	TN13 1AR	51.2710	0.1914
-V161508	Dental Beauty Orthodontics Purley	45 Foxley Lane, Purley	CR8 3EH	51.3414	-0.1258
 V162570	Brent Dental Specialists	Ground Floor, Wembley	HA9 6ER	51.5539	-0.2893
-V162878	Orthodontic Care Feltham	8 Hamilton Parade, Feltham	TW13 4PJ	51.4326	-0.4185
 V16302	62 Friar Street (Dental Practice)	62 Friar Street, Droitwich	WR9 8EF	52.2687	-2.1492
 V163123	Manchester Dp Ltd	2-4 Exchange Street, Manchester	M2 7HA	53.4829	-2.2456
 V16320	Gallery Dental Practice	The Chapel, Haywards Heath	RH17 5LJ	51.0067	-0.1409
@@ -5344,7 +5219,6 @@ V16875	Den Team Dental Centre	527 Earlham Road, Norwich	NR4 7HN	52.6293	1.2540
 V16878	Sunnybank House (Dental Practice)	506 Huddersfield Road, Bradford	BD12 8AD	53.7431	-1.7675
 V16881	Hindhead Dental Clinic	Tilford Road, Hindhead	GU26 6TD	51.1150	-0.7349
 V16882	Louie Dental Practice	360 High Street, Rochester	ME1 1DJ	51.3832	0.5157
-V169019	Total Orthodontics Lewisham	10-14 Mercy Terrace, London	SE13 7UX	51.4573	-0.0187
 V169050	Portman Healthcare Ltd	Unit 2C, London	SE13 7DJ	51.4641	-0.0158
 V16906	Quedgeley House Dental Practice	Space Park, Gloucester	GL2 4AL	51.8286	-2.2738
 V16915	195 Bow Common Lane (Dental Practice)	195 Bow Common Lane, London	E3 4JJ	51.5214	-0.0316
@@ -5370,7 +5244,6 @@ V17192	Walker Street (Dental Surgery)	1 Walker Street, Manchester	M34 3LH	53.457
 V17203	Broadway (Dental Surgery)	93 Broadway, St. Helens	WA10 5PJ	53.4619	-2.7749
 V17224	The St. Johns Dental Practice	11 Malvern Road, Worcester	WR2 4LE	52.1847	-2.2361
 V17241	Victoria Road (Dental Surgery)	145 Victoria Road, Wallasey	CH45 9LB	53.4375	-3.0448
-V17246	Kml Orthodontics	The Croft Shifa Health Centre, Rochdale	OL16 2UY	53.6228	-2.1383
 V17267	Sunny Nook	Stickenbridge, Truro	TR3 7QW	50.2009	-5.1245
 V17290	Moons Dental	18 All Saints Road, Newmarket	CB8 8ET	52.2427	0.4099
 V17324	Arundel House	Dental Surgery, Chelmsford	CM3 2EA	51.7772	0.5983
@@ -5378,7 +5251,6 @@ V17327	High Street (Dental Surgery)	41 High Street, Newport	TF10 7AT	52.7683	-2.
 V17329	Coronation Square (Dental Surgery)	54 Coronation Square, Cheltenham	GL51 7SA	51.9024	-2.1139
 V17401	Dental Surgery	1 Vaughan Street, Manchester	M30 8DH	53.4913	-2.3681
 V17427	Ground Floor Dental Surgery	Watford Orthodontics, Watford	WD18 0AF	51.6570	-0.4003
-V17432	Smileville Orthodontics	Unit 2 the Sidings, Carlisle	CA2 7AF	54.8968	-2.9534
 V17434	St. Anns Road (Dental Surgery)	33 St. Anns Road, Middlewich	CW10 9BN	53.1913	-2.4491
 V17441	Hilton Dentistry	27A High Street, Sittingbourne	ME10 4AW	51.3396	0.7376
 V17461	Normamby Dental Practice	Ist & 2ND Floor, Middlesbrough	TS6 0NQ	54.5575	-1.1550
@@ -5418,8 +5290,6 @@ V17964	Eye Smile Ltd T/a Whitton Corner	Dental Practice, Twickenham	TW2 6JL	51.4
 V17978	Barbican Dental Centre	16-18 Goswell Road, London	EC1M 7AA	51.5225	-0.0974
 V17979	M & B Practices Ltd	7-9 Branch Road, Leeds	LS12 3AQ	53.7977	-1.5878
 V18012	Unity Place Dental Practice	Unity Place, Chorley	PR7 7HZ	53.6784	-2.6580
-V180304	Saltaire Orthodontics (Crossley Street)	8-10 Crossley Street, Halifax	HX1 1UG	53.7239	-1.8608
-V180318	Saltaire Orthodontics (Bradford Road)	215 Bradford Road, Dewsbury	WF13 2HD	53.7009	-1.6306
 V18048	Mr Br Davies	Unit 116, Hull	HU2 0PZ	53.7547	-0.3296
 V18049	Newent Dental Care	4 Court Lane, Newent	GL18 1AR	51.9310	-2.4053
 V18052	St Johns Health Centre	Lightowler Road, Halifax	HX1 5NB	53.7247	-1.8771
@@ -5432,17 +5302,12 @@ V181637	Sns Dental Practice	4-5 Dollary Parade, Kingston upon Thames	KT1 3PD	51.
 V18257	Church Street (Dental Surgery)	14A Church Street, Doncaster	DN3 3AL	53.5363	-1.0607
 V18269	Smile Dental Care Tower Hamlets	115 Harford Street, London	E1 4FG	51.5184	-0.0381
 V183264	New Road Side (Dental Surgery)	251 New Road Side, Leeds	LS18 4DR	53.8328	-1.6469
-V183270	Malmin Orthodontics (Lancaster)	12 Spring Garden Street, Lancaster	LA1 1RQ	54.0469	-2.8007
-V183303	Kings Orthodontics	103-105 Dalton Road, Barrow-in-Furness	LA14 1HZ	54.1126	-3.2257
-V183321	Darwen Orthodontics	42 Railway Road, Darwen	BB3 2RJ	53.6967	-2.4650
 V18409	Cumbria Smiles	25 Market Square, Kirkby Stephen	CA17 4QT	54.4732	-2.3486
 V18461	Blatchington Road Dental Practice	49 Blatchington Road, Hove	BN3 3YJ	50.8316	-0.1751
 V18528	The Gardens Dental Centre	44B the Gardens, London	SE22 9QQ	51.4600	-0.0674
 V186502	Peach Street (Dental Surgery)	20 Peach Street, Wokingham	RG40 1XG	51.4109	-0.8314
 V187756	Wrekin Drive (Dental Surgery)	8 Wrekin Drive, Telford	TF2 8DP	52.7186	-2.4405
 V18927	Nelson Street (Dental Surgery)	17-18 Nelson Street, Stroud	GL5 2HN	51.7442	-2.2137
-V190470	Queensway Orthodontics (East) Limited	10 Newgate Street, Bishop Auckland	DL14 7EG	54.6645	-1.6752
-V190476	Queensway Orthodontics (West) Limited	2B Duke Street, Darlington	DL3 7AA	54.5255	-1.5588
 V19087	The Dental Practice (124 Barrack Street)	124 Barrack Street, Norwich	NR3 1TL	52.6367	1.3048
 V19287	Dental Surgery (14 St. Anns Square)	14 St. Anns Square, Manchester	M2 7HQ	53.4822	-2.2458
 V19300	Purley Dental Care	22 Pampisford Road, Purley	CR8 2NE	51.3411	-0.1147
@@ -5497,12 +5362,10 @@ V20922	Dental Comfort	24 Glencairn Drive, London	W5 1RT	51.5251	-0.3143
 V20950	St John's Dental Practice	Inch Arran House, Dorchester	DT1 3BX	50.7154	-2.4675
 V209633	Hednesford Road (Dental Surgery)	36-38 Hednesford Road, Cannock	WS12 3EA	52.6886	-1.9800
 V210646	The Bay Dental Practice	Alverton Terrace, Penzance	TR18 4JH	50.1183	-5.5421
-V21082	East Midlands Orthodontics	23 Regent Street, Nottingham	NG1 5BS	52.9529	-1.1571
 V21086	Devon Square Dental Surgery	29 Devon Square, Newton Abbot	TQ12 2HH	50.5300	-3.6051
 V211116	Yarm Road (Dental Surgery)	293 Yarm Road, Darlington	DL1 1BA	54.5227	-1.5269
 V21129	Dental Practice (260-290)	260-290 Berkhampstead Road, Chesham	HP5 3EZ	51.7133	-0.6082
 V21152	At Home Dental	24 Bridgetown, Totnes	TQ9 5AD	50.4305	-3.6794
-V211879	Stratford Orthodontics	1025 Stratford Road, Birmingham	B28 8BG	52.4409	-1.8497
 V211885	Kershaw Street (Dental Surgery)	27 Kershaw Street, Glossop	SK13 8NN	53.4392	-1.9503
 V21227	Dental Practice (Pheobe Street)	118 Phoebe Street, Salford	M5 3PH	53.4740	-2.2810
 V212376	Ilford Lane Family Dental Surgery	210 Ilford Lane, Ilford	IG1 2LW	51.5509	0.0742
@@ -5510,11 +5373,9 @@ V21239	Dental Surgery	Frome House, Stroud	GL5 2AA	51.7442	-2.2167
 V21313	South Ham Dental Surgery	St Andrews Centre, Basingstoke	RG22 6ER	51.2567	-1.1131
 V21318	Oneleigh House Dental Practice	Stoneleigh House Dental Practice, Taunton	TA4 4NW	51.1594	-3.3196
 V21349	Todmorden Road (Dental Surgery)	23-25 Todmorden Road, Burnley	BB10 4AB	53.7868	-2.2329
-V213970	Falchion Orthodontics Limited	Harrison House, Durham	DH1 4EL	54.7752	-1.5867
 V215244	Scalby Road (Dental Surgery)	445A Scalby Road, Scarborough	YO12 6UA	54.2965	-0.4412
 V21529	Chapel Street (Dental Surgery)	15 Chapel Street, Sheffield	S13 7JL	53.3592	-1.3727
 V21550	Goffs Oak Dental Care	Valley View Health Centre, Waltham Cross	EN7 5ET	51.7101	-0.0858
-V21600	Hitchin Orthodontic Clinic Limited	23 Bancroft, Hitchin	SG5 1JW	51.9505	-0.2772
 V216302	Victoria Road (Dental Surgery)	263 Victoria Road, London	N22 7XH	51.5996	-0.1327
 V216380	Ellis Dental Practice Limited	18 Beastfair, Pontefract	WF8 1AW	53.6915	-1.3125
 V216385	Crowgill House	Rosse Street, Shipley	BD18 3FB	53.8346	-1.7796
@@ -5527,7 +5388,6 @@ V21942	2 Unity Walk Dental Practice	2 Unity Walk, Tipton	DY4 8QL	52.5291	-2.0675
 V21953	Brigstock Road Dental Practice	97 Brigstock Road, Thornton Heath	CR7 7JL	51.3961	-0.1064
 V220699	High Street (Dental Surgery)	19 High Street, Stanford-le-Hope	SS17 0HD	51.5153	0.4266
 V22080	Wortley Road Dental Surgery	3 Wortley Road, Sheffield	S35 4LQ	53.4742	-1.4887
-V22235	The Orthodontic Centre (Reading) Ltd	27, Reading	RG1 5LU	51.4500	-0.9522
 V222401	Cosmo Dental Practice	167-169 Kingsland Road, London	E2 8AL	51.5324	-0.0774
 V22257	Europa House (Dental Surgery)	Europa House, Leighton Buzzard	LU7 1DD	51.9167	-0.6663
 V22378	Frome Enterprise Resource Centre (Dental Surgery)	Frome Enterprise Resource Centre, Frome	BA11 4BS	51.2229	-2.3271
@@ -5580,7 +5440,6 @@ V24461	Eastmoor Secure Childrens Home Dental Surgery	East Moor Secure Childrens 
 V24470	Smile for Life Dental Clinic	Camberley High Street Branch, Camberley	GU15 3RB	51.3382	-0.7442
 V24481	Exchange Row Dental Surgery	No 3 Exchange Row, Mansfield	NG18 1JU	53.1437	-1.1973
 V24513	Imperial Dental Group - Tenbury Wells	12 Teme Street, Tenbury Wells	WR15 8BA	52.3116	-2.5935
-V24657	Trinity House Orthodontics	New Lane, Selby	YO8 4QB	53.7830	-1.0705
 V247583	Dentoworld	38 East Hill, Colchester	CO1 2QX	51.8898	0.9105
 V24805	Tunstall Avenue Dental Surgery	49 Tunstall Avenue, Billingham	TS23 3QB	54.6225	-1.2791
 V248155	Highstreet Medical Dental	141-143 Brighton Road, Redhill	RH1 6PS	51.2338	-0.1718
@@ -5594,7 +5453,6 @@ V249464	Unit 2-3	City Business Centre, London	SE16 2XB	51.4987	-0.0545
 V24950	Clifton Drive South (Dental Surgery)	339 Clifton Drive South, Lytham St. Annes	FY8 1LP	53.7504	-3.0318
 V24999	Brookvale Dental Practice	6 King Street, Honiton	EX14 1AF	50.7972	-3.1933
 V25011	Harrogate Road Dental Practice	375-377 Harrogate Road, Leeds	LS17 6DW	53.8452	-1.5345
-V25019	Maidenhead Orthodontic Centre	122 High Street, Maidenhead	SL6 1PT	51.5227	-0.7230
 V25062	Park Street Dental Practice	42 Park Street, Brighouse	HD6 1JL	53.7016	-1.7806
 V25079	Church Square Dental Practice	19 Church Square, Dunstable	LU5 6AA	51.9500	-0.5324
 V25103	East Dulwich Dental Care	4 Forest Hill Road, London	SE22 0RR	51.4535	-0.0623
@@ -5631,9 +5489,6 @@ V262679	Whitecross Dental Care Limited	4 Sheepscar Court, Leeds	LS7 2BB	53.8084	
 V263052	Eden Dental Practice	1 Peacock Road, Carlisle	CA1 3UD	54.8823	-2.9057
 V263330	Sutton Dentists	62 Benhill Avenue, Sutton	SM1 4DW	51.3666	-0.1899
 V26355	Dental Surgery Hadley Centre	Unit 3, Telford	TF1 5GQ	52.7054	-2.4856
-V263900	Bright Orthodontics - Ormskirk	9 Derby Street, Ormskirk	L39 2BJ	53.5688	-2.8834
-V263915	Bright Orthodontics - Skelmersdale	73 Concourse Shopping Centre, Skelmersdale	WN8 6HD	53.5499	-2.7734
-V263918	Chorley Orthodontics	55 St. Thomas's Road, Chorley	PR7 1JE	53.6534	-2.6362
 V264279	Unit D Pegler Court	Pegler Way, Crawley	RH11 7GU	51.1144	-0.1925
 V26452	Stoneleigh Dental Surgery	Stoneleigh, Milnthorpe	LA7 7PP	54.2272	-2.7712
 V26454	Bexley Road Dental Surgery	172 Bexley Road, Erith	DA8 3HG	51.4756	0.1627
@@ -5651,7 +5506,6 @@ V26861	Smile Kensington	2 Russell Gardens, London	W14 8EZ	51.5003	-0.2114
 V26886	Warmsworth Road (Demtal Surgery)	196 Warmsworth Road, Doncaster	DN4 0TS	53.5011	-1.1673
 V269520	Acton Vale Dental Practice	179-181 the Vale, London	W3 7RW	51.5064	-0.2571
 V269769	Castle Street (Dental Surgery)	34 Castle Street, East Cowes	PO32 6RD	50.7584	-1.2895
-V270077	Kings Orthodontics	52 St Annes Road West, Lytham St. Annes	FY8 1SB	53.7517	-3.0316
 V27041	Tricon House	Coffee House Yard, Sevenoaks	TN13 1AH	51.2699	0.1924
 V271133	Glendale House	10 Church Street, Houghton le Spring	DH4 4DN	54.8418	-1.4685
 V272081	Yeadon Dental Centre	25 High Street, Leeds	LS19 7SP	53.8662	-1.6835
@@ -5665,7 +5519,6 @@ V277013	Croxley Dental Clinic	131 Watford Road, Rickmansworth	WD3 3DX	51.6470	-0
 V27844	Dental Surgery (2 Town House Garden)	2 Market Street, Hailsham	BN27 2AE	50.8620	0.2608
 V279160	37 Queens Square	Queens Square, Cannock	WS11 1EA	52.6903	-2.0278
 V27961	Edge Hill Dental Practice	Kensington Neighbourhood H/c, Liverpool	L7 2PF	53.4077	-2.9509
-V279915	Bright Orthodontics - Liverpool	Unit B, Liverpool	L24 9GB	53.3580	-2.8670
 V28051	Clacton-on-Sea Dental Centre	121-129 Old Road, Clacton-on-Sea	CO15 3AW	51.7942	1.1480
 V28076	Henrietta Street Dental Practice	Unit 6, Cheltenham	GL50 4FA	51.9033	-2.0764
 V28136	Dental Surgery	36-38 Currock Road, Carlisle	CA2 4BB	54.8823	-2.9319
@@ -5673,9 +5526,6 @@ V28141	Station Road Dental Practice	Station Road, Fowey	PL23 1DF	50.3397	-4.6341
 V28149	Surrey Docks Dental Practice	Downtown Health Centre, London	SE16 6BD	51.5011	-0.0364
 V28213	Regent Place (Dental Surgery)	44 Regent Place, Rugby	CV21 2PN	52.3752	-1.2601
 V282301	Unit 3 Condercum House	Unit 3, Newcastle upon Tyne	NE15 6PQ	54.9768	-1.6623
-V282302	Turret Orthodontic Practice	9B Altway, Liverpool	L10 3JA	53.4863	-2.9492
-V282305	Turret Orthodontic Practice	Unit 4, Liverpool	L1 6DE	53.4086	-2.9839
-V282354	Bright Orthodontics - Warrington	Unit NU10 Birchwood Shopping Centre, Warrington	WA3 7PG	53.4141	-2.5275
 V28330	Mydentist	68 - 70 Dam Lane, Warrington	WA1 4EP	53.4018	-2.5310
 V283497	Orthocentres Limited	The Parishes, Scunthorpe	DN15 6QX	53.5909	-0.6449
 V283552	Palace Court (Dental Surgery)	Unit 1, Grimsby	DN31 1PS	53.5708	-0.0813
@@ -5685,13 +5535,10 @@ V28473	Lever Street (Dental Surgery)	43 Lever Street, Manchester	M1 1FN	53.4832	
 V284827	The Granary	17A High Street, Yarm	TS15 9BW	54.5079	-1.3543
 V284828	Tennant Street (Dental Surgery)	4 Tennant Street, Stockton-on-Tees	TS18 2AT	54.5686	-1.3136
 V28499	Millharbour Dentistry (Dental Surgery)	Millharbour Dentistry, London	E14 9DH	51.4977	-0.0176
-V285148	Wearside Orthodontic Centre (South Shiel	8 Thomas Street, South Shields	NE33 1PU	54.9969	-1.4314
 V285167	Lagny Street (Dental Surgery)	Unit 7, Alnwick	NE66 1NJ	55.4128	-1.7098
 V285261	Unit 4 Rake House Farm	Rake Lane, North Shields	NE29 8EQ	55.0264	-1.4712
 V28530	402-404 Kingstanding Road (Dental Practice)	Kingstanding Road, Birmingham	B44 8LD	52.5410	-1.8864
 V285351	Portman Smile Clinic Ilkley	Valley Drive, Ilkley	LS29 8AL	53.9278	-1.8037
-V285360	Haricovert Ltd T/as Trinity House Orthodontics	55 Well Street, Bradford	BD1 5PS	53.7938	-1.7474
-V285369	Haricovert Ltd T/as Trinity House Orthodontics	Knowles Lane, Bradford	BD4 9SW	53.7737	-1.7225
 V285380	One Smile Dental	Unit 8 Learoyd Way, Sheffield	S6 2LR	53.4018	-1.4976
 V285410	One Smile Dental - Pontefract	11-15 Horsefair, Pontefract	WF8 1PE	53.6927	-1.3093
 V285428	High Street (Dental Surgery)	55 High Street, Barnsley	S73 8HS	53.5236	-1.4005
@@ -5728,7 +5575,6 @@ V29381	Slade Dental Practice	1 - 3 Garland Road, London	SE18 2RU	51.4786	0.0864
 V29441	Dental Spa Solutions	28-30 Hamilton Terrace, Leamington Spa	CV32 4LY	52.2892	-1.5329
 V294491	Liverpool Gardens (Dental Surgery)	12-14 Liverpool Gardens, Worthing	BN11 1RY	50.8131	-0.3721
 V294671	St. Lukes House	Emerson Way, Bristol	BS16 7AR	51.4925	-2.4759
-V294745	Northern Orthodontics	Sovereign House, Ashton-Under-Lyne	OL6 6QH	53.4879	-2.0846
 V29548	Clay Street Dental Surgery	Clay Street, Stafford	ST19 5AF	52.7245	-2.1157
 V29572	Duke Street Dental Surgery	5-7 Duke Street, Princes Risborough	HP27 0AT	51.7250	-0.8325
 V29638	Honeypot Lane Dental Surgery	4 Honeypot Lane, London	NW9 9QD	51.5856	-0.2818
@@ -5743,7 +5589,6 @@ V29840	The Smileworks Ltd	Church Road, Telford	TF3 2JZ	52.6723	-2.4550
 V29841	Surbiton Dental Office	109-111 Brighton Road, Surbiton	KT6 5NF	51.3922	-0.3120
 V29890	Friern Barnet Dental Clinic	21 Queens Parade, London	N11 3DA	51.6130	-0.1577
 V29933	The Oaks	69 Preston Road, Chorley	PR7 1PL	53.6639	-2.6326
-V299414	Lancashire Oral Surgery	19A Milbourne Street, Blackpool	FY1 3ER	53.8187	-3.0479
 V29968	My Dentist	23-27 Peel Street, Barnsley	S70 2RA	53.5526	-1.4829
 V29986	Habashi Dental Practice	176 Eynsham Drive, London	SE2 9PT	51.4938	0.1102
 V30055	Tulip Dental Practice	2 Woolram Wygate, Spalding	PE11 1NX	52.7903	-0.1607
@@ -5778,7 +5623,6 @@ V310829	High Street (Dental Surgery)	141 High Street, Cranleigh	GU6 8BB	51.1421	
 V31083	Resolution Treatment Centre	Becket House, Yeovil	BA20 1TE	50.9411	-2.6345
 V312409	Copper Beech Clinic	41 Stour Road, Christchurch	BH23 1LN	50.7354	-1.7858
 V31308	The Staines Centre of Dental Excellence	35 Kingston Road, Staines-upon-Thames	TW18 4ND	51.4340	-0.5035
-V313282	Trinity House Orthodontics	38 Bridge Place, Worksop	S80 1JS	53.3064	-1.1237
 V313357	Weybridge Dental Practice	91 Heath Road, Weybridge	KT13 8TS	51.3648	-0.4594
 V31363	Loddon Bridge Road (Dental Surgery)	281 Loddon Bridge Road, Reading	RG5 4BE	51.4533	-0.8982
 V313885	SMILE4U (Kidbrooke) Ltd	12A Pegler Square, London	SE3 9GR	51.4611	0.0272
@@ -5796,7 +5640,6 @@ V319010	Perivale Dental Practice	5 Teignmouth Parade, Greenford	UB6 8BZ	51.5337	
 V319545	Siskin Dental Centre	Norwich Community Hospital, Norwich	NR2 3TU	52.6339	1.2625
 V31998	Darlington Memorial Hospital Ooh Service	Hollyhurst Road, Darlington	DL3 6HX	54.5304	-1.5637
 V31999	University Hospital North Durham (Uhnd)	North Road, Durham	DH1 5TW	54.7885	-1.5938
-V320111	Angle House Orthodontics Cricklewood	Unit 3, London	NW2 2DP	51.5598	-0.2097
 V32079	Louth Dental Care	20 Upgate, Louth	LN11 9ET	53.3661	-0.0071
 V32137	Coram Green Dental Clinic	Hutton, Brentwood	CM13 1LR	51.6350	0.3503
 V321595	Hendrickse Dental Health	78 Botley Road, Southampton	SO52 9DU	50.9794	-1.4409
@@ -5839,12 +5682,10 @@ V337182	Former Community Hall	Ground Floor, Whitby	YO22 4JQ	54.4761	-0.6029
 V337247	West End Lane (Dental Surgery)	179-181 West End Lane, London	NW6 2LH	51.5463	-0.1914
 V337520	The Family Dental Practice Management Ltd	934 Brighton Road, Purley	CR8 2LN	51.3396	-0.1157
 V337531	Woodstock Road (Dental Surgery)	13-15 Woodstock Road, Oxford	OX2 6HA	51.7591	-1.2612
-V337941	Salford Oral Surgery	Unit C, Salford	M50 1ZD	53.4827	-2.3286
 V338039	Hilltop Way (Dental Surgery)	12 Hilltop Way, Hatfield	AL10 8FH	51.7488	-0.2346
 V338155	Bexleyheath Dental Practice	4 Crook Log, Bexleyheath	DA6 8BW	51.4588	0.1318
 V338245	Exeter Dental Care	The Depot, Exeter	EX1 2FW	50.7267	-3.5232
 V338671	Dental Surgery	49-51 Regent Street, Swindon	SN1 1JS	51.5598	-1.7831
-V339333	Justorthodontics	18-20 Grange Road, Stourbridge	DY9 7LE	52.4500	-2.1312
 V339360	Hercules Road (Dental Surgery)	3 Hercules Road, Norwich	NR6 5HQ	52.6577	1.2645
 V339389	Treeline Dental Care Lincoln	361 - 362 High Street, Lincoln	LN5 7RL	53.2243	-0.5429
 V340094	Cirencester Dental and Aesthetics	42A Querns Lane, Cirencester	GL7 1RH	51.7135	-1.9684
@@ -5860,7 +5701,6 @@ V343033	Perpignan Way (Dental Surgery)	12-14 Perpignan Way, Lancaster	LA1 1NE	54
 V343961	Amelia Street Dental Clinic	22 Amelia Street, London	SE17 3BY	51.4899	-0.0981
 V343962	Norwood Road Dental Clinic	222 Norwood Road, London	SE27 9AW	51.4379	-0.1060
 V343966	Cricklewood (Dental Surgery)	79 Cricklewood Broadway, London	NW2 3JR	51.5541	-0.2126
-V345345	Wickford Dental Practice & Orthodontic Centre	68-70 London Road, Wickford	SS12 0AN	51.6117	0.5167
 V346133	West Street (Dental Surgery)	13 West Street, Warwick	CV34 6AB	52.2790	-1.5913
 V346153	The Stow (Dental Surgery)	110-111 the Stow, Harlow	CM20 3AS	51.7757	0.1150
 V347064	Pinner Green Dental Clinic	8 Pinner Green, Pinner	HA5 2AA	51.5984	-0.3937
@@ -5908,8 +5748,6 @@ V362951	Dental Surgery	25-27 Victoria Road, Scunthorpe	DN16 2RZ	53.5652	-0.6513
 V362952	Riverside Surgery	Barnard Avenue, Brigg	DN20 8AS	53.5536	-0.4918
 V362960	Grimsby Road (Dental Surgery)	40 Grimsby Road, Cleethorpes	DN35 7AB	53.5709	-0.0551
 V363046	Netherfield Smile Centre	12-16 Victoria Road, Nottingham	NG4 2HE	52.9642	-1.0788
-V363294	Cheshire Orthodontics	17A Welles Street, Sandbach	CW11 1GT	53.1450	-2.3639
-V363304	Macclesfield Orthodontics	Winterton House, Macclesfield	SK11 0LP	53.2393	-2.1289
 V363659	Angle House Ealing	39 St. Marys Road, London	W5 5RG	51.5055	-0.3045
 V364061	Dental Surgery	129 High Street, Ipswich	IP6 8DH	52.1563	1.0492
 V364451	Dental Surgery	Steam Mills Road, Cinderford	GL14 3HY	51.8328	-2.5083
@@ -5930,7 +5768,6 @@ V367350	Malmin Barbican	131 Aldersgate Street, London	EC1A 4JQ	51.5210	-0.0978
 V367654	Hackney Dental Practice	Ground Floor, London	E8 1EP	51.5463	-0.0565
 V367673	Dental Surgery	99 High Street, Henley-in-Arden	B95 5AT	52.2942	-1.7789
 V368113	Surgery 9&10	2 Winchester Road, Andover	SP10 2EG	51.2037	-1.4787
-V36824	Dental & Oral Surgery	18 Bradbury Street, London	N16 8JN	51.5487	-0.0762
 V368240	Carlisle Urgent Dental Access Ctr Cumbria Health	4 Wavell Drive, Carlisle	CA1 2SE	54.8922	-2.8956
 V368382	Bridge Street Dental Practice	Bridge Street, Maryport	CA15 8AE	54.7146	-3.5021
 V368449	Dental Elements	18A North Street, Leatherhead	KT22 7AW	51.2955	-0.3297
@@ -5973,7 +5810,6 @@ V382691	Wiese and Associates	1-3 Ebenezer House, Cambridge	CB24 8QZ	52.2886	0.12
 V382937	Dental Surgery	129 Queen Street, Leeds	LS27 8HE	53.7441	-1.5999
 V383254	Revive Clinic Dental & Facial Aesthetics	31-33 Church Street, London	NW8 8ES	51.5238	-0.1696
 V383389	Dental Surgery	7-9 Crossley Street, Halifax	HX1 1UG	53.7239	-1.8608
-V383804	Angle House Orthodontic Highgate	1ST Floor, London	N6 5JL	51.5705	-0.1455
 V384035	West London Dental Centre	2B Belmont Road, London	W4 5UH	51.4932	-0.2639
 V384053	Dental Practice	258 Wandsworth Road, London	SW8 2JS	51.4746	-0.1326
 V384841	Fulwood Dental Aesthetic & Implant Centr	Fatima Health Centre, Preston	PR2 9QB	53.7870	-2.7119
@@ -6019,7 +5855,6 @@ V392012	M & J Dental Surgery	356 Preston Road, Harrow	HA3 0QJ	51.5759	-0.2943
 V39207	Leicester Street (Dental Surgery)	4A Leicester Street, Bedworth	CV12 9NG	52.4761	-1.4247
 V392096	Dental Surgery	1 Waters Meeting Road, Bolton	BL1 8HQ	53.5892	-2.4275
 V392174	Tooth and Mouth	355 North End Road, London	SW6 1NW	51.4841	-0.2013
-V39341	Total Orthodontics Ltd	5 Heath Sq, Haywards Heath	RH16 1BL	51.0025	-0.1070
 V393651	Queens Dental Practice	35 Willesden Lane, London	NW6 7RF	51.5408	-0.2013
 V39370	Dental Surgery	19 Bond Street, Nuneaton	CV11 4BX	52.5254	-1.4652
 V393726	Ph Dental Care	104 Peckham High Street, London	SE15 5ED	51.4737	-0.0684
@@ -6033,7 +5868,6 @@ V394561	P.b.robinson & Associates	3 Darnley Buildings, Doncaster	DN11 0TS	53.478
 V394956	Dental Surgery	Unit 31-32, Leigh	WN7 4PG	53.4955	-2.5166
 V394965	Far Cotton Limited	12 St. Leonards Road, Northampton	NN4 8DP	52.2279	-0.8980
 V394979	Dental Surgery	10 Wimborne Road, Wimborne	BH21 1NN	50.8063	-1.9879
-V39529	Lakeside Orthodontics	38 Salisbury Avenue, Wirral	CH48 0QP	53.3715	-3.1862
 V395346	Dental Surgery	17-19 Shelvers Hill, Tadworth	KT20 5PU	51.2967	-0.2373
 V395541	Dental Surgery	1-5 St. Pauls Street, Crewe	CW1 2JW	53.0991	-2.4463
 V395542	Dental Surgery	101 Victoria Street, Crewe	CW1 2JN	53.0989	-2.4462
@@ -6056,14 +5890,12 @@ V39927	Rhodes Dp Ltd	11 Rhodes Street, Oldham	OL1 3TG	53.5425	-2.1060
 V399919	Dental Surgery	463 High Road, London	E11 4JU	51.5581	0.0065
 V40010	Witham Health Centre	4 Mayland Road, Witham	CM8 2UX	51.8006	0.6429
 V400369	Abbeywood Dental Practice	108-110 Harrow Manorway, London	SE2 9FL	51.4980	0.1216
-V400503	Cirencester Orthodontics	4 West Way, Cirencester	GL7 1JA	51.7154	-1.9665
 V40060	Thornton Dental Practice	4 the Crescent, Liverpool	L23 4TA	53.4996	-3.0057
 V401064	State Street (Dental Surgery)	State Street - 9TH Floor, London	E14 5HJ	51.5038	-0.0139
 V40116	Freshwater Dental Practice	86 Avenue Road, Freshwater	PO40 9UT	50.6835	-1.5273
 V401224	Hanwell Dental Centre	Ground Floor, London	W7 3BD	51.5127	-0.3377
 V40134	Westbrook House	6-8 West Street, Newbury	RG14 1BD	51.4036	-1.3271
 V401341	Dental Surgery	463B High Road Leytonstone, London	E11 4JU	51.5581	0.0065
-V40136	Trinity House Orthodontics Market Weighton	4-6 Southgate, York	YO43 3AG	53.8631	-0.6647
 V401413	Beaconsfield Dental Practice - Ashford	173 Beaver Road, Ashford	TN23 7SG	51.1381	0.8692
 V401569	Dental Surgery	29 Brunswick Road, Gloucester	GL1 1JE	51.8616	-2.2460
 V401570	The Wilson Medical Centre	236 Prestbury Road, Cheltenham	GL52 3EY	51.9106	-2.0560
@@ -6078,25 +5910,16 @@ V40248	Dental Health Centre	12 Queen Street, Colchester	CO1 2PJ	51.8889	0.9039
 V40252	75 Macrae Road	Eden Business Park, Bristol	BS20 0DD	51.4784	-2.6752
 V402533	Dental Surgery	Suite A and D, Lowestoft	NR32 1UR	52.4790	1.7577
 V402757	Gentle Dental Care 4U Ltd	Bespoke Dental, Reading	RG31 5DG	51.4582	-1.0451
-V402874	Trinity House Orthodontics Leeds	15 the Penny Hill Centre, Leeds	LS10 2AP	53.7789	-1.5287
-V402879	Trinity House Orthodontics Bradford North	173 Otley Road, Bradford	BD3 0HX	53.8025	-1.7431
 V402892	Mydentist St Andrews Park	Unit 5, Durham	DH1 2RH	54.7799	-1.5387
-V40292	Oral Surgery Ltd - Charlton Village	Charlton, London	SE7 8UD	51.4818	0.0374
-V403201	Trinity House Orthodontics Doncaster	10 Cavendish Court, Doncaster	DN1 2DJ	53.5215	-1.1258
-V403202	Trinity House Orthodontics Thorne	1-2 Market Place, Doncaster	DN8 5DW	53.6111	-0.9606
-V403207	Trinity House Orthodontics	Unit 4, Barnsley	S73 8BH	53.5234	-1.3995
 V403510	Dental Surgery	12 Milton Road, Grays	RM17 5EZ	51.4799	0.3260
 V403599	Dental Surgery	23 Daws Lane, London	NW7 4SD	51.6159	-0.2414
 V403602	Dental Surgery	71 New George Street, Plymouth	PL1 1RJ	50.3712	-4.1441
 V403829	The Old Forge	Station Road, Stafford	ST20 0EZ	52.7829	-2.2561
 V404686	Dental Surgery	8 Grove Street, Wantage	OX12 7AA	51.5896	-1.4252
 V404734	One Smile Dental - Chard	Unit 21, Chard	TA20 1FA	50.8854	-2.9553
-V404798	Trinity House Orthodontics Hull	49 Anlaby Road, Hull	HU3 2LL	53.7430	-0.3470
 V405021	St Aidens Chapel	Bradford Road, Brighouse	HD6 4EA	53.7246	-1.7764
 V405365	Dental Surgery	33A Lodge Lane, Grays	RM17 5RY	51.4889	0.3409
 V405449	Damira Abingdon	10 Park Square, Abingdon	OX14 4RR	51.6212	-1.2986
-V405991	Trinity House Orthodontics	102 New Street, Huddersfield	HD1 2TR	53.6442	-1.7837
-V405992	Trinity House Orthodontics Dewsbury	32 the Princess of Wales Precinct, Dewsbury	WF13 1NH	53.6904	-1.6287
 V406328	Damira Ryde	8 High Street, Ryde	PO33 2PN	50.7295	-1.1631
 V40659	28 Aylesbury End	Old Town, Beaconsfield	HP9 1LW	51.6031	-0.6379
 V407012	Dental Surgery	8 Kingsfield Road, Birmingham	B14 7JN	52.4327	-1.8924
@@ -6104,13 +5927,11 @@ V407455	Dental Surgery	8 Grove Street, Wantage	OX12 7AA	51.5896	-1.4252
 V407575	Dental Surgery	18 & 18A Market Place, Faringdon	SN7 7HP	51.6580	-1.5839
 V407888	Dental Surgery	57 Market Street, Manchester	M46 0DA	53.5239	-2.4943
 V40797	Dental Surgery	158 High Road, London	N22 6EB	51.5953	-0.1087
-V40822	Basingstoke Orthodontics	309 Kempshott Lane, Basingstoke	RG22 5LY	51.2392	-1.1404
 V408886	Harrowgate Hill Dental	331 North Road, Darlington	DL1 3BL	54.5470	-1.5479
 V409085	Dental Surgery	9-11 the Avenue, Lincoln	LN1 1PA	53.2314	-0.5464
 V409098	Dental Surgery	Unit 14 Roundway House, Chipping Norton	OX7 5SR	51.9463	-1.5360
 V409229	High Wycombe Coachway	3 Marlow Hill, High Wycombe	HP11 1TJ	51.6151	-0.7605
 V409230	Dental Surgery	10 Great North Way, York	YO26 6RB	53.9779	-1.1327
-V409469	Turret Orthodontics	7 Market Gate, Warrington	WA1 1TW	53.3893	-2.5938
 V409568	The Abbey by Duthie Dental	1 Childwall Park Avenue, Liverpool	L16 0JE	53.3934	-2.8866
 V409572	Dental Surgery	The Hub, Coventry	CV1 5QT	52.4071	-1.5049
 V409884	Dental Surgery	2-4 Corn Street, Witney	OX28 6BL	51.7838	-1.4867
@@ -6118,13 +5939,11 @@ V410088	Battersea Park Dental	491 Battersea Park Road, London	SW11 4LW	51.4721	-
 V410523	Dental Surgery	18 High Street, Reigate	RH2 9AY	51.2378	-0.2065
 V410852	Dental Surgery	High Bridge House, Southampton	SO19 9AF	50.8974	-1.3738
 V41091	2B Hogarth Road	Earls Court, London	SW5 0PT	51.4928	-0.1925
-V41096	Preston Orthodontics	35 Ribblesdale Place, Preston	PR1 3NA	53.7546	-2.7007
 V411020	Thistlemoor Smiles Centre	6-10 Thistlemoor Road, Peterborough	PE1 3HP	52.5953	-0.2546
 V411061	Dental Surgery	51-52 High Street, Ryde	PO33 2RE	50.7271	-1.1626
 V411062	Dental Surgery	Unit A1, Havant	PO9 1QN	50.8443	-0.9876
 V411544	Dental Surgery	7 South Street, Bury	BL9 0JS	53.5944	-2.2910
 V411690	One Smile Dental Portsmouth	14 Isambard Brunel Road, Portsmouth	PO1 2DU	50.7981	-1.0916
-V41194	Windmill Orthodontics	37A Heaton Road, Newcastle upon Tyne	NE6 1SB	54.9790	-1.5801
 V411998	Dental Surgery	22 Boutport Street, Barnstaple	EX31 1RP	51.0814	-4.0585
 V412370	Dental Surgery	51 High Street, Waltham Cross	EN8 0BS	51.7094	-0.0366
 V412781	Dental Surgery	Unit 10C, Rotherham	S60 1TG	53.4442	-1.3456
@@ -6140,7 +5959,6 @@ V41381	Dental Surgery	84 Northern Road, Portsmouth	PO6 3ER	50.8473	-1.0673
 V41384	Dental Surgery	33 Kingston Crescent, Portsmouth	PO2 8AA	50.8135	-1.0818
 V414228	The Haringey Dentist	21 Grand Parade, London	N4 1LA	51.5811	-0.0992
 V414667	Dental Surgery	131 Corve Street, Ludlow	SY8 2PG	52.3697	-2.7182
-V41486	Smile Orthodontics	50 Bourne Road, Spalding	PE11 1JW	52.7840	-0.1698
 V414941	Dental Surgery	123 High Street, Banstead	SM7 2NS	51.3237	-0.1983
 V415309	Mydentist	Unit G19, Wakefield	WF1 1QU	53.6848	-1.4947
 V41624	Medway Dental Care	26 King George Road, Chatham	ME5 0TX	51.3501	0.5210
@@ -6149,20 +5967,17 @@ V416670	Dental Surgery	26-40 English Street, Carlisle	CA3 8HX	54.8942	-2.9362
 V416684	Hines Road (Dental Surgery)	3 Hines Road, Ipswich	IP3 9BG	52.0477	1.1837
 V416830	Dental Surgery	43 Victoria Road, Mablethorpe	LN12 2AF	53.3400	0.2636
 V41707	Darrell House	85 West Street, Dunstable	LU6 1SE	51.8846	-0.5260
-V41782	Redhill Orthodontic Practice	43 Hatchlands Road, Redhill	RH1 6AP	51.2376	-0.1814
 V418236	Dental Surgery	22 Market Street, Crewkerne	TA18 7LA	50.8836	-2.7961
 V418267	Dental Surgery	17-21 High Street, Ipswich	IP7 5AG	52.0422	0.9549
 V418402	Dentalcare West Swindon Ltd	17 West Swindon District Centre, Swindon	SN5 7DL	51.5585	-1.8295
 V418493	Dental Surgery	Gallagher Retail Park, Weston-Super-Mare	BS23 3YY	51.3394	-2.9621
 V418705	Dental Surgery	498B Stafford Road, Wolverhampton	WV10 6AN	52.6190	-2.1299
 V418886	Dental Surgery	Quayside House, Gloucester	GL1 2TZ	51.8662	-2.2516
-V41942	Barbican Orthodontic Clinic	84-85 Long Lane, London	EC1A 9ET	51.5197	-0.0985
 V419922	Dental Surgery	Unit 2A, Wellingborough	NN8 1AN	52.3017	-0.6927
 V419976	Dental Surgery	8 Wellington Road, Bridlington	YO15 2BG	54.0849	-0.1919
 V419987	Harleigh Road Dental Centre	Harleigh Road, Bodmin	PL31 1AH	50.4643	-4.7170
 V420036	Dental Surgery	12 Hightown, Sandbach	CW11 1AE	53.1445	-2.3641
 V420438	Dental Surgery	Unit 13-15, Saltash	PL12 6AR	50.4083	-4.2109
-V42062	Queensway Orthodontics South Limited	170 Queensway, Billingham	TS23 2NT	54.6070	-1.2920
 V42095	My Dentist	Unit 1A, Torquay	TQ1 3YA	50.4675	-3.5304
 V42115	Stratford House	36 Stratford Rd, Milton Keynes	MK12 5LW	52.0628	-0.8120
 V42152	Dental Surgery	40-42 St. Osyth Road, Clacton-on-Sea	CO15 3BW	51.7933	1.1459
@@ -6185,7 +6000,6 @@ V42453	Marsh Road (Dental Surgery)	52 Marsh Road, Luton	LU3 2NJ	51.9006	-0.4486
 V42461	Glendene	Wakefield Road, Halifax	HX3 0UA	53.7000	-1.8718
 V42466	Bedford Braces Ltd	37 Goldington Road, Bedford	MK40 3LH	52.1396	-0.4602
 V42478	89 Atherton Street	St Helens, St. Helens	WA10 2DS	53.4584	-2.7443
-V42527	NO.1 the Orthodontic Specialist	1 Station Road, Derby	DE3 9GH	52.9062	-1.5434
 V42530	Thanet Road (Dental Surgery)	65 Thanet Road, Bexley	DA5 1AP	51.4428	0.1486
 V42557	Puresmile Reading Limited	9-10 Market Place, Reading	RG1 2EG	51.4558	-0.9689
 V425839	Dental Surgery	39 Wood Street, London	E17 3JX	51.5896	-0.0040
@@ -6234,7 +6048,6 @@ V43431	High Street (Dental Surgery)	30 High Street, Emsworth	PO10 7AW	50.8464	-0
 V43439	West Street (Dental Surgery)	47 West Street, Reigate	RH2 9BZ	51.2391	-0.2143
 V43465	Surbiton Health Centre (Oakfield)	Ewell Road, Surbiton	KT6 6EZ	51.3908	-0.2999
 V43502	New Bank Road (Dental Surgery)	44 New Bank Road, Blackburn	BB2 6JW	53.7520	-2.5029
-V43571	Petts Wood Orthodontic Surgery	131 Queensway, Orpington	BR5 1DG	51.3895	0.0718
 V43592	Isis House	50 Tilers Road, Milton Keynes	MK11 3EA	52.0421	-0.8218
 V43598	The Priors Green Dental Hive	2 Priors Green Local Centre, Dunmow	CM6 1YE	51.8691	0.2820
 V43611	10 King Street	Winterton, Scunthorpe	DN15 9RN	53.6539	-0.5969
@@ -6253,7 +6066,6 @@ V43937	Fletcher Fosbrook Dental Surgery	First Floor, Heywood	OL10 4LY	53.5939	-2
 V43956	Bridgwater Road [Dental Surgery]	Bridgwater Road, Bridgwater	TA6 6PR	51.1001	-3.0023
 V44032	2 High Street	Linton, Cambridge	CB21 4HS	52.0971	0.2759
 V44035	Crowe Street (Dental Surgery)	7 Crowe Street, Stowmarket	IP14 1DL	52.1872	0.9947
-V44088	Inline Orthodontics	5 Letchmore Road, Stevenage	SG1 3JH	51.9107	-0.2040
 V44105	Manor Dental Clinic	18 Ridgeway Road, Sheffield	S12 2ST	53.3599	-1.4292
 V44120	Unit 2 Castle Maltings	Lower Street, Stansted	CM24 8XG	51.9021	0.2002
 V44399	Solent Dental Services	Mary Seacole Wing, Southampton	SO14 0YG	50.9124	-1.3971
@@ -6290,9 +6102,6 @@ V45291	Ealing Hospital	Uxbridge Road, Southall	UB1 3HW	51.5076	-0.3455
 V45300	Morden Dentist	6 Crown Parade, Morden	SM4 5DA	51.4015	-0.1967
 V45343	73 Garron Lane (Dental Surgery)	73 Garron Lane, South Ockendon	RM15 5JQ	51.5074	0.2729
 V45541	Chrisp Street (Dental Surgery)	89 Chrisp Street, London	E14 6GG	51.5144	-0.0148
-V45588	Oral Surgery Ltd	14 Collent Street, London	E9 6SG	51.5441	-0.0480
-V45589	Oral Surgery Ltd	87A Rushey Green, London	SE6 4AF	51.4475	-0.0178
-V45590	Oral Surgery Ltd - Confidental	3 Hazel Lane, London	SE10 9FZ	51.4860	0.0097
 V45592	The Old Surgery Dental Practice	132 Queen Street, Crewe	CW1 4AU	53.1028	-2.4287
 V45649	1 Long Street	Middleton, Manchester	M24 6TE	53.5501	-2.1983
 V46091	A. Smith and M. Crowley	152-154 Walton Road, East Molesey	KT8 0HP	51.4004	-0.3562
@@ -6311,7 +6120,6 @@ V49189	Northern Moor Dental Practice	394 Palatine Road, Manchester	M22 4FZ	53.40
 V49779	Wichelstowe Dental Care	Staldon Court, Swindon	SN1 7BY	51.5420	-1.7911
 V50548	Portman Smile Clinic Canterbury	Graylaw House, Canterbury	CT1 2UA	51.2769	1.0792
 V50552	Ground Floor Unit 1	Southerngate Office Village, Chichester	PO19 8SG	50.8314	-0.7856
-V50562	Neo Orthodontics Ltd	The Queens Apartments, Hastings	TN34 1JN	50.8549	0.5798
 V50564	3 the Warehouse	The Strand, Rye	TN31 7DB	50.9493	0.7306
 V50566	East Street (Dental Surgery)	3 East Street, Horsham	RH12 1HH	51.0618	-0.3269
 V50570	Neo Orthdontics Limited	Unit A, Lewes	BN7 2FZ	50.8787	0.0151
@@ -6321,7 +6129,6 @@ V50578	95-99 Station Road East	Station Road East, Oxted	RH8 0AX	51.2577	-0.0029
 V50615	Portman Smile Clinic Rainham	23 Mierscourt Road, Gillingham	ME8 8JE	51.3607	0.6135
 V50626	High Street (Dental Surgery)	34 High Street, Camberley	GU15 3RS	51.3380	-0.7446
 V50627	Portman Smile Clinic Sittingbourne	119A High Street, Sittingbourne	ME10 4AQ	51.3402	0.7337
-V50636	Palent Orthodontics (1 Odeon Buildings)	60-62 London Road, Bognor Regis	PO21 1PT	50.7861	-0.6747
 V50649	Portman Smile Clinic Margate	120 High Street, Margate	CT9 1JW	51.3865	1.3810
 V50700	Iq Braces & Faces	Unit 18, Woking	GU21 6GH	51.3201	-0.5604
 V50767	Knowledge Spa	Treliske, Truro	TR1 3HD	50.2649	-5.0932
@@ -6329,7 +6136,6 @@ V51561	Ravendale Street North (Dental Surgery)	22-24 Ravendale Street North, Scu
 V51957	Broad Street (Dental Surgery)	35-36 Broad Street, Stamford	PE9 1PJ	52.6534	-0.4774
 V52327	High Street (Dental Surgery)	37 High Street, Stevenage	SG1 3AU	51.9121	-0.2079
 V53156	Park Chambers Dental Surgery	10 Harbour House, Wadebridge	PL27 7AH	50.5172	-4.8360
-V53472	Contour Orthodontists	Alison Way, Winchester	SO22 5DD	51.0660	-1.3214
 V54047	Damira Bicester Dental Practice	Unit 4, Bicester	OX26 6JU	51.8995	-1.1533
 V54470	Weavers Court (Dental Surgery)	2-8 Weavers Court, Halstead	CO9 2NJ	51.9685	0.6937
 V54573	Your Dentist Didcot	166 Greenwood Way, Didcot	OX11 6GD	51.6063	-1.2715
@@ -6345,17 +6151,13 @@ V58878	St. Martins Walk (Dental Surgery)	4 St. Martins Walk, Dorking	RH4 1UT	51.
 V59367	Mydentist	30 Brunswick Road, Shoreham-by-Sea	BN43 5WB	50.8336	-0.2726
 V60565	Chelsea Road (Dental Surgery)	11 Chelsea Road, Bath	BA1 3DU	51.3851	-2.3886
 V60697	Harleigh Road Dental Centre	Unit 1, Bodmin	PL31 1AH	50.4643	-4.7170
-V61240	Poole Orthodontics Ltd	38 Lower Blandford Road, Broadstone	BH18 8NX	50.7515	-1.9852
 V61553	Unit 3	Gemini Business Park, Leeds	LS7 3JB	53.8108	-1.5357
 V61573	St. Thomas Street (Dental Surgery)	25 St. Thomas Street, Lymington	SO41 9NB	50.7570	-1.5478
 V61628	10-11	Cross Street, Ryde	PO33 2AD	50.7299	-1.1615
 V61632	Making Smiles Amersham	Chiltern Avenue, Amersham	HP6 5AY	51.6750	-0.6042
 V61688	Endo Bgd	29 Weymouth Street, London	W1G 7DB	51.5206	-0.1467
 V61998	Pelican House	Calenick Street, Truro	TR1 2SF	50.2624	-5.0542
-V62386	Langley Orthodontics	84 High Street, Slough	SL3 8JS	51.4965	-0.5451
 V64906	Mortonhampstead Dental Practice	1 Station Road, Newton Abbot	TQ13 8NQ	50.6595	-3.7632
-V65243	Banbury Orthodontics Limited	49 South Bar Street, Banbury	OX16 9AB	52.0593	-1.3410
-V65658	Ocean Orthodontic Clinic	91 Marldon Road, Torquay	TQ2 7EG	50.4767	-3.5687
 V66288	Feelgood Dental	2 Providence Road, West Drayton	UB7 8HJ	51.5118	-0.4672
 V68238	212 Station Road	West Moors, Ferndown	BH22 0JD	50.8269	-1.8891
 V69447	Unit Hughenden Yard (Dental Surgery)	Unit 13 Hughenden Yard, Marlborough	SN8 1LT	51.4199	-1.7329

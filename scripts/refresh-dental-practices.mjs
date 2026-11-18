@@ -10,6 +10,7 @@
 // - 1 request for the NHS website's list of its dentist pages (the sitemap its robots.txt names): only
 //   practices with a page are kept, so every result's "NHS page" link works. About a third of the
 //   report's active practices have none, and NHS Find a dentist doesn't list them either.
+// - Orthodontists and oral surgeons are left out by name, as students can't register with them.
 // - postcodes.io for coordinates, 100 postcodes a request (about 65 requests), no key. These are the
 //   practices' postcodes only: a student's location is never sent anywhere.
 // It writes a file only if it changed, and stops without writing if a request fails, a site refuses or
@@ -26,7 +27,7 @@ import { blockedReason } from './lib/nsu-collect.mjs';
 import { POSTCODES_URL } from './lib/gp-practices.mjs';
 import {
   activeDentalPractices, AREAS, checkDentistsBeforeWriting, DENTAL_REPORT_URL, DENTAL_USER_AGENT, DENTIST_SITEMAP_URL, englandDentistBody,
-  englandDentistFile, hasNhsPage, listedOnNhs, northEastFile, parseCsv, sameNorthEast
+  englandDentistFile, hasNhsPage, isSpecialist, listedOnNhs, northEastFile, parseCsv, sameNorthEast
 } from './lib/dental-practices.mjs';
 
 const REPO = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -70,8 +71,10 @@ console.log(`  ${rows.length} rows; ${active.length} active dental practices in 
 await sleep(1000);
 console.log('Downloading the NHS website\'s list of its dentist pages...');
 const listed = listedOnNhs(await (await request(DENTIST_SITEMAP_URL, { headers: { Accept: 'application/xml' } })).text());
-const england = active.filter((practice) => hasNhsPage(practice, listed));
-console.log(`  ${listed.size} dentist pages; ${england.length} of the active practices have one (${active.length - england.length} don't, so they're left out).`);
+const withPage = active.filter((practice) => hasNhsPage(practice, listed));
+const england = withPage.filter((practice) => !isSpecialist(practice.name));
+console.log(`  ${listed.size} dentist pages; ${withPage.length} of the active practices have one (${active.length - withPage.length} don't, so they're left out).`);
+console.log(`  ${withPage.length - england.length} orthodontists and oral surgeons left out, as students can't register with them.`);
 
 const postcodes = [...new Set(england.map((practice) => practice.postcode))];
 console.log(`Placing ${postcodes.length} postcodes with postcodes.io, 100 at a time...`);

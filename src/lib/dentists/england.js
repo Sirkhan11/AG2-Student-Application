@@ -44,3 +44,10 @@ export function parseDentistFile(text) {
  * @param {{ code: string }} practice
  */
 export const dentistPageUrl = (practice) => `https://www.nhs.uk/services/dentist/dentist/XV${practice.code.slice(1).padStart(6, '0')}`;
+
+/**
+ * The appointments section of the practice's NHS page, which says whether it's taking new NHS patients:
+ * where "New NHS patients?" goes, one tap closer than the page itself (agent1.md A11).
+ * @param {{ code: string }} practice
+ */
+export const newPatientsUrl = (practice) => `${dentistPageUrl(practice)}/appointments`;

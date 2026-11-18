@@ -14,10 +14,10 @@
 
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { DENTIST_COLUMNS, dentistPageUrl, parseDentistFile } from '#lib/dentists/england.js';
+import { DENTIST_COLUMNS, dentistPageUrl, newPatientsUrl, parseDentistFile } from '#lib/dentists/england.js';
 import { DENTIST_FILE, DENTIST_NATIONS, DENTISTS, nearestDentists } from '#lib/dentists/finder.js';
 import { findADentistUrl, OTHER_NATIONS } from '#lib/gp/finder.js';
-import { activeDentalPractices, englandDentistFile, MIN_ENGLAND_DENTISTS, MIN_NORTH_EAST_DENTISTS, northEastFile } from './lib/dental-practices.mjs';
+import { activeDentalPractices, englandDentistFile, isSpecialist, MIN_ENGLAND_DENTISTS, MIN_NORTH_EAST_DENTISTS, northEastFile } from './lib/dental-practices.mjs';
 
 const NORTH_EAST = JSON.parse(readFileSync('src/lib/dentists/north-east.json', 'utf8'));
 const ENGLAND = parseDentistFile(readFileSync(`static${DENTIST_FILE}`, 'utf8'));
@@ -51,6 +51,12 @@ const checks = [
     assert.deepEqual(england[0], { code: 'V00001', name: 'Crabtree Road Dental Practice', address: '25 Crabtree Road, Newcastle upon Tyne', postcode: 'NE1 8ST' });
     assert.deepEqual(activeDentalPractices(rows, ['NE', 'DH', 'SR']).map((practice) => practice.code), ['V00001'], 'the North East\'s');
   }],
+  ['Specialists a student can’t register with are left out by name (orthodontists, oral surgeons); hospitals, implant and community practices stay', () => {
+    for (const name of ['Neo Orthodontics', 'Smile Orthodontist Ltd', 'Bright Orthodontic Practice', 'Tyne Oral Surgery', 'Maxillofacial Unit']) assert.ok(isSpecialist(name), name);
+    for (const name of ['Saville Dental Practice', 'Newcastle Dental Hospital', 'Smile & Implant Centre', 'Community Dental Service']) assert.ok(!isSpecialist(name), name);
+    assert.deepEqual(ENGLAND.filter((practice) => isSpecialist(practice.name)).map((practice) => practice.code), [], 'none in the real list');
+    assert.match(readFileSync('src/routes/gp-finder/+page.svelte', 'utf8'), /leaving out orthodontists and oral surgeons, as you can’t register with them\./, 'the tab says so');
+  }],
   ['The England file reads back as it was written: a note with the source and licence, the columns, then one practice a line', () => {
     const placed = [{ code: 'V00001', name: 'Crabtree Road Dental Practice', address: '25 Crabtree Road, Gosforth, Newcastle upon Tyne', postcode: 'NE1 8ST', lat: 54.97391, lng: -1.61393 }];
     const text = englandDentistFile(placed, '2026-11-18');
@@ -79,6 +85,7 @@ const checks = [
   ['The links: each practice’s NHS page by its code (V12345 is XV012345), NHS Find a dentist, and the rest of the UK’s own', () => {
     assert.equal(dentistPageUrl({ code: 'V12345' }), 'https://www.nhs.uk/services/dentist/dentist/XV012345');
     assert.equal(dentistPageUrl({ code: 'V123456' }), 'https://www.nhs.uk/services/dentist/dentist/XV123456');
+    assert.equal(newPatientsUrl({ code: 'V12345' }), 'https://www.nhs.uk/services/dentist/dentist/XV012345/appointments', '"New NHS patients?" opens the appointments section');
     assert.equal(findADentistUrl('NE6'), 'https://www.nhs.uk/service-search/find-a-dentist/results?location=NE6');
     assert.equal(findADentistUrl(null), 'https://www.nhs.uk/service-search/find-a-dentist/');
     assert.deepEqual(Object.keys(DENTIST_NATIONS), Object.keys(OTHER_NATIONS), 'the same three nations as the GP tab');
