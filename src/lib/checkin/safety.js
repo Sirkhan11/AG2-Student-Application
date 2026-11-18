@@ -28,14 +28,14 @@ const CRISIS_PATTERNS = [
 ];
 
 /**
- * What the chat shows instead of an AI reply. The Need help now page lists 999 and NHS 111 but not
- * Samaritans yet, so the last line only promises those two; update it once that page is updated.
+ * What the chat shows instead of an AI reply. The last line points to the Need help now page, which
+ * has all three numbers and Shout's text line (src/lib/need-help/urgent.js): keep the two in step.
  */
 export const SAFETY_MESSAGE =
   'I’m really sorry you’re going through this, and you don’t have to deal with it on your own. ' +
   'If you’re in danger or might act on these thoughts, call 999 now. For urgent help that isn’t an ' +
   'emergency, call NHS 111. You can talk to Samaritans any time, for free, on 116 123. ' +
-  'The Need help now page has the 999 and NHS 111 numbers too.';
+  'The Need help now page has these numbers too, and Shout’s free text line if you’d rather text.';
 
 /**
  * True if the message suggests the student may be at risk.
