@@ -111,6 +111,26 @@ npx --engine-strict=false firebase-tools deploy --only hosting,firestore:rules -
 node --env-file=.env scripts/check-live-site.mjs --base https://ag2-dev-thomas.web.app
 ```
 
+### Mentors who share their email address (for the mentoring coordinator)
+
+A mentor can let the students matched with them see their email address: a box at sign-up, off unless
+they tick it, or Share it with them on Your mentor, where they can also stop. It's kept in Firestore as
+`mentorContacts/{mentor's uid}`: their own login address (`email`) and when they agreed (`agreedAt`),
+nothing else. Students see it on Home, Your mentor and the chat's mentor card, as a link to email them;
+Gemini is never told it. Without it, those cards say the coordinator will introduce them.
+
+- **Who can read it:** the mentor, and a student whose `matches/{student's uid}` names that mentor with
+  status `matched`. So moving a student to someone else in the console (changing `mentorId`) takes the
+  old mentor's address away from them at once, and shows the new mentor's, if they share one.
+- **When you remove a mentor, remove this too.** Deleting `mentors/{uid}` or `mentorDetails/{uid}` leaves
+  `mentorContacts/{uid}` behind, and the students still matched with that mentor can still read it. Delete
+  `mentorContacts/{uid}` as well, and move their students.
+- **While the access switch is off,** "the students matched with you" means anyone with a verified email
+  address who signs up and takes one of the mentor's places. Ask real mentors not to share their address
+  until the switch is back to Northumbria only.
+- Checked by `scripts/check-mentor-contact.mjs` (offline, the rules in the emulators, and the screens in
+  Chrome).
+
 ## Refreshing the NSU data
 
 The Societies pages use two copies of Northumbria Students' Union's society information:

@@ -155,7 +155,7 @@
       <!-- Always there, so a screen reader hears "Done" when it appears. -->
       <div class="muted" role="status">{#if said}<p>{said}</p>{/if}</div>
       {#if problem}<p class="error" role="alert">{problem}</p>{/if}
-      <p class="muted">Only students matched with you can see it, on their Your mentor page and in the chat. It’s never sent to Gemini.</p>
+      <p class="muted">Only students matched with you can see it: on their Home screen, their Your mentor page and their chat’s mentor card. It’s never sent to Gemini.</p>
     </section>
   {/if}
 

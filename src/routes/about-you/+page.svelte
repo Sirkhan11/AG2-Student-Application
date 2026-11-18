@@ -61,7 +61,7 @@
   function mentorInWords(match, isMentor) {
     if (isMentor) return 'You’re a mentor yourself, so it doesn’t offer to find you one. It’s never told your email address, even if you share it with the students matched with you: you choose that, and can stop, on Your mentor.';
     const often = match?.meetingFrequency ? ` You asked to meet ${match.meetingFrequency}.` : '';
-    if (match?.status === 'matched') return `You have one. It’s told why you were matched (as on the Your Mentor page), but not your mentor’s name or how to reach them.${often} Your mentor isn’t shown anything about you; if they chose to share their email address with you, it’s on Your mentor.`;
+    if (match?.status === 'matched') return `You have one. It’s told why you were matched (as on the Your Mentor page), but not your mentor’s name or how to reach them.${often} Your mentor isn’t shown anything about you; if they chose to share their email address with you, it’s on Home and Your mentor.`;
     if (match?.status === 'coordinator') return `The mentoring coordinator is finding you one.${often}`;
     return 'You haven’t got one yet.';
   }

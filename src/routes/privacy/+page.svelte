@@ -119,8 +119,8 @@
       <li>
         <strong>Your mentor</strong> sees nothing of yours in the app: not your name, your email address,
         your answers, your checklist, the chat or a request for a different mentor. If they chose to share
-        their email address with you, it’s on Your mentor, so you can get in touch yourself and decide what
-        to tell them. If not, the mentoring coordinator introduces you.
+        their email address with you, it’s on your Home screen and Your mentor page, so you can get in touch
+        yourself and decide what to tell them. If not, the mentoring coordinator introduces you.
       </li>
       <li>
         <strong>The mentoring coordinator</strong> uses the Firebase console, which shows what’s kept in the
@@ -129,8 +129,8 @@
       </li>
       <li>
         <strong>If you’re a mentor,</strong> the students matched with you see the name you chose to show
-        them and, only if you chose to share it, your email address, on their Your mentor page and in the
-        chat. You can stop sharing it on Your mentor at any time.
+        them and, only if you chose to share it, your email address, on their Home screen, their Your
+        mentor page and their chat’s mentor card. You can stop sharing it on Your mentor at any time.
       </li>
       <li><strong>Other students</strong> never see anything of yours.</li>
       <li>Nothing you say in the chat is passed on to the university or your mentor.</li>

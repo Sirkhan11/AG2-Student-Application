@@ -11,7 +11,8 @@
 //    matched student reads it, one document at a time; another student, one waiting, one without a
 //    match, an unverified one, another mentor and a signed-out visitor can't, and nobody can list
 //    them; it follows the match when the coordinator moves a student; signing up with the box ticked
-//    saves it with the profile in one batch, and an address that isn't theirs saves nothing at all.
+//    saves it with the profile in one batch, and an address that isn't theirs saves nothing at all;
+//    with the Auth emulator, a mentor who typed their address with capitals still signs up.
 // 3. In Chrome against the Auth and Firestore emulators (vite dev --mode emulators): a student whose
 //    mentor shared sees the address, as a link that opens their email app, on Home and Your mentor;
 //    a mentor shares it and stops on Your mentor, with the focus kept for the keyboard; the sign-up
@@ -26,6 +27,7 @@ import { randomBytes } from 'node:crypto';
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { initializeApp } from 'firebase/app';
+import { connectAuthEmulator, createUserWithEmailAndPassword, getAuth } from 'firebase/auth';
 import { collection, connectFirestoreEmulator, deleteDoc, doc, getDoc, getDocs, getFirestore, serverTimestamp, setDoc } from 'firebase/firestore';
 import { describeForGemini, matchLine } from '#lib/checkin/opener.js';
 import { outcomeText } from '#lib/matching/find-mentor-steps.js';
@@ -110,30 +112,32 @@ const offline = [
       'Students matched with you can see it, <strong class="address">{sharing.email}</strong>, so they can get in touch with you.',
       'Students matched with you can’t see it, so the coordinator introduces you.',
       "{busy ? 'Stopping…' : 'Stop sharing it'}", "{busy ? 'Sharing…' : 'Share it with them'}",
-      'Only students matched with you can see it, on their Your mentor page and in the chat. It’s never sent to Gemini.'
+      // Every place it appears, before they agree (agent1.md A6, 16:36).
+      'Only students matched with you can see it: on their Home screen, their Your mentor page and their chat’s mentor card. It’s never sent to Gemini.'
     ]) assert.ok(page.includes(words), words);
     assert.match(source('src/routes/home/+page.svelte'), /<p>You’re a mentor yourself, so there’s nothing to find here\.<\/p>\s*<a class="secondary-button do" href="\/mentor">Sharing your email<\/a>/);
     const privacy = oneLine(source('src/routes/privacy/+page.svelte'));
     for (const words of [
       'Your email address too, only if you chose to share it with the students matched with you.',
       'Your full name, your email address, or your mentor’s name or email address.',
-      'only if you chose to share it, your email address, on their Your mentor page and in the chat. You can stop sharing it on Your mentor at any time.',
+      'only if you chose to share it, your email address, on their Home screen, their Your mentor page and their chat’s mentor card. You can stop sharing it on Your mentor at any time.',
       '<strong>Your email address, if you’re a mentor sharing it with your students:</strong> Stop sharing it, on Your mentor.',
       // agent1.md A10: what the mentor is told replaces the old "To confirm" line.
-      '<strong>Your mentor</strong> sees nothing of yours in the app: not your name, your email address, your answers, your checklist, the chat or a request for a different mentor. If they chose to share their email address with you, it’s on Your mentor, so you can get in touch yourself and decide what to tell them. If not, the mentoring coordinator introduces you.'
+      '<strong>Your mentor</strong> sees nothing of yours in the app: not your name, your email address, your answers, your checklist, the chat or a request for a different mentor. If they chose to share their email address with you, it’s on your Home screen and Your mentor page, so you can get in touch yourself and decide what to tell them. If not, the mentoring coordinator introduces you.'
     ]) assert.ok(privacy.includes(words), words);
     assert.doesNotMatch(privacy, /To confirm<\/span> what they’re told when the coordinator introduces you/);
     const knows = oneLine(source('src/routes/about-you/+page.svelte'));
     for (const words of [
       'It’s never told your full name, your email, your mentor’s name or email address, or when you’re free to meet',
       'It’s never told your email address, even if you share it with the students matched with you: you choose that, and can stop, on Your mentor.',
-      'Your mentor isn’t shown anything about you; if they chose to share their email address with you, it’s on Your mentor.'
+      'Your mentor isn’t shown anything about you; if they chose to share their email address with you, it’s on Home and Your mentor.'
     ]) assert.ok(knows.includes(words), `What the chat knows: ${words}`);
   }]
 ];
 
 // ---------- 2. In the Firestore emulator ----------
 const FIRESTORE = process.env.FIRESTORE_EMULATOR_HOST;
+const AUTH = process.env.FIREBASE_AUTH_EMULATOR_HOST;
 const PROJECT = process.env.GCLOUD_PROJECT ?? 'demo-ag2';
 const [host, port] = (FIRESTORE ?? ':').split(':');
 const store = owner({ auth: '', firestore: FIRESTORE ?? '', project: PROJECT });
@@ -159,6 +163,15 @@ async function allowed(action) {
     if (/** @type {{ code?: string }} */ (err).code === 'permission-denied') return false;
     throw err;
   }
+}
+
+/** A new mentor's two documents, as registerMentor makes them (empty answers: nothing to match yet). */
+const NEW_MENTOR = { profile: { displayName: 'Cal', itemVectors: { q1: [], q2: [], q3: [], q4: [], q5: [], q6: [] }, approved: false, maxStudents: 2, studentCount: 0 }, details: { name: 'Cal Mentor', course: 'Law', answers: [], summaries: {}, meetingFrequency: 'weekly', availability: 'evenings' } };
+
+/** Marks an account verified, as clicking the link in the email would (the Auth emulator's owner). @param {string} uid */
+async function markVerified(uid) {
+  const response = await fetch(`http://${AUTH}/identitytoolkit.googleapis.com/v1/projects/${PROJECT}/accounts:update`, { method: 'POST', headers: { 'content-type': 'application/json', authorization: 'Bearer owner' }, body: JSON.stringify({ localId: uid, emailVerified: true }) });
+  assert.ok(response.ok, 'marking the account verified');
 }
 
 /** A student's match as the coordinator or the app saves it. @param {string} mentorId */
@@ -222,8 +235,7 @@ const emulated = [
     assert.equal(await loadMentorContact(as('student-a'), matchWith('mentor-a')), null, 'after stopping');
   }],
   ['Signing up with the box ticked saves the address with the profile, in one batch; unticked, nothing is shared; an address that isn’t theirs saves nothing at all', async () => {
-    const empty = { q1: [], q2: [], q3: [], q4: [], q5: [], q6: [] };
-    const mentor = { profile: { displayName: 'Cal', itemVectors: empty, approved: false, maxStudents: 2, studentCount: 0 }, details: { name: 'Cal Mentor', course: 'Law', answers: [], summaries: {}, meetingFrequency: 'weekly', availability: 'evenings' } };
+    const mentor = NEW_MENTOR;
     await saveMentor(as('mentor-c'), 'mentor-c', withContact(mentor, true, emailOf('mentor-c')));
     assert.equal((await store.read('mentorContacts/mentor-c'))?.fields?.email?.stringValue, emailOf('mentor-c'));
     assert.ok((await store.read('mentorContacts/mentor-c'))?.fields?.agreedAt?.timestampValue, 'with when they agreed');
@@ -233,6 +245,30 @@ const emulated = [
     assert.equal(await store.read('mentorContacts/mentor-d'), null, 'unticked: nothing shared');
     await assert.rejects(saveMentor(as('mentor-e'), 'mentor-e', { ...mentor, contact: { email: 'not.theirs@northumbria.ac.uk' } }), { code: 'permission-denied' });
     assert.equal(await store.read('mentors/mentor-e'), null, 'nothing at all: the profile goes with it');
+  }],
+  // agent1.md A6 (16:36): the rule compares the saved address with the sign-in's exactly, and the address
+  // goes in the same batch as the profile, so a difference in case would refuse the whole sign-up.
+  ['A mentor who types their address with capitals and ticks the box: the sign-up saves, profile and address together, the address exactly as their sign-in has it', async () => {
+    assert.ok(AUTH, 'this one needs the Auth emulator too (--only auth,firestore)');
+    const app = initializeApp({ projectId: PROJECT, apiKey: 'demo-key', authDomain: `${PROJECT}.firebaseapp.com` }, `capitals-${apps++}`);
+    const auth = getAuth(app);
+    connectAuthEmulator(auth, `http://${AUTH}`, { disableWarnings: true });
+    const db = getFirestore(app);
+    connectFirestoreEmulator(db, host, Number(port));
+    const typed = `Ava.Mentor.${randomBytes(3).toString('hex')}@Northumbria.ac.uk`;
+    // As registerMentor does: the account first, then what waits for verification, with the account's own address.
+    const { user } = await createUserWithEmailAndPassword(auth, typed, randomBytes(18).toString('base64url'));
+    const waiting = withContact(NEW_MENTOR, true, user.email);
+    // They click the link; the app then gets a fresh token (verify.js) and saves what waited (finishSignUp).
+    await markVerified(user.uid);
+    await user.reload();
+    const signedInAs = (await user.getIdTokenResult(true)).claims.email;
+    await saveMentor(db, user.uid, waiting);
+    const saved = (await store.read(`mentorContacts/${user.uid}`))?.fields?.email?.stringValue;
+    assert.equal(saved, signedInAs, 'the saved address is exactly the sign-in’s');
+    assert.ok(await store.read(`mentors/${user.uid}`), 'and the profile is saved with it');
+    assert.equal(saved?.toLowerCase(), typed.toLowerCase(), 'their own address');
+    console.log(`      (Firebase ${saved === typed ? 'kept the capitals' : 'kept it in small letters'}, in the account and its sign-in alike)`);
   }]
 ];
 
