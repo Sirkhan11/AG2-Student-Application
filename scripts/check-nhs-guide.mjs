@@ -76,7 +76,7 @@ const checks = [
   ['The chat can link the guide, and is told to answer NHS questions briefly with no prices', () => {
     assert.equal(CHAT_PAGES['NHS guide'].href, '/nhs-guide');
     const tools = Object.fromEntries(chatTools({ match: null, tasks: null })[0].functionDeclarations.map((/** @type {any} */ tool) => [tool.name, tool.description]));
-    assert.match(tools.show_page, /the NHS guide when they ask how the NHS works or whether they pay to see a doctor \(answer in one short sentence yourself, without prices or other figures: the guide has them\)/);
+    assert.match(tools.show_page, /the NHS guide when they ask how the NHS works or whether they pay to see a doctor \(answer in one short sentence yourself, without prices or other figures: seeing a GP is free, but they'll still pay for some things, such as prescriptions, dental treatment and eye tests, and the guide has the details\)/);
     assert.match(tools.show_finder, /Shows the GP finder \(surgeries near where they live\)/, 'registering with a GP: the finder, in the chat');
     assert.doesNotMatch(chatInstructions('(about)') + JSON.stringify(tools), /£/, 'the chat is never given the figures');
   }]

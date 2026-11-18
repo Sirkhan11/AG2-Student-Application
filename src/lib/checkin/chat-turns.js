@@ -16,8 +16,11 @@ import { chatOptions, describeForGemini } from '#lib/checkin/opener.js';
 // the Gemini model; it's kept apart so the checks run it in Node with a made-up model, and the scripts
 // with the real one through the Firebase SDK.
 
-/** Only the last this-many exchanges are sent each time, so a long chat can't grow without limit. */
-const MAX_EXCHANGES = 12;
+/**
+ * Only the last this-many exchanges are sent each time, so a long chat can't grow without limit, but
+ * enough that it remembers what they said earlier (such as a task that doesn't apply to them).
+ */
+const MAX_EXCHANGES = 20;
 /** Gemini may look things up or do things this many times for one message; then it has to reply. */
 const MAX_ROUNDS = 4;
 
@@ -188,7 +191,7 @@ export function chatWith(model, { facts, act, seed = [] }) {
         else if (action === 'offer' && options.mentor !== 'no') reply.offers = ['mentor'];
         else if (action === 'find' && options.mentor !== 'no') reply.start = 'mentor';
         else return { done: false, why: 'Not for this student (see what the app knows about their mentor).' };
-        return action === 'find' ? { started: true, note: 'The app asks the six questions next, here in the chat.' } : { shown: true };
+        return action === 'find' ? { started: true, note: "The app asks the six questions next, here in the chat: say you'll get them started, and never ask any yourself." } : { shown: true };
       }
       case 'suggest_replies': {
         const replies = Array.isArray(args.replies) ? args.replies.map((text) => String(text).trim()).filter((text) => text && text.length <= 40).slice(0, MAX_QUICK) : [];
@@ -213,15 +216,15 @@ export function chatWith(model, { facts, act, seed = [] }) {
     /** @type {ChatReply} */
     const reply = { kind: 'reply', text: '' };
     try {
-      for (let round = 0; ; round++) {
-        const last = round === MAX_ROUNDS;
+      for (let round = 0, again = false; ; round++) {
+        const last = round >= MAX_ROUNDS;
         const result = await model.generateContent(
           /** @type {any} */ ({
             contents: [...exchanges.slice(-MAX_EXCHANGES).flat(), ...turn],
             systemInstruction: chatInstructions(describeForGemini(facts)),
             tools: chatTools(facts),
-            // Out of rounds: it has to reply now.
-            ...(last ? { toolConfig: { functionCallingConfig: { mode: 'NONE' } } } : {})
+            // Out of rounds, or asking again after an empty answer: it has to reply in words now.
+            ...(last || again ? { toolConfig: { functionCallingConfig: { mode: 'NONE' } } } : {})
           })
         );
         const response = result.response;
@@ -231,9 +234,16 @@ export function chatWith(model, { facts, act, seed = [] }) {
         }
         const content = response.candidates?.[0]?.content;
         const calls = (content?.parts ?? []).filter((part) => 'functionCall' in part && part.functionCall);
-        if (calls.length === 0 || last) {
-          reply.text = (content?.parts ?? []).map((part) => ('text' in part && !('thought' in part && part.thought) ? part.text ?? '' : '')).join('').trim();
-          if (content) turn.push(content);
+        const said = (content?.parts ?? []).map((part) => ('text' in part && !('thought' in part && part.thought) ? part.text ?? '' : '')).join('').trim();
+        // Now and then Gemini answers with nothing at all: no words and no tools (on 18 November, to
+        // "brilliant"). Asked once more, for words this time, it replies; a second empty answer is an error.
+        if (calls.length === 0 && !said && !again) {
+          again = true;
+          continue;
+        }
+        if (calls.length === 0 || last || again) {
+          reply.text = said;
+          if (content && said) turn.push(content);
           break;
         }
         if (content) turn.push(content);
@@ -267,6 +277,8 @@ export function chatWith(model, { facts, act, seed = [] }) {
       turn[turn.length - 1] = { role: 'model', parts: [textPart(said)] };
     }
     reply.links = [...cardsFor(reply.text, found), ...(reply.links ?? [])];
+    // Quick replies only under a question.
+    if (reply.quick && !reply.text.includes('?')) delete reply.quick;
     pending = [];
     exchanges.push(turn);
     return reply;

@@ -10,8 +10,8 @@
 import assert from 'node:assert/strict';
 import { applyChange, defaultTasks, makeAdd } from '#lib/checklist/tasks.js';
 import { chatWith, ERROR_MESSAGE, UNAVAILABLE_MESSAGE, withoutClaims } from '#lib/checkin/chat-turns.js';
-import { createChatDo, NOTE_SAYS, saidIt } from '#lib/checkin/chat-do.js';
-import { chatTools, searchCatalogue, OWN_TASK } from '#lib/checkin/chat-tools.js';
+import { askedFor, createChatDo, NOTE_SAYS, saidIt, saysDone } from '#lib/checkin/chat-do.js';
+import { cardsFor, chatTools, searchCatalogue, OWN_TASK } from '#lib/checkin/chat-tools.js';
 import { chatInstructions } from '#lib/checkin/chat-prompt.js';
 import { describeForGemini } from '#lib/checkin/opener.js';
 import { SAFETY_MESSAGE } from '#lib/checkin/safety.js';
@@ -68,6 +68,10 @@ const checks = [
     // Gemini's own parts (and their signatures) go back exactly as they came.
     assert.equal(gemini.requests[1].contents.at(-2).parts[0].thoughtSignature, 'made-up-signature');
   }],
+  ['Cards only for the app\'s names as whole words: "sports news" is never the Sport card; an exact name shows its card even without a search', () => {
+    assert.deepEqual(cardsFor('Check the sports news for that one.', new Set(['Sport'])), []);
+    assert.deepEqual(cardsFor('The Advice Centre can help with that.', new Set()).map((link) => link.label), ['Advice Centre']);
+  }],
   ['A search for a kind ("sport clubs") lists the clubs; nothing that fits says so', () => {
     const clubs = searchCatalogue('sport clubs');
     assert.ok(clubs.length >= 8);
@@ -89,7 +93,7 @@ const checks = [
     await chat.send('cheers');
     assert.match(gemini.requests[2].systemInstruction, /Checklist, done: Join a society/);
   }],
-  ['Nothing is ticked unless they said they\'ve done it: words Gemini quotes must really be theirs; "yes" to "have you joined one?" is enough', async () => {
+  ['Nothing is ticked unless they said they\'ve done it: words Gemini quotes must really be theirs, say it\'s done (or a plain yes) and not "don\'t"', async () => {
     const store = stores();
     const gemini = scriptedGemini([
       { calls: [{ name: 'change_checklist', args: { change: 'tick', task: 'Enrol', their_words: 'I have enrolled' } }] },
@@ -104,6 +108,11 @@ const checks = [
     await chat.send('yes');
     assert.equal(store.state.tasks.find((task) => task.id === 'enrol')?.done, true);
     assert.ok(saidIt('joined that', ['ah brill ive joined that now']) && !saidIt('joined', ['hello']));
+    // Thomas on the live site: "i dont need to register for a gp…" is not having done it.
+    assert.equal(saysDone('i dont need to register for a gp', ['i dont need to register for a gp i need a mentor to help me focus and orginise work']), false);
+    assert.equal(saysDone('register for a gp', ['i dont need to register for a gp i need a mentor']), false, 'not even with the "don’t" left out of the quote');
+    assert.equal(saysDone('I picked up my student card today', ['I picked up my student card today actually']), true);
+    assert.equal(saysDone('not yet', ['not yet']), false);
   }],
   ['Their own tasks: matched on their words, never named to Gemini; unclear which: they pick from buttons with their tasks, Gemini only told "one of their own"', async () => {
     const add = makeAdd('Return library books');
@@ -146,6 +155,15 @@ const checks = [
     await chat.send('thanks');
     assert.match(gemini.requests.at(-1).contents.at(-1).parts[0].text, /^\[From the app, not the student: they tapped Undo/);
   }],
+  ['A task is only added when they asked for it: "what do you mean a reminder?" adds nothing (Thomas, on the live site, got a task called "not sure")', async () => {
+    assert.equal(askedFor('not sure', ['what do you mean a reminder can i set reminders on here?']), false);
+    assert.equal(askedFor('Open a bank account', ['thanks, can you remind me to sort my bank account']), true);
+    const store = stores();
+    const gemini = scriptedGemini([{ calls: [{ name: 'change_checklist', args: { change: 'add', task: 'not sure', new_title: 'not sure', their_words: 'can i set reminders on here' } }] }, { text: 'A reminder is a task on your checklist. Want one?' }]);
+    const reply = await chatWith(gemini.model, { facts: facts(), act: store.do }).send('what do you mean a reminder can i set reminders on here?');
+    assert.deepEqual(reply.changes ?? [], []);
+    assert.equal(store.state.tasks.length, defaultTasks().length);
+  }],
   ['Remember and forget: done with a line and Undo; never health, money, worries or contact details (not even offered)', async () => {
     const store = stores();
     const gemini = scriptedGemini([
@@ -173,7 +191,7 @@ const checks = [
   ['The cards and things the app shows: GP finder (with how it works), dentist search, key contacts, Ask4Help, a calendar card, a page, quick replies (at most 3, short), a reminder card, a Remember card', async () => {
     const gemini = scriptedGemini([
       { calls: [{ name: 'show_finder', args: { which: 'dentist' } }, { name: 'show_calendar', args: { title: 'Dentist appointment' } }, { name: 'suggest_replies', args: { replies: ['Yes', 'Not yet', 'What does it cost?', 'A fourth one'] } }] },
-      { text: 'Here’s the dentist search.' },
+      { text: 'Here’s the dentist search. Want to book one?' },
       { calls: [{ name: 'show_key_contacts' }, { name: 'show_ask4help' }, { name: 'show_page', args: { page: 'NHS guide' } }, { name: 'suggest_reminder', args: { task: 'Book a dentist check-up' } }, { name: 'offer_to_remember', args: { note: 'Plays five-a-side on Tuesdays' } }] },
       { text: 'Here you go.' }
     ]);
@@ -189,6 +207,8 @@ const checks = [
     assert.deepEqual(two.links?.map((link) => link.href), ['/nhs-guide']);
     assert.deepEqual(two.tasks, ['Book a dentist check-up']);
     assert.deepEqual(two.notes, ['Plays five-a-side on Tuesdays']);
+    gemini.then({ calls: [{ name: 'suggest_replies', args: { replies: ['Cheers'] } }] }, { text: 'Fair enough.' });
+    assert.equal((await chat.send('nah')).quick, undefined, 'quick replies only under a question');
   }],
   ['how_to: the task\'s steps for Gemini, and its link (the Student Portal) or the GP finder with the reply', async () => {
     const gemini = scriptedGemini([
@@ -212,6 +232,7 @@ const checks = [
     const gemini = scriptedGemini([{ calls: [{ name: 'mentor', args: { action: 'find' } }] }, { text: 'Let’s find you one.' }, { calls: [{ name: 'mentor', args: { action: 'change' } }] }, { text: 'Hmm.' }]);
     const chat = chatWith(gemini.model, { facts: facts(), act: stores().do });
     assert.equal((await chat.send('i need a mentor to help me focus and orginise work')).start, 'mentor');
+    assert.match(String(toldBack(gemini.requests[1]).mentor.note), /never ask any yourself/);
     const change = await chat.send('can I change my mentor');
     assert.equal(change.offers, undefined, 'no form without a mentor');
   }],
@@ -241,7 +262,7 @@ const checks = [
       if (out.kind === 'unavailable') {
         assert.deepEqual(await chat.send('still there?'), { kind: 'unavailable', text: UNAVAILABLE_MESSAGE });
       }
-      const failing = chatWith(scriptedGemini([{ error: new Error('network') }, { text: '' }]).model, { facts: facts() });
+      const failing = chatWith(scriptedGemini([{ error: new Error('network') }, { text: '' }, { text: '' }]).model, { facts: facts() });
       assert.deepEqual(await failing.send('hi'), { kind: 'error', text: ERROR_MESSAGE });
       assert.deepEqual(await failing.send('hi'), { kind: 'error', text: ERROR_MESSAGE });
     } finally {

@@ -1,0 +1,457 @@
+{
+ "about": "Whole conversations with the check-in chat (made-up students; Thomas’s own messages from the live site). Remade by try-chat.mjs.",
+ "model": "gemini-3.5-flash-lite",
+ "made": "2026-11-18T11:25:44.679Z",
+ "conversations": [
+  {
+   "name": "thomas",
+   "about": "Thomas’s messages from the live site, exactly as typed, in the order he sent them (with \"I love dancing\" before the tick, as he had the Salsa and Bachata card)",
+   "turns": [
+    {
+     "says": "",
+     "reply": {
+      "kind": "reply",
+      "text": "Alright Thomas, how are things going with getting settled in?",
+      "links": []
+     }
+    },
+    {
+     "says": "i dont need to register for a gp i need a mentor to help me focus and orginise work",
+     "reply": {
+      "kind": "reply",
+      "text": "I've taken that off your list, Thomas. Let's get you sorted with a mentor then—just answer these quick questions and we'll find the right one for you.",
+      "changes": [
+       {
+        "text": "Removed from your checklist: Register with a GP."
+       }
+      ],
+      "start": "mentor",
+      "links": []
+     }
+    },
+    {
+     "says": "(the app asks the six questions: answered, and matched)",
+     "reply": {
+      "kind": "reply",
+      "text": "That sounds like a solid plan for staying on top of things. Since you're into dancing and the gym, have you spotted the Dance society or Olympic Weightlifting on your travels yet?",
+      "links": [
+       {
+        "label": "Dance",
+        "href": "/societies/21",
+        "external": false,
+        "kind": "society",
+        "nsuId": 21
+       },
+       {
+        "label": "Olympic Weightlifting",
+        "href": "/sport/olympic-weightlifting",
+        "external": false,
+        "kind": "club",
+        "slug": "olympic-weightlifting"
+       }
+      ]
+     }
+    },
+    {
+     "says": "okay great now what",
+     "reply": {
+      "kind": "reply",
+      "text": "Your mentoring coordinator will be in touch soon to introduce you properly. In the meantime, do you fancy ticking off something easy from your list, like saving your key contacts?",
+      "links": []
+     }
+    },
+    {
+     "says": "yes but that is overwhelming can you help me do them 1 by 1?",
+     "reply": {
+      "kind": "reply",
+      "text": "Course we can take it nice and slow. Have a look at the key contacts card I've popped up—how are you fixed for adding those numbers to your phone?",
+      "tool": "contacts",
+      "links": []
+     }
+    },
+    {
+     "says": "I love dancing, are there any societies?",
+     "reply": {
+      "kind": "reply",
+      "text": "There's Dance, Beats Cartel Dance, and Irish Dance. What kind of dancing are you usually into?",
+      "links": [
+       {
+        "label": "Dance",
+        "href": "/societies/21",
+        "external": false,
+        "kind": "society",
+        "nsuId": 21
+       },
+       {
+        "label": "Beats Cartel Dance",
+        "href": "/societies/202",
+        "external": false,
+        "kind": "society",
+        "nsuId": 202
+       },
+       {
+        "label": "Irish Dance",
+        "href": "/societies/49",
+        "external": false,
+        "kind": "society",
+        "nsuId": 49
+       }
+      ]
+     }
+    },
+    {
+     "says": "ah brill ive joined that now can you tick it off my list?",
+     "reply": {
+      "kind": "reply",
+      "text": "Nice one, I've ticked that off for you. Are you feeling ready to tackle collecting your student ID next, or shall we leave it for a bit?",
+      "changes": [
+       {
+        "text": "Ticked: Join a society."
+       }
+      ],
+      "links": []
+     }
+    },
+    {
+     "says": "what do you mean a reminder can i set reminders on here?",
+     "reply": {
+      "kind": "reply",
+      "text": "You can add anything you like to your checklist as a reminder, Thomas. What would you like me to put on there for you?",
+      "links": []
+     }
+    },
+    {
+     "says": "nah im good i keep everyhting on my outlook calender",
+     "reply": {
+      "kind": "reply",
+      "text": "Fair enough, keeping it all in Outlook makes sense. Here's a quick way to pop your student ID collection straight into your calendar if you want it.",
+      "calendar": {
+       "title": "Collect student ID"
+      },
+      "links": []
+     }
+    },
+    {
+     "says": "sure where is the closest dentist and how does it work?",
+     "reply": {
+      "kind": "reply",
+      "text": "Drop your postcode into that dentist finder to see what's closest. Seeing a dentist on the NHS isn't free like seeing a GP, so you'll pay towards your treatment unless you're exempt.",
+      "tool": "dentist-finder",
+      "links": []
+     }
+    },
+    {
+     "says": "okay done that whats next?",
+     "reply": {
+      "kind": "reply",
+      "text": "Brilliant, I've ticked that off. You've just got collecting your student ID and saving your key contacts left on your checklist.",
+      "changes": [
+       {
+        "text": "Ticked: Find a dentist."
+       }
+      ],
+      "links": []
+     }
+    },
+    {
+     "says": "how do i do this?",
+     "reply": {
+      "kind": "reply",
+      "text": "You just need to head over to the campus where your course is taught, Thomas. Make sure you bring a physical photo ID like your passport, and it'll be ready to pick up once you've enrolled and uploaded a photo.",
+      "links": [
+       {
+        "label": "Open the Student Portal",
+        "href": "https://myportal.northumbria.ac.uk/",
+        "external": true
+       }
+      ]
+     }
+    },
+    {
+     "says": "can you not check if there is a gym society?",
+     "reply": {
+      "kind": "reply",
+      "text": "There isn't a gym society as such, but Northumbria Sport has Olympic Weightlifting, Powerlifting, and Gymnastics clubs if any of those take your fancy.",
+      "links": [
+       {
+        "label": "Sport",
+        "href": "https://northumbriasport.com/sports",
+        "external": true,
+        "kind": "service",
+        "serviceId": "sport"
+       },
+       {
+        "label": "Olympic Weightlifting",
+        "href": "/sport/olympic-weightlifting",
+        "external": false,
+        "kind": "club",
+        "slug": "olympic-weightlifting"
+       },
+       {
+        "label": "Powerlifting",
+        "href": "/sport/powerlifting",
+        "external": false,
+        "kind": "club",
+        "slug": "powerlifting"
+       }
+      ]
+     }
+    },
+    {
+     "says": "what is the score of england last match?",
+     "reply": {
+      "kind": "reply",
+      "text": "Couldn't tell you, I don't get scores in here. Did you manage to catch it?",
+      "links": []
+     }
+    },
+    {
+     "says": "but no society can you sarch for me?",
+     "reply": {
+      "kind": "reply",
+      "text": "I had another look, and while there isn't a dedicated gym society, there are Yoga and Pilates recreational sport societies alongside the Northumbria Sport clubs.",
+      "links": [
+       {
+        "label": "Yoga",
+        "href": "/societies/110",
+        "external": false,
+        "kind": "society",
+        "nsuId": 110
+       },
+       {
+        "label": "Pilates",
+        "href": "/societies/264",
+        "external": false,
+        "kind": "society",
+        "nsuId": 264
+       },
+       {
+        "label": "Sport",
+        "href": "https://northumbriasport.com/sports",
+        "external": true,
+        "kind": "service",
+        "serviceId": "sport"
+       }
+      ]
+     }
+    },
+    {
+     "says": "what was the score in the last england match",
+     "reply": {
+      "kind": "reply",
+      "text": "I really can't check match scores in here, unfortunately. Were you hoping they'd win?",
+      "links": []
+     }
+    }
+   ]
+  },
+  {
+   "name": "free-1",
+   "about": "A home student, tired after moving in: small talk, cooking, homesick, societies, the checklist, a tick, football banter",
+   "turns": [
+    {
+     "says": "",
+     "reply": {
+      "kind": "reply",
+      "text": "Hey Jess, how's things going with getting settled in?",
+      "links": []
+     }
+    },
+    {
+     "says": "hiya",
+     "reply": {
+      "kind": "reply",
+      "text": "Alright? How's your first bit of uni life treating you so far?",
+      "links": []
+     }
+    },
+    {
+     "says": "honestly knackered, just moved in and the kitchen is a state",
+     "reply": {
+      "kind": "reply",
+      "text": "Oh mate, I completely feel that, first week moving chaos is no joke. Have you managed to sort out any food yet or are you living off takeaways?",
+      "links": []
+     }
+    },
+    {
+     "says": "any easy meals I can make with like a kettle and a microwave lol",
+     "reply": {
+      "kind": "reply",
+      "text": "Poundland gourmet right there. Jacket potatoes in the microwave are an absolute lifesaver, or just lobbing some pasta and boiling water into a bowl with a plate on top.",
+      "links": []
+     }
+    },
+    {
+     "says": "do you get homesick? I kinda miss my mams cooking",
+     "reply": {
+      "kind": "reply",
+      "text": "It's totally normal to miss home cooking when you're surrounded by boxes and chaos, Jess. Nothing quite hits the spot like what you're used to, is there?",
+      "links": []
+     }
+    },
+    {
+     "says": "are there any baking or cooking societies?",
+     "reply": {
+      "kind": "reply",
+      "text": "The app doesn't have a baking society on the books, but there are loads of other groups if you fancy trying something completely different. Want to take a look at what's going on?",
+      "links": []
+     }
+    },
+    {
+     "says": "nice. whats left on my checklist?",
+     "reply": {
+      "kind": "reply",
+      "text": "You've still got a few bits to tick off, like enrolling, registering with a GP, getting your student ID, joining a society, finding a dentist, and saving key contacts. Shall we tackle enrolling first?",
+      "links": [
+       {
+        "label": "Open the Student Portal",
+        "href": "https://myportal.northumbria.ac.uk/",
+        "external": true
+       }
+      ]
+     }
+    },
+    {
+     "says": "I picked up my student card today actually",
+     "reply": {
+      "kind": "reply",
+      "text": "Nice one, that's another thing sorted. Fancy tackling enrolling next, or do you want a break from admin?",
+      "changes": [
+       {
+        "text": "Ticked: Collect student ID."
+       }
+      ],
+      "links": []
+     }
+    },
+    {
+     "says": "did you see the toon game last night",
+     "reply": {
+      "kind": "reply",
+      "text": "Couldn't tell you, I don't get scores in here. Did you watch it?",
+      "links": []
+     }
+    },
+    {
+     "says": "ok im off out, cheers",
+     "reply": {
+      "kind": "reply",
+      "text": "Have a good time out, catch you later.",
+      "links": []
+     }
+    }
+   ]
+  },
+  {
+   "name": "free-2",
+   "about": "An international student, just arrived: where to start, a money worry (no advice: the right service), the GP, a society, laundry, a reminder",
+   "turns": [
+    {
+     "says": "",
+     "reply": {
+      "kind": "reply",
+      "text": "Alright Tobi, welcome to Newcastle. How are you settling in after getting here yesterday?",
+      "links": []
+     }
+    },
+    {
+     "says": "hello, I just arrived from Lagos yesterday",
+     "reply": {
+      "kind": "reply",
+      "text": "That's quite a journey, Tobi. How are you holding up with the jet lag and the chilly weather here?",
+      "links": []
+     }
+    },
+    {
+     "says": "where do I even start",
+     "reply": {
+      "kind": "reply",
+      "text": "Fair enough, it's a lot to take in all at once. Shall we tick off enrolment first since you're doing MSc Data Science?",
+      "links": [
+       {
+        "label": "Open the Student Portal",
+        "href": "https://myportal.northumbria.ac.uk/",
+        "external": true
+       }
+      ]
+     }
+    },
+    {
+     "says": "Im a bit worried about money, my loan hasnt come through",
+     "reply": {
+      "kind": "reply",
+      "text": "That's completely understandable to feel stressed about that, Tobi. It's really worth having a chat with the Students' Union Advice Centre or Ask4Help so they can look at your options and help tide you over.",
+      "links": [
+       {
+        "label": "Advice Centre",
+        "href": "https://mynsu.co.uk/advice-centre",
+        "external": true,
+        "kind": "service",
+        "serviceId": "advice-centre"
+       }
+      ]
+     }
+    },
+    {
+     "says": "how does the GP thing work here, do I have to pay?",
+     "reply": {
+      "kind": "reply",
+      "text": "Seeing a GP is completely free on the NHS, Tobi, though you might have to pay for things like prescriptions later on. Would you like me to show you the local surgeries near you?",
+      "links": [
+       {
+        "label": "NHS guide",
+        "href": "/nhs-guide",
+        "external": false
+       }
+      ]
+     }
+    },
+    {
+     "says": "ok and is there a nigerian society?",
+     "reply": {
+      "kind": "reply",
+      "text": "There is indeed, the Nigerian society is right there on the list. Would you like me to look up any football or music groups while we're at it?",
+      "links": [
+       {
+        "label": "Nigerian",
+        "href": "/societies/67",
+        "external": false,
+        "kind": "society",
+        "nsuId": 67
+       }
+      ]
+     }
+    },
+    {
+     "says": "how do i use the laundry machines in halls",
+     "reply": {
+      "kind": "reply",
+      "text": "Usually you just need to download the app the laundry room uses, top it up with your card, and tap your phone or card on the machine. You'll want to check the specific instructions in your accommodation laundry room though, as they sometimes use different providers.",
+      "links": []
+     }
+    },
+    {
+     "says": "thanks, can you remind me to sort my bank account",
+     "reply": {
+      "kind": "reply",
+      "text": "All added to your checklist, Tobi. Need a hand sorting anything else out today?",
+      "changes": [
+       {
+        "text": "Added to your checklist: Open a bank account."
+       }
+      ],
+      "links": []
+     }
+    },
+    {
+     "says": "brilliant",
+     "reply": {
+      "kind": "reply",
+      "text": "Glad to help. Give me a shout whenever you're ready for the next thing.",
+      "links": []
+     }
+    }
+   ]
+  }
+ ]
+}

@@ -6,7 +6,7 @@
 // its own words. The words of the student's own tasks never go to Gemini.
 // No Firebase here (the page passes its stores in, the scripts their own), so the checks run it in Node.
 
-import { EDIT_SAYS, planEdit } from '#lib/checkin/checklist-edits.js';
+import { DONE_WORDS, EDIT_SAYS, planEdit, words as taskWords } from '#lib/checkin/checklist-edits.js';
 import { screenNote } from '#lib/checkin/remember-notes.js';
 import { talkFor } from '#lib/checklist/how-to.js';
 import { NOT_SURE, OWN_TASK, standardTask } from '#lib/checkin/chat-tools.js';
@@ -57,6 +57,37 @@ const plain = (text) => text.toLowerCase().replace(/[’']/g, '').replace(/[^a-z
  */
 export const saidIt = (words, typed) => plain(words) !== '' && typed.some((text) => plain(text).includes(plain(words)));
 
+/** Words that turn "done" round ("I don't need to register", "not yet", "I haven't"). */
+const NOT = /\b(?:not|no|never|nope|dont|don't|don’t|haven't|haven’t|havent|didn't|didn’t|didnt|isn't|isn’t|isnt|can't|can’t|cant|won't|won’t|wont|yet)\b/i;
+/** A plain yes, to "have you done it?". */
+const YES = /^\s*(?:yes|yeah|yep|yup|ye|yea|aye|i have|i did|i've done it|done|sure have|definitely|of course|ofc)\b/i;
+
+/**
+ * Whether the words Gemini quoted for a tick really say they've done it: their own words (saidIt),
+ * with nothing turning them round, and the message they're from saying it's done ("I've joined that",
+ * "picked it up", "done that", "tick it off") or a plain yes to the chat's question.
+ * @param {string} words @param {string[]} typed
+ */
+export const saysDone = (words, typed) => {
+  if (!saidIt(words, typed) || NOT.test(words)) return false;
+  const message = typed.find((text) => plain(text).includes(plain(words))) ?? '';
+  return DONE_WORDS.test(words) || YES.test(words) || DONE_WORDS.test(message);
+};
+
+/** Words that say what kind of task it is rather than what it's about: not enough to say they asked for it. */
+const ACTIONS = new Set(['open', 'buy', 'get', 'sort', 'book', 'make', 'find', 'go', 'set', 'register', 'join', 'call', 'pay', 'remember', 'remind', 'add', 'reminder', 'sure', 'not', 'own', 'their']);
+
+/**
+ * Whether a task to add is one they asked for: a real task (not "not sure"), sharing a word that says
+ * what it's about with what they typed ("Open a bank account" for "remind me to sort my bank account").
+ * @param {string} title @param {string[]} typed
+ */
+export const askedFor = (title, typed) => {
+  const key = taskWords(title).filter((word) => !ACTIONS.has(word));
+  const theirs = new Set(typed.flatMap((text) => taskWords(text)));
+  return key.length > 0 && key.some((word) => theirs.has(word));
+};
+
 /**
  * The chat's changes, through these stores.
  * @param {Stores} stores
@@ -72,12 +103,15 @@ export function createChatDo(stores) {
      * @returns {Promise<Done>}
      */
     async checklist(call, typed) {
+      if (call.change === 'add' && !askedFor(call.new_title ?? '', typed)) {
+        return { forGemini: { done: false, why: "They haven't asked for that as a task: if they'd like one, ask what it should say." } };
+      }
       const list = await stores.loadTasks();
       const taskId = standardTask(call.task);
       const own = call.task === OWN_TASK;
       const words = call.their_words && saidIt(call.their_words, typed) ? call.their_words : typed[0] ?? '';
       const request = { edit: call.change, ...(taskId ? { taskId } : {}), own, title: call.new_title };
-      const plan = planEdit(list, request, words, call.change === 'tick' ? { saidDone: saidIt(call.their_words ?? '', typed) } : {});
+      const plan = planEdit(list, request, words, call.change === 'tick' ? { saidDone: saysDone(call.their_words ?? '', typed) } : {});
       if (plan.kind === 'say') return { forGemini: { done: false, why: plan.text } };
       if (plan.kind === 'sure') {
         const which = talkFor(plan.task.id) ? `"${plan.task.title}"` : 'that one of their own';

@@ -52,7 +52,7 @@ const offline = [
     const tool = chatTools({ match: MATCH, tasks: null })[0].functionDeclarations.find((/** @type {any} */ declared) => declared.name === 'mentor');
     const instructions = oneLine(chatInstructions('(about)'));
     for (const words of [
-      `"show" shows their mentor (or that they haven't got one yet)`,
+      `"show" shows their mentor here (or that they haven't got one yet) whenever they ask about their mentor, rather than sending them to a page`,
       `"change" shows the form to ask the mentoring coordinator for a different mentor (only the coordinator sees why: never ask them why yourself)`
     ]) assert.ok(tool.description.includes(words), words);
     assert.ok(instructions.includes('Never invent events, times, prices, places, people or contact details.'));

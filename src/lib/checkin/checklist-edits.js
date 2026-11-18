@@ -65,13 +65,13 @@ const FOR_GEMINI = Object.freeze({
  * Words that say they've done something, so a tick is what they meant: "I've joined that", "tick it
  * off", "done", "got it". Without any, the app asks before ticking.
  */
-const DONE_WORDS = /\b(tick|ticked|done|did|finished|complete|completed|sorted|joined|registered|enrolled|collected|picked (it )?up|got (it|my|one|the|a)|have got|saved|found|signed up|been|went|booked|made)\b/i;
+export const DONE_WORDS = /\b(tick|ticked|done|did|finished|complete|completed|sorted|joined|registered|enrolled|collected|picked (it )?up|got (it|my|one|the|a)|have got|saved|found|signed up|been|went|booked|made)\b/i;
 
 /** Small words that don't help tell tasks apart. */
 const LITTLE = new Set(['a', 'an', 'the', 'my', 'to', 'of', 'for', 'and', 'or', 'it', 'that', 'this', 'on', 'in', 'at', 'with', 'off', 'up', 'i', 'ive', 'im', 'me', 'you', 'can', 'please', 'one', 'task', 'list', 'checklist', 'tick', 'untick', 'remove', 'take', 'rename', 'done', 'just', 'now', 'have', 'has', 'is', 'be', 'do', 'did', 'got']);
 
 /** A text's words, for matching: lower case, no punctuation, no little words, no final "s". @param {string} text */
-function words(text) {
+export function words(text) {
   return text
     .toLowerCase()
     .replace(/['’]/g, '')

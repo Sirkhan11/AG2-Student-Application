@@ -18,7 +18,7 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { applyChange, defaultTasks } from '#lib/checklist/tasks.js';
 import { chatWith } from '#lib/checkin/chat-turns.js';
 import { createChatDo } from '#lib/checkin/chat-do.js';
-import { CHAT_MODEL, openNote } from '#lib/checkin/chat-prompt.js';
+import { afterMentorNote, CHAT_MODEL, openNote } from '#lib/checkin/chat-prompt.js';
 
 const SAVED = 'scripts/fixtures/chat-conversations.json';
 /** Prices per million tokens on the paid tier for the chat's model (checked 18 November 2026). */
@@ -168,9 +168,18 @@ for (const conversation of CONVERSATIONS.filter((item) => !only || only.includes
   for (const says of conversation.says) {
     const reply = await chat.send(says);
     turns.push({ says, reply });
-    // The page would start the six mentor questions here; this script stops them straight away, as
-    // the page does when they tap Stop (Gemini is told).
-    if (reply.start === 'mentor') chat.retell({ ...chat.facts(), mentorNote: 'stopped' });
+    // The page would ask the six mentor questions here (no Gemini). This script takes them as answered
+    // and matched, tells Gemini as the page does (without the mentor's name, with a summary), and has
+    // Gemini write its message after the match, as the page does.
+    if (reply.start === 'mentor') {
+      chat.retell({
+        ...chat.facts(),
+        match: { status: 'matched', mentorId: 'made-up', mentorName: null, reasons: ['You both want help staying organised'], meetingFrequency: 'weekly', availability: null },
+        mentorNote: null,
+        profile: { ...chat.facts().profile, matchingSummary: { likes: ['staying organised', 'focusing on work'], avoids: [], styles: { social: null, planning: 'planning ahead', working: null } } }
+      });
+      turns.push({ says: '(the app asks the six questions: answered, and matched)', reply: await chat.prompt(afterMentorNote('matched')) });
+    }
   }
   const done = { name: conversation.name, about: conversation.about, turns: turns.map(({ says, reply }) => ({ says, reply: { ...reply, changes: reply.changes?.map((change) => ({ text: change.text })) } })) };
   results.push(done);
@@ -184,5 +193,8 @@ const input = usage.reduce((total, used) => total + (used.promptTokenCount ?? 0)
 const output = usage.reduce((total, used) => total + (used.candidatesTokenCount ?? 0) + (used.thoughtsTokenCount ?? 0), 0);
 const dollars = (input * PRICE.input + output * PRICE.output) / 1e6;
 console.log(`\n${requests} Gemini requests for ${messages} messages (${(requests / Math.max(1, messages)).toFixed(2)} a message); on average ${Math.round(input / Math.max(1, requests))} tokens in and ${Math.round(output / Math.max(1, requests))} out a request; about $${(dollars / Math.max(1, messages)).toFixed(4)} a message with ${CHAT_MODEL}.`);
-writeFileSync(SAVED, `${JSON.stringify({ about: 'Whole conversations with the check-in chat (made-up students; Thomas’s own messages from the live site). Remade by try-chat.mjs.', model: CHAT_MODEL, made: new Date().toISOString(), conversations: results }, null, 1)}\n`);
+// With --only, the other conversations saved before stay as they were.
+const before = only ? JSON.parse(readFileSync(SAVED, 'utf8')).conversations.filter((/** @type {any} */ saved) => !only.includes(saved.name)) : [];
+const conversations = CONVERSATIONS.map((item) => results.find((done) => done.name === item.name) ?? before.find((/** @type {any} */ saved) => saved.name === item.name)).filter(Boolean);
+writeFileSync(SAVED, `${JSON.stringify({ about: 'Whole conversations with the check-in chat (made-up students; Thomas’s own messages from the live site). Remade by try-chat.mjs.', model: CHAT_MODEL, made: new Date().toISOString(), conversations }, null, 1)}\n`);
 console.log(`Saved to ${SAVED}.`);

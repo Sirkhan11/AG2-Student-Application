@@ -77,7 +77,7 @@ export function chatTools(facts) {
         ),
         declare(
           'change_checklist',
-          "Changes their checklist: tick a task (only when they've said they've done it), untick one, add one (a reminder is a task on their checklist), remove one, or rename one of their own. The app checks it, makes it, and shows a line with Undo; it tells you what happened.",
+          "Changes their checklist: tick a task (only when they've said they've done it), untick one, add one (a reminder is a task on their checklist), remove one (when they ask you to, or tell you they don't need it), or rename one of their own. The app checks it, makes it, and shows a line with Undo; it tells you what happened.",
           {
             change: string('What to do', ['tick', 'untick', 'add', 'remove', 'rename']),
             task: string(`Which task: one of the standard ones by its title, "${OWN_TASK}" for one they added themselves (you aren't told those; the app matches their words), or "${NOT_SURE}" (the app then asks which). For add, "${NOT_SURE}".`, tasks),
@@ -95,7 +95,7 @@ export function chatTools(facts) {
         declare('offer_to_remember', "Shows a card asking whether to remember something useful they've mentioned but didn't ask you to remember (such as a plan). They tap to say yes. The card asks, so don't ask it yourself.", {
           note: string('What it would remember, short')
         }),
-        declare('suggest_reminder', "Shows a card offering to add a task to their checklist that they didn't ask for. They tap Add (the card asks, so don't ask it yourself). When they ask for one, use change_checklist instead.", {
+        declare('suggest_reminder', "Shows a card offering to add a task to their checklist that they didn't ask for: a specific one that would help with something they've said (never a vague one). They tap Add (the card asks, so don't ask it yourself). When they ask for one, use change_checklist instead.", {
           task: string('The task, starting with a verb')
         }),
         declare('show_finder', 'Shows the GP finder (surgeries near where they live) or the dentist search. They type their postcode into it: never ask for it yourself.', {
@@ -103,15 +103,15 @@ export function chatTools(facts) {
         }),
         declare('show_key_contacts', 'Shows the key contacts card: Campus Security, Ask4Help, 999 and 101, to call or save.'),
         declare('show_ask4help', "Shows Ask4Help, the university's student help service, when that's really the best next step."),
-        declare('show_calendar', 'Shows a card to put something in their own calendar (Outlook on the web, or a calendar file). The app keeps nothing.', {
-          title: string('What the calendar entry is called')
+        declare('show_calendar', "Shows a card to put one specific thing in their own calendar (Outlook on the web, or a calendar file), such as a task from their checklist. The app keeps nothing. When they'd rather keep things in their own calendar (such as Outlook), offer it in words; show it when there's a specific thing to put in.", {
+          title: string('The thing to put in, as the calendar entry is called (such as "Register with a GP")')
         }),
-        declare('show_page', "Shows a button to one of the app's pages, when the page itself is what helps: the NHS guide when they ask how the NHS works or whether they pay to see a doctor (answer in one short sentence yourself, without prices or other figures: the guide has them); Need help now when they might be in danger.", {
+        declare('show_page', "Shows a button to one of the app's pages, when the page itself is what helps: the NHS guide when they ask how the NHS works or whether they pay to see a doctor (answer in one short sentence yourself, without prices or other figures: seeing a GP is free, but they'll still pay for some things, such as prescriptions, dental treatment and eye tests, and the guide has the details); Need help now when they might be in danger.", {
           page: string('Which page', Object.keys(CHAT_PAGES))
         }),
         declare(
           'mentor',
-          `Their student mentor: "show" shows their mentor (or that they haven't got one yet)${mentorActions.includes('find') ? '; "find" starts the six short questions that find them one, here in the chat, when they ask for one; "offer" shows a card offering that, when they might like one but didn\'t ask' : ''}${mentorActions.includes('change') ? '; "change" shows the form to ask the mentoring coordinator for a different mentor (only the coordinator sees why: never ask them why yourself)' : ''}.`,
+          `Their student mentor: "show" shows their mentor here (or that they haven't got one yet) whenever they ask about their mentor, rather than sending them to a page${mentorActions.includes('find') ? '; "find" starts the six short questions that find them one, here in the chat, when they ask for one (the app asks them, so never ask them yourself); "offer" shows a card offering that, when they might like one but didn\'t ask' : ''}${mentorActions.includes('change') ? '; "change" shows the form to ask the mentoring coordinator for a different mentor (only the coordinator sees why: never ask them why yourself)' : ''}.`,
           { action: string('What to do', mentorActions) }
         ),
         declare('suggest_replies', 'Shows up to three quick replies under your message, for a question with obvious short answers.', {
@@ -196,17 +196,20 @@ export function linkFor(id) {
 /** A standard task's id from its title, or null. @param {string} title */
 export const standardTask = (title) => STANDARD_TITLES.find((task) => task.title === title)?.id ?? null;
 
+/** A name as a pattern that only matches it as whole words. @param {string} name @param {boolean} anyCase */
+const named = (name, anyCase) => new RegExp(`(?<![\\p{L}\\p{N}])${name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?![\\p{L}\\p{N}])`, anyCase ? 'iu' : 'u');
+
 /**
- * The cards for the societies, clubs and services a reply names: only ones the app knows, found in
- * this conversation's searches, in the order they're named, at most MAX_CARDS.
+ * The cards for the societies, clubs and services a reply names, as whole words: any the app knows,
+ * written as the app writes them, and those its searches found in any capitals ("sports news" is never
+ * the Sport card). In the order they're named, at most MAX_CARDS.
  * @param {string} text the reply
  * @param {Set<string>} found every name a search has returned in this conversation
  * @returns {import('#lib/suggestions/catalogue.js').ReplyLink[]}
  */
 export function cardsFor(text, found) {
-  const lower = text.toLowerCase();
-  return [...found]
-    .map((name) => ({ name, at: lower.indexOf(name.toLowerCase()) }))
+  return SUGGESTIONS.map((item) => item.name)
+    .map((name) => ({ name, at: text.search(named(name, found.has(name))) }))
     .filter((entry) => entry.at >= 0)
     .sort((a, b) => a.at - b.at || b.name.length - a.name.length)
     // A name inside a longer one that's also named (Football in Women's Football) isn't a card of its own.

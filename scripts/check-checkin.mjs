@@ -143,9 +143,9 @@ const checks = [
     ]);
     assert.deepEqual(cardsFor('Swimming.', found), [{ label: 'Swimming', href: '/sport/swimming', external: false, kind: 'club', slug: 'swimming' }]);
   }],
-  ['A name no search found never becomes a card, however it\'s written; each once, at most three, in the order named', () => {
+  ['Only the app\'s own names become cards, as whole words (an invented or left-out one never does); each once, at most three, in the order named', () => {
     const found = new Set(searchCatalogue('climbing').map((result) => result.name));
-    assert.deepEqual(cardsFor('Climbing, climbing, Underwater Basket Weaving, Girls Who Run, Film.', found).map((link) => link.label), ['Climbing']);
+    assert.deepEqual(cardsFor('Climbing, climbing, Underwater Basket Weaving, Girls Who Run, Film.', found).map((link) => link.label), ['Climbing', 'Film']);
     const many = new Set(['Film', 'Swimming', 'Food Pantry', 'Music']);
     assert.deepEqual(cardsFor('Music, Film, Swimming or the Food Pantry.', many).map((link) => link.label), ['Music', 'Film', 'Swimming']);
   }],
@@ -258,8 +258,8 @@ const checks = [
   ['Reminders: a reminder is a task on their checklist; one they ask for is added straight away (change_checklist); one the chat suggests has an Add card; the calendar for their own calendar', () => {
     const tools = Object.fromEntries(chatTools({ match: null, tasks: defaultTasks() })[0].functionDeclarations.map((/** @type {any} */ tool) => [tool.name, tool.description]));
     assert.match(tools.change_checklist, /add one \(a reminder is a task on their checklist\)/);
-    assert.match(tools.suggest_reminder, /that they didn't ask for\. They tap Add .* When they ask for one, use change_checklist instead\./);
-    assert.match(tools.show_calendar, /put something in their own calendar \(Outlook on the web, or a calendar file\)\. The app keeps nothing\./);
+    assert.match(tools.suggest_reminder, /that they didn't ask for: a specific one that would help with something they've said \(never a vague one\)\. They tap Add .* When they ask for one, use change_checklist instead\./);
+    assert.match(tools.show_calendar, /put one specific thing in their own calendar \(Outlook on the web, or a calendar file\).*The app keeps nothing\./);
     assert.doesNotMatch(chatInstructions(''), /reminding about while they settle in/, 'no stock reminder question');
   }],
   ['The chat gives the page a suggested reminder for its card (only the tap adds it), and Gemini sees what the student saw', async () => {
@@ -328,8 +328,16 @@ const checks = [
       assert.deepEqual(await busy.send('Hi'), { kind: 'error', text: ERROR_MESSAGE });
       assert.deepEqual(await busy.send('Hi again'), { kind: 'error', text: ERROR_MESSAGE });
       assert.equal(calls, 2);
-      const empty = chatWith(scriptedGemini([{ text: '   ' }]).model, { facts: noFacts });
+      const empty = chatWith(scriptedGemini([{ text: '   ' }, { text: '' }]).model, { facts: noFacts });
       assert.deepEqual(await empty.send('Hi'), { kind: 'error', text: ERROR_MESSAGE }, 'nothing to say or show is never shown as a reply');
+      // One empty answer is asked again once, for words (no tools this time), as Gemini did on 18 November.
+      const once = scriptedGemini([{ text: '' }, { text: 'Glad that helped.' }]);
+      const quietOnce = chatWith(once.model, { facts: noFacts });
+      assert.equal((await quietOnce.send('brilliant')).text, 'Glad that helped.');
+      assert.equal(once.requests.length, 2);
+      assert.equal(once.requests[0].toolConfig, undefined);
+      assert.equal(once.requests[1].toolConfig.functionCallingConfig.mode, 'NONE');
+      assert.ok(!once.requests[1].contents.some((/** @type {any} */ content) => content.role === 'model'), 'the empty answer is not kept');
     } finally {
       console.error = quiet;
     }
