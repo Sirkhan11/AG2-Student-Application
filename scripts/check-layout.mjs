@@ -63,6 +63,22 @@ const offline = [
     }
     assert.doesNotMatch(page, /to confirm|to be confirmed/i);
     assert.ok(PUBLIC_PAGES.includes('/need-help') && ALWAYS_OPEN.includes('/need-help'), 'without logging in, whatever state an account is in');
+  }],
+  ['One finder for GPs and dentists, with a tab for each: on the GP tab the search and results come first, each result has "How to register", and the Registering facts sit below; the Dentist tab has the postcode box, NHS Find a dentist and the steps; the reminder to check with the practice stays', () => {
+    const page = source('src/routes/gp-finder/+page.svelte');
+    assert.match(page, /let tab = \$derived\(page\.url\.searchParams\.get\('tab'\) === 'dentist' \? 'dentist' : 'gp'\);/, 'the tab is in the address, so the checklist can open it');
+    assert.match(page, /<a href="\/gp-finder" class:active=\{tab === 'gp'\}/);
+    assert.match(page, /<a href="\/gp-finder\?tab=dentist" class:active=\{tab === 'dentist'\}/);
+    const gpTab = page.slice(page.indexOf("{#if tab === 'gp'}"), page.indexOf('{:else}'));
+    const order = ['id="search"', 'Use my location', '{#if finder.results}', 'How to register ↗', 'Phone the practice to check before you visit', '<h2>Registering</h2>', 'More in the NHS Guide'];
+    for (let i = 1; i < order.length; i++) assert.ok(gpTab.indexOf(order[i - 1]) !== -1 && gpTab.indexOf(order[i - 1]) < gpTab.indexOf(order[i]), `${order[i - 1]} comes before ${order[i]}`);
+    assert.match(gpTab, /href=\{practicePageUrl\(practice\)\}[\s\S]{0,400}How to register ↗/, 'each result’s How to register opens its NHS page');
+    for (const kept of ['REGISTERING.free, REGISTERING.documents, REGISTERING.studentRegistration, REGISTERING.healthHub', 'Nearest GP surgeries to', 'More surgeries on NHS Find a GP', 'Show {Math.min(RESULTS', 'Organisation Data Service']) assert.ok(page.includes(kept), `kept: ${kept}`);
+    const dentistTab = page.slice(page.indexOf('{:else}'), page.indexOf('<BottomNav />'));
+    for (const words of ['id="dentist-search"', 'Find dentists', 'It’s only used to open NHS Find a dentist for it. Nothing is saved.', 'NHS Find a dentist near {dentist.label} ↗', '{#each dentistHowTo.steps as step, i (i)}', 'Phone the practice to check before you visit']) assert.ok(dentistTab.includes(words), words);
+    assert.match(page, /const dentistHowTo = HOW_TO\.dentist;/, 'the checklist’s steps, not a second copy');
+    assert.match(page, /if \(wanted\.kind === 'postcode' \|\| wanted\.kind === 'district'\) dentist = \{ href: findADentistUrl\(wanted\.value\), label: wanted\.value \};/, 'as the chat’s dentist card does');
+    assert.doesNotMatch(page, /localStorage|sessionStorage|indexedDB|document\.cookie/, 'nothing typed is stored');
   }]
 ];
 
