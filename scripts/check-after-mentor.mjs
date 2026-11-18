@@ -241,11 +241,15 @@ async function inTheBrowser(where) {
    * use up Chrome's few connections to it, and reads late in it give up as "offline".
    * @param {(page: Awaited<ReturnType<typeof openChrome>>, gemini: Awaited<ReturnType<typeof standInGemini>>) => Promise<void>} part
    */
+  /** What Gemini would have refused in every part, for the last check. @type {string[][]} */
+  const refused = [];
   const inFreshChrome = async (part) => {
     const page = await openChrome(app.base);
+    const gemini = await standInGemini(page.send, page.listen);
     try {
-      await part(page, await standInGemini(page.send, page.listen));
+      await part(page, gemini);
     } finally {
+      refused.push(...gemini.refused());
       await page.close();
     }
   };
@@ -319,6 +323,7 @@ async function inTheBrowser(where) {
           && cards.includes('Swimming') && cards.includes('Salsa and Bachata') && gemini.requests.length === 2,
         `${outcome}; ${gemini.requests.length} request(s) to the stand-in; summary kept: ${Boolean(kept)}`);
     });
+    report('Gemini would accept every request the app sent: no field it doesn’t know (on 18 November two extra fields made it refuse every ordinary message)', refused.length === 0, JSON.stringify(refused));
   } finally {
     app.stop();
   }

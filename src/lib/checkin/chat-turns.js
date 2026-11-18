@@ -122,8 +122,14 @@ export function chatWith(model, { facts, opener, seed = [] }) {
    */
   async function ask(message, request, read) {
     try {
-      // Whole exchanges only, so what's sent always starts with one of the student's messages.
-      const result = await model.generateContent({ contents: [...history.slice(-MAX_HISTORY_MESSAGES), message], ...request });
+      // Whole exchanges only, so what's sent always starts with one of the student's messages. Only
+      // the fields Gemini accepts are sent, whatever the request builder returned: anything else
+      // (such as the checklist chatRequest keeps for the app) makes Gemini refuse the whole request.
+      const result = await model.generateContent({
+        contents: [...history.slice(-MAX_HISTORY_MESSAGES), message],
+        systemInstruction: request.systemInstruction,
+        generationConfig: request.generationConfig
+      });
       // Layer 3: if Gemini's own safety filters stop the reply, the student still gets the support message.
       const response = result.response;
       if (response.promptFeedback?.blockReason || response.candidates?.[0]?.finishReason === 'SAFETY') {

@@ -495,6 +495,7 @@ async function inTheBrowser() {
     await go('/more');
     await evaluate(`([...document.querySelectorAll('a')].find((a) => a.textContent.includes('What the chat knows about you'))?.click(), true)`);
     report('More links to the page', await waitFor(`location.pathname === '/about-you' && ${has('What the chat knows about you')}`));
+    report('Gemini would accept every request the app sent: no field it doesn’t know (on 18 November two extra fields made it refuse every ordinary message)', gemini.refused().length === 0, JSON.stringify(gemini.refused()));
   } finally {
     socket?.close();
     chrome.kill();
