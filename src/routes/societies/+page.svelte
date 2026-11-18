@@ -151,9 +151,9 @@
     flex: none;
     width: 56px;
     height: 56px;
-    border-radius: 10px;
+    border-radius: var(--radius-s);
     object-fit: cover;
-    background: #eaf2f8;
+    background: var(--violet-soft);
   }
 
   .initials {

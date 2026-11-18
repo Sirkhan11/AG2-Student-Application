@@ -143,7 +143,7 @@ const offline = [
     assert.match(card, /onclick=\{remember\}/);
   }],
   ['The page: linked from More and the chat’s note; shows the record and the notes, with Delete for each and Delete all after a confirm; deleting tells a running chat', () => {
-    assert.match(source('src/routes/more/+page.svelte'), /\{ name: 'What the chat knows about you', href: '\/about-you' \}/);
+    assert.match(source('src/routes/more/+page.svelte'), /\{ name: 'What the chat knows about you', href: '\/about-you'[^}]*\}/);
     const page = source('src/routes/about-you/+page.svelte');
     for (const words of ['<h1>What the chat knows about you</h1>', 'First name', 'Course', 'Interests', 'Arrival date', 'Your mentor', 'From your answers when finding a mentor', 'Your checklist', 'Things you asked it to remember']) assert.ok(page.includes(words), words);
     assert.match(page, /aria-label=\{`Delete: \$\{note\.text\}`\}>Delete<\/button>/);

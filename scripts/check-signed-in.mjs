@@ -300,7 +300,7 @@ try {
       );
       return transition;
     };
-    document.querySelector('a.chat-button').click();
+    document.querySelector('a.ask[href="/check-in"]').click();
     setTimeout(() => done({ problem: 'no slide within 30 seconds' }), 30000);
   })`);
   const chatOpened = await waitFor(`location.pathname === '/check-in' && document.querySelector('[data-chat-ready]')`);

@@ -192,9 +192,9 @@
     flex: none;
     width: 88px;
     height: 88px;
-    border-radius: 14px;
+    border-radius: var(--radius-m);
     object-fit: cover;
-    background: #eaf2f8;
+    background: var(--violet-soft);
   }
 
   .initials {
@@ -221,7 +221,7 @@
     justify-content: space-between;
     gap: 12px;
     padding: 10px 0;
-    border-bottom: 1px solid var(--border);
+    border-bottom: 1px solid var(--line);
   }
 
   .buttons {

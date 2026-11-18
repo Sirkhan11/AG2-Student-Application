@@ -5,6 +5,8 @@
   import { safeNextPath } from '#lib/next-path.js';
   import { logIn } from '#lib/firebase/auth.js';
   import { isUniEmail, UNI_EMAIL_MESSAGE } from '#lib/uni-email.js';
+  import Icon from '#lib/components/Icon.svelte';
+  import Mascot from '#lib/components/Mascot.svelte';
 
   let email = $state('');
   let password = $state('');
@@ -42,12 +44,15 @@
 </script>
 
 <main class="page">
-  <h1>Welcome back</h1>
-  <p class="muted">
-    Log in to your AG2 student support account.
-  </p>
+  <header class="hello">
+    <Mascot mood="wave" size={112} />
+    <h1>Welcome back</h1>
+    <p class="muted">
+      Log in to your AG2 student support account.
+    </p>
+  </header>
 
-  <form onsubmit={(event) => {
+  <form class="card" onsubmit={(event) => {
     event.preventDefault();
     handleLogin();
   }}>
@@ -85,11 +90,29 @@
   </div>
 
   <a class="help-link" href="/need-help">
-    Need help now?
+    <Icon name="help" size={20} /> Need help now?
   </a>
 </main>
 
 <style>
+  .hello {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    margin: 8px 0 6px;
+  }
+
+  .hello h1 {
+    font-size: 36px;
+    margin: 6px 0 4px;
+  }
+
+  .hello p {
+    margin: 0;
+    font-size: 16px;
+  }
+
   .links {
     display: flex;
     flex-direction: column;
@@ -99,13 +122,17 @@
   }
 
   .help-link {
-    display: block;
-    margin-top: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 40px;
     padding: 14px;
-    border: 1px solid #e8b6b1;
-    border-radius: 10px;
-    color: #c93d35;
+    border: 2px solid var(--danger-line);
+    border-radius: var(--radius-pill);
+    background: var(--danger-soft);
+    color: var(--danger-ink);
     text-align: center;
-    font-weight: bold;
+    font-weight: 800;
   }
 </style>

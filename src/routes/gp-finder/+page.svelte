@@ -236,9 +236,9 @@
 
   .note {
     padding: 10px 12px;
-    border-radius: 10px;
-    background: #fff3cd;
-    color: #4d3800;
+    border-radius: var(--radius-s);
+    background: var(--sun-soft);
+    color: var(--sun-ink);
   }
 
   .choices {
@@ -292,7 +292,7 @@
   .contact dt {
     flex: none;
     width: 64px;
-    color: #647780;
+    color: var(--ink-3);
     font-size: 14px;
   }
 

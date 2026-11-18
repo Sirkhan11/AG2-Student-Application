@@ -28,7 +28,9 @@ import { watchSignedIn } from '#lib/firebase/auth.js';
  * dentist search, the key contacts); ask4help shows the Ask4Help card.
  * From any message: undo is how to put back a change the chat made when asked (a checklist edit, or
  * something remembered or forgotten), for its Undo button; calendar is a calendar card (Outlook on the
- * web, or a file) for something they'd rather keep in their own calendar.
+ * web, or a file) for something they'd rather keep in their own calendar. celebrate: the message
+ * telling them they've just been matched, for confetti; cleared once it has played, so it never replays.
+ * first: Gemini's first reply in this conversation, for a little sparkle.
  * @typedef {{ role: 'assistant' | 'user', text: string, kind?: 'safety' | 'error' | 'unavailable',
  *   links?: { label: string, href: string, external?: boolean, kind?: 'society' | 'club' | 'service',
  *     nsuId?: number, slug?: string, serviceId?: string, action?: string }[],
@@ -37,7 +39,7 @@ import { watchSignedIn } from '#lib/firebase/auth.js';
  *   quick?: { options: import('#lib/checkin/checklist-talk.js').QuickReply[], open: boolean },
  *   ticked?: { id: string, title: string, undone: boolean }, tool?: 'gp-finder' | 'dentist-finder' | 'contacts', ask4help?: boolean,
  *   undo?: { checklist?: import('#lib/checklist/tasks.js').Change, notes?: import('#lib/checkin/run-actions.js').NoteUndo, done: boolean },
- *   calendar?: { title: string } }} Message
+ *   calendar?: { title: string }, celebrate?: boolean, first?: boolean }} Message
  */
 
 /** @typedef {{ action: string, state: 'offered' | 'started' | 'declined' }} Offer */
@@ -59,7 +61,7 @@ import { watchSignedIn } from '#lib/firebase/auth.js';
 
 /**
  * @typedef {{ uid: string | null, messages: Message[], draft: string, waiting: boolean,
- *   started: boolean, unavailable: boolean, conversation: number,
+ *   started: boolean, unavailable: boolean, conversation: number, replied: boolean,
  *   flow: import('#lib/checkin/mentor-flow.js').FlowState | TalkFlowState | null }} ChatSession
  */
 
@@ -70,11 +72,12 @@ import { watchSignedIn } from '#lib/firebase/auth.js';
  * - started: true once the first messages are in, so coming back shows them instead of starting again
  * - unavailable: true once Gemini has said its credit has run out, so the message box is switched off
  * - conversation: goes up each time it's cleared, so a reply for a conversation that's gone is dropped
+ * - replied: true once Gemini's first reply has shown, which gets a little sparkle
  * - flow: where an action the app is running in the chat is (finding a mentor, or going through the
  *   checklist), or null
  */
 export const chatSession = $state(
-  /** @type {ChatSession} */ ({ uid: null, messages: [], draft: '', waiting: false, started: false, unavailable: false, conversation: 0, flow: null })
+  /** @type {ChatSession} */ ({ uid: null, messages: [], draft: '', waiting: false, started: false, unavailable: false, conversation: 0, replied: false, flow: null })
 );
 
 /** The Gemini conversation behind the messages. Not $state, as the page never shows it. */
@@ -183,6 +186,7 @@ export function clearChat(uid = null) {
   chatSession.started = false;
   chatSession.unavailable = false;
   chatSession.conversation++;
+  chatSession.replied = false;
   chatSession.flow = null;
   gemini = null;
   flows = {};

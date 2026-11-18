@@ -99,8 +99,8 @@
     margin-right: 4px;
     padding: 2px 8px;
     border-radius: 999px;
-    background: #fff1d6;
-    color: #6b4500;
+    background: var(--sun-soft);
+    color: var(--sun-ink);
     font-size: 12px;
     font-weight: bold;
   }
@@ -117,9 +117,9 @@
     align-items: center;
     min-height: 44px;
     padding: 8px 14px;
-    border: 1px solid var(--border);
-    border-radius: 22px;
-    background: #f1f6f9;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-l);
+    background: var(--panel);
     font-size: 14px;
   }
 </style>

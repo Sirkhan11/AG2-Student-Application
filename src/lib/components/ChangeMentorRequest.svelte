@@ -165,8 +165,8 @@
 
   fieldset {
     margin: 0 0 12px;
-    border: 1px solid var(--border);
-    border-radius: 10px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-s);
   }
 
   .reason {
@@ -182,15 +182,15 @@
 
   .note {
     padding: 10px 12px;
-    border-radius: 10px;
-    background: #eef6f9;
+    border-radius: var(--radius-s);
+    background: var(--violet-soft);
   }
 
   .urgent {
     padding: 10px 12px;
-    border: 1px solid #e8b6b1;
-    border-radius: 10px;
-    color: #8a1c13;
+    border: 1px solid var(--danger-line);
+    border-radius: var(--radius-s);
+    color: var(--danger-ink);
     font-weight: bold;
   }
 

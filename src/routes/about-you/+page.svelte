@@ -224,7 +224,7 @@
     justify-content: space-between;
     gap: 12px;
     padding: 10px 0;
-    border-bottom: 1px solid #e1e8ed;
+    border-bottom: 1px solid var(--line);
   }
 
   .notes button {
@@ -241,6 +241,6 @@
   }
 
   .error {
-    color: #8a1c13;
+    color: var(--danger-ink);
   }
 </style>

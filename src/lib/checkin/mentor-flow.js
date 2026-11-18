@@ -37,7 +37,7 @@ import {
 /**
  * What the flow adds to the chat: a bubble (from the app, or echoing the student's choice), maybe with
  * a card. question: it asks for a typed answer, so the page announces it and moves focus to the box.
- * @typedef {{ role: 'assistant' | 'user', text: string, card?: FlowCard & { id: number }, question?: boolean }} FlowMessage
+ * @typedef {{ role: 'assistant' | 'user', text: string, card?: FlowCard & { id: number }, question?: boolean, celebrate?: boolean }} FlowMessage
  */
 
 /**
@@ -89,12 +89,13 @@ export function createMentorFlow({ check, steps, post, changed, finished }) {
   };
   /**
    * Posts a bubble (from the app unless role says otherwise); one with a card makes that card the live one.
-   * @param {{ role?: 'assistant' | 'user', text: string, card?: FlowCard, question?: boolean }} message
+   * celebrate: the moment they're matched, for the page to celebrate.
+   * @param {{ role?: 'assistant' | 'user', text: string, card?: FlowCard, question?: boolean, celebrate?: boolean }} message
    */
   const say = (message) => {
     if (message.card) {
       const id = ++cards;
-      post({ role: message.role ?? 'assistant', text: message.text, card: { ...message.card, id }, question: message.question });
+      post({ role: message.role ?? 'assistant', text: message.text, card: { ...message.card, id }, question: message.question, ...(message.celebrate ? { celebrate: true } : {}) });
       set({ live: id });
     } else {
       post({ role: message.role ?? 'assistant', text: message.text, question: message.question });
@@ -143,7 +144,7 @@ export function createMentorFlow({ check, steps, post, changed, finished }) {
     if (result.status === 'saved') {
       const saved = result.outcome;
       const matched = saved.outcome === 'matched' || (saved.outcome === 'already-saved' && saved.match.status === 'matched');
-      say({ text: outcomeText(saved), card: saved.outcome === 'no-mentors' ? undefined : { kind: 'link', label: matched ? 'Your mentor' : 'See your mentor page', href: '/mentor' } });
+      say({ text: outcomeText(saved), card: saved.outcome === 'no-mentors' ? undefined : { kind: 'link', label: matched ? 'Your mentor' : 'See your mentor page', href: '/mentor' }, celebrate: saved.outcome === 'matched' });
       end({ outcome: saved.outcome, saved, match: saved.outcome === 'already-saved' ? saved.match : undefined, summary: result.summary });
     } else if (result.status === 'gemini-failed') {
       set({ step: 'gemini-failed' });

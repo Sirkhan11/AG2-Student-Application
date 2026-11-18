@@ -2,6 +2,8 @@
   import { watchSignedIn } from '#lib/firebase/auth.js';
   import BottomNav from '#lib/components/BottomNav.svelte';
   import ChangeMentorRequest from '#lib/components/ChangeMentorRequest.svelte';
+  import Icon from '#lib/components/Icon.svelte';
+  import Mascot from '#lib/components/Mascot.svelte';
   import { loadMyMatch } from '#lib/matching/matches.js';
 
   /**
@@ -45,22 +47,31 @@
     <button class="primary-button" onclick={load}>Try again</button>
 
   {:else if view === 'none'}
-    <p>You haven’t got a mentor yet. Answer a few short questions and we’ll match you with a student mentor.</p>
-    <a class="primary-button" href="/find-mentor">Find a mentor</a>
+    <div class="card hero">
+      <Mascot mood="wave" size={92} />
+      <p>You haven’t got a mentor yet. Answer a few short questions and we’ll match you with a student mentor.</p>
+      <a class="primary-button" href="/find-mentor">Find a mentor</a>
+    </div>
 
   {:else if view === 'waiting'}
-    <p>We’re finding you a mentor, and we’ll let you know soon.</p>
+    <div class="card hero">
+      <Mascot mood="calm" size={92} />
+      <p>We’re finding you a mentor, and we’ll let you know soon.</p>
+    </div>
 
   {:else if match && match.status === 'matched'}
     <!-- A match the coordinator made in the console may have no name, reasons or meeting frequency,
          so each part only shows when it's there. -->
-    <div class="card">
-      <h2>{match.mentorName ? `You’ve been matched with ${match.mentorName}` : 'You’ve been matched with a mentor'}</h2>
+    <div class="card matched">
+      <div class="matched-head">
+        <span class="badge"><Icon name="people" size={26} /></span>
+        <h2>{match.mentorName ? `You’ve been matched with ${match.mentorName}` : 'You’ve been matched with a mentor'}</h2>
+      </div>
       {#if match.reasons.length}
         <p>Why we matched you:</p>
-        <ul>
+        <ul class="reasons">
           {#each match.reasons as reason (reason)}
-            <li>{reason}</li>
+            <li><Icon name="check" size={18} stroke={3} /> <span>{reason}</span></li>
           {/each}
         </ul>
       {/if}
@@ -76,3 +87,79 @@
 
   <BottomNav />
 </main>
+
+<style>
+  /* No mentor yet, or one being found: the mascot, and the way to start. */
+  .hero {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 6px;
+    padding: 22px 20px;
+  }
+
+  .hero p {
+    margin: 4px 0 14px;
+    font-weight: 600;
+  }
+
+  /* Matched: a warm card with a badge, and why, ticked off. */
+  .matched {
+    background: linear-gradient(160deg, var(--sun-soft) 0%, white 45%);
+  }
+
+  .matched-head {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .matched-head h2 {
+    margin: 0;
+  }
+
+  .badge {
+    display: grid;
+    place-items: center;
+    width: 52px;
+    height: 52px;
+    border-radius: 18px;
+    color: white;
+    background: linear-gradient(135deg, var(--coral) 0%, var(--violet) 100%);
+    box-shadow: 0 6px 14px rgb(107 60 245 / 0.28);
+    flex: none;
+  }
+
+  .reasons {
+    list-style: none;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .reasons li {
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+    font-weight: 600;
+  }
+
+  .reasons :global(.icon) {
+    margin-top: 2px;
+    color: var(--mint);
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .badge {
+      animation: badge-in var(--dur-4) var(--ease-bounce) 120ms both;
+    }
+  }
+
+  @keyframes badge-in {
+    from {
+      transform: scale(0.4) rotate(-20deg);
+    }
+  }
+</style>

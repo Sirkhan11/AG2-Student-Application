@@ -293,16 +293,16 @@
 
   .note {
     padding: 10px 12px;
-    border-radius: 10px;
-    background: #eaf2f8;
+    border-radius: var(--radius-s);
+    background: var(--violet-soft);
   }
 
   .mock {
     display: inline-block;
     padding: 3px 10px;
-    border-radius: 12px;
-    background: #fff3cd;
-    color: #4d3800;
+    border-radius: var(--radius-s);
+    background: var(--sun-soft);
+    color: var(--sun-ink);
     font-size: 13px;
     font-weight: bold;
   }
@@ -310,7 +310,7 @@
   .module {
     margin-top: 14px;
     padding-top: 12px;
-    border-top: 1px solid var(--border);
+    border-top: 1px solid var(--line);
   }
 
   .module h3 {
@@ -326,17 +326,17 @@
     display: inline-block;
     margin: 0 6px;
     padding: 1px 8px;
-    border-radius: 10px;
-    background: #e3f1e6;
-    color: #1d5e2c;
+    border-radius: var(--radius-s);
+    background: var(--mint-soft);
+    color: var(--mint-ink);
     font-size: 12px;
     font-weight: bold;
   }
 
   .top {
     padding: 10px 12px;
-    border-radius: 10px;
-    background: #f1f6f9;
+    border-radius: var(--radius-s);
+    background: var(--panel);
   }
 
   .top p {
@@ -344,11 +344,11 @@
   }
 
   .top.past-due {
-    background: #fdecea;
+    background: var(--danger-soft);
   }
 
   .top.due-soon {
-    background: #fff3cd;
+    background: var(--sun-soft);
   }
 
   .toggle {
@@ -379,9 +379,9 @@
     display: inline-block;
     margin-right: 6px;
     padding: 1px 8px;
-    border-radius: 10px;
-    background: #fdecea;
-    color: #8a1c13;
+    border-radius: var(--radius-s);
+    background: var(--danger-soft);
+    color: var(--danger-ink);
     font-size: 12px;
     font-weight: bold;
   }
@@ -416,9 +416,9 @@
   .guide {
     margin-top: 16px;
     padding: 12px;
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    background: #fbfcfd;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-s);
+    background: white;
   }
 
   .guide h3 {

@@ -117,7 +117,7 @@
   }
 
   .who {
-    color: #647780;
+    color: var(--ink-3);
     font-size: 13px;
   }
 

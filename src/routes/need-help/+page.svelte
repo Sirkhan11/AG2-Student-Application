@@ -21,7 +21,7 @@
     <h2>Emergency services</h2>
     <p>For life-threatening emergencies.</p>
 
-    <a class="primary-button" href="tel:999">
+    <a class="primary-button emergency" href="tel:999">
       Call 999
     </a>
   </section>
@@ -85,6 +85,26 @@
 </main>
 
 <style>
+  /* 999: red, as an emergency button should be. */
+  .emergency {
+    background: var(--danger);
+    box-shadow:
+      0 4px 0 #b3262b,
+      0 10px 20px rgb(229 72 77 / 0.25);
+  }
+
+  @media (hover: hover) {
+    .emergency:hover:not(:disabled) {
+      background: #ec5b60;
+    }
+  }
+
+  .emergency:active {
+    box-shadow:
+      0 1px 0 #b3262b,
+      0 4px 10px rgb(229 72 77 / 0.22);
+  }
+
   .nsu-link,
   .uni-link {
     display: inline-flex;

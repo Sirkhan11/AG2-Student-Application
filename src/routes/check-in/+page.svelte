@@ -13,6 +13,11 @@
   import GpFinderCard from '#lib/components/GpFinderCard.svelte';
   import KeyContactsCard from '#lib/components/KeyContactsCard.svelte';
   import CalendarCard from '#lib/components/CalendarCard.svelte';
+  import Burst from '#lib/components/Burst.svelte';
+  import Icon from '#lib/components/Icon.svelte';
+  import Mascot from '#lib/components/Mascot.svelte';
+  import { arrive, buzz, playedOnce } from '#lib/motion.js';
+  import { onMount } from 'svelte';
   import { createChecklistEdits } from '#lib/checkin/checklist-edits.js';
   import { afterReply, createNoteActions } from '#lib/checkin/run-actions.js';
   import { loadMyMatch } from '#lib/matching/matches.js';
@@ -60,8 +65,19 @@
 
   // null while Firebase checks for a saved login.
   let signedIn = $state(/** @type {boolean | null} */ (null));
-  /** @type {HTMLFormElement | undefined} */
-  let form = $state();
+  // What's already in the chat when the page opens stays still; what arrives after springs in.
+  let appeared = false;
+  onMount(() => {
+    requestAnimationFrame(() => (appeared = true));
+  });
+  const ready = () => appeared;
+
+  /**
+   * Whether this message ticked a task off (going through the checklist, or asked for from any
+   * message), so it can celebrate. Undo's own change for a tick is the untick.
+   * @param {import('#lib/checkin/chat-session.svelte.js').Message} item
+   */
+  const tickedOff = (item) => Boolean(item.ticked) || (item.undo?.checklist?.type === 'tick' && item.undo.checklist.done === false);
 
   // Logged-out visitors go to login, which brings them back here afterwards. Logging out on any
   // page clears the conversation.
@@ -115,6 +131,8 @@
       text,
       // The buttons go under the first message; Yes and Not yet under the checklist question (the last).
       links: i === 0 ? opener.links : undefined,
+      // Straight from being matched on the Find a mentor page: the first message celebrates.
+      celebrate: i === 0 && justSignedUp && match?.status === 'matched' ? true : undefined,
       // Closed until the checklist talk has loaded, so a tap can't arrive before it's listening.
       quick: opener.asks && i === opener.messages.length - 1 ? { options: QUICK.yesNo, open: false } : undefined
     }));
@@ -158,7 +176,8 @@
         },
         post: (message) => {
           if (chatSession.conversation !== conversation) return;
-          chatSession.messages.push({ role: message.role, text: message.text, flow: message.card });
+          chatSession.messages.push({ role: message.role, text: message.text, flow: message.card, celebrate: message.celebrate });
+          if (message.celebrate) buzz([14, 70, 24]);
           showLatest(message.question);
         },
         changed: (state) => {
@@ -220,6 +239,7 @@
         post: (message) => {
           if (chatSession.conversation !== conversation) return;
           if (message.quick) closeQuickReplies();
+          if (message.ticked) buzz();
           chatSession.messages.push({
             role: 'assistant',
             text: message.text,
@@ -278,6 +298,7 @@
       const post = (message) => {
         if (chatSession.conversation !== conversation) return;
         if (message.quick) closeQuickReplies();
+        if (message.undo?.type === 'tick' && message.undo.done === false) buzz();
         chatSession.messages.push({
           role: 'assistant',
           text: message.text,
@@ -446,9 +467,13 @@
     // card shown straight away, such as their mentor. Going through the checklist has no card: it
     // starts, or is offered in one line, after this reply (askGemini).
     const action = reply.offers?.[0] ? chatAction(reply.offers[0]) : null;
+    // Gemini's first reply in this conversation gets a little sparkle.
+    const first = reply.kind === 'reply' && reply.text.trim() !== '' && !chatSession.replied;
+    if (first) chatSession.replied = true;
     chatSession.messages.push({
       role: 'assistant',
       text: reply.text,
+      first: first || undefined,
       kind: reply.kind === 'reply' || reply.kind === 'skip' ? undefined : reply.kind,
       links:
         reply.kind === 'safety' || reply.kind === 'unavailable'
@@ -500,47 +525,59 @@
    */
   async function showLatest(question = false) {
     await tick();
-    form?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    // To the end of the conversation: the box stays at the bottom, above the bar, so the newest
+    // message shows just above it. A jump rather than a glide with Reduce Motion on.
+    const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    window.scrollTo({ top: document.documentElement.scrollHeight, behavior: still ? 'auto' : 'smooth' });
     if (question) /** @type {HTMLInputElement | null} */ (document.getElementById('chat-message'))?.focus();
   }
 </script>
 
-<main class="page">
-  <h1>Check-in Chat</h1>
-
-  <p class="muted">
-    A place to check in and find student support.
-    This is not a medical or emergency service.
-  </p>
+<main class="page chat-page">
+  <header class="chat-head">
+    <span class="avatar"><Mascot size={50} /></span>
+    <div>
+      <h1>Check-in Chat</h1>
+      <p class="muted">
+        A place to check in and find student support.
+        This is not a medical or emergency service.
+        <a class="need-help" href="/need-help">Need help now?</a>
+      </p>
+    </div>
+  </header>
 
   {#if !signedIn || chatSession.messages.length === 0}
     <p class="muted" role="status">Loading…</p>
   {:else}
-    <p class="muted">
-      Replies are written by Google’s Gemini AI. To help, Gemini is told your first name; the course,
-      interests and arrival date you gave when you signed up; whether you have a mentor, why you were
-      matched and how often you asked to meet; a short summary of your answers from finding a mentor;
-      your checklist progress; and anything you’ve asked it to remember. It’s never told your full name
-      or email, or your mentor’s name. <a href="/about-you">See what the chat knows about you</a>.
-    </p>
-    <p class="muted">
-      This chat isn’t saved: it stays while the app is open in this tab, until you log out, and nothing
-      you say is passed on to the university or your mentor. If you go through your checklist here,
-      answering yes ticks that task on it (Undo unticks it). If it suggests a reminder and you tap Add,
-      that task is saved to your checklist, and if it offers to remember something and you tap
-      Remember, that’s kept for later chats until you delete it. If you find a mentor here, your answers
-      are saved when you choose Find my mentor, as on the Find a mentor page; they’re never sent to
-      Gemini as chat messages, though it’s told the short summary, and straight after, it suggests a few
-      things that might suit you. Google doesn’t use the chat to improve its
-      products, but keeps messages for a limited time, only to detect misuse, keep its services safe
-      and secure, and meet legal requirements, and they may be stored or cached in any country
-      (<a
-        href="https://ai.google.dev/gemini-api/terms"
-        target="_blank"
-        rel="noopener noreferrer"
-        aria-label="Gemini API terms (opens in a new tab)">Gemini API terms ↗</a>).
-      So please leave out names, contact details and anything you’d want kept private.
-    </p>
+    <!-- What Gemini is told and what's kept: one tap away, the same words. -->
+    <details class="about-chat">
+      <summary><Icon name="lock" size={17} /> How your chat is used</summary>
+      <p class="muted">
+        Replies are written by Google’s Gemini AI. To help, Gemini is told your first name; the course,
+        interests and arrival date you gave when you signed up; whether you have a mentor, why you were
+        matched and how often you asked to meet; a short summary of your answers from finding a mentor;
+        your checklist progress; and anything you’ve asked it to remember. It’s never told your full name
+        or email, or your mentor’s name. <a href="/about-you">See what the chat knows about you</a>.
+      </p>
+      <p class="muted">
+        This chat isn’t saved: it stays while the app is open in this tab, until you log out, and nothing
+        you say is passed on to the university or your mentor. If you go through your checklist here,
+        answering yes ticks that task on it (Undo unticks it). If it suggests a reminder and you tap Add,
+        that task is saved to your checklist, and if it offers to remember something and you tap
+        Remember, that’s kept for later chats until you delete it. If you find a mentor here, your answers
+        are saved when you choose Find my mentor, as on the Find a mentor page; they’re never sent to
+        Gemini as chat messages, though it’s told the short summary, and straight after, it suggests a few
+        things that might suit you. Google doesn’t use the chat to improve its
+        products, but keeps messages for a limited time, only to detect misuse, keep its services safe
+        and secure, and meet legal requirements, and they may be stored or cached in any country
+        (<a
+          href="https://ai.google.dev/gemini-api/terms"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Gemini API terms (opens in a new tab)">Gemini API terms ↗</a>).
+        So please leave out names, contact details and anything you’d want kept private.
+      </p>
+    </details>
 
     <!-- data-chat-ready: the slide from Home waits for this, so the whole chat slides in. -->
     <div class="messages" aria-live="polite" data-chat-ready>
@@ -554,7 +591,22 @@
           class:user={item.role === 'user'}
           class:safety={item.kind === 'safety'}
           class:failed={item.kind === 'error' || item.kind === 'unavailable'}
+          class:done={tickedOff(item)}
+          class:matched={Boolean(item.celebrate)}
+          use:arrive={{ ready }}
         >
+          {#if item.first}
+            <!-- Gemini's first reply: a sparkle pops at its corner (only as it arrives). -->
+            <span class="sparkle"><Icon name="sparkle" size={20} /></span>
+          {/if}
+          {#if item.celebrate}
+            <!-- Just matched: confetti, once (after the chat has opened, if it's the first message). -->
+            <span class="match-burst" use:playedOnce={() => (item.celebrate = false)}><Burst count={26} spread={130} delay={ready() ? 0 : 560} /></span>
+          {/if}
+          {#if tickedOff(item)}
+            <!-- Something ticked off: a little celebration. -->
+            <span class="tick-mark"><Icon name="check" size={16} stroke={3} /><Burst /></span>
+          {/if}
           {item.text}
           {#if buttons.length}
             <div class="links">
@@ -582,7 +634,7 @@
         </div>
         {#if cards.length}
           <!-- Not read out as they arrive: the reply already names them, and screen reader users can move to them. -->
-          <div class="cards" aria-live="off">
+          <div class="cards" aria-live="off" use:arrive={{ ready }}>
             {#each cards as link (link.href)}
               {@const society = link.kind === 'society' ? societyById(link.nsuId ?? -1) : null}
               {@const service = link.kind === 'service' ? serviceById(link.serviceId ?? '') : null}
@@ -598,17 +650,17 @@
           </div>
         {/if}
         {#if item.task}
-          <div class="cards">
+          <div class="cards" use:arrive={{ ready }}>
             <TaskSuggestionCard bind:task={item.task} />
           </div>
         {/if}
         {#if item.note}
-          <div class="cards">
+          <div class="cards" use:arrive={{ ready }}>
             <RememberCard bind:note={item.note} onsaved={noteSaved} />
           </div>
         {/if}
         {#if item.offer}
-          <div class="cards">
+          <div class="cards" use:arrive={{ ready }}>
             <ChatOfferCard
               bind:offer={item.offer}
               disabled={flowTakesAll || flowBusy}
@@ -618,51 +670,51 @@
           </div>
         {/if}
         {#if item.appCard}
-          <div class="cards">
+          <div class="cards" use:arrive={{ ready }}>
             <YourMentorCard change={item.appCard === 'change-mentor'} />
           </div>
         {/if}
         {#if item.flow}
-          <div class="cards">
+          <div class="cards" use:arrive={{ ready }}>
             <ChatFlowCard card={item.flow} live={flowActive && chatSession.flow?.kind === 'mentor' && chatSession.flow.live === item.flow.id && !flowBusy} flow={chatFlow()} />
           </div>
         {/if}
         {#if item.ticked}
-          <div class="ticked">
+          <div class="ticked" use:arrive={{ ready }}>
             {#if item.ticked.undone}
               <span class="muted">Unticked.</span>
             {:else}
-              <button class="secondary-button" type="button" disabled={flowBusy || chatSession.waiting} onclick={() => undoTick(item)} aria-label={`Undo: untick ${item.ticked.title}`}>Undo</button>
+              <button class="secondary-button undo" type="button" disabled={flowBusy || chatSession.waiting} onclick={() => undoTick(item)} aria-label={`Undo: untick ${item.ticked.title}`}><Icon name="undo" size={16} /> Undo</button>
             {/if}
           </div>
         {/if}
         {#if item.tool === 'gp-finder' || item.tool === 'dentist-finder'}
-          <div class="cards">
+          <div class="cards" use:arrive={{ ready }}>
             <GpFinderCard kind={item.tool === 'gp-finder' ? 'gp' : 'dentist'} />
           </div>
         {:else if item.tool === 'contacts'}
-          <div class="cards">
+          <div class="cards" use:arrive={{ ready }}>
             <KeyContactsCard />
           </div>
         {/if}
         {#if item.ask4help}
-          <div class="cards">
+          <div class="cards" use:arrive={{ ready }}>
             <div class="ask4help-card">
               <Ask4HelpLink />
             </div>
           </div>
         {/if}
         {#if item.undo}
-          <div class="ticked">
+          <div class="ticked" use:arrive={{ ready }}>
             {#if item.undo.done}
               <span class="muted">Undone.</span>
             {:else}
-              <button class="secondary-button" type="button" disabled={flowBusy || chatSession.waiting} onclick={() => undoChange(item)}>Undo</button>
+              <button class="secondary-button undo" type="button" disabled={flowBusy || chatSession.waiting} onclick={() => undoChange(item)}><Icon name="undo" size={16} /> Undo</button>
             {/if}
           </div>
         {/if}
         {#if item.calendar}
-          <div class="cards">
+          <div class="cards" use:arrive={{ ready }}>
             <CalendarCard title={item.calendar.title} />
           </div>
         {/if}
@@ -670,77 +722,222 @@
           <div class="quick" role="group" aria-label="Quick replies">
             {#each item.quick.options as option (option.value)}
               <!-- Not while something saves or Gemini is asked. -->
-              <button class="secondary-button" type="button" disabled={flowBusy || chatSession.waiting} onclick={() => sendMessage(option.value)}>{option.label}</button>
+              <button class="secondary-button chip" type="button" use:arrive={{ ready }} disabled={flowBusy || chatSession.waiting} onclick={() => sendMessage(option.value)}>{option.label}</button>
             {/each}
           </div>
         {/if}
       {/each}
       {#if chatSession.waiting}
-        <div class="bubble typing">Typing…</div>
+        <div class="bubble typing" use:arrive={{ ready }}>
+          <span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>
+          <span class="visually-hidden">Typing…</span>
+        </div>
       {/if}
     </div>
 
-    <form bind:this={form} onsubmit={(event) => {
+    <form class="composer" onsubmit={(event) => {
       event.preventDefault();
       sendMessage();
     }}>
-      <label for="chat-message">Your message</label>
+      <label class="visually-hidden" for="chat-message">Your message</label>
 
       <input
         id="chat-message"
         class="field"
-        placeholder={flowTakesAll || talking ? 'Type your answer, or stop to stop' : chatSession.unavailable ? 'The chat isn’t available right now' : 'Type your message...'}
+        placeholder={flowTakesAll || talking ? 'Your answer, or “stop”' : chatSession.unavailable ? 'The chat isn’t available right now' : 'Type your message...'}
         autocomplete="off"
         disabled={flowTakesAll ? flowBusy : flowBusy || chatSession.waiting || chatSession.unavailable}
         bind:value={chatSession.draft}
       />
 
-      <button class="primary-button" type="submit" disabled={flowTakesAll ? flowBusy : flowBusy || chatSession.waiting || chatSession.unavailable}>
-        {flowTakesAll ? 'Send answer' : chatSession.waiting ? 'Waiting for a reply…' : chatSession.unavailable ? 'Chat unavailable' : 'Send'}
+      <button class="send" type="submit" disabled={flowTakesAll ? flowBusy : flowBusy || chatSession.waiting || chatSession.unavailable}>
+        <Icon name="send" size={20} />
+        <span class="visually-hidden">{flowTakesAll ? 'Send answer' : chatSession.waiting ? 'Waiting for a reply…' : chatSession.unavailable ? 'Chat unavailable' : 'Send'}</span>
       </button>
       {#if flowActive && !flowBusy}
         <!-- Ends finding a mentor before Find my mentor (nothing saved), or going through the checklist. -->
-        <button class="secondary-button" type="button" onclick={() => chatFlow()?.stop()}>Stop</button>
+        <button class="secondary-button stop" type="button" onclick={() => chatFlow()?.stop()}>Stop</button>
       {/if}
     </form>
   {/if}
-
-  <p><a href="/need-help">Need help now?</a></p>
 
   <BottomNav />
 </main>
 
 <style>
-  .messages {
+  /* The conversation fills the screen, and its box sits at the bottom, just above the bar. */
+  .chat-page {
     display: flex;
     flex-direction: column;
+    padding-bottom: calc(96px + env(safe-area-inset-bottom));
+  }
+
+  .chat-head {
+    display: flex;
+    align-items: center;
     gap: 12px;
-    min-height: 280px;
-    margin: 20px 0;
+    margin-bottom: 6px;
+  }
+
+  .chat-head h1 {
+    font-size: 26px;
+    margin: 0;
+  }
+
+  .chat-head p {
+    margin: 2px 0 0;
+  }
+
+  .avatar {
+    display: grid;
+    place-items: center;
+    width: 58px;
+    height: 58px;
+    border-radius: 50%;
+    background: white;
+    box-shadow: var(--shadow-2);
+    flex: none;
+  }
+
+  .about-chat {
+    margin: 10px 0 4px;
+    padding: 10px 14px;
+    border-radius: var(--radius-m);
+    background: rgb(255 255 255 / 0.7);
+    border: 1px solid var(--line);
+  }
+
+  .about-chat summary {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 800;
+    color: var(--ink-2);
+    cursor: pointer;
+    list-style: none;
+  }
+
+  .about-chat summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .about-chat summary::after {
+    content: '▾';
+    margin-left: auto;
+    transition: transform var(--dur-2) var(--ease-spring);
+  }
+
+  .about-chat[open] summary::after {
+    transform: rotate(180deg);
+  }
+
+  .messages {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin: 18px 0;
   }
 
   .bubble {
+    position: relative;
     align-self: flex-start;
-    max-width: 85%;
-    padding: 13px;
-    border-radius: 14px;
-    background: #eaf2f8;
+    max-width: 86%;
+    padding: 12px 15px;
+    border-radius: 20px 20px 20px 6px;
+    background: white;
+    border: 1px solid var(--line);
+    box-shadow: var(--shadow-1);
+    font-weight: 600;
+    color: var(--ink);
+    transform-origin: 0% 100%;
   }
 
   .bubble.user {
     align-self: flex-end;
-    background: #1764a1;
+    border: 0;
+    border-radius: 20px 20px 6px 20px;
     color: white;
+    background: linear-gradient(135deg, #8457ff 0%, var(--violet) 70%);
+    box-shadow: 0 6px 16px rgb(75 31 208 / 0.22);
+    transform-origin: 100% 100%;
   }
 
   .bubble.safety {
-    background: #fdecea;
-    border: 1px solid #e8b6b1;
+    background: var(--coral-soft);
+    border-color: #f5b6a7;
   }
 
-  .bubble.failed,
+  .bubble.failed {
+    color: var(--ink-3);
+    background: #f6f3fa;
+  }
+
+  .bubble.done {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--mint-soft);
+    border-color: #b8ecd8;
+    color: #0a5c43;
+    font-weight: 800;
+  }
+
+  /* Confetti only for a tick that's just happened, not one they scroll back to. */
+  .bubble:not(:global(.arrive)) .tick-mark :global(.burst) {
+    display: none;
+  }
+
+  .tick-mark {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: var(--mint);
+    color: white;
+    flex: none;
+  }
+
+  .bubble.matched {
+    background: linear-gradient(135deg, var(--sun-soft) 0%, white 75%);
+    border-color: #ffe08a;
+  }
+
+  /* A sparkle on Gemini's first reply, only as it arrives: it pops, twirls and fades. */
+  .sparkle {
+    position: absolute;
+    right: -8px;
+    top: -10px;
+    color: var(--sun);
+    filter: drop-shadow(0 1px 1px rgb(176 120 0 / 0.35));
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .match-burst {
+    position: absolute;
+    left: 28px;
+    top: 18px;
+  }
+
+  /* Typing: three dots bouncing in turn (still, with Reduce Motion on). */
   .bubble.typing {
-    color: #647780;
+    padding: 14px 16px;
+  }
+
+  .dots {
+    display: inline-flex;
+    gap: 5px;
+  }
+
+  .dots i {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--violet);
+    opacity: 0.55;
   }
 
   .links {
@@ -765,11 +962,186 @@
     gap: 8px;
   }
 
+  .chip {
+    border-color: #d8cbff;
+    color: var(--violet);
+    background: white;
+  }
+
+  .undo {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    font-size: 14px;
+  }
+
   .ask4help-card {
     padding: 4px 12px 12px;
     border: 1px solid var(--border);
-    border-radius: 14px;
+    border-radius: var(--radius-m);
     background: #fff;
   }
 
+  /* The message box stays at the bottom, above the bar, while the conversation scrolls. */
+  .composer {
+    position: sticky;
+    bottom: calc(96px + env(safe-area-inset-bottom));
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 6px 6px 8px;
+    border-radius: var(--radius-pill);
+    background: rgb(255 255 255 / 0.94);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--line);
+    box-shadow: var(--shadow-2);
+  }
+
+  .composer :global(.field) {
+    flex: 1;
+    min-width: 0;
+    margin: 0;
+    border: 0;
+    border-radius: var(--radius-pill);
+    background: transparent;
+    padding: 10px 8px;
+  }
+
+  .composer :global(.field:focus) {
+    box-shadow: none;
+  }
+
+  .send {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border: 0;
+    border-radius: 50%;
+    color: white;
+    background: var(--violet);
+    box-shadow: 0 3px 0 var(--violet-press);
+    flex: none;
+    transition: transform var(--dur-2) var(--ease-bounce);
+  }
+
+  .send:active:not(:disabled) {
+    transform: translateY(2px) scale(0.92);
+    transition-duration: var(--dur-tap);
+  }
+
+  .send:disabled {
+    opacity: 0.45;
+    box-shadow: none;
+  }
+
+  .stop {
+    padding: 8px 12px;
+    font-size: 14px;
+    flex: none;
+  }
+
+  .need-help {
+    font-weight: 800;
+    white-space: nowrap;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    /* New messages and cards spring in, one after another; the typing dots bounce. */
+    :global(.chat-page .arrive) {
+      animation: chat-arrive var(--dur-3) var(--ease-spring) var(--arrive-delay, 0ms) both;
+    }
+
+    :global(.chat-page .chip.arrive) {
+      animation-name: chip-pop;
+      animation-timing-function: var(--ease-bounce);
+    }
+
+    .dots i {
+      animation: dot 1.1s ease-in-out infinite;
+    }
+
+    .dots i:nth-child(2) {
+      animation-delay: 0.15s;
+    }
+
+    .dots i:nth-child(3) {
+      animation-delay: 0.3s;
+    }
+
+    .bubble:global(.arrive) .sparkle {
+      animation: sparkle 1.4s var(--ease-out) var(--arrive-delay, 0ms) both;
+    }
+
+    .bubble.done:global(.arrive) .tick-mark {
+      animation: tick-pop var(--dur-3) var(--ease-bounce) both;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    :global(.chat-page .arrive) {
+      animation: chat-fade var(--dur-1) ease var(--arrive-delay, 0ms) both;
+    }
+  }
+
+  @keyframes chat-arrive {
+    from {
+      opacity: 0;
+      transform: translateY(12px) scale(0.9);
+    }
+  }
+
+  @keyframes chip-pop {
+    from {
+      opacity: 0;
+      transform: scale(0.6);
+    }
+  }
+
+  @keyframes chat-fade {
+    from {
+      opacity: 0;
+    }
+  }
+
+  @keyframes dot {
+    0%,
+    80%,
+    100% {
+      transform: translateY(0);
+      opacity: 0.55;
+    }
+    40% {
+      transform: translateY(-6px);
+      opacity: 1;
+    }
+  }
+
+  @keyframes sparkle {
+    0% {
+      opacity: 0;
+      transform: scale(0.2) rotate(-60deg);
+    }
+    25% {
+      opacity: 1;
+      transform: scale(1.25) rotate(10deg);
+    }
+    60% {
+      opacity: 1;
+      transform: scale(1) rotate(0deg);
+    }
+    100% {
+      opacity: 0;
+      transform: scale(0.9) rotate(20deg);
+    }
+  }
+
+  @keyframes tick-pop {
+    from {
+      transform: scale(0.2) rotate(-30deg);
+    }
+  }
 </style>
