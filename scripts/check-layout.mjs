@@ -4,14 +4,16 @@
 //    the page transitions crossfade between (Home, Checklist, Chat in the middle, Societies, More),
 //    and Mentor stays one tap away on More; Need help now is four one-tap cards, most urgent first,
 //    each with the official page its number and words were checked against, then "Not urgent?" with
-//    what the page had (with --links, every source page is asked, one a second).
+//    what the page had (with --links, every source page is asked, one a second). And no screen runs
+//    two sentences together by losing a space beside a block (scripts/lib/dropped-spaces.mjs).
 // Run from the project folder:
 //   node scripts/check-layout.mjs [--links]
 //   npx --engine-strict=false firebase-tools emulators:exec --only auth,firestore --project demo-ag2 "node scripts/check-layout.mjs"
 
 import assert from 'node:assert/strict';
 import { randomBytes } from 'node:crypto';
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { ALWAYS_OPEN, PUBLIC_PAGES } from '#lib/account-gate.js';
 import { isoDate } from '#lib/checkin/about-you.js';
 import { HOW_TO } from '#lib/checklist/how-to.js';
@@ -19,6 +21,7 @@ import { nextTask, societiesForYou, weekLine } from '#lib/home/dashboard.js';
 import { TAB_PATHS, TABS } from '#lib/nav-tabs.js';
 import { CHECKED_ON, URGENT_HELP } from '#lib/need-help/urgent.js';
 import { TABS as TRANSITION_TABS, transitionFor } from '#lib/page-transitions.js';
+import { droppedSpaces, droppedSpacesIn } from './lib/dropped-spaces.mjs';
 import { emulators, openChrome, owner, sleep, startApp } from './lib/emulator-app.mjs';
 
 const source = (/** @type {string} */ file) => readFileSync(file, 'utf8');
@@ -125,6 +128,16 @@ const offline = [
     assert.notEqual(societiesForYou(['Climbing'], 3).tryNew?.name, societiesForYou(['Climbing'], 4).tryNew?.name, 'which changes each day');
     assert.deepEqual(societiesForYou([], 3).matches, [], 'no interests: no matches made up');
     assert.deepEqual(societiesForYou(['zzzz'], 3).matches, [], 'nothing that matches: none');
+  }],
+  ['No two sentences run together on any screen: no space that Svelte drops beside an if, each, key or await block (Home’s mentor card said “introduce you.You asked”, and the Societies pages “Sport· For women”), nor between the items of an each', () => {
+    const was = '<p>Getting in touch: your coordinator will introduce you.{#if match.meetingFrequency} You asked to meet {match.meetingFrequency}.{/if}</p>';
+    assert.equal(droppedSpacesIn(was).length, 1, 'it finds the one that was live');
+    assert.deepEqual(droppedSpacesIn(was.replace('} You', "}{' '}You")), [], "and not once it's {' '}");
+    assert.deepEqual(droppedSpacesIn('<p>Hello,{#if a}{a}{:else if b} there{:else}{/if}! {#each xs as x}{x} {/each}</p>').map((at) => at.edge), ['start', 'between'], 'an else-if branch too, and between the items of an each, but not before the "!"');
+    assert.deepEqual(droppedSpacesIn('<ul>\n  {#each xs as x}\n    <li>{x}</li>\n  {/each}\n</ul>\n<p>{a} {#if b}and {b}{/if}</p>'), [], 'nor list items on their own lines, or a space outside the block');
+    const files = readdirSync('src', { recursive: true, encoding: 'utf8' }).filter((name) => name.endsWith('.svelte')).map((name) => join('src', name));
+    assert.ok(files.length > 40, `only ${files.length} screens and components found`);
+    assert.deepEqual(droppedSpaces(files).map((at) => `${at.file}:${at.line} ${at.edge}: ${at.near}`), []);
   }]
 ];
 
@@ -277,7 +290,7 @@ async function inTheBrowser(where) {
     await inFreshChrome(async (page) => {
       report('A matched student logs in', await page.logIn(mia, password));
       await page.waitFor(page.has('Hi Mia'));
-      report('Her mentor card: the mentor’s name, how to get in touch, how often, and Your mentor page', (await page.waitFor(page.has('Alex Mentor'))) && (await page.evaluate(page.has('your coordinator will introduce you'))) && (await page.evaluate(page.has('every two weeks'))) && (await hrefs(page, '.dash a.do[href="/mentor"]')).length === 1);
+      report('Her mentor card: the mentor’s name, how to get in touch, then (after a space) how often, and Your mentor page', (await page.waitFor(page.has('Alex Mentor'))) && (await page.evaluate(page.has('Getting in touch: your coordinator will introduce you. You asked to meet every two weeks.'))) && (await hrefs(page, '.dash a.do[href="/mentor"]')).length === 1);
       await tap(page, '.dash a.do[href="/mentor"]');
       report('Your mentor page opens with a way back to Home', (await page.waitFor(`location.pathname === '/mentor' && ${page.has('← Back')}`)) && (await page.evaluate(`([...document.querySelectorAll('button, a')].find((e) => e.textContent.trim().includes('← Back')).click(), true)`)) && (await page.waitFor(`location.pathname === '/home'`)));
     });

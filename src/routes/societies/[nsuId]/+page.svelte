@@ -75,7 +75,7 @@
     <div>
       <h1>{society.name}</h1>
       <p class="muted">
-        {society.category ?? 'Society'} · {society.campus} campus{#if AUDIENCE[society.nsuId]} · {AUDIENCE_LABELS[AUDIENCE[society.nsuId]]}{/if}
+        {society.category ?? 'Society'} · {society.campus} campus{#if AUDIENCE[society.nsuId]}{' '}· {AUDIENCE_LABELS[AUDIENCE[society.nsuId]]}{/if}
       </p>
     </div>
   </div>

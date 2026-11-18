@@ -97,7 +97,7 @@
           <span class="text">
             <span class="name">{society.name}</span>
             <span class="muted">
-              {society.category ?? 'Society'}{#if AUDIENCE[society.nsuId]} · {AUDIENCE_LABELS[AUDIENCE[society.nsuId]]}{/if}
+              {society.category ?? 'Society'}{#if AUDIENCE[society.nsuId]}{' '}· {AUDIENCE_LABELS[AUDIENCE[society.nsuId]]}{/if}
             </span>
           </span>
         </a>

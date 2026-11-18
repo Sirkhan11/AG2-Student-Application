@@ -105,8 +105,9 @@
       <p class="muted" role="status">Loading…</p>
     {:else if mentor === 'matched' && match?.status === 'matched'}
       <p class="name">{match.mentorName ?? 'Your mentor'}</p>
-      <!-- The same as the Your Mentor page: the coordinator introduces them. -->
-      <p>Getting in touch: your coordinator will introduce you.{#if match.meetingFrequency} You asked to meet {match.meetingFrequency}.{/if}</p>
+      <!-- The same as the Your Mentor page: the coordinator introduces them. The {' '} is the space
+           between the two sentences: Svelte drops a plain space at the start of an if block. -->
+      <p>Getting in touch: your coordinator will introduce you.{#if match.meetingFrequency}{' '}You asked to meet {match.meetingFrequency}.{/if}</p>
       <a class="secondary-button do" href="/mentor">Your mentor page</a>
     {:else if mentor === 'waiting'}
       <p>We’re finding you a mentor, and we’ll let you know soon.</p>
