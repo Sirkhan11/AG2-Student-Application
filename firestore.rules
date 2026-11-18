@@ -123,6 +123,21 @@ service cloud.firestore {
         && validMatch(request.resource.data);
     }
 
+    // A mentor's email address, shared with the students matched with them only if the mentor agreed
+    // (when signing up, or later on Your mentor; src/lib/matching/mentor-contact.js). It holds their
+    // own login address and nothing else, with when they agreed, and only for an account with a mentor
+    // profile. Only the mentor, and a student whose match names them (matchedWith), can read it, one
+    // document at a time: nobody can list them. Only the mentor can share it, or stop (delete it).
+    match /mentorContacts/{mentorId} {
+      allow get: if hasAccess() && (request.auth.uid == mentorId || matchedWith(mentorId));
+      allow create, update: if hasAccess() && request.auth.uid == mentorId
+        && request.resource.data.keys().hasOnly(['email', 'agreedAt'])
+        && request.resource.data.email == request.auth.token.email
+        && request.resource.data.agreedAt == request.time
+        && existsAfter(/databases/$(database)/documents/mentors/$(mentorId));
+      allow delete: if hasAccess() && request.auth.uid == mentorId;
+    }
+
     // The things a student asked the check-in chat to remember (src/lib/checkin/chat-notes.js): only
     // that student can read, change or delete them, with at most 10 notes of at most 100 characters
     // each (MAX_NOTES and MAX_NOTE_LENGTH in about-you.js). See validChatNotes below.
@@ -234,6 +249,16 @@ service cloud.firestore {
       let mentor = /databases/$(database)/documents/mentors/$(mentorId);
       return get(mentor).data.approved == true
         && getAfter(mentor).data.studentCount == get(mentor).data.studentCount + 1;
+    }
+
+    // True when the signed-in student's match names this mentor. A student can only make that match
+    // by taking one of the mentor's places, and can never change it (matches, above), so it can't be
+    // faked; when the coordinator moves them to someone else, it follows the new mentor.
+    function matchedWith(mentorId) {
+      let theirs = /databases/$(database)/documents/matches/$(request.auth.uid);
+      return exists(theirs)
+        && get(theirs).data.get('status', '') == 'matched'
+        && get(theirs).data.get('mentorId', '') == mentorId;
     }
 
     // The sign-up page's about-you answers, when the record has them (src/lib/students/signup.js):

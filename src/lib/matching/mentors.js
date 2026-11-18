@@ -9,6 +9,7 @@ import { notUniEmail } from '#lib/uni-email.js';
 import { questions } from '#lib/matching/questions.js';
 import { findBlankAnswer } from '#lib/matching/answers.js';
 import { hasMentorProfile } from '#lib/matching/mentor-account.js';
+import { withContact } from '#lib/matching/mentor-contact.js';
 import { MAX_WANTS, summariseAnswers } from '#lib/matching/summarise.js';
 import { summaryToSave } from '#lib/matching/summary-prompt.js';
 import { embedSummaries } from '#lib/matching/compare-items.js';
@@ -20,9 +21,10 @@ const VECTOR_LENGTH = 384;
 export const NOTHING_TO_MATCH = 'matching/nothing-to-match';
 
 /**
- * What a mentor fills in on the sign-up form, apart from their login.
+ * What a mentor fills in on the sign-up form, apart from their login. shareEmail: they ticked the box
+ * to let the students matched with them see their email address (mentor-contact.js).
  * @typedef {{ displayName: string, name: string, course: string, answers: string[],
- *   meetingFrequency: string, availability: string, maxStudents: number }} MentorProfile
+ *   meetingFrequency: string, availability: string, maxStudents: number, shareEmail?: boolean }} MentorProfile
  */
 
 /**
@@ -169,11 +171,11 @@ export async function registerMentor(profile, login, waiting = waitingSignUp()) 
   if (!login) {
     const user = getFirebaseAuth().currentUser;
     if (!user?.emailVerified) throw new Error('Log in with your verified Northumbria account first.');
-    await saveMentor(db, user.uid, mentor);
+    await saveMentor(db, user.uid, withContact(mentor, profile.shareEmail, user.email));
     return 'saved';
   }
   const { user } = await createUserWithEmailAndPassword(getFirebaseAuth(), login.email.trim(), login.password);
-  waiting.save({ uid: user.uid, mentor });
+  waiting.save({ uid: user.uid, mentor: withContact(mentor, profile.shareEmail, user.email) });
   // If the email can't be sent, the check-your-inbox screen has Resend.
   await sendVerification(user).catch((err) => console.error('Sending the verification email failed:', err?.code ?? err));
   return 'verify-email';

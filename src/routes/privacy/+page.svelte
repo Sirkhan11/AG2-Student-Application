@@ -37,7 +37,8 @@
         <strong>If you’re a mentor:</strong> privately, your name, course, answers, Gemini’s summary of them,
         how often you’d meet and when you’re free. Separately, the name you show students and your answers
         turned into numbers: once the coordinator has approved you, signed-in students’ apps download these to
-        find matches, but the app only shows your name to a student who’s matched with you.
+        find matches, but the app only shows your name to a student who’s matched with you. Your email
+        address too, only if you chose to share it with the students matched with you.
       </li>
     </ul>
     <p>
@@ -78,7 +79,7 @@
     </p>
     <h3>Never told</h3>
     <ul>
-      <li>Your full name, your email address, or your mentor’s name.</li>
+      <li>Your full name, your email address, or your mentor’s name or email address.</li>
       <li>Your contact details, postcode or location.</li>
       <li>When you’re free to meet your mentor.</li>
       <li>Your reason for asking for a different mentor.</li>
@@ -124,6 +125,11 @@
         database: they read requests for a different mentor, and your answers if they match you by hand.
         <span class="tbc">To confirm</span> who the coordinator is.
       </li>
+      <li>
+        <strong>If you’re a mentor,</strong> the students matched with you see the name you chose to show
+        them and, only if you chose to share it, your email address, on their Your mentor page and in the
+        chat. You can stop sharing it on Your mentor at any time.
+      </li>
       <li><strong>Other students</strong> never see anything of yours.</li>
       <li>Nothing you say in the chat is passed on to the university or your mentor.</li>
     </ul>
@@ -135,6 +141,7 @@
       <li><strong>Things the chat remembers:</strong> Delete, or Delete all, on <a href="/about-you">What the chat knows about you</a>.</li>
       <li><strong>Checklist tasks:</strong> open “How to” (or “Stuck?”) under the task on your checklist, then Delete this task.</li>
       <li><strong>A request for a different mentor:</strong> Cancel, on Your Mentor.</li>
+      <li><strong>Your email address, if you’re a mentor sharing it with your students:</strong> Stop sharing it, on Your mentor.</li>
       <li><strong>The chat:</strong> log out. It’s never saved.</li>
       <li><strong>On your phone:</strong> clear this site’s data in your browser’s settings.</li>
       <li><strong>Your account and everything in it:</strong> there’s no button for this in the app yet. <span class="tbc">To confirm</span> who to ask, and how soon it’s done.</li>

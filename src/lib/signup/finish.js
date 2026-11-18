@@ -1,20 +1,24 @@
 import { doc, serverTimestamp, setDoc, writeBatch } from 'firebase/firestore';
+import { contactToSave, MENTOR_CONTACTS } from '#lib/matching/mentor-contact.js';
 
 // Saving what a sign-up made, once the account is allowed to write: the student's record, or the
 // mentor's two documents. Firestore is passed in, so check-uni-rules.mjs runs this against the
 // emulator with the real rules.
 
 /**
- * Saves a mentor's two documents together: either both are written or neither is. mentors/{uid} is
- * public (only what matching needs) and mentorDetails/{uid} is private (see registerMentor).
+ * Saves a mentor's documents together: either all are written or none is. mentors/{uid} is public
+ * (only what matching needs) and mentorDetails/{uid} is private (see registerMentor). With contact,
+ * when they ticked the box to share their email address with the students matched with them,
+ * mentorContacts/{uid} too (mentor-contact.js).
  * @param {import('firebase/firestore').Firestore} db
  * @param {string} uid
- * @param {{ profile: Record<string, unknown>, details: Record<string, unknown> }} mentor
+ * @param {{ profile: Record<string, unknown>, details: Record<string, unknown>, contact?: { email: string } }} mentor
  */
 export async function saveMentor(db, uid, mentor) {
   const batch = writeBatch(db);
   batch.set(doc(db, 'mentors', uid), mentor.profile);
   batch.set(doc(db, 'mentorDetails', uid), { ...mentor.details, createdAt: serverTimestamp() });
+  if (mentor.contact) batch.set(doc(db, MENTOR_CONTACTS, uid), contactToSave(mentor.contact.email));
   await batch.commit();
 }
 

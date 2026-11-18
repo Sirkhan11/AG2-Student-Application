@@ -113,7 +113,7 @@ const checks = [
     assert.deepEqual(t.calls.prepared[0], ANSWERS, 'trimmed');
     assert.deepEqual(t.calls.preferences[0], { meetingFrequency: 'every two weeks', availability: 'Weekday afternoons' });
     assert.ok(t.posts.some((p) => p.text === findingMessage(false)), 'the same progress message; these made-up steps don’t say the model is ready, so with the note');
-    assert.equal(t.last().text, 'Thanks for answering those questions. You’ve been matched with Alex, and your coordinator will introduce you.');
+    assert.equal(t.last().text, 'Thanks for answering those questions. You’ve been matched with Alex. Your mentor page says how to get in touch.');
     assert.deepEqual([t.last().card.kind, t.last().card.href], ['link', '/mentor']);
     assert.equal(t.finished[0].outcome, 'matched');
     assert.equal(t.state().active, false);
@@ -302,7 +302,7 @@ const checks = [
     assert.match(describeForGemini({ ...base, match: { status: 'coordinator', meetingFrequency: 'weekly', availability: null } }), /coordinator is finding them a mentor/);
   }],
   ['Straight after finding a mentor on the page, the app’s own line has the mentor’s name (never Gemini’s); otherwise Gemini writes the first message', () => {
-    assert.equal(matchLine({ status: 'matched', mentorId: 'm', mentorName: 'Alex', reasons: [], meetingFrequency: null, availability: null }), 'Thanks for answering those questions. You’ve been matched with Alex, and your coordinator will introduce you.');
+    assert.equal(matchLine({ status: 'matched', mentorId: 'm', mentorName: 'Alex', reasons: [], meetingFrequency: null, availability: null }), 'Thanks for answering those questions. You’ve been matched with Alex. Your mentor page says how to get in touch.');
     assert.match(String(matchLine({ status: 'coordinator', meetingFrequency: null, availability: null })), /We’re finding you a mentor/);
     assert.equal(matchLine(null), null);
   }],

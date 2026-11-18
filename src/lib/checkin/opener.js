@@ -23,7 +23,9 @@ const standard = (task) => talkFor(task.id) !== null;
  * @param {Match | null | undefined} match
  */
 export function matchLine(match) {
-  if (match?.status === 'matched') return `Thanks for answering those questions. You’ve been matched with ${match.mentorName ?? 'a mentor'}, and your coordinator will introduce you.`;
+  // How they get in touch depends on whether the mentor shared their email address, which this line
+  // never knows (mentor-contact.js), so it points to where it's shown.
+  if (match?.status === 'matched') return `Thanks for answering those questions. You’ve been matched with ${match.mentorName ?? 'a mentor'}. Your mentor page says how to get in touch.`;
   if (match?.status === 'coordinator') return 'Thanks for answering those questions. We’re finding you a mentor, and we’ll let you know soon.';
   return null;
 }
@@ -55,7 +57,7 @@ export function describeForGemini({ match, tasks, checklistSaved = true, profile
   if (isMentor) {
     lines.push('Mentor: they’re a mentor themselves (they signed up as one), so don’t offer to find them one.');
   } else if (match?.status === 'matched') {
-    lines.push('Mentor: they have one. They’ve been matched with a student mentor, and the mentoring coordinator will introduce them. You aren’t told the mentor’s name or how to reach them.');
+    lines.push('Mentor: they have one. They’ve been matched with a student mentor. You aren’t told the mentor’s name or how to reach them: if they ask, show their mentor (the mentor tool), which has both, rather than saying how yourself.');
     const reasons = (match.reasons ?? []).map((reason) => tidyText(reason, MAX_REASON_LENGTH)).filter(Boolean).slice(0, 3);
     lines.push(
       reasons.length

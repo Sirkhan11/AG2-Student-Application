@@ -61,7 +61,7 @@
   function mentorInWords(match, isMentor) {
     if (isMentor) return 'You’re a mentor yourself, so it doesn’t offer to find you one.';
     const often = match?.meetingFrequency ? ` You asked to meet ${match.meetingFrequency}.` : '';
-    if (match?.status === 'matched') return `You have one. It’s told why you were matched (as on the Your Mentor page), but not your mentor’s name.${often}`;
+    if (match?.status === 'matched') return `You have one. It’s told why you were matched (as on the Your Mentor page), but not your mentor’s name or how to reach them.${often}`;
     if (match?.status === 'coordinator') return `The mentoring coordinator is finding you one.${often}`;
     return 'You haven’t got one yet.';
   }

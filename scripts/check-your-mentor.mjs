@@ -1,6 +1,7 @@
 // Checks their mentor in the check-in chat (YourMentorCard.svelte): the your-mentor action shows a card
-// with the mentor's name, how to get in touch and how often they asked to meet, read from the student's
-// own record so Gemini never sees them; the change-mentor action opens the form for a different mentor
+// with the mentor's name, how to get in touch (the address the mentor chose to share, or the
+// coordinator: check-mentor-contact.mjs has the rest) and how often they asked to meet, read from the
+// student's own records so Gemini never sees them; the change-mentor action opens the form for a different mentor
 // (ChangeMentorRequest), which goes only to the coordinator; Gemini never asks for the reason. Both
 // are only allowed for a student with a mentor.
 // 1. Offline, in Node: the two actions show their card straight away; the instructions; what Gemini
@@ -8,7 +9,7 @@
 //    chat's own code, with its own ids.
 // 2. In Chrome against the Auth and Firestore emulators (vite dev --mode emulators), with a stand-in
 //    for Gemini (scripts/lib/stand-in-gemini.mjs), so nothing reaches Google: the card with the
-//    mentor's details while Gemini's request has none of them; the form, sent to Firestore, with the
+//    mentor's details, including the address they shared, while Gemini's request has none of them; the form, sent to Firestore, with the
 //    reason never in a later Gemini request; a student without a mentor.
 // Made-up people only; nothing real is touched (project demo-ag2). Run from the project folder:
 //   node scripts/check-your-mentor.mjs
@@ -59,16 +60,16 @@ const offline = [
   }],
   ['Gemini is never told the mentor’s name or how to reach them', () => {
     const told = describeForGemini({ match: { ...MATCH, mentorName: null }, tasks: null, profile: null });
-    assert.match(told, /You aren’t told the mentor’s name or how to reach them\./);
+    assert.match(told, /You aren’t told the mentor’s name or how to reach them: if they ask, show their mentor \(the mentor tool\), which has both, rather than saying how yourself\./);
     const page = source('src/routes/check-in/+page.svelte');
     assert.match(page, /const withoutName = match\?\.status === 'matched' \? \{ \.\.\.match, mentorName: null \} : match;/, 'the first messages Gemini sees have no name');
     assert.doesNotMatch(describeForGemini({ match: MATCH, tasks: null, profile: null }), /Alex Mentor/, 'even if a name were passed in');
   }],
-  ['The card reads their own record: the name, the coordinator introducing them, how often; Ask for a different mentor opens the form; only with a mentor', () => {
+  ['The card reads their own records: the name, how to get in touch (the address their mentor shared, or the coordinator), how often; Ask for a different mentor opens the form; only with a mentor', () => {
     const card = oneLine(source('src/lib/components/YourMentorCard.svelte'));
-    assert.match(card, /match = await loadMyMatch\(\);/);
+    assert.match(card, /match = await loadMyMatch\(\); contact = await loadMentorContact\(db, match\);/);
     assert.match(card, /<p class="name">\{match\.mentorName \?\? 'Your mentor'\}<\/p>/);
-    assert.match(card, /<strong>Getting in touch:<\/strong> your coordinator will introduce you\./);
+    assert.match(card, /<p><strong>Getting in touch:<\/strong> <MentorContact \{contact\} \/><\/p>/);
     assert.match(card, /<strong>How often:<\/strong> you asked to meet \{match\.meetingFrequency\}\./);
     assert.match(card, /changing = change && match\?\.status === 'matched';/, 'the form only for a student with a mentor');
     assert.match(card, /\{#if changing\} <ChangeMentorRequest open \/> \{\/if\}/);
@@ -127,6 +128,9 @@ async function inTheBrowser(where) {
   const ivy = await db.verifiedAccount('ivy.mentor@northumbria.ac.uk', password);
   await db.seed(`students/${ivy}`, { name: 'Ivy Student', course: 'BSc Law', email: 'ivy.mentor@northumbria.ac.uk', arrivalDate: '', role: 'student', ...CHECKLIST_DONE });
   await db.seed(`matches/${ivy}`, { ...MATCH, createdAt: new Date() });
+  // Ivy's mentor chose to share their address (check-mentor-contact.mjs checks the sharing itself).
+  const ALEX = 'alex.mentor.shares@northumbria.ac.uk';
+  await db.seed(`mentorContacts/${MATCH.mentorId}`, { email: ALEX, agreedAt: new Date() });
   const jo = await db.verifiedAccount('jo.mentor@northumbria.ac.uk', password);
   await db.seed(`students/${jo}`, { name: 'Jo Student', course: 'BA History', email: 'jo.mentor@northumbria.ac.uk', arrivalDate: '', role: 'student', ...CHECKLIST_DONE });
   const DETAILS = 'Made-up words for the check';
@@ -168,8 +172,10 @@ async function inTheBrowser(where) {
       const card = oneLine(await page.evaluate(`[...document.querySelectorAll('[aria-label="Your mentor"]')].at(-1)?.innerText ?? ''`));
       if (process.env.SCREENSHOTS) await page.picture(join(process.env.SCREENSHOTS, 'your-mentor-card.png'));
       const sent = JSON.stringify(gemini.requests);
-      report('“Who’s my mentor?” shows the card with the mentor’s name, how to get in touch and how often, read from their record; Gemini is sent none of it',
-        shown && card.includes('Getting in touch: your coordinator will introduce you.') && card.includes('How often: you asked to meet weekly.') && !sent.includes('Alex Mentor') && !sent.includes('mentor-alex'),
+      report('“Who’s my mentor?” shows the card with the mentor’s name, the address they shared (to email them), and how often, read from their records; Gemini is sent none of it',
+        shown && card.includes(`Getting in touch: email ${ALEX}.`) && card.includes('How often: you asked to meet weekly.')
+          && (await page.evaluate(`[...document.querySelectorAll('[aria-label="Your mentor"]')].at(-1)?.querySelector('a[href="mailto:${ALEX}"]') !== null`))
+          && !sent.includes('Alex Mentor') && !sent.includes('mentor-alex') && !sent.includes(ALEX) && !sent.includes('alex.mentor.shares'),
         JSON.stringify(card.slice(0, 120)));
 
       // 2. A different mentor: the form, sent to Firestore only; the reason never reaches Gemini.

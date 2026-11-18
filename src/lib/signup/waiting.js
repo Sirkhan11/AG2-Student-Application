@@ -7,9 +7,10 @@
 const KEY = 'ag2-signup-waiting';
 
 /**
- * What waits: the account it belongs to, and the student's record or the mentor's two documents.
+ * What waits: the account it belongs to, and the student's record or the mentor's documents (with
+ * the address to share with their students, if they ticked the box: saveMentor in finish.js).
  * @typedef {{ uid: string, student?: Record<string, unknown>,
- *   mentor?: { profile: Record<string, unknown>, details: Record<string, unknown> } }} Waiting
+ *   mentor?: { profile: Record<string, unknown>, details: Record<string, unknown>, contact?: { email: string } } }} Waiting
  */
 
 /** This tab's sessionStorage, if the browser lets the page use it (reading it can throw). */

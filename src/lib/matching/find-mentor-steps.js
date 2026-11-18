@@ -81,7 +81,9 @@ export const alreadyHasText = (match) =>
  * @param {import('#lib/matching/find-match.js').SaveOutcome} outcome
  */
 export function outcomeText(outcome) {
-  if (outcome.outcome === 'matched') return `Thanks for answering those questions. You’ve been matched with ${outcome.mentorName}, and your coordinator will introduce you.`;
+  // The mentor may have shared their email address, or the coordinator introduces them: the mentor
+  // page says which (mentor-contact.js), and a link to it comes next.
+  if (outcome.outcome === 'matched') return `Thanks for answering those questions. You’ve been matched with ${outcome.mentorName}. Your mentor page says how to get in touch.`;
   if (outcome.outcome === 'coordinator') return 'Thanks for answering those questions. We’re finding you a mentor, and we’ll let you know soon.';
   if (outcome.outcome === 'already-saved') return alreadyHasText(outcome.match);
   return `${SAYS.noMentors} ${SAYS.nothingSaved}`;

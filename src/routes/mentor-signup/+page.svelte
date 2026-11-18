@@ -18,6 +18,8 @@
   let meetingFrequency = $state('every two weeks');
   let availability = $state('');
   let maxStudents = $state(2);
+  // Off unless they tick it: their email address is shared only if they choose (mentor-contact.js).
+  let shareEmail = $state(false);
   let over18 = $state(false);
 
   let status = $state('');
@@ -58,7 +60,8 @@
           answers,
           meetingFrequency,
           availability,
-          maxStudents: Number(maxStudents)
+          maxStudents: Number(maxStudents),
+          shareEmail
         },
         signedIn ? null : { email, password, uniOnly }
       );
@@ -99,8 +102,9 @@
     <p class="muted">
       Your answers are only used to match you with students who'd get on with you. Google's Gemini
       AI summarises them to find a match. Students will see the name you choose to show them and a
-      short reason for the match, such as a shared interest, but not your answers or other details.
-      The coordinator checks every profile first.
+      short reason for the match, such as a shared interest, but not your answers or other details,
+      unless you choose below to share your email address with them. The coordinator checks every
+      profile first.
     </p>
 
     <form onsubmit={(event) => {
@@ -144,6 +148,15 @@
 
       <label for="max">How many students could you mentor?</label>
       <input id="max" class="field" type="number" min="1" max="5" bind:value={maxStudents} required />
+
+      <label>
+        <input type="checkbox" bind:checked={shareEmail} aria-describedby="share-email-note" />
+        Let the students I’m matched with see my email address, so they can get in touch with me
+      </label>
+      <p id="share-email-note" class="muted">
+        Optional. Only students matched with you can see it, and it’s never sent to Gemini. If you
+        don’t share it, the coordinator introduces you. You can change your mind on Your mentor at any time.
+      </p>
 
       <label>
         <input type="checkbox" bind:checked={over18} required />

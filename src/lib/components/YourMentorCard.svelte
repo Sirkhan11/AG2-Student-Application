@@ -1,25 +1,31 @@
 <script>
   import { onMount } from 'svelte';
+  import { db } from '#lib/firebase/client.js';
   import ChangeMentorRequest from '#lib/components/ChangeMentorRequest.svelte';
+  import MentorContact from '#lib/components/MentorContact.svelte';
   import { loadMyMatch } from '#lib/matching/matches.js';
+  import { loadMentorContact } from '#lib/matching/mentor-contact.js';
 
   /**
    * Their mentor, in the check-in chat ({{your-mentor}}, and {{change-mentor}} with change set: see
-   * chat-actions.js): the mentor's name, how to get in touch and how often they asked to meet, read
-   * here from their own match record, so Gemini never sees them; and asking the mentoring coordinator
-   * for a different mentor (ChangeMentorRequest), which goes only to the coordinator. Only with a
-   * mentor: otherwise it says where they are.
+   * chat-actions.js): the mentor's name, how to get in touch (their email address, if the mentor chose
+   * to share it, or the coordinator introducing them) and how often they asked to meet, read here from
+   * their own records, so Gemini never sees them; and asking the mentoring coordinator for a different
+   * mentor (ChangeMentorRequest), which goes only to the coordinator. Only with a mentor: otherwise it
+   * says where they are.
    * @type {{ change?: boolean }} change: they asked for a different mentor, so the form opens straight away
    */
   let { change = false } = $props();
 
   let view = $state(/** @type {'loading' | 'error' | 'ready'} */ ('loading'));
   let match = $state(/** @type {import('#lib/matching/matches.js').Match | null} */ (null));
+  let contact = $state(/** @type {import('#lib/matching/mentor-contact.js').MentorContact | null} */ (null));
   let changing = $state(false);
 
   onMount(async () => {
     try {
       match = await loadMyMatch();
+      contact = await loadMentorContact(db, match);
       changing = change && match?.status === 'matched';
       view = 'ready';
     } catch (err) {
@@ -38,8 +44,8 @@
   {:else if match?.status === 'matched'}
     <p class="label">Your mentor</p>
     <p class="name">{match.mentorName ?? 'Your mentor'}</p>
-    <!-- The same as the Your Mentor page: the coordinator introduces them. -->
-    <p><strong>Getting in touch:</strong> your coordinator will introduce you.</p>
+    <!-- The same as the Your Mentor page: their email address if they shared it, or the coordinator. -->
+    <p><strong>Getting in touch:</strong> <MentorContact {contact} /></p>
     {#if match.meetingFrequency}
       <p><strong>How often:</strong> you asked to meet {match.meetingFrequency}.</p>
     {/if}

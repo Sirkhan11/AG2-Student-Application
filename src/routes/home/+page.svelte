@@ -3,11 +3,14 @@
   import BottomNav from '#lib/components/BottomNav.svelte';
   import FinishDetailsCard from '#lib/components/FinishDetailsCard.svelte';
   import Icon from '#lib/components/Icon.svelte';
+  import MentorContact from '#lib/components/MentorContact.svelte';
   import { loadMyRecord } from '#lib/checklist/store.js';
   import { watchAccount } from '#lib/firebase/auth.js';
+  import { db } from '#lib/firebase/client.js';
   import { nextTask, societiesForYou, weekLine } from '#lib/home/dashboard.js';
   import { loadMyMatch } from '#lib/matching/matches.js';
   import { hasMentorProfile } from '#lib/matching/mentor-account.js';
+  import { loadMentorContact } from '#lib/matching/mentor-contact.js';
   import { greetingFor } from '#lib/students/greeting.js';
 
   // Home as a dashboard, as the group's wireframe: the greeting, with Need help now always in view at
@@ -30,6 +33,8 @@
   /** Which state their mentor is in: none yet, waiting for the coordinator, or matched (and a mentor's own account, or a failed load). */
   let mentor = $state(/** @type {'loading' | 'none' | 'waiting' | 'matched' | 'is-mentor' | 'error'} */ ('loading'));
   let match = $state(/** @type {import('#lib/matching/matches.js').Match | null} */ (null));
+  /** Their mentor's email address, if the mentor chose to share it (mentor-contact.js). */
+  let contact = $state(/** @type {import('#lib/matching/mentor-contact.js').MentorContact | null} */ (null));
 
   onMount(() =>
     watchAccount(async (account) => {
@@ -49,6 +54,8 @@
       }
       try {
         const [found, isMentor] = await Promise.all([loadMyMatch(), hasMentorProfile()]);
+        // Before the card shows, so "the coordinator will introduce you" never flashes up first.
+        contact = isMentor ? null : await loadMentorContact(db, found);
         match = found;
         mentor = isMentor ? 'is-mentor' : found?.status === 'matched' ? 'matched' : found?.status === 'coordinator' ? 'waiting' : 'none';
       } catch (err) {
@@ -105,14 +112,16 @@
       <p class="muted" role="status">Loading…</p>
     {:else if mentor === 'matched' && match?.status === 'matched'}
       <p class="name">{match.mentorName ?? 'Your mentor'}</p>
-      <!-- The same as the Your Mentor page: the coordinator introduces them. The {' '} is the space
-           between the two sentences: Svelte drops a plain space at the start of an if block. -->
-      <p>Getting in touch: your coordinator will introduce you.{#if match.meetingFrequency}{' '}You asked to meet {match.meetingFrequency}.{/if}</p>
+      <!-- The same as the Your Mentor page: their email address if they shared it, or the coordinator.
+           The {' '} is the space between the two sentences: Svelte drops a plain space at the start of
+           an if block. -->
+      <p>Getting in touch: <MentorContact {contact} />{#if match.meetingFrequency}{' '}You asked to meet {match.meetingFrequency}.{/if}</p>
       <a class="secondary-button do" href="/mentor">Your mentor page</a>
     {:else if mentor === 'waiting'}
       <p>We’re finding you a mentor, and we’ll let you know soon.</p>
     {:else if mentor === 'is-mentor'}
       <p>You’re a mentor yourself, so there’s nothing to find here.</p>
+      <a class="secondary-button do" href="/mentor">Sharing your email</a>
     {:else if mentor === 'error'}
       <p>We couldn’t load your mentor just now.</p>
       <a class="secondary-button do" href="/mentor">Your mentor page</a>

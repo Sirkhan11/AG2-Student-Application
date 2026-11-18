@@ -65,7 +65,8 @@ const offline = [
   }],
   ['The Your Mentor page offers it only with a mentor, says only the coordinator sees it, points to Need help now, and can cancel', () => {
     const page = readFileSync('src/routes/mentor/+page.svelte', 'utf8');
-    assert.match(page, /\{:else if match && match\.status === 'matched'\}[\s\S]*<ChangeMentorRequest \/>\s*\{\/if\}/);
+    // Only in the matched student's part: a mentor's own part (sharing their address) comes after it.
+    assert.match(page, /\{:else if match && match\.status === 'matched'\}[\s\S]*<ChangeMentorRequest \/>\s*\{:else if view === 'mentor'\}(?![\s\S]*ChangeMentorRequest)/);
     assert.match(COMPONENT, /This goes only to the mentoring coordinator\. Your mentor won’t see it, and it’s never sent to Gemini\./);
     assert.match(COMPONENT, /If it’s urgent, or you feel unsafe, <a href="\/need-help">get help now<\/a>\./);
     assert.match(COMPONENT, /URGENT_REASONS\.includes\(reason\) \? 'urgent'/, 'stronger when they don’t feel comfortable');
