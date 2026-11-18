@@ -89,7 +89,7 @@ const offline = [
     assert.deepEqual([off.emailLabel, off.emailPlaceholder, off.inboxHeading, off.testingNote], ['Email address', undefined, 'Check your inbox', 'Testing: open to any email address']);
     assert.doesNotMatch(JSON.stringify(off), /Northumbria|uni /, 'nothing about Northumbria with the switch off');
   }],
-  ['The gate: logged out, only the five public pages (others go to log in, nothing shows while Firebase checks); not Northumbria, told why (unless the switch is off; nothing until it’s read); not verified, only check-your-inbox; Need help always opens', () => {
+  ['The gate: logged out, only the six public pages (others go to log in, nothing shows while Firebase checks); not Northumbria, told why (unless the switch is off; nothing until it’s read); not verified, only check-your-inbox; Need help always opens', () => {
     const uni = { email: 'sam@northumbria.ac.uk', verified: true };
     assert.deepEqual(PUBLIC_PAGES, ['/', '/signup', '/forgot-password', '/mentor-signup', '/need-help', '/privacy']);
     for (const path of PUBLIC_PAGES) {

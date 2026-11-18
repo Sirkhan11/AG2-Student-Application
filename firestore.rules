@@ -121,11 +121,6 @@ service cloud.firestore {
         && validMatch(request.resource.data);
     }
 
-    // A student asking the coordinator for a different mentor, under their own uid, so each student
-    // has at most one open request. Only that student can send, read and cancel (delete) it: never
-    // their mentor or anyone else, and only while they have a mentor. The coordinator reads it in the
-    // Firebase console and deletes it once they've moved the student. Nothing changes it from the app,
-    // and the chat never reads it.
     // The things a student asked the check-in chat to remember (src/lib/checkin/chat-notes.js): only
     // that student can read, change or delete them, with at most 10 notes of at most 100 characters
     // each (MAX_NOTES and MAX_NOTE_LENGTH in about-you.js). See validChatNotes below.
@@ -136,6 +131,11 @@ service cloud.firestore {
         && validChatNotes(request.resource.data.notes);
     }
 
+    // A student asking the coordinator for a different mentor, under their own uid, so each student
+    // has at most one open request. Only that student can send, read and cancel (delete) it: never
+    // their mentor or anyone else, and only while they have a mentor. The coordinator reads it in the
+    // Firebase console and deletes it once they've moved the student. Nothing changes it from the app,
+    // and the chat never reads it.
     match /mentorChangeRequests/{studentId} {
       allow read, delete: if hasAccess() && request.auth.uid == studentId;
       allow create: if hasAccess() && request.auth.uid == studentId
