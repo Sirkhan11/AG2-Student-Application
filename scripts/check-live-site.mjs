@@ -34,7 +34,7 @@ import { join } from 'node:path';
 import { initializeApp } from 'firebase/app';
 import { createUserWithEmailAndPassword, deleteUser, getAuth, signInWithEmailAndPassword, signOut } from 'firebase/auth';
 import { collection, doc, getDoc, getDocs, getFirestore, query, serverTimestamp, setDoc, where } from 'firebase/firestore/lite';
-import { uniOnlyFrom, wordingFor } from '#lib/access.js';
+import { fieldsFrom, uniOnlyFrom, wordingFor } from '#lib/access.js';
 
 const baseAt = process.argv.indexOf('--base');
 const BASE = (baseAt > 0 ? process.argv[baseAt + 1] : 'http://127.0.0.1:5005').replace(/\/$/, '');
@@ -56,17 +56,22 @@ for (const account of [throwaway, outsider]) {
   await signOut(auth);
 }
 
-// The live access switch, read logged out as the forms read it: the wording and what happens to an
-// address from elsewhere follow it, so the checks below expect whichever position it's in. Until the
-// rules with the switch are deployed, the read is refused: the site is then Northumbria only (the app
-// treats a refused read the same way), and the check of the switch itself (part 5) says so.
-const access = await getDoc(doc(db, 'config', 'access')).then(
-  (snapshot) => ({ uniOnly: uniOnlyFrom(snapshot.data()), problem: '' }),
-  (err) => ({ uniOnly: true, problem: String(err.code) })
+// The live access switch, read exactly as the forms read it (readUniOnly in src/lib/access.js): one
+// plain request to Firestore's REST API, logged out. 200 is the document (uniOnly among its fields) and
+// 404 is no document: Northumbria only. Anything else means the switch can't be read at all, when the
+// site looks exactly as it does with the switch on: the checks below then expect Northumbria only, and
+// part 5 fails rather than let that pass as "on". (Until the rules with the switch are deployed, 403.)
+const SWITCH_URL = `https://firestore.googleapis.com/v1/projects/${env.VITE_FIREBASE_PROJECT_ID}/databases/(default)/documents/config/access?key=${encodeURIComponent(env.VITE_FIREBASE_API_KEY)}`;
+const answer = await fetch(SWITCH_URL).then(
+  async (response) => ({ status: response.status, body: await response.json().catch(() => ({})) }),
+  (err) => ({ status: 0, body: { error: String(err?.message ?? err) } })
 );
+const access = answer.status === 200 ? { uniOnly: uniOnlyFrom(fieldsFrom(answer.body.fields)), problem: '' }
+  : answer.status === 404 ? { uniOnly: true, problem: '' }
+    : { uniOnly: true, problem: answer.status ? `HTTP ${answer.status}` : String(answer.body.error) };
 const uniOnly = access.uniOnly;
 const words = wordingFor(uniOnly);
-console.log(`The access switch (config/access): ${access.problem ? `can't be read (${access.problem}: the deployed rules don't have it yet), so Northumbria only` : uniOnly ? 'ON, Northumbria only (no uniOnly: false)' : 'OFF, open to any email address (uniOnly: false)'}\n`);
+console.log(`The access switch (config/access): ${access.problem ? `can't be read (${access.problem}), so the site is Northumbria only` : uniOnly ? `ON, Northumbria only (HTTP ${answer.status}: ${answer.status === 404 ? 'no document' : 'no uniOnly: false'})` : 'OFF, open to any email address (uniOnly: false)'}\n`);
 
 const profile = mkdtempSync(join(tmpdir(), 'ag2-live-site-'));
 const chrome = spawn(CHROME, ['--headless=new', `--remote-debugging-port=${PORT}`, `--user-data-dir=${profile}`, '--no-first-run', '--disable-extensions', '--window-size=390,844', 'about:blank'], { stdio: 'ignore' });
@@ -254,7 +259,7 @@ try {
   }
 
   // 5. The switch itself, logged out: readable (the forms read it before anyone signs in), not writable.
-  report('Logged out, the switch (config/access) can be read, as the forms read it', access.problem === '', access.problem ? `${access.problem}: deploy firestore.rules with the site, which lets anyone read it` : '');
+  report('Logged out, the switch (config/access) answers the forms’ plain request with 200 (the document) or 404 (no document)', access.problem === '', access.problem ? `${access.problem}: deploy firestore.rules with the site, which lets anyone read it` : `HTTP ${answer.status}`);
   const written = await setDoc(doc(db, 'config', 'access'), { probe: 'check-live-site' }, { merge: true }).then(() => 'allowed', (err) => String(err.code));
   report('Logged out, the switch can’t be written', written === 'permission-denied', written);
 } finally {

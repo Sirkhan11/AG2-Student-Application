@@ -80,6 +80,10 @@ change:
   code is in `src/lib/access.js`; `scripts/check-uni-rules.mjs` tests both positions in the emulator,
   `scripts/check-access-switch.mjs` tests what people see in the browser, and `check-live-site.mjs`
   expects whichever way the live switch is set.
+- The app reads the switch with one plain request to Firestore's REST API (`readUniOnly`), not the
+  Firestore SDK. App Check isn't enforced for Firestore on this project today; if it ever is, that
+  request needs the App Check token in its `X-Firebase-AppCheck` header, or the switch will read as on
+  for everyone.
 
 ```sh
 npm run build:live    # a static site in build/, then scripts/check-live-build.mjs checks it
