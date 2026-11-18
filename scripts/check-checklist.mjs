@@ -20,7 +20,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
   applyChange, applyToLatest, ChecklistError, DEFAULT_TASKS, defaultTasks, makeAdd, makeDelete,
-  makeEdit, makeTick, MAX_TASKS, MAX_TITLE_LENGTH, readSaved, checklistFrom
+  makeEdit, makeTick, MAX_TASKS, MAX_TITLE_LENGTH, readSaved, checklistFrom, withNewDefaults
 } from '#lib/checklist/tasks.js';
 import { createChecklistSync } from '#lib/checklist/sync.js';
 
@@ -42,11 +42,13 @@ function refuses(action, message) {
   assert.throws(action, (err) => err instanceof ChecklistError && err.message === message);
 }
 const ids = (/** @type {{ id: string }[]} */ list) => list.map((task) => task.id);
+/** Whether the task with this id is ticked in a list. @param {{ id: string, done: boolean }[]} list @param {string} id */
+const done = (list, id) => list.find((task) => task.id === id)?.done;
 
 // ---------------------------------------------------------------- 1. Tasks
 console.log('-- 1. Tasks (tasks.js)');
-await check('Five defaults with fixed ids, none done', () => {
-  assert.deepEqual(ids(defaultTasks()), ['gp', 'student-id', 'society', 'dentist', 'contacts']);
+await check('Six defaults with fixed ids, Enrol first, none done', () => {
+  assert.deepEqual(ids(defaultTasks()), ['enrol', 'gp', 'student-id', 'society', 'dentist', 'contacts']);
   assert.ok(defaultTasks().every((task) => task.done === false));
 });
 await check('defaultTasks() gives fresh copies: ticking one never changes the defaults', () => {
@@ -59,7 +61,7 @@ await check('Adding: trimmed, given its own "own-" id, added at the end', () => 
   const change = makeAdd('  Buy a desk lamp  ');
   assert.equal(change.type, 'add');
   const list = applyChange(defaultTasks(), change);
-  assert.equal(list.length, 6);
+  assert.equal(list.length, 7);
   assert.deepEqual(list.at(-1), { id: change.type === 'add' ? change.task.id : '', title: 'Buy a desk lamp', done: false });
   assert.match(list.at(-1)?.id ?? '', /^own-/);
   assert.notEqual(/** @type {any} */ (makeAdd('a')).task.id, /** @type {any} */ (makeAdd('a')).task.id);
@@ -83,12 +85,13 @@ await check(`Adding: task number ${MAX_TASKS + 1} is refused`, () => {
 });
 await check('Adding the same task twice (a retry) only adds it once', () => {
   const change = makeAdd('Buy a desk lamp');
-  assert.equal(applyChange(applyChange(defaultTasks(), change), change).length, 6);
+  assert.equal(applyChange(applyChange(defaultTasks(), change), change).length, 7);
 });
 await check('Ticking and unticking; ticking a task that has gone changes nothing', () => {
+  const gp = (/** @type {{ id: string, done: boolean }[]} */ list) => list.find((task) => task.id === 'gp')?.done;
   const ticked = applyChange(defaultTasks(), makeTick('gp', true));
-  assert.equal(ticked[0].done, true);
-  assert.equal(applyChange(ticked, makeTick('gp', false))[0].done, false);
+  assert.equal(gp(ticked), true);
+  assert.equal(gp(applyChange(ticked, makeTick('gp', false))), false);
   assert.deepEqual(applyChange(ticked, makeTick('gone', true)), ticked);
 });
 await check('Editing: your own tasks can be renamed; the defaults and empty names are refused', () => {
@@ -100,7 +103,7 @@ await check('Editing: your own tasks can be renamed; the defaults and empty name
 });
 await check('Deleting, including a default; deleting one that has gone changes nothing', () => {
   const list = applyChange(defaultTasks(), makeDelete('society'));
-  assert.deepEqual(ids(list), ['gp', 'student-id', 'dentist', 'contacts']);
+  assert.deepEqual(ids(list), ['enrol', 'gp', 'student-id', 'dentist', 'contacts']);
   assert.deepEqual(applyChange(list, makeDelete('society')), list);
 });
 await check('Reading a saved list: nothing saved gives null; badly formed tasks are dropped', () => {
@@ -111,16 +114,36 @@ await check('Reading a saved list: nothing saved gives null; badly formed tasks 
     { id: 'x', title: 'X', done: false }
   ]);
 });
-await check('The page and the chat read the checklist the same way: what\'s saved, or the five defaults, unticked, marked as never saved', () => {
-  const saved = checklistFrom({ checklist: [{ id: 'gp', title: 'Register with a GP', done: true }], course: 'Law' });
+await check('The page and the chat read the checklist the same way: what\'s saved (with Enrol, once), or the six defaults, unticked, marked as never saved', () => {
+  const saved = checklistFrom({ checklist: [{ id: 'gp', title: 'Register with a GP', done: true }], checklistOffered: ['enrol'], course: 'Law' });
   assert.deepEqual(saved, { tasks: [{ id: 'gp', title: 'Register with a GP', done: true }], saved: true });
   for (const record of [undefined, {}, { checklist: 'not a list' }]) {
     const fresh = checklistFrom(/** @type {any} */ (record));
     assert.equal(fresh.saved, false);
-    assert.deepEqual(ids(fresh.tasks), ['gp', 'student-id', 'society', 'dentist', 'contacts']);
+    assert.deepEqual(ids(fresh.tasks), ['enrol', 'gp', 'student-id', 'society', 'dentist', 'contacts']);
     assert.ok(fresh.tasks.every((task) => task.done === false));
   }
-  assert.deepEqual(checklistFrom({ checklist: [] }), { tasks: [], saved: true }, 'an emptied list stays empty');
+  assert.deepEqual(checklistFrom({ checklist: [], checklistOffered: ['enrol'] }), { tasks: [], saved: true }, 'an emptied list stays empty');
+  assert.deepEqual(ids(checklistFrom({ checklist: [] }).tasks), ['enrol'], 'one emptied before Enrol was added gets it, once');
+});
+await check('Enrol is added to a list saved before it existed: at the top, once, keeping their own tasks and ticks; one they delete stays deleted; a full list gets it once there’s room', async () => {
+  const old = [{ id: 'gp', title: 'Register with a GP', done: true }, { id: 'own-1', title: 'Buy a lamp', done: false }, { id: 'society', title: 'Join a society', done: true }];
+  const added = withNewDefaults(old, undefined);
+  assert.deepEqual(added.tasks, [{ id: 'enrol', title: 'Enrol', done: false }, ...old]);
+  assert.deepEqual(added.offered, ['enrol']);
+  assert.deepEqual(withNewDefaults(old, ['enrol']).tasks, old, 'deleted after it was added: stays deleted');
+  const full = Array.from({ length: MAX_TASKS }, (_, i) => ({ id: `own-${i}`, title: `Task ${i}`, done: i % 2 === 0 }));
+  assert.deepEqual(withNewDefaults(full, []), { tasks: full, offered: [] }, 'no room: not added, and not marked as had');
+  assert.equal(withNewDefaults(full.slice(1), []).tasks[0].id, 'enrol', 'once there’s room');
+  // Saving a change notes it as had, so deleting Enrol keeps it deleted.
+  /** @type {any[]} */
+  const written = [];
+  let record = /** @type {any} */ ({ checklist: old });
+  const transaction = { get: async () => ({ data: () => record }), set: (/** @type {any} */ _ref, /** @type {any} */ data) => { written.push(data); record = { ...record, ...data }; } };
+  await applyToLatest(transaction, null, makeTick('enrol', true));
+  assert.deepEqual(written[0], { checklist: [{ id: 'enrol', title: 'Enrol', done: true }, ...old], checklistOffered: ['enrol'] });
+  await applyToLatest(transaction, null, makeDelete('enrol'));
+  assert.deepEqual(ids(checklistFrom(record).tasks), ['gp', 'own-1', 'society'], 'deleted, and it stays deleted');
 });
 
 await check('Saved format is exactly what the check-in chat reads: { id, title, done }', () => {
@@ -137,11 +160,11 @@ await check('Two browsers: a tick from an out-of-date copy keeps the other brows
   const latest = applyChange(stale, makeAdd('Added in browser 1')); // browser 1 saved this since
   const tick = makeTick('gp', true); // browser 2 now ticks
   // Old way, saving browser 2's whole list: browser 1's task is lost.
-  assert.equal(applyChange(stale, tick).length, 5);
+  assert.equal(applyChange(stale, tick).length, 6);
   // New way, applying the change to the latest list: both survive.
   const merged = applyChange(latest, tick);
-  assert.equal(merged.length, 6);
-  assert.equal(merged[0].done, true);
+  assert.equal(merged.length, 7);
+  assert.equal(merged.find((task) => task.id === 'gp')?.done, true);
 });
 
 // ---------------------------------------------------------------- 2. Sync
@@ -191,10 +214,10 @@ await check('A failed save stays on screen with an error, nothing else is sent, 
   });
   await sync.record(makeTick('gp', true));
   assert.equal(seen.problem?.kind, 'error');
-  assert.equal(seen.tasks[0].done, true, 'the tick is still shown');
+  assert.equal(done(seen.tasks, 'gp'), true, 'the tick is still shown');
   await sync.record(makeTick('society', true));
   assert.deepEqual(server.calls, [], 'nothing sent while there is an error');
-  assert.equal(seen.tasks[2].done, true, 'the second change is shown too');
+  assert.equal(done(seen.tasks, 'society'), true, 'the second change is shown too');
   await sync.retry();
   assert.deepEqual(server.calls, ['tick', 'tick']);
   assert.equal(seen.problem, null);
@@ -207,7 +230,7 @@ await check('Offline: changes are queued with a notice, which clears once they r
   const { sync, seen } = startSync(async () => ({ status: 'queued', synced }));
   await sync.record(makeTick('gp', true));
   assert.equal(seen.problem?.kind, 'offline');
-  assert.equal(seen.tasks[0].done, true);
+  assert.equal(done(seen.tasks, 'gp'), true);
   arrive();
   await synced;
   await new Promise((resolve) => setTimeout(resolve, 0));
@@ -218,7 +241,7 @@ await check('A change the server can never accept is taken off the screen, with 
     throw new ChecklistError(`You can have up to ${MAX_TASKS} tasks.`);
   });
   await sync.record(makeAdd('One too many'));
-  assert.equal(seen.tasks.length, 5);
+  assert.equal(seen.tasks.length, DEFAULT_TASKS.length);
   assert.equal(seen.problem?.kind, 'refused');
   assert.equal(seen.problem?.message, `You can have up to ${MAX_TASKS} tasks.`);
 });
@@ -227,9 +250,9 @@ await check('After saving, the screen shows the latest list, including another d
   const { sync, seen } = startSync(server.save);
   server.list = applyChange(server.list, makeAdd('Added on my phone'));
   await sync.record(makeTick('gp', true));
-  assert.equal(seen.tasks.length, 6);
+  assert.equal(seen.tasks.length, DEFAULT_TASKS.length + 1);
   assert.equal(seen.tasks.at(-1).title, 'Added on my phone');
-  assert.equal(seen.tasks[0].done, true);
+  assert.equal(done(seen.tasks, 'gp'), true);
 });
 await check('Changes that aren\'t allowed are refused before anything is shown or sent', () => {
   const server = pretendServer();
@@ -286,10 +309,14 @@ if (!haveStudents || !env.VITE_FIREBASE_PROJECT_ID) {
       const saved = await runTransaction(db, (tx) => applyToLatest(tx, record, makeAdd('Rules test: added in browser 1')));
       assert.ok(saved.some((task) => task.title === 'Rules test: added in browser 1'));
     });
-    await check('Saving the checklist leaves student 1\'s other fields alone', async () => {
+    await check('Saving the checklist leaves student 1\'s other fields alone, apart from noting which newer standard tasks it has had', async () => {
       const after = (await getDoc(record)).data() ?? {};
-      const others = (/** @type {any} */ data) => JSON.stringify(canonical({ ...data, checklist: null }));
-      assert.equal(others(after), others(before));
+      // Only the names of any fields that changed are shown, never what's in the record.
+      const changed = Object.keys({ ...before, ...after })
+        .filter((key) => key !== 'checklist' && key !== 'checklistOffered')
+        .filter((key) => JSON.stringify(canonical(before[key])) !== JSON.stringify(canonical(after[key])));
+      assert.deepEqual(changed, [], 'fields that changed');
+      assert.ok(Array.isArray(after.checklistOffered) && after.checklistOffered.every((/** @type {unknown} */ id) => typeof id === 'string'), 'checklistOffered is a list of task ids');
     });
     await check('Two browsers on the real server: a tick from an out-of-date copy keeps the newer task', async () => {
       const stale = readSaved((await getDoc(record)).data()?.checklist) ?? defaultTasks(); // browser 2 loads
@@ -327,7 +354,10 @@ if (!haveStudents || !env.VITE_FIREBASE_PROJECT_ID) {
   } finally {
     // Put student 1's checklist back as it was.
     await signInAs(/** @type {string} */ (env.TEST_STUDENT_EMAIL), /** @type {string} */ (env.TEST_STUDENT_PASSWORD));
-    await updateDoc(record, { checklist: hadChecklist ? before.checklist : deleteField() });
+    await updateDoc(record, {
+      checklist: hadChecklist ? before.checklist : deleteField(),
+      checklistOffered: 'checklistOffered' in before ? before.checklistOffered : deleteField()
+    });
     await signOut(auth);
     console.log('      (Student 1\'s checklist has been put back as it was.)');
   }

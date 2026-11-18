@@ -1,6 +1,6 @@
-import { doc, getDoc, runTransaction, setDoc } from 'firebase/firestore';
+import { arrayUnion, doc, getDoc, runTransaction, setDoc } from 'firebase/firestore';
 import { db, getFirebaseAuth } from '#lib/firebase/client.js';
-import { applyToLatest, CHECKLIST_FIELD, ChecklistError, checklistFrom } from '#lib/checklist/tasks.js';
+import { ADDED_DEFAULTS, applyToLatest, CHECKLIST_FIELD, ChecklistError, checklistFrom, OFFERED_FIELD } from '#lib/checklist/tasks.js';
 import { firstName } from '#lib/students/greeting.js';
 
 /** @typedef {import('#lib/checklist/tasks.js').Task} Task */
@@ -88,7 +88,9 @@ export async function saveChange(change, listOnScreen) {
   } catch (err) {
     if (!isOffline(err)) throw err;
     // Queued in this browser until it's back online. The promise resolves once the server has it.
-    const synced = setDoc(ref, { [CHECKLIST_FIELD]: listOnScreen }, { merge: true });
+    // Any newer standard task on screen is noted as had (see withNewDefaults in tasks.js).
+    const had = ADDED_DEFAULTS.filter((id) => listOnScreen.some((task) => task.id === id));
+    const synced = setDoc(ref, { [CHECKLIST_FIELD]: listOnScreen, ...(had.length ? { [OFFERED_FIELD]: arrayUnion(...had) } : {}) }, { merge: true });
     synced.catch((syncErr) => console.error('The queued checklist save failed:', syncErr));
     return { status: 'queued', synced };
   }

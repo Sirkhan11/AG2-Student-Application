@@ -5,7 +5,9 @@
 // Saved format, at students/{uid}.checklist (the checklist page and the check-in chat both read it
 // through checklistFrom() below, via loadMyRecord() in store.js, so they always show the same list):
 //   [{ id: string, title: string, done: boolean }, ...]
-// The five defaults always keep their ids; tasks the student adds get ids starting "own-".
+// The six defaults always keep their ids; tasks the student adds get ids starting "own-". A standard
+// task added after students had saved their lists (ADDED_DEFAULTS) is put at the top of a saved list
+// once, and students/{uid}.checklistOffered remembers that, so one they delete stays deleted.
 
 /** @typedef {{ id: string, title: string, done: boolean }} Task */
 
@@ -22,14 +24,18 @@ export const CHECKLIST_FIELD = 'checklist';
 /**
  * Limits, so one student can't fill their record. firestore.rules checks each task in turn, and a
  * rule can only evaluate so much per write: the rules for 50 places refused 20 tasks or more, so the
- * limit is 15 (the 5 standard tasks and 10 of their own), well inside what fits. check-checklist.mjs
+ * limit is 15 (the 6 standard tasks and 9 of their own), well inside what fits. check-checklist.mjs
  * checks the rules have exactly MAX_TASKS places, and that the server accepts a full list.
  */
 export const MAX_TASKS = 15;
 export const MAX_TITLE_LENGTH = 100;
 
-/** Every student starts with these. Their ids never change, as the check-in chat recognises them. */
+/**
+ * Every student starts with these, in this order. Their ids never change, as the check-in chat
+ * recognises them, and each has a how-to (how-to.js).
+ */
 export const DEFAULT_TASKS = Object.freeze([
+  { id: 'enrol', title: 'Enrol', done: false },
   { id: 'gp', title: 'Register with a GP', done: false },
   { id: 'student-id', title: 'Collect student ID', done: false },
   { id: 'society', title: 'Join a society', done: false },
@@ -38,6 +44,15 @@ export const DEFAULT_TASKS = Object.freeze([
 ]);
 
 const DEFAULT_IDS = new Set(DEFAULT_TASKS.map((task) => task.id));
+
+/**
+ * Standard tasks added after students had started saving their lists, in DEFAULT_TASKS order. A saved
+ * list without one gets it at the top, once (see withNewDefaults).
+ */
+export const ADDED_DEFAULTS = Object.freeze(['enrol']);
+
+/** The field in students/{uid} listing which ADDED_DEFAULTS have been put in their list. */
+export const OFFERED_FIELD = 'checklistOffered';
 
 /** A problem the student can fix or needs to know about, with a message that's safe to show them. */
 export class ChecklistError extends Error {}
@@ -66,15 +81,40 @@ export function readSaved(saved) {
 }
 
 /**
- * A student's checklist from their record (students/{uid}): what they've saved, or a fresh copy of
- * the defaults, all unticked, if they've never changed it. saved says which, so the check-in chat
- * can word a list nobody has ticked yet carefully (they may have done things without ticking them).
+ * A saved list with any standard task added since it was saved (ADDED_DEFAULTS) put at the top, in
+ * the defaults' order, once: offered lists the ones the list has had, so one they've deleted stays
+ * deleted. Only while there's room (MAX_TASKS): their own tasks and ticks are never touched, and one
+ * that doesn't fit is added once they make room. Returns the list and what it has now had.
+ * @param {Task[]} tasks
+ * @param {unknown} offered students/{uid}.checklistOffered
+ * @returns {{ tasks: Task[], offered: string[] }}
+ */
+export function withNewDefaults(tasks, offered) {
+  const had = new Set(Array.isArray(offered) ? offered.filter((id) => typeof id === 'string') : []);
+  /** @type {Task[]} */
+  const added = [];
+  for (const id of ADDED_DEFAULTS) {
+    if (had.has(id)) continue;
+    if (!tasks.some((task) => task.id === id)) {
+      if (tasks.length + added.length >= MAX_TASKS) continue;
+      added.push({ .../** @type {Task} */ (DEFAULT_TASKS.find((task) => task.id === id)) });
+    }
+    had.add(id);
+  }
+  return { tasks: added.length ? [...added, ...tasks] : tasks, offered: [...had] };
+}
+
+/**
+ * A student's checklist from their record (students/{uid}): what they've saved (with any newer
+ * standard task, see withNewDefaults), or a fresh copy of the defaults, all unticked, if they've
+ * never changed it. saved says which, so the check-in chat can word a list nobody has ticked yet
+ * carefully (they may have done things without ticking them).
  * @param {Record<string, unknown> | undefined} record
  * @returns {{ tasks: Task[], saved: boolean }}
  */
 export function checklistFrom(record) {
   const saved = readSaved(record?.[CHECKLIST_FIELD]);
-  return saved ? { tasks: saved, saved: true } : { tasks: defaultTasks(), saved: false };
+  return saved ? { tasks: withNewDefaults(saved, record?.[OFFERED_FIELD]).tasks, saved: true } : { tasks: defaultTasks(), saved: false };
 }
 
 /**
@@ -180,9 +220,11 @@ export function applyAll(list, changes) {
  * @returns {Promise<Task[]>} the list as saved
  */
 export async function applyToLatest(transaction, ref, change) {
-  const snapshot = await transaction.get(ref);
-  const latest = readSaved(snapshot.data()?.[CHECKLIST_FIELD]) ?? defaultTasks();
+  const data = (await transaction.get(ref)).data();
+  const saved = readSaved(data?.[CHECKLIST_FIELD]);
+  // As the page shows it: with any newer standard task (once), or the defaults, which have them all.
+  const { tasks: latest, offered } = saved ? withNewDefaults(saved, data?.[OFFERED_FIELD]) : { tasks: defaultTasks(), offered: [...ADDED_DEFAULTS] };
   const next = applyChange(latest, change);
-  transaction.set(ref, { [CHECKLIST_FIELD]: next }, { merge: true });
+  transaction.set(ref, { [CHECKLIST_FIELD]: next, [OFFERED_FIELD]: offered }, { merge: true });
   return next;
 }

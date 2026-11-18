@@ -18,6 +18,7 @@ export { tidyProfile } from '#lib/checkin/about-you.js';
 
 /** How each default checklist task reads in "you haven't … yet", by task id (see DEFAULT_TASKS in checklist/tasks.js). */
 const NOT_DONE = {
+  enrol: 'enrolled',
   gp: 'registered with a GP',
   'student-id': 'collected your student ID',
   society: 'joined a society',
@@ -75,7 +76,7 @@ export function buildOpener({ match, tasks, checklistSaved = true, justSignedUp,
   // 2. Their checklist: a society first (as a question), then up to 3 other tasks by name.
   if (tasks && tasks.length > 0 && !checklistSaved) {
     // Never ticked anything: point them to it, without claiming what they haven't done.
-    messages.push('Your checklist has a few things that help with settling in, like registering with a GP and joining a society. Have a look when you’re ready.');
+    messages.push('Your checklist has a few things that help with settling in, like enrolling, registering with a GP and joining a society. Have a look when you’re ready.');
     links.push({ label: 'Open your checklist', href: '/checklist' });
   } else if (tasks && tasks.length > 0) {
     const notDone = tasks.filter((task) => !task.done);

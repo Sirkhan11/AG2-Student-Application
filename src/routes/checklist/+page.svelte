@@ -2,6 +2,8 @@
   import { tick } from 'svelte';
   import BottomNav from '#lib/components/BottomNav.svelte';
   import BlackboardSection from '#lib/components/BlackboardSection.svelte';
+  import Ask4HelpLink from '#lib/components/Ask4HelpLink.svelte';
+  import { howToFor, isOutside } from '#lib/checklist/how-to.js';
   import { watchSignedIn } from '#lib/firebase/auth.js';
   import { loadChecklist, saveChange } from '#lib/checklist/store.js';
   import { createChecklistSync } from '#lib/checklist/sync.js';
@@ -143,8 +145,9 @@
   <h1>Your checklist</h1>
   <p class="muted">
     Complete these tasks to help you settle in. Your checklist is saved to your account, so it’s the
-    same on any device.
+    same on any device. Open “How to” under a task for the steps.
   </p>
+  <Ask4HelpLink />
 
   <p class="visually-hidden" role="status">{announcement}</p>
 
@@ -201,26 +204,52 @@
               </div>
             </form>
           {:else}
-            <input
-              type="checkbox"
-              id={`task-${task.id}`}
-              checked={task.done}
-              onchange={(event) => record(makeTick(task.id, event.currentTarget.checked))}
-            />
-            <label for={`task-${task.id}`} class:finished={task.done}>{task.title}</label>
-            {#if !isDefault(task.id)}
-              <button
-                id={`edit-button-${task.id}`}
-                class="icon-button"
-                onclick={() => startEdit(task)}
-                aria-label={`Edit ${task.title}`}
-              >
-                Edit
+            {@const howTo = howToFor(task.id)}
+            <div class="task-row">
+              <input
+                type="checkbox"
+                id={`task-${task.id}`}
+                checked={task.done}
+                onchange={(event) => record(makeTick(task.id, event.currentTarget.checked))}
+              />
+              <label for={`task-${task.id}`} class:finished={task.done}>{task.title}</label>
+              {#if !isDefault(task.id)}
+                <button
+                  id={`edit-button-${task.id}`}
+                  class="icon-button"
+                  onclick={() => startEdit(task)}
+                  aria-label={`Edit ${task.title}`}
+                >
+                  Edit
+                </button>
+              {/if}
+              <button class="icon-button delete" onclick={() => removeTask(task)} aria-label={`Delete ${task.title}`}>
+                ×
               </button>
-            {/if}
-            <button class="icon-button delete" onclick={() => removeTask(task)} aria-label={`Delete ${task.title}`}>
-              ×
-            </button>
+            </div>
+            <!-- How to do it (the standard tasks: how-to.js), and Ask4Help for every task. -->
+            <details class="how-to">
+              <summary>{howTo ? 'How to' : 'Stuck?'}<span class="visually-hidden">: {task.title}</span></summary>
+              {#if howTo}
+                <ol>
+                  {#each howTo.steps as step, i (i)}
+                    <li>{step}</li>
+                  {/each}
+                </ol>
+                {#if isOutside(howTo.link)}
+                  <a class="secondary-button" href={howTo.link.href} target="_blank" rel="noopener noreferrer" aria-label={`${howTo.link.label} (opens in a new tab)`}>{howTo.link.label} ↗</a>
+                {:else}
+                  <a class="secondary-button" href={howTo.link.href}>{howTo.link.label}</a>
+                {/if}
+                <p class="sources">
+                  {howTo.sources.length > 1 ? 'Sources:' : 'Source:'}
+                  {#each howTo.sources as source, i (source.href)}
+                    <a href={source.href} target="_blank" rel="noopener noreferrer" aria-label={`${source.label} (opens in a new tab)`}>{source.label} ↗</a>{i < howTo.sources.length - 1 ? '; ' : ''}
+                  {/each}
+                </p>
+              {/if}
+              <Ask4HelpLink about={task.title} />
+            </details>
           {/if}
         </li>
       {/each}
@@ -276,11 +305,14 @@
   }
 
   .task {
+    padding: 6px 4px;
+    border-bottom: 1px solid #e3eaee;
+  }
+
+  .task-row {
     display: flex;
     align-items: center;
     gap: 8px;
-    padding: 6px 4px;
-    border-bottom: 1px solid #e3eaee;
   }
 
   .task input[type='checkbox'] {
@@ -290,7 +322,7 @@
   }
 
   /* The label is the big tap target: tapping the words ticks the box. */
-  .task > label {
+  .task-row > label {
     flex: 1;
     min-height: 44px;
     display: flex;
@@ -321,6 +353,34 @@
   .edit {
     flex: 1;
     padding: 8px 0;
+  }
+
+  /* Under the task's name, lined up with it. */
+  .how-to {
+    margin: 0 0 6px 30px;
+  }
+
+  .how-to summary {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    color: var(--primary);
+    cursor: pointer;
+  }
+
+  .how-to ol {
+    margin: 0 0 10px;
+    padding-left: 20px;
+  }
+
+  .how-to li + li {
+    margin-top: 6px;
+  }
+
+  .sources {
+    margin: 10px 0 0;
+    font-size: 13px;
+    color: #647780;
   }
 
   .edit .field {
