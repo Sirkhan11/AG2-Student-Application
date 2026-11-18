@@ -1,7 +1,7 @@
 <script>
   import { onMount } from 'svelte';
   import { sendPasswordResetEmail } from 'firebase/auth';
-  import { getFirebaseAuth } from '#lib/firebase/client';
+  import { getFirebaseAuth } from '#lib/firebase/client.js';
   import { isAllowedEmail, wordingFor } from '#lib/access.js';
   import { access, loadAccess } from '#lib/access.svelte.js';
   import { UNI_EMAIL_MESSAGE } from '#lib/uni-email.js';
@@ -13,6 +13,7 @@
   let words = $derived(wordingFor(access.uniOnly));
   onMount(() => void loadAccess());
 
+  /** @param {SubmitEvent} event */
   async function resetPassword(event) {
     event.preventDefault();
     message = '';
@@ -34,7 +35,7 @@
       message =
         'If an account exists for this email, a password reset link will be sent.';
     } catch (err) {
-      console.error('Password reset failed:', err.code);
+      console.error('Password reset failed:', /** @type {{ code?: string }} */ (err)?.code ?? 'error');
 
       message =
         'Unable to process the request. Please try again later.';

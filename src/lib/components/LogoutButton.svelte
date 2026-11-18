@@ -1,7 +1,7 @@
 <script>
   import { goto } from '$app/navigation';
   import { signOut } from 'firebase/auth';
-  import { getFirebaseAuth } from '#lib/firebase/client';
+  import { getFirebaseAuth } from '#lib/firebase/client.js';
   import { disconnectBlackboard } from '#lib/blackboard/api.js';
   import { LIVE } from '#lib/live.js';
   import { waitingSignUp } from '#lib/signup/waiting.js';
@@ -24,7 +24,7 @@
       await signOut(getFirebaseAuth());
       await goto('/');
     } catch (err) {
-      console.error('Logout failed:', err.code);
+      console.error('Logout failed:', /** @type {{ code?: string }} */ (err)?.code ?? 'error');
       errorMessage = 'Unable to log out. Please try again.';
     } finally {
       loading = false;
