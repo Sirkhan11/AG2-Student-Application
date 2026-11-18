@@ -5,12 +5,45 @@ import { reload, sendEmailVerification } from 'firebase/auth';
 // been verified" page, then come back to the app's tab and tap "I've clicked it". No Firebase app
 // here (the user is passed in), so the checks can run it against the Auth emulator.
 
+// The tab notes when it sent an account a link (sessionStorage: this tab only, gone when it closes),
+// so the check-your-inbox screen says a link was sent only when one was. An account that logs in
+// unverified, such as one made before verification existed, is offered the link instead
+// (VerifyEmail.svelte). Signing up sends the link while that screen is already showing, so the screen
+// also hears about each one as it goes (SENT_EVENT).
+
+/** Where this tab keeps which account it last sent a link to, and when. */
+const SENT_KEY = 'ag2.verificationSent';
+/** The page's event for a link just sent; its detail is { uid, at }. */
+export const SENT_EVENT = 'ag2:verification-sent';
+
 /**
- * Sends the email with the link that verifies their address.
+ * Sends the email with the link that verifies their address, then notes in this tab that it did
+ * (sentThisVisit) and tells the page (SENT_EVENT).
  * @param {import('firebase/auth').User} user
  */
-export function sendVerification(user) {
-  return sendEmailVerification(user);
+export async function sendVerification(user) {
+  await sendEmailVerification(user);
+  const sent = { uid: user.uid, at: Date.now() };
+  try {
+    sessionStorage.setItem(SENT_KEY, JSON.stringify(sent));
+  } catch {
+    // No storage (Node, or a browser that refuses it): the screen still hears the event below.
+  }
+  if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent(SENT_EVENT, { detail: sent }));
+}
+
+/**
+ * When this tab last sent this account a link (milliseconds since 1970), or null if it hasn't.
+ * @param {string | null | undefined} uid
+ * @returns {number | null}
+ */
+export function sentThisVisit(uid) {
+  try {
+    const sent = JSON.parse(sessionStorage.getItem(SENT_KEY) ?? 'null');
+    return uid && sent?.uid === uid && typeof sent.at === 'number' ? sent.at : null;
+  } catch {
+    return null;
+  }
 }
 
 /**

@@ -5,20 +5,20 @@
 //   sign-ups and forgot password, before anything is sent to Firebase Auth (and, for mentors, before
 //   Gemini or the matching model); with it off, every form says "Email address", the sign-up page
 //   says "Testing: open to any email address", and a log-in from elsewhere goes to Firebase Auth;
-// - logged out, the five public pages open (log in, sign up, forgot password, mentor sign-up, Need
-//   help) and every other page goes to log in, with the way back (?next=); the team's pages and the
-//   pretend Blackboard never show; the tab says AG2;
+// - logged out, the six public pages open (log in, sign up, forgot password, mentor sign-up, Need
+//   help, Privacy) and every other page goes to log in, with the way back (?next=); the team's pages
+//   and the pretend Blackboard never show; the tab says AG2;
 // - Need help shows Northumbria's own support (Ask4Help to call, the counselling page), no placeholder;
-// - an unverified Northumbria account sees only the check-your-inbox screen ("Check your uni inbox",
-//   or "Check your inbox" with the switch off; "I've clicked it" says it isn't verified yet, Need help
-//   now still opens, Log out works) and is never sent to log in, and no verification email is asked
-//   for; with the switch off, an unverified example.com account sees that screen too, never the
-//   Northumbria-only one;
+// - an unverified Northumbria account that logs in (made by this check, so no link has been sent)
+//   sees only the verify screen ("Verify your email address", with Send the link, never "We've sent a
+//   link"; "I've clicked it" says it isn't verified yet, Need help now still opens, Log out works) and
+//   is never sent to log in, and no verification email is asked for; with the switch off, an
+//   unverified example.com account sees that screen too, never the Northumbria-only one;
 // - the deployed Firestore rules let that unverified account, and an account made without the app's
 //   forms (a never-verified example.com address), read and write nothing, including the switch;
 // - logged out, the switch can be read (the forms read it before anyone signs in) but not written.
 // For those parts it makes two throwaway accounts in the project .env points at, with made-up
-// addresses and random passwords: making them sends no email, Resend is never pressed, and both are
+// addresses and random passwords: making them sends no email, Send the link is never pressed, and both are
 // deleted at the end. Nothing secret is printed, and the live switch is never changed.
 // Run from the project folder, against the local preview (npm run build:live, then
 // npx --engine-strict=false firebase-tools emulators:start --only hosting --project demo-ag2) or the live site:
@@ -196,42 +196,41 @@ try {
   report('Need help still has 999 and 111 to call', help.calls.some(([href]) => href === 'tel:999') && help.calls.some(([href]) => href === 'tel:111'));
   report('The tab says AG2, not the web address', (await evaluate('document.title')) === 'AG2', await evaluate('document.title'));
 
-  // 3. The check-your-inbox screen, with the throwaway account (never verified). Its heading follows
-  //    the switch: "Check your uni inbox" with it on, "Check your inbox" with it off.
-  const INBOX = words.inboxHeading;
+  // 3. The verify screen, with the throwaway account: never verified, and made by this check rather
+  //    than the app's sign-up, so no link has been sent. The screen says so plainly ("Verify your email
+  //    address", with Send the link) and never that a link was sent (agent1.md A9). The check never
+  //    presses Send the link, so no email goes to the made-up address.
+  const VERIFY = 'Verify your email address';
+  const SENT = 'We’ve sent a link';
   await go('/');
   requests.length = 0;
   await fill('#email', throwaway.email); await fill('#password', throwaway.password); await click('button[type=submit]');
-  const shown = await waitFor(`${has(INBOX)} && ${has(throwaway.email)} && ${has('Junk')}`);
-  report(`An unverified Northumbria account sees only the check-your-inbox screen ("${INBOX}"), with its address and Junk`, shown);
+  const shown = await waitFor(`${has(VERIFY)} && ${has(throwaway.email)} && ${has('Send the link')} && !${has(SENT)}`);
+  report(`An unverified Northumbria account that logs in sees only the verify screen ("${VERIFY}"), with its address and Send the link, and never that a link was sent`, shown);
   report('...and its "Wrong address?" line follows the switch', await evaluate(has(words.wrongAddress)));
   await clickText('I’ve clicked it');
-  report('"I’ve clicked it" before clicking the link says it isn’t verified yet', await waitFor(has('It isn’t verified yet')));
-  // A fresh page load doesn't read the switch for a Northumbria account (access.svelte.js: only the
-  // forms, and the layout for an account from elsewhere, read it), so from here on its heading is
-  // Northumbria's whichever way the switch is: "Check your uni inbox".
-  const AFRESH = wordingFor(null).inboxHeading;
+  report('"I’ve clicked it" before clicking a link says it isn’t verified yet', await waitFor(has('It isn’t verified yet')));
   await go('/home');
-  report(`Home still shows only the check-your-inbox screen ("${AFRESH}" on a fresh page load)`, await waitFor(`${has(AFRESH)} && !${has('How can we help you today?')}`));
+  report('Home still shows only the verify screen', await waitFor(`${has(VERIFY)} && !${has('How can we help you today?')}`));
   /** @type {string[]} */
   const sentAway = [];
   for (const path of ['/checklist', '/gp-finder', '/mentor', '/societies', '/check-in']) {
     await go(path);
-    if (!(await waitFor(`location.pathname === ${JSON.stringify(path)} && ${has(AFRESH)}`, 8000))) sentAway.push(path);
+    if (!(await waitFor(`location.pathname === ${JSON.stringify(path)} && ${has(VERIFY)}`, 8000))) sentAway.push(path);
   }
-  report('Signed in but not verified yet, they’re never sent to log in: every page shows check-your-inbox', sentAway.length === 0, sentAway.join(', '));
+  report('Signed in but not verified yet, they’re never sent to log in: every page shows the verify screen', sentAway.length === 0, sentAway.join(', '));
   await go('/need-help');
-  report('Need help now still opens while unverified', await waitFor(`${has('Need help now?')} && !${has(INBOX)}`));
-  report('No verification email was asked for (Resend wasn’t pressed)', !requests.some((u) => /sendOobCode/.test(u)));
+  report('Need help now still opens while unverified', await waitFor(`${has('Need help now?')} && !${has(VERIFY)}`));
+  report('No verification email was asked for (Send the link wasn’t pressed)', !requests.some((u) => /sendOobCode/.test(u)));
   await go('/home');
-  await waitFor(has(INBOX));
+  await waitFor(has(VERIFY));
   await clickText('Log out');
-  report('Log out from the check-your-inbox screen goes back to log in', await waitFor(`location.pathname === '/' && ${has('Welcome back')}`));
+  report('Log out from the verify screen goes back to log in', await waitFor(`location.pathname === '/' && ${has('Welcome back')}`));
   if (!uniOnly) {
     await go('/');
     requests.length = 0;
     await fill('#email', outsider.email); await fill('#password', outsider.password); await click('button[type=submit]');
-    report('With the switch off, an unverified example.com account sees the check-your-inbox screen too, never the Northumbria-only screen', await waitFor(`${has(INBOX)} && ${has(outsider.email)} && ${has('Junk')} && !${has('AG2 is for Northumbria students')}`));
+    report('With the switch off, an unverified example.com account sees the verify screen too, never the Northumbria-only screen', await waitFor(`${has(VERIFY)} && ${has(outsider.email)} && !${has(SENT)} && !${has('AG2 is for Northumbria students')}`));
     report('No verification email was asked for there either', !requests.some((u) => /sendOobCode/.test(u)));
     await clickText('Log out');
     await waitFor(`location.pathname === '/' && ${has('Welcome back')}`);
