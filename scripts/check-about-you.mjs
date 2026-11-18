@@ -157,7 +157,7 @@ const offline = [
     assert.equal(places.match(/validChatNote\(notes\[\d+\]\)/g)?.length, MAX_NOTES);
     assert.match(places, new RegExp(`notes\\.size\\(\\) <= ${MAX_NOTES}`));
     assert.match(rules, new RegExp(`note\\.text\\.size\\(\\) <= ${MAX_NOTE_LENGTH}`));
-    assert.match(rules, /match \/chatNotes\/\{userId\} \{\s*allow read, delete: if isNorthumbria\(\) && request\.auth\.uid == userId;/);
+    assert.match(rules, /match \/chatNotes\/\{userId\} \{\s*allow read, delete: if hasAccess\(\) && request\.auth\.uid == userId;/);
   }],
   ['Finding a mentor keeps the summary for the chat (after taking a place, and with a request for the coordinator), and the note before the questions says so', () => {
     const findMatch = source('src/lib/matching/find-match.js');

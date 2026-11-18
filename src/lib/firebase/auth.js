@@ -1,6 +1,7 @@
 import { onAuthStateChanged, onIdTokenChanged, signInWithEmailAndPassword } from 'firebase/auth';
 import { getFirebaseAuth } from '#lib/firebase/client.js';
-import { isUniEmail, notUniEmail } from '#lib/uni-email.js';
+import { isAllowedEmail } from '#lib/access.js';
+import { notUniEmail } from '#lib/uni-email.js';
 
 /**
  * Tells the page whether someone is signed in: once Firebase has checked for a saved login, and again
@@ -36,13 +37,15 @@ export async function idToken() {
 /**
  * Logs in with an email and password. Firebase keeps the session in the browser, so the person stays
  * logged in across page loads until they log out. Only a Northumbria address is accepted (code
- * NOT_UNI_EMAIL in uni-email.js, before anything is sent to Firebase).
+ * NOT_UNI_EMAIL in uni-email.js, before anything is sent to Firebase), unless the access switch is
+ * off (access.js), when any address is.
  * A wrong email or password throws a FirebaseError with code 'auth/invalid-credential'.
  * @param {string} email
  * @param {string} password
+ * @param {boolean | null} [uniOnly] the switch's position, as the page read it (left out: Northumbria only)
  */
-export function logIn(email, password) {
-  if (!isUniEmail(email)) return Promise.reject(notUniEmail());
+export function logIn(email, password, uniOnly = true) {
+  if (!isAllowedEmail(email, uniOnly)) return Promise.reject(notUniEmail());
   return signInWithEmailAndPassword(getFirebaseAuth(), email.trim(), password);
 }
 

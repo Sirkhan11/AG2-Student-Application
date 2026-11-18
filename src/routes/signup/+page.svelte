@@ -5,7 +5,9 @@
   import { db, getFirebaseAuth } from '#lib/firebase/client.js';
   import { saveStudentDetails, signUpStudent } from '#lib/students/signup.js';
   import { waitingSignUp } from '#lib/signup/waiting.js';
-  import { isUniEmail, NOT_UNI_EMAIL, UNI_EMAIL_MESSAGE } from '#lib/uni-email.js';
+  import { isAllowedEmail, wordingFor } from '#lib/access.js';
+  import { access, loadAccess } from '#lib/access.svelte.js';
+  import { NOT_UNI_EMAIL, UNI_EMAIL_MESSAGE } from '#lib/uni-email.js';
 
   let name = $state('');
   let email = $state('');
@@ -15,6 +17,8 @@
   let arrivalDate = $state('');
   let error = $state('');
   let loading = $state(false);
+  // The email box's label and placeholder, and the testing line, follow the access switch (access.js).
+  let words = $derived(wordingFor(access.uniOnly));
   // Already logged in with a verified account: their details were lost before they verified (the tab
   // closed), and Home sent them here. The form saves the details to that account, with no new login.
   /** @type {{ uid: string, email: string } | null} */
@@ -36,8 +40,10 @@
       }
       return;
     }
-    // AG2 is for Northumbria students: other addresses are turned away before an account is made.
-    if (!isUniEmail(email)) {
+    // AG2 is for Northumbria students: other addresses are turned away before an account is made,
+    // unless the access switch is off (access.js), which is read before deciding.
+    const uniOnly = await loadAccess();
+    if (!isAllowedEmail(email, uniOnly)) {
       error = UNI_EMAIL_MESSAGE;
       return;
     }
@@ -47,7 +53,7 @@
       // Makes the account and sends the verification email. The record waits in this tab until the
       // link is clicked (see signup.js); meanwhile the app shows the check-your-inbox screen.
       await signUpStudent(
-        { auth: getFirebaseAuth(), waiting: waitingSignUp() },
+        { auth: getFirebaseAuth(), waiting: waitingSignUp(), uniOnly },
         { name, email, password, course, interests, arrivalDate }
       );
 
@@ -79,6 +85,9 @@
     <p class="muted">
       Tell us a little about yourself.
     </p>
+    {#if words.testingNote}
+      <p class="muted">{words.testingNote}</p>
+    {/if}
   {/if}
 
   <form onsubmit={(event) => {
@@ -90,9 +99,9 @@
       bind:value={name} required />
 
     {#if !account}
-      <label for="email">Northumbria email address</label>
+      <label for="email">{words.emailLabel}</label>
       <input id="email" class="field" type="email"
-        placeholder="ending @northumbria.ac.uk"
+        placeholder={words.emailPlaceholder}
         bind:value={email} required />
 
       <label for="password">Password</label>

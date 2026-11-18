@@ -1,18 +1,25 @@
-// Checks the live site in a real browser (headless Chrome at phone size, over the DevTools protocol):
-// - another address is turned away on log in, both sign-ups and forgot password, before anything is
-//   sent to Firebase Auth (and, for mentors, before Gemini or the matching model);
+// Checks the live site in a real browser (headless Chrome at phone size, over the DevTools protocol).
+// It first reads the live access switch (config/access, uniOnly: src/lib/access.js), which anyone may
+// read, and expects whichever behaviour that position means:
+// - with the switch on (Northumbria only, the default), another address is turned away on log in, both
+//   sign-ups and forgot password, before anything is sent to Firebase Auth (and, for mentors, before
+//   Gemini or the matching model); with it off, every form says "Email address", the sign-up page
+//   says "Testing: open to any email address", and a log-in from elsewhere goes to Firebase Auth;
 // - logged out, the five public pages open (log in, sign up, forgot password, mentor sign-up, Need
 //   help) and every other page goes to log in, with the way back (?next=); the team's pages and the
 //   pretend Blackboard never show; the tab says AG2;
 // - Need help shows Northumbria's own support (Ask4Help to call, the counselling page), no placeholder;
-// - an unverified Northumbria account sees only the check-your-inbox screen ("I've clicked it" says
-//   it isn't verified yet, Need help now still opens, Log out works) and is never sent to log in, and
-//   no verification email is asked for;
+// - an unverified Northumbria account sees only the check-your-inbox screen ("Check your uni inbox",
+//   or "Check your inbox" with the switch off; "I've clicked it" says it isn't verified yet, Need help
+//   now still opens, Log out works) and is never sent to log in, and no verification email is asked
+//   for; with the switch off, an unverified example.com account sees that screen too, never the
+//   Northumbria-only one;
 // - the deployed Firestore rules let that unverified account, and an account made without the app's
-//   forms (a never-verified example.com address), read and write nothing.
+//   forms (a never-verified example.com address), read and write nothing, including the switch;
+// - logged out, the switch can be read (the forms read it before anyone signs in) but not written.
 // For those parts it makes two throwaway accounts in the project .env points at, with made-up
 // addresses and random passwords: making them sends no email, Resend is never pressed, and both are
-// deleted at the end. Nothing secret is printed.
+// deleted at the end. Nothing secret is printed, and the live switch is never changed.
 // Run from the project folder, against the local preview (npm run build:live, then
 // npx --engine-strict=false firebase-tools emulators:start --only hosting --project demo-ag2) or the live site:
 //   node --env-file=.env scripts/check-live-site.mjs [--base https://ag2-dev-thomas.web.app]
@@ -27,6 +34,7 @@ import { join } from 'node:path';
 import { initializeApp } from 'firebase/app';
 import { createUserWithEmailAndPassword, deleteUser, getAuth, signInWithEmailAndPassword, signOut } from 'firebase/auth';
 import { collection, doc, getDoc, getDocs, getFirestore, query, serverTimestamp, setDoc, where } from 'firebase/firestore/lite';
+import { uniOnlyFrom, wordingFor } from '#lib/access.js';
 
 const baseAt = process.argv.indexOf('--base');
 const BASE = (baseAt > 0 ? process.argv[baseAt + 1] : 'http://127.0.0.1:5005').replace(/\/$/, '');
@@ -47,6 +55,18 @@ for (const account of [throwaway, outsider]) {
   await createUserWithEmailAndPassword(auth, account.email, account.password);
   await signOut(auth);
 }
+
+// The live access switch, read logged out as the forms read it: the wording and what happens to an
+// address from elsewhere follow it, so the checks below expect whichever position it's in. Until the
+// rules with the switch are deployed, the read is refused: the site is then Northumbria only (the app
+// treats a refused read the same way), and the check of the switch itself (part 5) says so.
+const access = await getDoc(doc(db, 'config', 'access')).then(
+  (snapshot) => ({ uniOnly: uniOnlyFrom(snapshot.data()), problem: '' }),
+  (err) => ({ uniOnly: true, problem: String(err.code) })
+);
+const uniOnly = access.uniOnly;
+const words = wordingFor(uniOnly);
+console.log(`The access switch (config/access): ${access.problem ? `can't be read (${access.problem}: the deployed rules don't have it yet), so Northumbria only` : uniOnly ? 'ON, Northumbria only (no uniOnly: false)' : 'OFF, open to any email address (uniOnly: false)'}\n`);
 
 const profile = mkdtempSync(join(tmpdir(), 'ag2-live-site-'));
 const chrome = spawn(CHROME, ['--headless=new', `--remote-debugging-port=${PORT}`, `--user-data-dir=${profile}`, '--no-first-run', '--disable-extensions', '--window-size=390,844', 'about:blank'], { stdio: 'ignore' });
@@ -81,29 +101,47 @@ try {
   const authCalls = () => requests.filter((u) => /identitytoolkit|securetoken/.test(u)).map((u) => u.split('?')[0].split('/').pop());
   const UNI = 'Please use your Northumbria email address (ending @northumbria.ac.uk).';
 
-  // 1. Another address is turned away on every form, before anything is sent.
-  await go('/');
-  requests.length = 0;
-  await fill('#email', 'someone@gmail.com'); await fill('#password', 'whatever-123'); await click('button[type=submit]');
-  report('Log in: a Gmail address is refused with the Northumbria message, and nothing goes to Firebase Auth', (await waitFor(has(UNI))) && authCalls().length === 0, authCalls().join(', '));
+  // 1. Another address. With the switch on, it's turned away on every form before anything is sent.
+  //    With it off, every form says "Email address" (the sign-up page adds the testing line) and a
+  //    log-in goes to Firebase Auth. Only the log-in form is submitted then: a sign-up would make an
+  //    account and send an email, a reset would send an email, and the mentor form would call Gemini.
+  if (uniOnly) {
+    await go('/');
+    requests.length = 0;
+    await fill('#email', 'someone@gmail.com'); await fill('#password', 'whatever-123'); await click('button[type=submit]');
+    report('Log in: a Gmail address is refused with the Northumbria message, and nothing goes to Firebase Auth', (await waitFor(has(UNI))) && authCalls().length === 0, authCalls().join(', '));
 
-  await go('/signup');
-  requests.length = 0;
-  await fill('#name', 'Test Person'); await fill('#email', 'someone@gmail.com'); await fill('#password', 'whatever-123'); await fill('#course', 'Law'); await click('button[type=submit]');
-  report('Student sign-up: a Gmail address is refused, and no account is made', (await waitFor(has(UNI))) && authCalls().length === 0, authCalls().join(', '));
+    await go('/signup');
+    requests.length = 0;
+    await fill('#name', 'Test Person'); await fill('#email', 'someone@gmail.com'); await fill('#password', 'whatever-123'); await fill('#course', 'Law'); await click('button[type=submit]');
+    report('Student sign-up: a Gmail address is refused, and no account is made', (await waitFor(has(UNI))) && authCalls().length === 0, authCalls().join(', '));
+    report('Student sign-up: no testing line while the switch is on', !(await evaluate(has(wordingFor(false).testingNote))));
 
-  await go('/mentor-signup');
-  requests.length = 0;
-  for (const [field, value] of [['#name', 'Test Person'], ['#displayName', 'Test'], ['#email', 'someone@gmail.com'], ['#password', 'whatever-1234'], ['#course', 'Law'], ['#availability', 'evenings']]) await fill(field, value);
-  for (let q = 1; q <= 6; q++) await fill(`#q${q}`, 'Football and films');
-  await click('input[type=checkbox]'); await click('button[type=submit]');
-  const ai = requests.filter((u) => /firebasevertexai|generativelanguage|huggingface|\.wasm|identitytoolkit/.test(u));
-  report('Mentor sign-up: a Gmail address is refused before Gemini, the model or Firebase Auth is used', (await waitFor(has(UNI))) && ai.length === 0, ai.map((u) => new URL(u).host).join(', '));
+    await go('/mentor-signup');
+    requests.length = 0;
+    for (const [field, value] of [['#name', 'Test Person'], ['#displayName', 'Test'], ['#email', 'someone@gmail.com'], ['#password', 'whatever-1234'], ['#course', 'Law'], ['#availability', 'evenings']]) await fill(field, value);
+    for (let q = 1; q <= 6; q++) await fill(`#q${q}`, 'Football and films');
+    await click('input[type=checkbox]'); await click('button[type=submit]');
+    const ai = requests.filter((u) => /firebasevertexai|generativelanguage|huggingface|\.wasm|identitytoolkit/.test(u));
+    report('Mentor sign-up: a Gmail address is refused before Gemini, the model or Firebase Auth is used', (await waitFor(has(UNI))) && ai.length === 0, ai.map((u) => new URL(u).host).join(', '));
 
-  await go('/forgot-password');
-  requests.length = 0;
-  await fill('#email', 'someone@gmail.com'); await click('button[type=submit]');
-  report('Forgot password: a Gmail address is refused, and no reset email is asked for', (await waitFor(has(UNI))) && authCalls().length === 0, authCalls().join(', '));
+    await go('/forgot-password');
+    requests.length = 0;
+    await fill('#email', 'someone@gmail.com'); await click('button[type=submit]');
+    report('Forgot password: a Gmail address is refused, and no reset email is asked for', (await waitFor(has(UNI))) && authCalls().length === 0, authCalls().join(', '));
+  } else {
+    for (const [path, form] of [['/', 'Log in'], ['/signup', 'Student sign-up'], ['/mentor-signup', 'Mentor sign-up'], ['/forgot-password', 'Forgot password']]) {
+      await go(path);
+      const plain = await waitFor(`document.querySelector('label[for=email]')?.textContent.trim() === ${JSON.stringify(words.emailLabel)}`);
+      report(`${form}: with the switch off, the email box is "${words.emailLabel}", and nothing says Northumbria email`, plain && !(await evaluate(has('Northumbria email'))));
+    }
+    await go('/signup');
+    report('Student sign-up: the testing line, so testers know the app is open to any address', await waitFor(has(words.testingNote)));
+    await go('/');
+    requests.length = 0;
+    await fill('#email', outsider.email); await fill('#password', 'not-the-password-1'); await click('button[type=submit]');
+    report('Log in: with the switch off, an example.com address goes to Firebase Auth (a wrong password gets the "don’t match" message)', (await waitFor(has("That email and password don't match an account."))) && authCalls().includes('accounts:signInWithPassword'), authCalls().join(', '));
+  }
 
   // 2. Logged out: the five public pages open; every other page goes to log in and back; what's left
   //    out never shows; Need help has Northumbria's own support; the tab says AG2.
@@ -148,30 +186,42 @@ try {
   report('Need help still has 999 and 111 to call', help.calls.some(([href]) => href === 'tel:999') && help.calls.some(([href]) => href === 'tel:111'));
   report('The tab says AG2, not the web address', (await evaluate('document.title')) === 'AG2', await evaluate('document.title'));
 
-  // 3. The check-your-inbox screen, with the throwaway account (never verified).
+  // 3. The check-your-inbox screen, with the throwaway account (never verified). Its heading follows
+  //    the switch: "Check your uni inbox" with it on, "Check your inbox" with it off.
+  const INBOX = words.inboxHeading;
   await go('/');
   requests.length = 0;
   await fill('#email', throwaway.email); await fill('#password', throwaway.password); await click('button[type=submit]');
-  const shown = await waitFor(`${has('Check your uni inbox')} && ${has(throwaway.email)} && ${has('Junk')}`);
-  report('An unverified Northumbria account sees only the check-your-inbox screen, with its address and Junk', shown);
+  const shown = await waitFor(`${has(INBOX)} && ${has(throwaway.email)} && ${has('Junk')}`);
+  report(`An unverified Northumbria account sees only the check-your-inbox screen ("${INBOX}"), with its address and Junk`, shown);
+  report('...and its "Wrong address?" line follows the switch', await evaluate(has(words.wrongAddress)));
   await clickText('I’ve clicked it');
   report('"I’ve clicked it" before clicking the link says it isn’t verified yet', await waitFor(has('It isn’t verified yet')));
   await go('/home');
-  report('Home still shows only the check-your-inbox screen', await waitFor(`${has('Check your uni inbox')} && !${has('How can we help you today?')}`));
+  report('Home still shows only the check-your-inbox screen', await waitFor(`${has(INBOX)} && !${has('How can we help you today?')}`));
   /** @type {string[]} */
   const sentAway = [];
   for (const path of ['/checklist', '/gp-finder', '/mentor', '/societies', '/check-in']) {
     await go(path);
-    if (!(await waitFor(`location.pathname === ${JSON.stringify(path)} && ${has('Check your uni inbox')}`, 8000))) sentAway.push(path);
+    if (!(await waitFor(`location.pathname === ${JSON.stringify(path)} && ${has(INBOX)}`, 8000))) sentAway.push(path);
   }
   report('Signed in but not verified yet, they’re never sent to log in: every page shows check-your-inbox', sentAway.length === 0, sentAway.join(', '));
   await go('/need-help');
-  report('Need help now still opens while unverified', await waitFor(`${has('Need help now?')} && !${has('Check your uni inbox')}`));
+  report('Need help now still opens while unverified', await waitFor(`${has('Need help now?')} && !${has(INBOX)}`));
   report('No verification email was asked for (Resend wasn’t pressed)', !requests.some((u) => /sendOobCode/.test(u)));
   await go('/home');
-  await waitFor(has('Check your uni inbox'));
+  await waitFor(has(INBOX));
   await clickText('Log out');
   report('Log out from the check-your-inbox screen goes back to log in', await waitFor(`location.pathname === '/' && ${has('Welcome back')}`));
+  if (!uniOnly) {
+    await go('/');
+    requests.length = 0;
+    await fill('#email', outsider.email); await fill('#password', outsider.password); await click('button[type=submit]');
+    report('With the switch off, an unverified example.com account sees the check-your-inbox screen too, never the Northumbria-only screen', await waitFor(`${has(INBOX)} && ${has(outsider.email)} && ${has('Junk')} && !${has('AG2 is for Northumbria students')}`));
+    report('No verification email was asked for there either', !requests.some((u) => /sendOobCode/.test(u)));
+    await clickText('Log out');
+    await waitFor(`location.pathname === '/' && ${has('Welcome back')}`);
+  }
 
   console.log(`\nConsole errors on the pages: ${errors.length}${errors.length ? `\n  ${errors.slice(0, 4).join('\n  ')}` : ''}`);
 
@@ -186,7 +236,8 @@ try {
       ['read a sports club', () => getDoc(doc(db, 'sportClubs', 'swimming'))],
       ['list approved mentors', () => getDocs(query(collection(db, 'mentors'), where('approved', '==', true)))],
       ['ask for the coordinator', () => setDoc(doc(db, 'matches', user.uid), { status: 'coordinator', meetingFrequency: 'weekly', availability: '', createdAt: serverTimestamp() })],
-      ['ask to change mentor', () => setDoc(doc(db, 'mentorChangeRequests', user.uid), { reason: 'not-a-good-fit', details: '', createdAt: serverTimestamp() })]
+      ['ask to change mentor', () => setDoc(doc(db, 'mentorChangeRequests', user.uid), { reason: 'not-a-good-fit', details: '', createdAt: serverTimestamp() })],
+      ['write to the switch', () => setDoc(doc(db, 'config', 'access'), { probe: 'check-live-site' }, { merge: true })]
     ];
     /** @type {string[]} */
     const allowed = [];
@@ -201,6 +252,11 @@ try {
     report(`The rules let ${who} read and write nothing`, allowed.length === 0, allowed.join(', '));
     await signOut(auth);
   }
+
+  // 5. The switch itself, logged out: readable (the forms read it before anyone signs in), not writable.
+  report('Logged out, the switch (config/access) can be read, as the forms read it', access.problem === '', access.problem ? `${access.problem}: deploy firestore.rules with the site, which lets anyone read it` : '');
+  const written = await setDoc(doc(db, 'config', 'access'), { probe: 'check-live-site' }, { merge: true }).then(() => 'allowed', (err) => String(err.code));
+  report('Logged out, the switch can’t be written', written === 'permission-denied', written);
 } finally {
   ws?.close();
   chrome.kill();
@@ -216,5 +272,5 @@ try {
     }
   }
 }
-console.log(`\n${results.filter(Boolean).length}/${results.length} checks passed (${BASE})`);
+console.log(`\n${results.filter(Boolean).length}/${results.length} checks passed (${BASE}, the switch ${uniOnly ? 'on: Northumbria only' : 'off: any email address'})`);
 process.exit(results.every(Boolean) ? 0 : 1);

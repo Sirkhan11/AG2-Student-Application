@@ -316,9 +316,9 @@ const checks = [
   }],
 
   // ---------- Wiring ----------
-  ['The root layout starts the background download for a verified Northumbria account, loading its code only then', () => {
+  ['The root layout starts the background download for a verified account the access switch lets in, loading its code only then', () => {
     const layout = source('src/routes/+layout.svelte');
-    assert.match(layout, /account\?\.verified && isUniEmail\(account\.email\) \? account\.uid : null/);
+    assert.match(layout, /account\?\.verified && isAllowedEmail\(account\.email, access\.uniOnly\) \? account\.uid : null/);
     assert.match(layout, /import\('#lib\/matching\/model-download-browser\.js'\)\.then\(\(model\) => model\.downloadAfterLogin\(uid\)/);
     assert.doesNotMatch(layout, /^\s*import .*model-download-browser/m, 'not loaded with every page');
   }],

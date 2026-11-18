@@ -60,6 +60,27 @@ sign-up and log in take only `@northumbria.ac.uk` addresses, the address must be
 app opens, and `firestore.rules` refuses every read and write from anyone else (apart from the three
 test accounts the check scripts use).
 
+### The access switch: Northumbria only, or any email address
+
+Northumbria's mail filter quarantines the verification emails (IT ticket INC0456681), so until IT allow
+the sender no `@northumbria.ac.uk` address can finish signing up. For testing with the project group,
+one switch in the Firebase console opens the app to any email address, with no deploy and no code
+change:
+
+- Firebase console, **Firestore Database**, collection `config`, document `access`, boolean field
+  `uniOnly`. `false` opens the app to any verified address. `true`, any other value, no field or no
+  document means Northumbria only: the default, so nothing needs setting up for the real release.
+- The address still has to be verified, so people still prove it's theirs. `firestore.rules` read the
+  same document (`anyVerifiedAddress`), and only for accounts that aren't Northumbria ones.
+- With the switch off, the forms say "Email address" rather than "Northumbria email address", the
+  check-your-inbox screen says "Check your inbox", and the sign-up page says "Testing: open to any
+  email address". Flipping it back deletes nothing: accounts from elsewhere just see the
+  Northumbria-only screen again until it's flipped off.
+- Nobody can change the switch from the app (the rules let anyone read it and nobody write it). The
+  code is in `src/lib/access.js`; `scripts/check-uni-rules.mjs` tests both positions in the emulator,
+  `scripts/check-access-switch.mjs` tests what people see in the browser, and `check-live-site.mjs`
+  expects whichever way the live switch is set.
+
 ```sh
 npm run build:live    # a static site in build/, then scripts/check-live-build.mjs checks it
 ```
