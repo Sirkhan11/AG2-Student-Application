@@ -501,7 +501,7 @@ const gp = await new Promise((done) => {
 const gpResult = /** @type {{ code: number, output: string }} */ (gp);
 for (const line of gpResult.output.split('\n').filter((line) => /^FAIL/.test(line))) console.log(`      ${line}`);
 if (!/\d+\/\d+ checks passed/.test(gpResult.output)) console.log(gpResult.output.split('\n').slice(-12).map((line) => `      ${line}`).join('\n'));
-report('The GP finder keeps "Use my location" on the phone, logged in (check-gp-finder-privacy)', gpResult.code === 0, gpResult.output.match(/\d+\/\d+ checks passed/)?.[0] ?? 'no result');
+report('The GP and dentist finder keeps "Use my location" on the phone, logged in (check-gp-finder-privacy)', gpResult.code === 0, gpResult.output.match(/\d+\/\d+ checks passed/)?.[0] ?? 'no result');
 
 app.kill();
 console.log(`\n${results.filter(Boolean).length}/${results.length} checks passed`);

@@ -71,7 +71,7 @@ const offline = [
     assert.doesNotMatch(page, /to confirm|to be confirmed/i);
     assert.ok(PUBLIC_PAGES.includes('/need-help') && ALWAYS_OPEN.includes('/need-help'), 'without logging in, whatever state an account is in');
   }],
-  ['One finder for GPs and dentists, with a tab for each: on the GP tab the search and results come first, each result has "How to register", and the Registering facts sit below; the Dentist tab has the postcode box, NHS Find a dentist and the steps; the reminder to check with the practice stays', () => {
+  ['One finder for GPs and dentists, with a tab for each: on the GP tab the search and results come first, each result has "How to register", and the Registering facts sit below; the Dentist tab works the same way (Use my location, the nearest NHS dentists, each with its NHS page), then the steps; the reminder to check with the practice stays', () => {
     const page = source('src/routes/gp-finder/+page.svelte');
     assert.match(page, /let tab = \$derived\(page\.url\.searchParams\.get\('tab'\) === 'dentist' \? 'dentist' : 'gp'\);/, 'the tab is in the address, so the checklist can open it');
     assert.match(page, /<a href="\/gp-finder" class:active=\{tab === 'gp'\}/);
@@ -82,9 +82,13 @@ const offline = [
     assert.match(gpTab, /href=\{practicePageUrl\(practice\)\}[\s\S]{0,400}How to register ↗/, 'each result’s How to register opens its NHS page');
     for (const kept of ['REGISTERING.free, REGISTERING.documents, REGISTERING.studentRegistration, REGISTERING.healthHub', 'Nearest GP surgeries to', 'More surgeries on NHS Find a GP', 'Show {Math.min(RESULTS', 'Organisation Data Service']) assert.ok(page.includes(kept), `kept: ${kept}`);
     const dentistTab = page.slice(page.indexOf('{:else}'), page.indexOf('<BottomNav />'));
-    for (const words of ['id="dentist-search"', 'Find dentists', 'It’s only used to open NHS Find a dentist for it. Nothing is saved.', 'NHS Find a dentist near {dentist.label} ↗', '{#each dentistHowTo.steps as step, i (i)}', 'Phone the practice to check before you visit']) assert.ok(dentistTab.includes(words), words);
+    // Like the GP tab since 18 November: Use my location (it stays on the phone) and the nearest NHS
+    // dental practices, each with its NHS page (whether it's taking new NHS patients).
+    const dentistOrder = ['id="dentist-search"', 'Find dentists', 'Use my location', 'Your location stays on your phone: it isn’t saved or sent anywhere.', 'Nearest NHS dentists to', 'New NHS patients? ↗', 'More dentists on NHS Find a dentist ↗', 'Phone the practice to check before you visit', '{#each dentistHowTo.steps as step, i (i)}'];
+    for (let i = 1; i < dentistOrder.length; i++) assert.ok(dentistTab.indexOf(dentistOrder[i - 1]) !== -1 && dentistTab.indexOf(dentistOrder[i - 1]) < dentistTab.indexOf(dentistOrder[i]), `dentist tab: ${dentistOrder[i - 1]} comes before ${dentistOrder[i]}`);
+    assert.match(dentistTab, /href=\{dentistPageUrl\(practice\)\}[\s\S]{0,400}New NHS patients\? ↗/, 'each dentist opens its NHS page');
     assert.match(page, /const dentistHowTo = HOW_TO\.dentist;/, 'the checklist’s steps, not a second copy');
-    assert.match(page, /if \(wanted\.kind === 'postcode' \|\| wanted\.kind === 'district'\) dentist = \{ href: findADentistUrl\(wanted\.value\), label: wanted\.value \};/, 'as the chat’s dentist card does');
+    assert.match(page, /const dentists = new GpSearch\(\{ needsTyping: \(\) => dentistBox\?\.focus\(\), nearest: nearestDentists, words: DENTIST_WORDS \}\);/, 'the GP tab’s search, with the dental lists');
     assert.doesNotMatch(page, /localStorage|sessionStorage|indexedDB|document\.cookie/, 'nothing typed is stored');
   }],
   ['The checklist: each task with a screen in the app has a button that does it (Find a GP; Find one, the dentist tab; Browse, societies; See them, the contacts), ticked tasks keep "How to", and deleting is tucked under "How to", one tap once it’s open', () => {
@@ -257,10 +261,10 @@ async function inTheBrowser(where) {
       await tap(page, '.dash a.do[href="/gp-finder"]');
       report('Find a GP: one tap after opening Home, she’s on the finder, searching for a surgery', await page.waitFor(`location.pathname === '/gp-finder' && ${page.has('Find GPs')}`));
       await tap(page, 'nav.tabs a[href="/gp-finder?tab=dentist"]');
-      report('The finder’s Dentist tab: the postcode box, NHS Find a dentist and the steps', (await page.waitFor(`location.search === '?tab=dentist' && ${page.has('Find dentists')}`)) && (await page.evaluate(page.has('Finding an NHS dentist'))));
+      report('The finder’s Dentist tab: the search, Use my location and the steps', (await page.waitFor(`location.search === '?tab=dentist' && ${page.has('Find dentists')} && ${page.has('Use my location')}`)) && (await page.evaluate(page.has('Finding an NHS dentist'))));
       await page.fill('#dentist-search', 'NE1 8ST');
       await page.press('Find dentists');
-      report('A postcode opens NHS Find a dentist for it', await page.waitFor(`[...document.querySelectorAll('a')].some((a) => a.href.includes('find-a-dentist/results?location=NE1'))`));
+      report('A postcode lists the nearest NHS dentists, each with its NHS page, then NHS Find a dentist for it', (await page.waitFor(`document.querySelectorAll('.practice a[href*="/services/dentist/dentist/XV"]').length === 10`)) && (await page.evaluate(`[...document.querySelectorAll('a')].some((a) => a.href.includes('find-a-dentist/results?location=NE1'))`)));
       await tap(page, 'nav.tabs a[href="/gp-finder"]');
       report('...and the GP tab comes back, with Registering below the results', (await page.waitFor(`location.search === '' && ${page.has('Find GPs')}`)) && (await page.evaluate(page.has('Registering'))));
       await page.go('/checklist');

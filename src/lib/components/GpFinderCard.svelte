@@ -1,98 +1,94 @@
 <script>
-  import { classifySearch, distanceText, findADentistUrl, findAGpUrl, OTHER_NATIONS, practicePageUrl } from '#lib/gp/finder.js';
+  import { untrack } from 'svelte';
+  import { dentistPageUrl } from '#lib/dentists/england.js';
+  import { DENTIST_NATIONS, DENTIST_WORDS, nearestDentists } from '#lib/dentists/finder.js';
+  import { distanceText, findADentistUrl, findAGpUrl, OTHER_NATIONS, practicePageUrl } from '#lib/gp/finder.js';
   import { GpSearch } from '#lib/gp/search.svelte.js';
 
   /**
-   * The GP finder inside the check-in chat, when Gemini shows it (its show_finder tool, chat-tools.js):
-   * the student types a postcode, district or place here, in the app's own card, so it never goes to
-   * Gemini (the chat's messages blank postcodes too). For a GP, the nearest surgeries, the same search
-   * as the GP finder page (search.svelte.js: "Use my location" stays on the phone); for a dentist,
-   * NHS Find a dentist for that postcode or district, as the NHS lists dentists.
+   * The GP or dentist finder inside the check-in chat, when Gemini shows it (its show_finder tool,
+   * chat-tools.js): the student types a postcode, district or place here, in the app's own card, so it
+   * never goes to Gemini (the chat's messages blank postcodes too), or taps Use my location, which stays
+   * on the phone. The same search as the finder page's GP and Dentist tabs (search.svelte.js), showing
+   * the nearest few, each with its NHS page.
    * @type {{ kind?: 'gp' | 'dentist' }}
    */
   let { kind = 'gp' } = $props();
 
-  /** How many surgeries the card shows: the full list is on the GP finder page. */
+  /** How many the card shows: the full list is on the finder page. */
   const SHOWN = 3;
   const htmlId = $props.id();
   let query = $state('');
   /** @type {HTMLInputElement | undefined} */
   let box = $state();
-  const finder = new GpSearch({ needsTyping: () => box?.focus() });
-  /** The dentist search: NHS Find a dentist for what they typed, or a note. */
-  let dentist = $state(/** @type {{ href: string, label: string } | null} */ (null));
-  let dentistNote = $state('');
+  // A card is a GP one or a dentist one for good (the chat makes a new card for the other), so only
+  // the kind it starts with counts.
+  const dentist = untrack(() => kind === 'dentist');
+  const finder = new GpSearch({ needsTyping: () => box?.focus(), ...(dentist ? { nearest: nearestDentists, words: DENTIST_WORDS } : {}) });
+  const nations = dentist ? DENTIST_NATIONS : OTHER_NATIONS;
+  /** @param {import('#lib/gp/finder.js').NearbyPractice} practice */
+  const pageOf = (practice) => (dentist ? dentistPageUrl(practice) : practicePageUrl(practice));
 
   /** @param {SubmitEvent} event */
   function search(event) {
     event.preventDefault();
-    if (kind === 'gp') {
-      void finder.search(query);
-      return;
-    }
-    const wanted = classifySearch(query);
-    dentist = null;
-    dentistNote = '';
-    if (wanted.kind === 'postcode' || wanted.kind === 'district') dentist = { href: findADentistUrl(wanted.value), label: wanted.value };
-    else dentistNote = 'Type a postcode (NE1 8ST) or a postcode district (NE6).';
+    void finder.search(query);
   }
 </script>
 
-<div class="finder-card" role="group" aria-label={kind === 'gp' ? 'Find a GP near you' : 'Find a dentist near you'}>
+<div class="finder-card" role="group" aria-label={dentist ? 'Find a dentist near you' : 'Find a GP near you'}>
   <form onsubmit={search}>
-    <label for={`${htmlId}-search`}>{kind === 'gp' ? 'Your postcode, district or place' : 'Your postcode or district'}</label>
+    <label for={`${htmlId}-search`}>Your postcode, district or place</label>
     <div class="row">
-      <input id={`${htmlId}-search`} class="field" bind:this={box} bind:value={query} autocomplete="postal-code" placeholder={kind === 'gp' ? 'NE1 8ST, NE6 or Heaton' : 'NE1 8ST or NE6'} />
+      <input id={`${htmlId}-search`} class="field" bind:this={box} bind:value={query} autocomplete="postal-code" placeholder="NE1 8ST, NE6 or Heaton" />
       <button class="primary-button" type="submit" disabled={finder.busy !== ''}>{finder.busy === 'search' ? 'Searching…' : 'Find'}</button>
     </div>
   </form>
-  {#if kind === 'gp'}
-    <button class="secondary-button" type="button" onclick={() => finder.useMyLocation()} disabled={finder.busy !== ''}>
-      {finder.busy === 'location' ? 'Finding where you are…' : 'Use my location'}
-    </button>
-  {/if}
-  <p class="muted small">This stays in the app: it’s never sent to Gemini. {kind === 'gp' ? 'Your location stays on your phone, and a postcode or place is looked up on postcodes.io.' : 'It’s only used to open NHS Find a dentist.'}</p>
+  <button class="secondary-button" type="button" onclick={() => finder.useMyLocation()} disabled={finder.busy !== ''}>
+    {finder.busy === 'location' ? 'Finding where you are…' : 'Use my location'}
+  </button>
+  <p class="muted small">This stays in the app: it’s never sent to Gemini. Your location stays on your phone, and a postcode or place is looked up on postcodes.io.</p>
 
   <div aria-live="polite">
-    {#if kind === 'gp'}
-      {#if finder.note}
-        <p role="alert">{finder.note}</p>
-      {/if}
-      {#if finder.choices}
-        <p>Which {finder.choices[0].label}?</p>
-        <div class="choices">
-          {#each finder.choices.slice(0, 5) as place (`${place.label}|${place.county}`)}
-            <button class="secondary-button" type="button" onclick={() => finder.choose(place)}>{place.label}, {place.county}</button>
-          {/each}
-        </div>
-      {/if}
-      {#if finder.nation}
-        <p>That’s in {finder.nation}, so use its own GP finder:</p>
-        <a class="secondary-button" href={OTHER_NATIONS[finder.nation].href} target="_blank" rel="noopener noreferrer" aria-label={`${OTHER_NATIONS[finder.nation].label} (opens in a new tab)`}>{OTHER_NATIONS[finder.nation].label} ↗</a>
-      {/if}
-      {#if finder.results}
-        <p class="heading">Nearest GP surgeries to {finder.results.label}</p>
-        <ol>
-          {#each finder.results.practices.slice(0, SHOWN) as practice (practice.code)}
-            <li>
-              <strong>{practice.name}</strong>
-              <span class="muted">{distanceText(practice.distanceKm)} away</span>
-              <a href={practicePageUrl(practice)} target="_blank" rel="noopener noreferrer" aria-label={`${practice.name} on the NHS website: registering and new patients (opens in a new tab)`}>NHS page: register ↗</a>
-            </li>
-          {/each}
-        </ol>
-        <div class="more">
+    {#if finder.note}
+      <p role="alert">{finder.note}</p>
+    {/if}
+    {#if finder.choices}
+      <p>Which {finder.choices[0].label}?</p>
+      <div class="choices">
+        {#each finder.choices.slice(0, 5) as place (`${place.label}|${place.county}`)}
+          <button class="secondary-button" type="button" onclick={() => finder.choose(place)}>{place.label}, {place.county}</button>
+        {/each}
+      </div>
+    {/if}
+    {#if finder.nation}
+      <p>That’s in {finder.nation}, so use its own {dentist ? 'way to find a dentist' : 'GP finder'}:</p>
+      <a class="secondary-button" href={nations[finder.nation].href} target="_blank" rel="noopener noreferrer" aria-label={`${nations[finder.nation].label} (opens in a new tab)`}>{nations[finder.nation].label} ↗</a>
+    {/if}
+    {#if finder.results}
+      <p class="heading">{dentist ? 'Nearest NHS dentists' : 'Nearest GP surgeries'} to {finder.results.label}</p>
+      <ol>
+        {#each finder.results.practices.slice(0, SHOWN) as practice (practice.code)}
+          <li>
+            <strong>{practice.name}</strong>
+            <span class="muted">{distanceText(practice.distanceKm)} away</span>
+            {#if dentist}
+              <a href={pageOf(practice)} target="_blank" rel="noopener noreferrer" aria-label={`Whether ${practice.name} is taking new NHS patients, on the NHS website (opens in a new tab)`}>New NHS patients? ↗</a>
+            {:else}
+              <a href={pageOf(practice)} target="_blank" rel="noopener noreferrer" aria-label={`${practice.name} on the NHS website: registering and new patients (opens in a new tab)`}>NHS page: register ↗</a>
+            {/if}
+          </li>
+        {/each}
+      </ol>
+      <div class="more">
+        {#if dentist}
+          <a href="/gp-finder?tab=dentist">More on the dentist finder</a>
+          <a href={findADentistUrl(finder.results.nhsSearch)} target="_blank" rel="noopener noreferrer" aria-label="NHS Find a dentist (opens in a new tab)">NHS Find a dentist ↗</a>
+        {:else}
           <a href="/gp-finder">More on the GP finder</a>
           <a href={findAGpUrl(finder.results.nhsSearch)} target="_blank" rel="noopener noreferrer" aria-label="NHS Find a GP (opens in a new tab)">NHS Find a GP ↗</a>
-        </div>
-      {/if}
-    {:else}
-      {#if dentistNote}
-        <p role="alert">{dentistNote}</p>
-      {/if}
-      {#if dentist}
-        <a class="primary-button" href={dentist.href} target="_blank" rel="noopener noreferrer" aria-label={`NHS Find a dentist near ${dentist.label} (opens in a new tab)`}>NHS Find a dentist near {dentist.label} ↗</a>
-      {/if}
+        {/if}
+      </div>
     {/if}
   </div>
 </div>

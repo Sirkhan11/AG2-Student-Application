@@ -7,7 +7,10 @@
 // - a full postcode, a district (NE6) and a place with several matches (Heaton, with a "which one?"
 //   list) all find surgeries, with phone numbers and emails where the NHS has them; "Show more" shows
 //   more; a Scottish postcode gets Scotland's own GP finder;
-// - a new search, valid or not, replaces the last result and message.
+// - a new search, valid or not, replaces the last result and message;
+// - the Dentist tab, the same way since 18 November: "Use my location" finds NHS dentists with nothing
+//   sent in Newcastle, and only the all-England dentist list in London, the location in no request,
+//   storage or console; a postcode finds dentists; a Scottish postcode gets Scotland's own directory.
 // The typed searches ask postcodes.io, as the page does.
 //
 // The GP finder needs a signed-in, verified Northumbria account, so the check logs in first as the
@@ -30,6 +33,7 @@ if (!base) {
   process.exit(2);
 }
 const PAGE_URL = new URL('/gp-finder', base).href;
+const DENTIST_URL = new URL('/gp-finder?tab=dentist', base).href;
 const ORIGIN = new URL(base).origin;
 /** Made-up locations with digits that won't turn up by chance: by Newcastle city centre, and in London. */
 const NEWCASTLE = { latitude: 54.973861, longitude: -1.613947 };
@@ -97,15 +101,15 @@ async function waitForText(text) {
   }
   return false;
 }
-/** Opens the page and waits for it to be ready. */
-async function open() {
-  await page.send('Page.navigate', { url: PAGE_URL });
+/** Opens the page (the GP tab, or the URL given) and waits for it to be ready. @param {string} [url] */
+async function open(url = PAGE_URL) {
+  await page.send('Page.navigate', { url });
   assert.ok(await waitForText('Use my location'), 'the page loaded');
   await sleep(1500);
 }
-/** Types into the search box and submits. @param {string} text */
-const typeAndSearch = (text) =>
-  run(`(() => { const box = document.querySelector('#search'); box.value = ${JSON.stringify(text)}; box.dispatchEvent(new Event('input', { bubbles: true })); document.querySelector('form.search').requestSubmit(); })()`);
+/** Types into the search box (the GP tab's, or the one given) and submits. @param {string} text @param {string} [box] */
+const typeAndSearch = (text, box = '#search') =>
+  run(`(() => { const box = document.querySelector(${JSON.stringify(box)}); box.value = ${JSON.stringify(text)}; box.dispatchEvent(new Event('input', { bubbles: true })); document.querySelector('form.search').requestSubmit(); })()`);
 const practices = () => run(`document.querySelectorAll('.practice').length`);
 /** Everything the page has stored: local and session storage, cookies and IndexedDB. */
 const storage = () =>
@@ -122,16 +126,17 @@ const storage = () =>
   })()`);
 
 /**
- * Uses "my location" at a made-up spot and returns the requests made after the tap.
+ * Uses "my location" at a made-up spot, on the GP tab or the Dentist tab, and returns the requests made after the tap.
  * @param {{ latitude: number, longitude: number }} spot
+ * @param {{ url?: string, results?: string }} [where] the tab's address and its results' heading
  */
-async function useLocationAt(spot) {
+async function useLocationAt(spot, { url = PAGE_URL, results = 'Nearest GP surgeries to you' } = {}) {
   await browser.send('Browser.grantPermissions', { origin: ORIGIN, permissions: ['geolocation'] });
   await page.send('Emulation.setGeolocationOverride', { ...spot, accuracy: 20 });
-  await open();
+  await open(url);
   const from = page.events.length;
   await run(`document.querySelector('button.location').click()`);
-  assert.ok(await waitForText('Nearest GP surgeries to you'), 'results appear');
+  assert.ok(await waitForText(results), 'results appear');
   await sleep(800);
   const after = page.events.slice(from);
   const requests = after.filter((event) => event.method === 'Network.requestWillBeSent').map((event) => event.params.request);
@@ -222,6 +227,32 @@ const checks = [
     assert.ok(await waitForText('Type a postcode (NE1 8ST)'));
     assert.equal(await run(`document.querySelectorAll('.note').length`), 1, 'only the new message');
     assert.ok(!String(await run('document.body.innerText')).includes('couldn’t find a place called'), 'the old message is gone');
+  }],
+  ['Dentist tab, Use my location in Newcastle: 10 NHS dentists, each opening its NHS page, with nothing sent at all; the location is in no request, storage or console', async () => {
+    const urls = await useLocationAt(NEWCASTLE, { url: DENTIST_URL, results: 'Nearest NHS dentists to you' });
+    assert.deepEqual(urls, [], 'no request after the tap');
+    assert.equal(await practices(), 10);
+    assert.equal(await run(`[...document.querySelectorAll('.practice a')].filter((a) => /^https:\\/\\/www\\.nhs\\.uk\\/services\\/dentist\\/dentist\\/XV\\d{6}$/.test(a.href)).length`), 10, 'each one’s NHS page');
+  }],
+  ['Dentist tab, Use my location in London: the all-England dentist list, one request that\'s the same for everyone, and still no location in any request, storage or console', async () => {
+    const urls = await useLocationAt(LONDON, { url: DENTIST_URL, results: 'Nearest NHS dentists to you' });
+    assert.deepEqual(urls.map((url) => new URL(url).pathname + new URL(url).search), ['/dentists/england.tsv']);
+    assert.equal(await practices(), 10);
+  }],
+  ['Dentist tab: a full postcode finds 10 dentists, and NHS Find a dentist uses the postcode', async () => {
+    await open(DENTIST_URL);
+    await typeAndSearch('ne18st', '#dentist-search');
+    assert.ok(await waitForText('Nearest NHS dentists to NE1 8ST'));
+    assert.equal(await practices(), 10);
+    const links = await run(`[...document.querySelectorAll('a')].map((a) => a.href)`);
+    assert.ok(links.includes('https://www.nhs.uk/service-search/find-a-dentist/results?location=NE1%208ST'));
+  }],
+  ['Dentist tab: a Scottish postcode gets Scotland’s own dental services, not a list', async () => {
+    await open(DENTIST_URL);
+    await typeAndSearch('EH1 1YZ', '#dentist-search');
+    assert.ok(await waitForText('That’s in Scotland'));
+    assert.ok(await run(`[...document.querySelectorAll('a')].some((a) => a.href === 'https://www.nhsinform.scot/scotlands-service-directory/dental-services/')`));
+    assert.equal(await practices(), 0);
   }]
 ];
 

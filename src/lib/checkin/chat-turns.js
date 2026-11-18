@@ -55,7 +55,7 @@ const CLAIMS = [
  *   (a task's link, such as the Student Portal, or an app page)
  * - changes: the changes the app made for it, each a line with Undo (chat-do.js)
  * - quick: quick replies under the reply
- * - tool: the GP finder, the dentist search or the key contacts card; ask4help: the Ask4Help card;
+ * - tool: the GP finder, the dentist finder or the key contacts card; ask4help: the Ask4Help card;
  *   calendar: a calendar card for this
  * - tasks: a reminder it suggested (they didn't ask), for the Add / No thanks card; notes: something
  *   it offered to remember, for the Remember / Not now card

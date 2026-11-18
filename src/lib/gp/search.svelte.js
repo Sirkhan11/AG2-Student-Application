@@ -1,7 +1,8 @@
 import { classifySearch, nearestAnywhere, OTHER_NATIONS, placeChoices, RESULTS } from '#lib/gp/finder.js';
 
 // One search for the nearest GP surgeries, as the GP finder page and the check-in chat's GP finder
-// card both do it (see finder.js for the two lists):
+// card both do it (see finder.js for the two lists), and, with England's NHS dental practices instead
+// (dentists/finder.js), for the nearest dentists on the finder's Dentist tab and the chat's dentist card:
 // - A typed full postcode (NE1 8ST), postcode district (NE6) or place (Heaton) goes to postcodes.io
 //   (open data, no key) for where it is. A place with more than one match gives a short "which one?"
 //   list. Nothing typed here is ever sent to Gemini: the chat's card is the app's own.
@@ -19,6 +20,22 @@ import { classifySearch, nearestAnywhere, OTHER_NATIONS, placeChoices, RESULTS }
  * @typedef {{ practices: import('#lib/gp/finder.js').NearbyPractice[], label: string, nhsSearch: string | null,
  *   source: 'north-east' | 'england', farFromEngland: boolean }} Results
  */
+
+/**
+ * What the search says when the list or a lookup fails: about GP surgeries, or, given
+ * DENTIST_WORDS (dentists/finder.js), dentists.
+ * @typedef {{ listFailed: string, lookupFailed: string }} SearchWords
+ */
+/**
+ * Finds the nearest practices to a point: GP surgeries (nearestAnywhere), or NHS dentists
+ * (nearestDentists in dentists/finder.js).
+ * @typedef {(lat: number, lng: number) => ReturnType<typeof nearestAnywhere>} FindNearest
+ */
+/** @type {SearchWords} */
+export const GP_WORDS = Object.freeze({
+  listFailed: 'We couldn’t load the list of surgeries in England just now. Please try again, or use NHS Find a GP.',
+  lookupFailed: 'We couldn’t look that up just now. Please try again, or use NHS Find a GP.'
+});
 
 /** @param {unknown} country */
 const otherNation = (country) => (typeof country === 'string' && Object.hasOwn(OTHER_NATIONS, country) ? /** @type {keyof typeof OTHER_NATIONS} */ (country) : null);
@@ -45,9 +62,16 @@ export class GpSearch {
   /** How many results are showing ("Show more" adds RESULTS more). */
   shown = $state(RESULTS);
 
-  /** @param {{ needsTyping?: () => void }} [options] needsTyping: the location couldn't be used, so they should type instead */
-  constructor({ needsTyping } = {}) {
+  /**
+   * needsTyping: the location couldn't be used, so they should type instead. nearest and words: what to
+   * search and say, GP surgeries unless they're given (the Dentist tab gives nearestDentists and
+   * DENTIST_WORDS).
+   * @param {{ needsTyping?: () => void, nearest?: FindNearest, words?: SearchWords }} [options]
+   */
+  constructor({ needsTyping, nearest = nearestAnywhere, words = GP_WORDS } = {}) {
     this.needsTyping = needsTyping ?? (() => {});
+    this.nearest = nearest;
+    this.words = words;
   }
 
   /** Clears the last search's results and messages: every new search starts from nothing. */
@@ -65,11 +89,11 @@ export class GpSearch {
    */
   async showNearest(lat, lng, label, nhsSearch) {
     try {
-      const found = await nearestAnywhere(lat, lng);
+      const found = await this.nearest(lat, lng);
       this.results = { ...found, label, nhsSearch };
     } catch (err) {
-      console.error('The England GP list did not load:', err instanceof Error ? err.message : err);
-      this.note = 'We couldn’t load the list of surgeries in England just now. Please try again, or use NHS Find a GP.';
+      console.error('The England list did not load:', err instanceof Error ? err.message : err);
+      this.note = this.words.listFailed;
     }
   }
 
@@ -102,7 +126,7 @@ export class GpSearch {
       }
     } catch (err) {
       console.error('The search failed:', err instanceof Error ? err.message : err);
-      this.note = 'We couldn’t look that up just now. Please try again, or use NHS Find a GP.';
+      this.note = this.words.lookupFailed;
     } finally {
       this.busy = '';
     }

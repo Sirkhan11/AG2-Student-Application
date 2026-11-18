@@ -54,7 +54,7 @@
       <li><strong>Your sign-up details,</strong> until you’ve verified your email address. Then they’re saved to your account and removed from your phone (and they’re gone if you close the tab first).</li>
       <li><strong>That you’re logged in,</strong> as Firebase does, so you don’t have to log in every time.</li>
       <li><strong>The matching model:</strong> the part of matching that turns words into numbers runs on your phone. It’s downloaded once, from Hugging Face (with its code from jsDelivr), and your browser keeps it.</li>
-      <li><strong>Your location,</strong> if you use “Use my location” in the GP finder: it’s used on your phone to sort the surgeries, and never saved or sent anywhere.</li>
+      <li><strong>Your location,</strong> if you use “Use my location” in the GP or dentist finder: it’s used on your phone to sort the surgeries or dentists, and never saved or sent anywhere.</li>
     </ul>
   </section>
 
@@ -106,7 +106,7 @@
     <ul>
       <li><strong>Google Firebase</strong> runs the login, the database and the website.</li>
       <li><strong>Google reCAPTCHA</strong> checks in the background that requests come from the real app.</li>
-      <li><strong>postcodes.io</strong> looks up a postcode or place you type into the GP finder. In the dentist finder, the postcode you type is only used to open NHS Find a dentist for it.</li>
+      <li><strong>postcodes.io</strong> looks up a postcode or place you type into the GP or dentist finder.</li>
       <li><strong>Hugging Face and jsDelivr</strong> supply the matching model and its code.</li>
       <li>Links to the NHS, the Students’ Union, Northumbria Sport and Northumbria University open their own sites, which have their own privacy notices.</li>
     </ul>

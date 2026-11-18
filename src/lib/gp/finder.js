@@ -81,7 +81,8 @@ export function loadEngland(fetchImpl = fetch) {
  * is true when even the nearest is more than BEYOND_ENGLAND_KM away (probably not in England).
  * @param {number} lat
  * @param {number} lng
- * @param {{ load?: () => Promise<import('#lib/gp/england.js').EnglandPractice[]>, northEast?: GpPractice[] }} [options]
+ * The finder's Dentist tab passes its own two lists (dentists/finder.js).
+ * @param {{ load?: () => Promise<import('#lib/gp/england.js').EnglandPractice[]>, northEast?: AnyPractice[] }} [options]
  * @returns {Promise<{ source: 'north-east' | 'england', practices: NearbyPractice[], farFromEngland: boolean }>}
  */
 export async function nearestAnywhere(lat, lng, { load = loadEngland, northEast = PRACTICES } = {}) {

@@ -4,16 +4,19 @@
   import BottomNav from '#lib/components/BottomNav.svelte';
   import { HOW_TO } from '#lib/checklist/how-to.js';
   import { REGISTERING } from '#lib/nhs/guide.js';
-  import { classifySearch, distanceText, findADentistUrl, findAGpUrl, LIST_DATE, mailHref, OTHER_NATIONS, practicePageUrl, RESULTS, telHref } from '#lib/gp/finder.js';
+  import { dentistPageUrl } from '#lib/dentists/england.js';
+  import { DENTIST_LIST_DATE, DENTIST_NATIONS, DENTIST_WORDS, nearestDentists } from '#lib/dentists/finder.js';
+  import { distanceText, findADentistUrl, findAGpUrl, LIST_DATE, mailHref, OTHER_NATIONS, practicePageUrl, RESULTS, telHref } from '#lib/gp/finder.js';
   import { GpSearch } from '#lib/gp/search.svelte.js';
 
   // One finder for GPs and dentists, with a tab for each, as the group's wireframe. The GP tab finds
   // the surgeries nearest a student, anywhere in England: the search itself (and what it keeps
   // private: the location never leaves the phone) is in src/lib/gp/search.svelte.js, which the
   // check-in chat's GP finder card shares. The results come first; each has "How to register" (its NHS
-  // page), and the registering facts sit below them. The Dentist tab (/gp-finder?tab=dentist) holds
-  // what the app has for dentists: NHS Find a dentist for a postcode (the postcode is only used to
-  // open it, as the chat's dentist card does) and the checklist's steps for finding one.
+  // page), and the registering facts sit below them. The Dentist tab (/gp-finder?tab=dentist) does the
+  // same for England's NHS dental practices, with the same search and the same privacy (the location
+  // never leaves the phone): each has its NHS page, which says whether it's taking new NHS patients.
+  // The checklist's steps for finding a dentist sit below.
 
   /** Which tab is showing, from the address, so the checklist's "Find one" can open the Dentist tab. */
   let tab = $derived(page.url.searchParams.get('tab') === 'dentist' ? 'dentist' : 'gp');
@@ -34,20 +37,16 @@
     void finder.search(query);
   }
 
-  // The dentist search: NHS Find a dentist for the postcode or district typed, or a note. Nothing is
-  // looked up or saved: the link is made on the phone.
+  // The Dentist tab: the same search, with England's NHS dental practices (dentists/finder.js).
   let dentistQuery = $state('');
-  let dentist = $state(/** @type {{ href: string, label: string } | null} */ (null));
-  let dentistNote = $state('');
+  /** @type {HTMLInputElement | undefined} */
+  let dentistBox = $state();
+  const dentists = new GpSearch({ needsTyping: () => dentistBox?.focus(), nearest: nearestDentists, words: DENTIST_WORDS });
 
   /** @param {SubmitEvent} event */
-  function findDentist(event) {
+  function findDentists(event) {
     event.preventDefault();
-    const wanted = classifySearch(dentistQuery);
-    dentist = null;
-    dentistNote = '';
-    if (wanted.kind === 'postcode' || wanted.kind === 'district') dentist = { href: findADentistUrl(wanted.value), label: wanted.value };
-    else dentistNote = 'Type a postcode (NE1 8ST) or a postcode district (NE6).';
+    void dentists.search(dentistQuery);
   }
 </script>
 
@@ -221,27 +220,100 @@
     </p>
   {:else}
     <p class="muted">
-      NHS dentists are separate from GP surgeries. The NHS website lists the ones near you, and says
-      whether each is taking new NHS patients.
+      NHS dentists are separate from GP surgeries. Search near where you live in term time. Each
+      practice’s NHS page says whether it’s taking new NHS patients.
     </p>
 
-    <form class="search" onsubmit={findDentist}>
-      <label for="dentist-search">Your postcode or district</label>
+    <form class="search" onsubmit={findDentists}>
+      <label for="dentist-search">Postcode, district or place</label>
       <div class="row">
-        <input id="dentist-search" class="field" bind:value={dentistQuery} autocomplete="postal-code" placeholder="NE1 8ST or NE6" />
-        <button class="primary-button" type="submit">Find dentists</button>
+        <input id="dentist-search" class="field" bind:this={dentistBox} bind:value={dentistQuery} autocomplete="postal-code" placeholder="NE1 8ST, NE6 or Heaton" />
+        <button class="primary-button" type="submit" disabled={dentists.busy !== ''}>
+          {dentists.busy === 'search' ? 'Searching…' : 'Find dentists'}
+        </button>
       </div>
     </form>
-    <p class="muted small">It’s only used to open NHS Find a dentist for it. Nothing is saved.</p>
+
+    <button class="secondary-button location" type="button" onclick={() => dentists.useMyLocation()} disabled={dentists.busy !== ''}>
+      {dentists.busy === 'location' ? 'Finding where you are…' : 'Use my location'}
+    </button>
+    <p class="muted small">
+      Your location stays on your phone: it isn’t saved or sent anywhere. A postcode or place you type is
+      looked up on postcodes.io.
+    </p>
 
     <div aria-live="polite">
-      {#if dentistNote}
-        <p class="note" role="alert">{dentistNote}</p>
+      {#if dentists.note}
+        <p class="note" role="alert">{dentists.note}</p>
       {/if}
-      {#if dentist}
-        <a class="primary-button" href={dentist.href} target="_blank" rel="noopener noreferrer" aria-label={`NHS Find a dentist near ${dentist.label} (opens in a new tab)`}>
-          NHS Find a dentist near {dentist.label} ↗
-        </a>
+
+      {#if dentists.choices}
+        <div class="card">
+          <h2>Which {dentists.choices[0].label}?</h2>
+          <ul class="choices">
+            {#each dentists.choices as place (`${place.label}|${place.county}`)}
+              <li>
+                <button class="secondary-button" type="button" onclick={() => dentists.choose(place)}>
+                  {place.label}, {place.county}
+                </button>
+              </li>
+            {/each}
+          </ul>
+        </div>
+      {/if}
+
+      {#if dentists.nation}
+        <div class="card">
+          <p>That’s in {dentists.nation}. We only list dentists in England, so use {dentists.nation}’s own:</p>
+          <a class="primary-button" href={DENTIST_NATIONS[dentists.nation].href} target="_blank" rel="noopener noreferrer" aria-label={`${DENTIST_NATIONS[dentists.nation].label} (opens in a new tab)`}>
+            {DENTIST_NATIONS[dentists.nation].label} ↗
+          </a>
+        </div>
+      {/if}
+
+      {#if dentists.results}
+        {#if dentists.results.farFromEngland}
+          <div class="card nations">
+            <p>You look to be outside England. If you’re in Scotland, Wales or Northern Ireland, look there:</p>
+            <ul>
+              {#each Object.values(DENTIST_NATIONS) as link (link.href)}
+                <li><a href={link.href} target="_blank" rel="noopener noreferrer" aria-label={`${link.label} (opens in a new tab)`}>{link.label} ↗</a></li>
+              {/each}
+            </ul>
+            <p class="muted small">The nearest dentists in England are below.</p>
+          </div>
+        {/if}
+
+        <h2>Nearest NHS dentists to {dentists.results.label}</h2>
+        <ol class="results">
+          {#each dentists.results.practices.slice(0, dentists.shown) as practice (practice.code)}
+            <li class="card practice">
+              <h3>{practice.name}</h3>
+              <p>{practice.address}, {practice.postcode}</p>
+              <p class="muted">{distanceText(practice.distanceKm)} away in a straight line</p>
+              <!-- The practice's NHS page: whether it's taking new NHS patients, and its phone number. -->
+              <a
+                class="secondary-button register"
+                href={dentistPageUrl(practice)}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={`Whether ${practice.name} is taking new NHS patients, and its phone number, on the NHS website (opens in a new tab)`}
+              >
+                New NHS patients? ↗
+              </a>
+            </li>
+          {/each}
+        </ol>
+        {#if dentists.results.practices.length > dentists.shown}
+          <button class="secondary-button more" type="button" onclick={() => (dentists.shown += RESULTS)}>
+            Show {Math.min(RESULTS, dentists.results.practices.length - dentists.shown)} more
+          </button>
+        {/if}
+        <p>
+          <a href={findADentistUrl(dentists.results.nhsSearch)} target="_blank" rel="noopener noreferrer" aria-label="More dentists on NHS Find a dentist (opens in a new tab)">
+            More dentists on NHS Find a dentist ↗
+          </a>
+        </p>
       {/if}
     </div>
 
@@ -254,7 +326,7 @@
           <li>{step}</li>
         {/each}
       </ol>
-      <a class="secondary-button" href={findADentistUrl(dentist?.label ?? finder.results?.nhsSearch ?? null)} target="_blank" rel="noopener noreferrer" aria-label="NHS Find a dentist (opens in a new tab)">
+      <a class="secondary-button" href={findADentistUrl(dentists.results?.nhsSearch ?? null)} target="_blank" rel="noopener noreferrer" aria-label="NHS Find a dentist (opens in a new tab)">
         NHS Find a dentist ↗
       </a>
       <p class="sources">
@@ -264,6 +336,12 @@
         {/each}
       </p>
     </section>
+
+    <p class="muted small">
+      Every active NHS dental practice in England, from NHS England’s Organisation Data Service (list last
+      changed on {DENTIST_LIST_DATE}). Contains NHS England data, under the Open Government Licence.
+      Distances are worked out on your phone.
+    </p>
   {/if}
 
   <BottomNav />

@@ -98,7 +98,7 @@ export function chatTools(facts) {
         declare('suggest_reminder', "Shows a card offering to add a task to their checklist that they didn't ask for: a specific one that would help with something they've said (never a vague one). They tap Add (the card asks, so don't ask it yourself). When they ask for one, use change_checklist instead.", {
           task: string('The task, starting with a verb')
         }),
-        declare('show_finder', 'Shows the GP finder (surgeries near where they live) or the dentist search. They type their postcode into it: never ask for it yourself.', {
+        declare('show_finder', 'Shows the GP finder (surgeries near where they live) or the dentist finder (NHS dentists near where they live). They type their postcode into it or use their location: never ask for either yourself.', {
           which: string('Which one', ['gp', 'dentist'])
         }),
         declare('show_key_contacts', 'Shows the key contacts card: Campus Security, Ask4Help, 999 and 101, to call or save.'),
@@ -180,7 +180,7 @@ export function howTo(title, studentType = null) {
     ...(talk.needsFirst ? { needs_first: talk.needsFirst.task } : {}),
     ...(forThem?.pointer ? { also_for_them: `${forThem.pointer.label}: the app's Arriving late page (show_page), if it fits. The app doesn't know their CAS deadline or when teaching starts, so never say whether they're late or fine.` } : {}),
     shown_with_your_reply:
-      talk.tool === 'gp-finder' ? 'the GP finder' : talk.tool === 'dentist-finder' ? 'the dentist search' : talk.tool === 'contacts' ? 'the key contacts card' : linkFor(task.id) ? `a button: ${linkFor(task.id)?.label}` : 'nothing'
+      talk.tool === 'gp-finder' ? 'the GP finder' : talk.tool === 'dentist-finder' ? 'the dentist finder' : talk.tool === 'contacts' ? 'the key contacts card' : linkFor(task.id) ? `a button: ${linkFor(task.id)?.label}` : 'nothing'
   };
 }
 

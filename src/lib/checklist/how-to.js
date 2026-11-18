@@ -337,7 +337,7 @@ export function talkForStudent(id, studentType = null) {
  */
 export const FINDER_LINES = Object.freeze({
   gp: 'Find a surgery near you below. To register, use its website if it offers it (about 15 minutes) or fill in a form at the surgery. It’s free, and you don’t need ID, though a surgery may ask for your passport and tenancy agreement.',
-  dentist: 'Find a dentist near you below, then contact the practice and ask for an NHS appointment. You may be asked to join a waiting list, and most adults pay for NHS dental appointments.'
+  dentist: 'Find a dentist near you below: each one’s NHS page says whether it’s taking new NHS patients. Then contact the practice and ask for an NHS appointment. You may be asked to join a waiting list, and most adults pay for NHS dental appointments.'
 });
 
 /**

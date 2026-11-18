@@ -131,6 +131,25 @@ Gemini is never told it. Without it, those cards say the coordinator will introd
 - Checked by `scripts/check-mentor-contact.mjs` (offline, the rules in the emulators, and the screens in
   Chrome).
 
+## Refreshing the NHS GP and dentist lists
+
+The GP and dentist finder (`/gp-finder`, and its cards in the chat) searches its own lists on the
+phone, so "Use my location" never sends the location anywhere. They come from NHS England's
+Organisation Data Service (Open Government Licence), placed with postcodes.io. For each, the North
+East's practices are part of the page and the rest of England is a file in `static/` that's loaded only
+for a search outside the North East (the same request for everyone). Each script writes only what
+changed, stops without writing if anything looks wrong, and prints counts, never names or addresses:
+
+```sh
+node scripts/refresh-gp-practices.mjs [--reuse-contacts]   # GP surgeries: src/lib/gp/, static/gp/england.tsv
+node scripts/refresh-dental-practices.mjs [--reuse-pages]  # NHS dentists: src/lib/dentists/, static/dentists/england.tsv
+node scripts/check-gp-practices.mjs && node scripts/check-dental-practices.mjs
+```
+
+Both read each North East practice's page on the NHS website, about one every two seconds: for GPs,
+their phone, email and website; for dentists, to keep only those whose NHS page exists, as each result
+links to it (it says whether they're taking new NHS patients, which changes too often to copy).
+
 ## Refreshing the NSU data
 
 The Societies pages use two copies of Northumbria Students' Union's society information:

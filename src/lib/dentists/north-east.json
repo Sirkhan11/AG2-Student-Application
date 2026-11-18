@@ -1,0 +1,1597 @@
+{
+  "source": "NHS England Organisation Data Service: dental practices (egdpprac), from https://www.odsdatasearchandexport.nhs.uk/, those with a page on the NHS website (its list of dentist pages, https://www.nhs.uk/sitemap-profiles-dentist.xml).",
+  "licence": "Contains NHS England data, Open Government Licence v3.0. Coordinates from postcodes.io (ONS Postcode Directory): contains OS data © Crown copyright and database right; contains Royal Mail data © Royal Mail copyright and database right; contains National Statistics data © Crown copyright and database right.",
+  "dataFrom": "2026-11-18",
+  "areas": [
+    "NE",
+    "DH",
+    "SR"
+  ],
+  "count": 198,
+  "practices": [
+    {
+      "code": "V01350",
+      "name": "1 A the Dental Practice",
+      "address": "74 Fowler Street, South Shields",
+      "postcode": "NE33 1PD",
+      "lat": 54.99641,
+      "lng": -1.43081
+    },
+    {
+      "code": "V10977",
+      "name": "10 Burnside",
+      "address": "Ponteland, Newcastle upon Tyne",
+      "postcode": "NE20 9AQ",
+      "lat": 55.03651,
+      "lng": -1.77114
+    },
+    {
+      "code": "V13926",
+      "name": "10 Linnet Court (Dental Practice)",
+      "address": "10 Linnet Court, Cawledge Business Park, Hawfinch Drive, Alnwick",
+      "postcode": "NE66 2GD",
+      "lat": 55.39769,
+      "lng": -1.69206
+    },
+    {
+      "code": "V01645",
+      "name": "10 Sun Street",
+      "address": "Sunniside, Newcastle upon Tyne",
+      "postcode": "NE16 5LR",
+      "lat": 54.92374,
+      "lng": -1.67442
+    },
+    {
+      "code": "V01654",
+      "name": "137 the Dental Practice",
+      "address": "137 Kenton Road, Newcastle upon Tyne",
+      "postcode": "NE3 4NQ",
+      "lat": 55.00343,
+      "lng": -1.63983
+    },
+    {
+      "code": "V01344",
+      "name": "16 - 22 Westoe Road",
+      "address": "16-22 Westoe Road, South Shields",
+      "postcode": "NE33 4LZ",
+      "lat": 54.99308,
+      "lng": -1.429
+    },
+    {
+      "code": "V04676",
+      "name": "270 Dental",
+      "address": "177 Medomsley Road, Consett",
+      "postcode": "DH8 5HU",
+      "lat": 54.85731,
+      "lng": -1.8319
+    },
+    {
+      "code": "V01689",
+      "name": "323 Durham Road Dental Practice",
+      "address": "323 Durham Road, Gateshead",
+      "postcode": "NE9 5AH",
+      "lat": 54.94265,
+      "lng": -1.59921
+    },
+    {
+      "code": "V13109",
+      "name": "50 Leazes Park Road (Dental Practice)",
+      "address": "Dental Surgery, 50 Leazes Park Road, Newcastle upon Tyne",
+      "postcode": "NE1 4PG",
+      "lat": 54.97594,
+      "lng": -1.61831
+    },
+    {
+      "code": "V01711",
+      "name": "55 Gosforth Smiles Clinic",
+      "address": "55A Church Road, Gosforth, Newcastle upon Tyne",
+      "postcode": "NE3 1UE",
+      "lat": 55.0077,
+      "lng": -1.61575
+    },
+    {
+      "code": "V03358",
+      "name": "8 Team Valley Shopping Village",
+      "address": "Valley House, Kingsway North, Team Valley Trading Estate, Gateshead",
+      "postcode": "NE11 0JS",
+      "lat": 54.9368,
+      "lng": -1.62268
+    },
+    {
+      "code": "V01661",
+      "name": "A Waugh Dental Surgery",
+      "address": "13 Jesmond Vale Terrace, Newcastle upon Tyne",
+      "postcode": "NE6 5JT",
+      "lat": 54.98545,
+      "lng": -1.58188
+    },
+    {
+      "code": "V10114",
+      "name": "Abbey Clinic",
+      "address": "Beaumont Street, Hexham",
+      "postcode": "NE46 3NB",
+      "lat": 54.97131,
+      "lng": -2.10316
+    },
+    {
+      "code": "V03852",
+      "name": "Abbey Dental Practice",
+      "address": "9 Beaumont Street, Hexham",
+      "postcode": "NE46 3LZ",
+      "lat": 54.97107,
+      "lng": -2.10209
+    },
+    {
+      "code": "V01641",
+      "name": "Acorn Dental Surgery",
+      "address": "44 Acorn Road, Newcastle upon Tyne",
+      "postcode": "NE2 2DJ",
+      "lat": 54.99257,
+      "lng": -1.60472
+    },
+    {
+      "code": "V03876",
+      "name": "Alison Brett Dental Care",
+      "address": "32 Woodhorn Road, Ashington",
+      "postcode": "NE63 9AE",
+      "lat": 55.18385,
+      "lng": -1.56622
+    },
+    {
+      "code": "V01708",
+      "name": "Angel Dental Care",
+      "address": "6 Frenton Close, Newcastle upon Tyne",
+      "postcode": "NE5 1EH",
+      "lat": 54.996,
+      "lng": -1.71826
+    },
+    {
+      "code": "V04371",
+      "name": "Aqua Dental Care",
+      "address": "10A Milburn Road, Ashington",
+      "postcode": "NE63 0HD",
+      "lat": 55.17919,
+      "lng": -1.565
+    },
+    {
+      "code": "V03844",
+      "name": "Battle Hill Dental Surgery",
+      "address": "11 Battle Hill, Hexham",
+      "postcode": "NE46 1BA",
+      "lat": 54.96999,
+      "lng": -2.10206
+    },
+    {
+      "code": "V01658",
+      "name": "Beech Cottage Dental Practice",
+      "address": "2 Redesdale Avenue, Newcastle upon Tyne",
+      "postcode": "NE3 3PP",
+      "lat": 55.01085,
+      "lng": -1.64097
+    },
+    {
+      "code": "V12515",
+      "name": "Bennison's Dental Practice",
+      "address": "Lowland Road, Brandon",
+      "postcode": "DH7 8NN",
+      "lat": 54.75099,
+      "lng": -1.63062
+    },
+    {
+      "code": "V01649",
+      "name": "Bensham Dental Practice",
+      "address": "24 Saltwell Road, Gateshead",
+      "postcode": "NE8 4XE",
+      "lat": 54.95029,
+      "lng": -1.61659
+    },
+    {
+      "code": "V01605",
+      "name": "Blakelaw Health Centre",
+      "address": "Springfield Road, Newcastle upon Tyne",
+      "postcode": "NE5 3DS",
+      "lat": 54.99423,
+      "lng": -1.66317
+    },
+    {
+      "code": "V01639",
+      "name": "Blaydon Dental Practice",
+      "address": "Dunsopp House, Lucy Street, Blaydon-on-Tyne",
+      "postcode": "NE21 5PU",
+      "lat": 54.96307,
+      "lng": -1.71147
+    },
+    {
+      "code": "V03809",
+      "name": "Blyth Family Dental",
+      "address": "42 Marine Terrace, Blyth",
+      "postcode": "NE24 2JN",
+      "lat": 55.12562,
+      "lng": -1.5096
+    },
+    {
+      "code": "V01373",
+      "name": "Boldon Lane Dental Practice",
+      "address": "51-53 Boldon Lane, South Shields",
+      "postcode": "NE34 0AR",
+      "lat": 54.97389,
+      "lng": -1.4399
+    },
+    {
+      "code": "V03866",
+      "name": "Bondgate Without (Dental Surgery)",
+      "address": "3A Bondgate Without, Alnwick",
+      "postcode": "NE66 1PY",
+      "lat": 55.4112,
+      "lng": -1.70127
+    },
+    {
+      "code": "V01617",
+      "name": "Broadway Dental Surgery",
+      "address": "242 the Broadway, North Shields",
+      "postcode": "NE30 3DB",
+      "lat": 55.03075,
+      "lng": -1.43978
+    },
+    {
+      "code": "V04680",
+      "name": "Burnopfield Dental Practice",
+      "address": "2-4 Busty Bank, Burnopfield, Newcastle upon Tyne",
+      "postcode": "NE16 6NF",
+      "lat": 54.90684,
+      "lng": -1.72229
+    },
+    {
+      "code": "V03864",
+      "name": "Butterworth Dentist Ltd",
+      "address": "17 Bondgate Without, Alnwick",
+      "postcode": "NE66 1PR",
+      "lat": 55.41202,
+      "lng": -1.7027
+    },
+    {
+      "code": "V01375",
+      "name": "Cestria Dental Practice",
+      "address": "8 High Chare, Chester le Street",
+      "postcode": "DH3 3PX",
+      "lat": 54.85487,
+      "lng": -1.57295
+    },
+    {
+      "code": "V01371",
+      "name": "Claypath Dental Practice",
+      "address": "71 Claypath, Durham",
+      "postcode": "DH1 1QT",
+      "lat": 54.77838,
+      "lng": -1.5715
+    },
+    {
+      "code": "V01657",
+      "name": "Crawcrook Dental Practice",
+      "address": "5 Beech Grove Terrace, Ryton",
+      "postcode": "NE40 4LZ",
+      "lat": 54.96809,
+      "lng": -1.78452
+    },
+    {
+      "code": "V01653",
+      "name": "Crescent Dental Care",
+      "address": "3 the Crescent, Dunston, Gateshead",
+      "postcode": "NE11 9SJ",
+      "lat": 54.94871,
+      "lng": -1.64538
+    },
+    {
+      "code": "V01612",
+      "name": "D P Rundle Dental Surgery",
+      "address": "522 Denton Road, Newcastle upon Tyne",
+      "postcode": "NE15 7HJ",
+      "lat": 54.98121,
+      "lng": -1.68752
+    },
+    {
+      "code": "V03768",
+      "name": "Darras Hall Dental Practice",
+      "address": "Broadway, Ponteland, Newcastle upon Tyne",
+      "postcode": "NE20 9PW",
+      "lat": 55.03646,
+      "lng": -1.76485
+    },
+    {
+      "code": "V01368",
+      "name": "Dean Road Dental Practice",
+      "address": "78-82 Dean Road, South Shields",
+      "postcode": "NE33 4AR",
+      "lat": 54.98661,
+      "lng": -1.42723
+    },
+    {
+      "code": "V01633",
+      "name": "Deneholme Dental Practice",
+      "address": "Durham Road North, Birtley, Chester le Street",
+      "postcode": "DH3 1LE",
+      "lat": 54.89681,
+      "lng": -1.57716
+    },
+    {
+      "code": "V256665",
+      "name": "Dental Hospital",
+      "address": "Richardson Road, Newcastle upon Tyne",
+      "postcode": "NE2 4AZ",
+      "lat": 54.98151,
+      "lng": -1.62273
+    },
+    {
+      "code": "V00938",
+      "name": "Dental Practice",
+      "address": "8 Princess Road, Seaham",
+      "postcode": "SR7 7SP",
+      "lat": 54.8354,
+      "lng": -1.34105
+    },
+    {
+      "code": "V00941",
+      "name": "Dental Practice",
+      "address": "30 Yoden Way, Peterlee",
+      "postcode": "SR8 1AL",
+      "lat": 54.75922,
+      "lng": -1.33343
+    },
+    {
+      "code": "V00216",
+      "name": "Dental Surgery",
+      "address": "Wentworth House, Seaside Lane, Easington Colliery, Peterlee",
+      "postcode": "SR8 3PG",
+      "lat": 54.78807,
+      "lng": -1.32809
+    },
+    {
+      "code": "V00939",
+      "name": "Dental Surgery",
+      "address": "6 the Avenue, Wheatley Hill, Durham",
+      "postcode": "DH6 3NT",
+      "lat": 54.74566,
+      "lng": -1.4195
+    },
+    {
+      "code": "V00940",
+      "name": "Dental Surgery",
+      "address": "12 Woods Terrace East, Murton, Seaham",
+      "postcode": "SR7 9AA",
+      "lat": 54.8169,
+      "lng": -1.3834
+    },
+    {
+      "code": "V01340",
+      "name": "Dental Surgery",
+      "address": "88 Victoria Road West, Hebburn",
+      "postcode": "NE31 1LR",
+      "lat": 54.97043,
+      "lng": -1.52122
+    },
+    {
+      "code": "V01356",
+      "name": "Dental Surgery",
+      "address": "265 Sunderland Road, South Shields",
+      "postcode": "NE34 6AL",
+      "lat": 54.97478,
+      "lng": -1.41134
+    },
+    {
+      "code": "V01357",
+      "name": "Dental Surgery",
+      "address": "18 Old Elvet, Durham",
+      "postcode": "DH1 3HL",
+      "lat": 54.77506,
+      "lng": -1.5712
+    },
+    {
+      "code": "V01361",
+      "name": "Dental Surgery",
+      "address": "22 Front Street, Framwellgate Moor, Durham",
+      "postcode": "DH1 5EJ",
+      "lat": 54.79471,
+      "lng": -1.5905
+    },
+    {
+      "code": "V01597",
+      "name": "Dental Surgery",
+      "address": "2 Manor Road, Newcastle upon Tyne",
+      "postcode": "NE7 7XS",
+      "lat": 55.00601,
+      "lng": -1.57641
+    },
+    {
+      "code": "V01598",
+      "name": "Dental Surgery",
+      "address": "Greencroft Lodge, Strathmore Road, Rowlands Gill",
+      "postcode": "NE39 1HX",
+      "lat": 54.91933,
+      "lng": -1.74848
+    },
+    {
+      "code": "V01606",
+      "name": "Dental Surgery",
+      "address": "1 Spoor Street, Gateshead",
+      "postcode": "NE11 9BD",
+      "lat": 54.95236,
+      "lng": -1.64227
+    },
+    {
+      "code": "V01610",
+      "name": "Dental Surgery",
+      "address": "21 Chiswick Square, Sunderland",
+      "postcode": "SR5 3PZ",
+      "lat": 54.92255,
+      "lng": -1.45147
+    },
+    {
+      "code": "V01627",
+      "name": "Dental Surgery",
+      "address": "4 Neale Terrace, Birtley, Chester le Street",
+      "postcode": "DH3 1LR",
+      "lat": 54.89787,
+      "lng": -1.57773
+    },
+    {
+      "code": "V01629",
+      "name": "Dental Surgery",
+      "address": "3 Alma Place, North Shields",
+      "postcode": "NE29 0LZ",
+      "lat": 55.01205,
+      "lng": -1.4502
+    },
+    {
+      "code": "V01632",
+      "name": "Dental Surgery",
+      "address": "64 Salters Road, Newcastle upon Tyne",
+      "postcode": "NE3 1DX",
+      "lat": 55.0066,
+      "lng": -1.62484
+    },
+    {
+      "code": "V01637",
+      "name": "Dental Surgery",
+      "address": "1 Musgrave Terrace, Gateshead",
+      "postcode": "NE10 0RH",
+      "lat": 54.9541,
+      "lng": -1.54256
+    },
+    {
+      "code": "V01650",
+      "name": "Dental Surgery",
+      "address": "84 Station Road, Hetton-le-Hole, Houghton le Spring",
+      "postcode": "DH5 9JB",
+      "lat": 54.81855,
+      "lng": -1.45078
+    },
+    {
+      "code": "V01673",
+      "name": "Dental Surgery",
+      "address": "31 Tynemouth Road, Wallsend",
+      "postcode": "NE28 0AA",
+      "lat": 54.99624,
+      "lng": -1.50228
+    },
+    {
+      "code": "V01684",
+      "name": "Dental Surgery",
+      "address": "54 High Street, Easington Lane, Houghton le Spring",
+      "postcode": "DH5 0JN",
+      "lat": 54.80927,
+      "lng": -1.43964
+    },
+    {
+      "code": "V01692",
+      "name": "Dental Surgery",
+      "address": "6 Crawford Place, Whitley Bay",
+      "postcode": "NE25 8TB",
+      "lat": 55.03881,
+      "lng": -1.46838
+    },
+    {
+      "code": "V01693",
+      "name": "Dental Surgery",
+      "address": "2 Grange Terrace, Sunderland",
+      "postcode": "SR2 7DF",
+      "lat": 54.9005,
+      "lng": -1.38539
+    },
+    {
+      "code": "V01696",
+      "name": "Dental Surgery",
+      "address": "1-2 Park View, Felling, Gateshead",
+      "postcode": "NE10 9ND",
+      "lat": 54.95173,
+      "lng": -1.56636
+    },
+    {
+      "code": "V01701",
+      "name": "Dental Surgery",
+      "address": "18 Ilfracombe Gardens, Whitley Bay",
+      "postcode": "NE26 3SL",
+      "lat": 55.04646,
+      "lng": -1.45314
+    },
+    {
+      "code": "V01702",
+      "name": "Dental Surgery",
+      "address": "6 Eden Villas, Washington",
+      "postcode": "NE38 7EJ",
+      "lat": 54.89479,
+      "lng": -1.51406
+    },
+    {
+      "code": "V01710",
+      "name": "Dental Surgery",
+      "address": "217 Chester Road, Sunderland",
+      "postcode": "SR4 7TU",
+      "lat": 54.90108,
+      "lng": -1.40679
+    },
+    {
+      "code": "V01719",
+      "name": "Dental Surgery",
+      "address": "18 Denton Park Centre, West Denton Way, Newcastle upon Tyne",
+      "postcode": "NE5 2QZ",
+      "lat": 54.99303,
+      "lng": -1.69926
+    },
+    {
+      "code": "V01724",
+      "name": "Dental Surgery",
+      "address": "59-61 Great North Road, Grange Park, Newcastle upon Tyne",
+      "postcode": "NE3 2DQ",
+      "lat": 55.01581,
+      "lng": -1.62202
+    },
+    {
+      "code": "V03014",
+      "name": "Dental Surgery",
+      "address": "46 South View, East Denton, Newcastle upon Tyne",
+      "postcode": "NE5 2BP",
+      "lat": 54.98633,
+      "lng": -1.69807
+    },
+    {
+      "code": "V03787",
+      "name": "Dental Surgery",
+      "address": "8 Church Street, Cramlington",
+      "postcode": "NE23 6QQ",
+      "lat": 55.08609,
+      "lng": -1.58431
+    },
+    {
+      "code": "V03857",
+      "name": "Dental Surgery",
+      "address": "Linden Cottage, High Market, Ashington",
+      "postcode": "NE63 8NQ",
+      "lat": 55.18357,
+      "lng": -1.59239
+    },
+    {
+      "code": "V04659",
+      "name": "Dental Surgery",
+      "address": "11 Station Road, Stanley",
+      "postcode": "DH9 0JL",
+      "lat": 54.87304,
+      "lng": -1.69692
+    },
+    {
+      "code": "V04664",
+      "name": "Dental Surgery",
+      "address": "13 -15 Front Street, Stanley",
+      "postcode": "DH9 0JE",
+      "lat": 54.87156,
+      "lng": -1.69765
+    },
+    {
+      "code": "V04670",
+      "name": "Dental Surgery",
+      "address": "14 Derwent Street, Consett",
+      "postcode": "DH8 8LU",
+      "lat": 54.86068,
+      "lng": -1.84845
+    },
+    {
+      "code": "V04677",
+      "name": "Dental Surgery",
+      "address": "1A Clifford Road, Stanley",
+      "postcode": "DH9 0AB",
+      "lat": 54.87004,
+      "lng": -1.69806
+    },
+    {
+      "code": "V04691",
+      "name": "Dental Surgery",
+      "address": "6 Front Street, Consett",
+      "postcode": "DH8 5AQ",
+      "lat": 54.8509,
+      "lng": -1.83247
+    },
+    {
+      "code": "V07647",
+      "name": "Dental Surgery",
+      "address": "The Gables Health Centre, 26 St. Johns Road, Bedlington",
+      "postcode": "NE22 7DU",
+      "lat": 55.14082,
+      "lng": -1.56444
+    },
+    {
+      "code": "V349082",
+      "name": "Dental Surgery",
+      "address": "9-11 Burnhope Way, Peterlee",
+      "postcode": "SR8 1BT",
+      "lat": 54.76011,
+      "lng": -1.33611
+    },
+    {
+      "code": "V359491",
+      "name": "Dental Surgery",
+      "address": "9 the Green, Southwick, Sunderland",
+      "postcode": "SR5 2HT",
+      "lat": 54.91945,
+      "lng": -1.40265
+    },
+    {
+      "code": "V378867",
+      "name": "Dental Surgery",
+      "address": "32-34 Bondgate Within, Alnwick",
+      "postcode": "NE66 1TD",
+      "lat": 55.41326,
+      "lng": -1.70478
+    },
+    {
+      "code": "V391985",
+      "name": "Dental Surgery",
+      "address": "2A Blackgate East, Coxhoe, Durham",
+      "postcode": "DH6 4AA",
+      "lat": 54.71503,
+      "lng": -1.50231
+    },
+    {
+      "code": "V394019",
+      "name": "Dental Surgery",
+      "address": "Avalon House, St. Catherines Court, Sunderland Enterprise Park, Sunderland",
+      "postcode": "SR5 3XJ",
+      "lat": 54.91707,
+      "lng": -1.43036
+    },
+    {
+      "code": "V401721",
+      "name": "Dental Surgery",
+      "address": "2 Lagny Street, Alnwick",
+      "postcode": "NE66 1NJ",
+      "lat": 55.41277,
+      "lng": -1.70977
+    },
+    {
+      "code": "V01644",
+      "name": "Doran Dental Practice",
+      "address": "180 Chester Road, Sunderland",
+      "postcode": "SR4 7EY",
+      "lat": 54.90236,
+      "lng": -1.4005
+    },
+    {
+      "code": "V14120",
+      "name": "Dunelm Orthodontics",
+      "address": "The Cross Gate Centre, Alexandria Crescent, Durham",
+      "postcode": "DH1 4HF",
+      "lat": 54.77554,
+      "lng": -1.58482
+    },
+    {
+      "code": "V04687",
+      "name": "Durham Road (Dental Surgery)",
+      "address": "307 Durham Road, Consett",
+      "postcode": "DH8 5NW",
+      "lat": 54.86184,
+      "lng": -1.83201
+    },
+    {
+      "code": "V11351",
+      "name": "Emergency Dental & Advisory",
+      "address": "Molineux Street Medical Centre, Molineux Street, Newcastle upon Tyne",
+      "postcode": "NE6 1SG",
+      "lat": 54.97751,
+      "lng": -1.58349
+    },
+    {
+      "code": "V213970",
+      "name": "Falchion Orthodontics Limited",
+      "address": "Harrison House, Hawthorn Terrace, Durham",
+      "postcode": "DH1 4EL",
+      "lat": 54.77523,
+      "lng": -1.58667
+    },
+    {
+      "code": "V01700",
+      "name": "Fawdon Dental Practice",
+      "address": "1 Station Cottages, Fawdon, Newcastle upon Tyne",
+      "postcode": "NE3 2RJ",
+      "lat": 55.01379,
+      "lng": -1.64442
+    },
+    {
+      "code": "V01602",
+      "name": "Fencehouses Dental Practice",
+      "address": "68 Station Avenue North, Fencehouses, Houghton le Spring",
+      "postcode": "DH4 6HT",
+      "lat": 54.84429,
+      "lng": -1.50104
+    },
+    {
+      "code": "V01690",
+      "name": "Frederick Family Dental Practice",
+      "address": "55 Frederick Street, Sunderland",
+      "postcode": "SR1 1NF",
+      "lat": 54.90603,
+      "lng": -1.37916
+    },
+    {
+      "code": "V14574",
+      "name": "Front Street Dental Surgery",
+      "address": "21 Front Street, Framwellgate Moor, Durham",
+      "postcode": "DH1 5EJ",
+      "lat": 54.79471,
+      "lng": -1.5905
+    },
+    {
+      "code": "V13936",
+      "name": "Genix Healthcare Whitley Bay Ltd",
+      "address": "271-275 Whitley Road, Whitley Bay",
+      "postcode": "NE26 2SS",
+      "lat": 55.0421,
+      "lng": -1.445
+    },
+    {
+      "code": "V271133",
+      "name": "Glendale House",
+      "address": "10 Church Street, Houghton le Spring",
+      "postcode": "DH4 4DN",
+      "lat": 54.84176,
+      "lng": -1.46848
+    },
+    {
+      "code": "V01341",
+      "name": "Grange Road West Dental Practice",
+      "address": "6 Grange Road West, Jarrow",
+      "postcode": "NE32 3JA",
+      "lat": 54.98139,
+      "lng": -1.49273
+    },
+    {
+      "code": "V01628",
+      "name": "Grangetown Family Dental Health",
+      "address": "41 Windsor Terrace, Sunderland",
+      "postcode": "SR2 9QF",
+      "lat": 54.8864,
+      "lng": -1.36836
+    },
+    {
+      "code": "V03355",
+      "name": "Great North Dental Care",
+      "address": "North Road, Wideopen, Newcastle upon Tyne",
+      "postcode": "NE13 6LW",
+      "lat": 55.04894,
+      "lng": -1.6238
+    },
+    {
+      "code": "V03873",
+      "name": "Haltwhistle Dental Health",
+      "address": "5 Station Court, Haltwhistle",
+      "postcode": "NE49 9HN",
+      "lat": 54.96841,
+      "lng": -2.46341
+    },
+    {
+      "code": "V01626",
+      "name": "Heaton Dental Clinic",
+      "address": "392 Chillingham Road, Newcastle upon Tyne",
+      "postcode": "NE6 5QX",
+      "lat": 54.99121,
+      "lng": -1.57846
+    },
+    {
+      "code": "V03351",
+      "name": "Heaton Road (Dental Surgery)",
+      "address": "37 Heaton Road, Heaton, Newcastle upon Tyne",
+      "postcode": "NE6 1SB",
+      "lat": 54.97903,
+      "lng": -1.58013
+    },
+    {
+      "code": "V03845",
+      "name": "Hencotes Dental Practice",
+      "address": "7 Hencotes, Hexham",
+      "postcode": "NE46 2EQ",
+      "lat": 54.96999,
+      "lng": -2.10653
+    },
+    {
+      "code": "V03743",
+      "name": "Higgins & Winter",
+      "address": "17 Bell Villas, Ponteland, Newcastle upon Tyne",
+      "postcode": "NE20 9BD",
+      "lat": 55.05004,
+      "lng": -1.7386
+    },
+    {
+      "code": "V18126",
+      "name": "High Street (Dental Surgery)",
+      "address": "67 High Street, Newcastle upon Tyne",
+      "postcode": "NE3 4AA",
+      "lat": 55.00299,
+      "lng": -1.62036
+    },
+    {
+      "code": "V03776",
+      "name": "Highgate House Dental Practice",
+      "address": "Highgate House, 11 Front Street West, Bedlington",
+      "postcode": "NE22 5TZ",
+      "lat": 55.13101,
+      "lng": -1.59876
+    },
+    {
+      "code": "V01681",
+      "name": "Horizon Dental Clinic",
+      "address": "2A Kenilworth Road, Whitley Bay",
+      "postcode": "NE25 8BE",
+      "lat": 55.04155,
+      "lng": -1.45986
+    },
+    {
+      "code": "V03796",
+      "name": "Horizon Dental Clinic",
+      "address": "58 Beaconsfield Street, Blyth",
+      "postcode": "NE24 2DS",
+      "lat": 55.12479,
+      "lng": -1.50548
+    },
+    {
+      "code": "V01683",
+      "name": "Indental Practice Limited",
+      "address": "25 Fewster Square, Gateshead",
+      "postcode": "NE10 8XQ",
+      "lat": 54.94065,
+      "lng": -1.54516
+    },
+    {
+      "code": "V10457",
+      "name": "James Rp Jones & Associates",
+      "address": "4A Bridge Street, Morpeth",
+      "postcode": "NE61 1NB",
+      "lat": 55.16722,
+      "lng": -1.68936
+    },
+    {
+      "code": "V01674",
+      "name": "K S Bamrah and Associates",
+      "address": "27A Jackson Street, Gateshead",
+      "postcode": "NE8 1EE",
+      "lat": 54.96156,
+      "lng": -1.60194
+    },
+    {
+      "code": "V01625",
+      "name": "Keith Bellfield and Associates",
+      "address": "1-2 Kenton Park Shopping Centre, Newcastle upon Tyne",
+      "postcode": "NE3 4RU",
+      "lat": 55.00161,
+      "lng": -1.63949
+    },
+    {
+      "code": "V01595",
+      "name": "Kenton Lane (Dental Surgery)",
+      "address": "78 Kenton Lane, Newcastle upon Tyne",
+      "postcode": "NE3 4LE",
+      "lat": 55.00416,
+      "lng": -1.64818
+    },
+    {
+      "code": "V01359",
+      "name": "Kingsgate Dental Practice",
+      "address": "29A Church Street, Durham",
+      "postcode": "DH1 3DG",
+      "lat": 54.77268,
+      "lng": -1.57149
+    },
+    {
+      "code": "V01660",
+      "name": "Laburnum Avenue (Dental Surgery)",
+      "address": "16 Laburnum Avenue, Wallsend",
+      "postcode": "NE28 8HQ",
+      "lat": 54.99229,
+      "lng": -1.53253
+    },
+    {
+      "code": "V01675",
+      "name": "Laburnum Dental Practice",
+      "address": "96 Laburnum Avenue, Wallsend",
+      "postcode": "NE28 8HG",
+      "lat": 54.99356,
+      "lng": -1.53387
+    },
+    {
+      "code": "V285167",
+      "name": "Lagny Street (Dental Surgery)",
+      "address": "Unit 7, Lagny Street, Alnwick",
+      "postcode": "NE66 1NJ",
+      "lat": 55.41277,
+      "lng": -1.70977
+    },
+    {
+      "code": "V01367",
+      "name": "Lam Dental Care",
+      "address": "6 Weardale Terrace, Chester le Street",
+      "postcode": "DH3 3PQ",
+      "lat": 54.85164,
+      "lng": -1.57237
+    },
+    {
+      "code": "V01611",
+      "name": "Lesbury Avenue (Dental Surgery)",
+      "address": "1 Lesbury Avenue, Shiremoor, Newcastle upon Tyne",
+      "postcode": "NE27 0NL",
+      "lat": 55.03585,
+      "lng": -1.50559
+    },
+    {
+      "code": "V01665",
+      "name": "Lobley Hill Road (Dental Surgery)",
+      "address": "443 Lobley Hill Road, Lobley Hill, Gateshead",
+      "postcode": "NE11 0BT",
+      "lat": 54.93974,
+      "lng": -1.63333
+    },
+    {
+      "code": "V119079",
+      "name": "Lynwood Dental",
+      "address": "162 Fulwell Road, Sunderland",
+      "postcode": "SR6 9QS",
+      "lat": 54.922,
+      "lng": -1.37986
+    },
+    {
+      "code": "V13481",
+      "name": "Lynwood Prudhoe",
+      "address": "34 West Road, Prudhoe",
+      "postcode": "NE42 6HR",
+      "lat": 54.96094,
+      "lng": -1.85563
+    },
+    {
+      "code": "V01352",
+      "name": "Marsden Road Health Centre (Dental Surgery)",
+      "address": "Marsden Road Health Centre, Marsden Road, South Shields",
+      "postcode": "NE34 6RE",
+      "lat": 54.98047,
+      "lng": -1.40015
+    },
+    {
+      "code": "V01718",
+      "name": "Mr Alec Waugh and Associates",
+      "address": "The Lodge, 160 Dryden Road, Gateshead",
+      "postcode": "NE9 5BY",
+      "lat": 54.94786,
+      "lng": -1.59615
+    },
+    {
+      "code": "V03899",
+      "name": "Mydentist Cowpen Road",
+      "address": "323 Cowpen Road, Blyth",
+      "postcode": "NE24 5EZ",
+      "lat": 55.13068,
+      "lng": -1.53775
+    },
+    {
+      "code": "V01621",
+      "name": "Mydentist Heaton Smile",
+      "address": "34 Heaton Road, Newcastle upon Tyne",
+      "postcode": "NE6 1SD",
+      "lat": 54.97849,
+      "lng": -1.57923
+    },
+    {
+      "code": "V402892",
+      "name": "Mydentist St Andrews Park",
+      "address": "Unit 5, St. Andrews Park, Dragon Lane, Durham",
+      "postcode": "DH1 2RH",
+      "lat": 54.77989,
+      "lng": -1.53872
+    },
+    {
+      "code": "V01677",
+      "name": "Nanas Dental Surgery",
+      "address": "16A the Garth, Front Street, Winlaton, Blaydon-on-Tyne",
+      "postcode": "NE21 6DD",
+      "lat": 54.9548,
+      "lng": -1.72676
+    },
+    {
+      "code": "V14784",
+      "name": "Neo Orthodontics",
+      "address": "98 -100 Close, Newcastle upon Tyne",
+      "postcode": "NE1 3RF",
+      "lat": 54.96768,
+      "lng": -1.61107
+    },
+    {
+      "code": "V18143",
+      "name": "Netherby Drive (Dental Surgery)",
+      "address": "18 Netherby Drive, Newcastle upon Tyne",
+      "postcode": "NE5 2RS",
+      "lat": 54.98595,
+      "lng": -1.66529
+    },
+    {
+      "code": "V01668",
+      "name": "Newbiggin Dental Clinic",
+      "address": "Newbiggin Villa, 265 Kells Lane, Gateshead",
+      "postcode": "NE9 6UE",
+      "lat": 54.93135,
+      "lng": -1.59664
+    },
+    {
+      "code": "V02722",
+      "name": "Newbiggin Dental Practice",
+      "address": "1 Gibson Street, Newbiggin-by-the-Sea",
+      "postcode": "NE64 6PF",
+      "lat": 55.18269,
+      "lng": -1.51666
+    },
+    {
+      "code": "V01715",
+      "name": "Newburn Dental Surgery",
+      "address": "1-3 High Street, Newburn, Newcastle upon Tyne",
+      "postcode": "NE15 8LN",
+      "lat": 54.98131,
+      "lng": -1.73756
+    },
+    {
+      "code": "V01716",
+      "name": "Newcastle Dental Care",
+      "address": "11 Ridley Place, Newcastle upon Tyne",
+      "postcode": "NE1 8JQ",
+      "lat": 54.97724,
+      "lng": -1.61258
+    },
+    {
+      "code": "V01682",
+      "name": "Newcastle Pct Dental Service",
+      "address": "Douglas Terrace, Arthurs Hill Clinic, Newcastle upon Tyne",
+      "postcode": "NE4 6BT",
+      "lat": 54.97435,
+      "lng": -1.62875
+    },
+    {
+      "code": "V10965",
+      "name": "Newcastle Pct Dental Services",
+      "address": "Dental Department, Kenton Centre, Newcastle upon Tyne",
+      "postcode": "NE3 3QJ",
+      "lat": 55.00523,
+      "lng": -1.65326
+    },
+    {
+      "code": "V03855",
+      "name": "Newgate Dental Group",
+      "address": "21-23 Newgate Street, Morpeth",
+      "postcode": "NE61 1AW",
+      "lat": 55.1683,
+      "lng": -1.69101
+    },
+    {
+      "code": "V01676",
+      "name": "No 1 Victoria Terrace Dental Clinic",
+      "address": "1 Victoria Terrace, Newcastle upon Tyne",
+      "postcode": "NE15 9EL",
+      "lat": 54.9958,
+      "lng": -1.75496
+    },
+    {
+      "code": "V01342",
+      "name": "North Road (Dental Surgery)",
+      "address": "22 North Road, Boldon Colliery",
+      "postcode": "NE35 9AR",
+      "lat": 54.94838,
+      "lng": -1.46098
+    },
+    {
+      "code": "V11736",
+      "name": "Northumbria Dental Care Limited",
+      "address": "45 High Street, Amble, Morpeth",
+      "postcode": "NE65 0LE",
+      "lat": 55.33271,
+      "lng": -1.5878
+    },
+    {
+      "code": "V24946",
+      "name": "Northumbria Dental Service",
+      "address": "Morpeth Health Centre, The Mount, Morpeth",
+      "postcode": "NE61 1JX",
+      "lat": 55.1717,
+      "lng": -1.68344
+    },
+    {
+      "code": "V01351",
+      "name": "Oasis Dental Care Ltd",
+      "address": "2A Maynards Row, Durham",
+      "postcode": "DH1 1QF",
+      "lat": 54.7789,
+      "lng": -1.55639
+    },
+    {
+      "code": "V01646",
+      "name": "Oasis Dental Care Ltd",
+      "address": "102 Bedford Street, North Shields",
+      "postcode": "NE29 6QJ",
+      "lat": 55.00783,
+      "lng": -1.44605
+    },
+    {
+      "code": "V01662",
+      "name": "Old Durham Road (Dental Surgery)",
+      "address": "294 Old Durham Road, Gateshead",
+      "postcode": "NE8 4BQ",
+      "lat": 54.95055,
+      "lng": -1.59532
+    },
+    {
+      "code": "V01607",
+      "name": "Osborne Road (Dental Surgery)",
+      "address": "129 Osborne Road, Newcastle upon Tyne",
+      "postcode": "NE2 2TB",
+      "lat": 54.99459,
+      "lng": -1.6047
+    },
+    {
+      "code": "V01694",
+      "name": "Osborne Road (Dental Surgery)",
+      "address": "90 Osborne Road, Newcastle upon Tyne",
+      "postcode": "NE2 2AP",
+      "lat": 54.99165,
+      "lng": -1.60357
+    },
+    {
+      "code": "V01686",
+      "name": "P M Cowie Dental Practice",
+      "address": "572 Welbeck Road, Newcastle upon Tyne",
+      "postcode": "NE6 3AB",
+      "lat": 54.97524,
+      "lng": -1.55217
+    },
+    {
+      "code": "V01656",
+      "name": "Park Dental Practice",
+      "address": "97 Park Road, Wallsend",
+      "postcode": "NE28 7LP",
+      "lat": 54.99276,
+      "lng": -1.53186
+    },
+    {
+      "code": "V01670",
+      "name": "Park Lane Dental Practice",
+      "address": "11 Grange Terrace, Sunderland",
+      "postcode": "SR2 7DF",
+      "lat": 54.9005,
+      "lng": -1.38539
+    },
+    {
+      "code": "V01377",
+      "name": "Park Road (Dental Surgery)",
+      "address": "4 Park Road, Hebburn",
+      "postcode": "NE31 2UL",
+      "lat": 54.97232,
+      "lng": -1.51589
+    },
+    {
+      "code": "V19959",
+      "name": "Park View Dental Practice",
+      "address": "The Victoria Buildings, Heaton Park View, Heaton, Newcastle upon Tyne",
+      "postcode": "NE6 5AH",
+      "lat": 54.98165,
+      "lng": -1.58542
+    },
+    {
+      "code": "V01707",
+      "name": "Perfect Smile Gateshead Partnership",
+      "address": "15 Regent Terrace, Gateshead",
+      "postcode": "NE8 1LU",
+      "lat": 54.96059,
+      "lng": -1.60409
+    },
+    {
+      "code": "V01366",
+      "name": "Prince Edward Road (Dental Surgery)",
+      "address": "147 Prince Edward Road, South Shields",
+      "postcode": "NE34 8PL",
+      "lat": 54.97196,
+      "lng": -1.41202
+    },
+    {
+      "code": "V03841",
+      "name": "Princes Street Dental Practice",
+      "address": "Hedley House, Princes Street, Corbridge",
+      "postcode": "NE45 5DQ",
+      "lat": 54.97474,
+      "lng": -2.01507
+    },
+    {
+      "code": "V03831",
+      "name": "Prudhoe Dental Practice",
+      "address": "78 Front Street, Prudhoe",
+      "postcode": "NE42 5PU",
+      "lat": 54.96136,
+      "lng": -1.85224
+    },
+    {
+      "code": "V158193",
+      "name": "Queensway Orthodontics (North) Limited",
+      "address": "33-35 Middle Street, Consett",
+      "postcode": "DH8 5QP",
+      "lat": 54.85191,
+      "lng": -1.83331
+    },
+    {
+      "code": "V01723",
+      "name": "Ramshaw & Silver Dental Surgery",
+      "address": "1 Atkinson Road, Sunderland",
+      "postcode": "SR6 9AR",
+      "lat": 54.92862,
+      "lng": -1.38029
+    },
+    {
+      "code": "V01609",
+      "name": "Reid Family Dental Practice",
+      "address": "11 Salters Road, Newcastle upon Tyne",
+      "postcode": "NE3 1DH",
+      "lat": 55.00689,
+      "lng": -1.62181
+    },
+    {
+      "code": "V01355",
+      "name": "Ridgway Dental Limited",
+      "address": "17 South Burns, Chester le Street",
+      "postcode": "DH3 3EZ",
+      "lat": 54.85863,
+      "lng": -1.57616
+    },
+    {
+      "code": "V03871",
+      "name": "Rivenhall Dental Practice",
+      "address": "Rivenhall, High Pit Road, Cramlington",
+      "postcode": "NE23 6RA",
+      "lat": 55.08218,
+      "lng": -1.56904
+    },
+    {
+      "code": "V10820",
+      "name": "Roseberry School House",
+      "address": "Pelton Lane, Pelton, Chester le Street",
+      "postcode": "DH2 1NP",
+      "lat": 54.86647,
+      "lng": -1.62444
+    },
+    {
+      "code": "V01604",
+      "name": "Rosebrough Dental Surgery",
+      "address": "Four Lane Ends, Newcastle upon Tyne",
+      "postcode": "NE7 7UH",
+      "lat": 55.00922,
+      "lng": -1.57761
+    },
+    {
+      "code": "V01713",
+      "name": "Ryton Dental",
+      "address": "29 Dean Terrace, Ryton",
+      "postcode": "NE40 3HQ",
+      "lat": 54.97274,
+      "lng": -1.76149
+    },
+    {
+      "code": "V01360",
+      "name": "S D C Harrison Dental Surgery",
+      "address": "2 Belle Vue Crescent, South Shields",
+      "postcode": "NE33 4RD",
+      "lat": 54.97501,
+      "lng": -1.4404
+    },
+    {
+      "code": "V01651",
+      "name": "Saville Dental Practice",
+      "address": "6 Saville Place, Newcastle upon Tyne",
+      "postcode": "NE1 8DQ",
+      "lat": 54.9761,
+      "lng": -1.60961
+    },
+    {
+      "code": "V04675",
+      "name": "Shotley Bridge Dental Care",
+      "address": "10B Queens Road, Blackhill, Consett",
+      "postcode": "DH8 0BH",
+      "lat": 54.86216,
+      "lng": -1.846
+    },
+    {
+      "code": "V01717",
+      "name": "Silver and Charlton",
+      "address": "49-50 John Street, Sunderland",
+      "postcode": "SR1 1QH",
+      "lat": 54.90696,
+      "lng": -1.38097
+    },
+    {
+      "code": "V04686",
+      "name": "Smile in Durham",
+      "address": "3 New Durham Road, Stanley",
+      "postcode": "DH9 7UQ",
+      "lat": 54.85618,
+      "lng": -1.73331
+    },
+    {
+      "code": "V01720",
+      "name": "St Mary's Dental Practice",
+      "address": "3 St. Marys Place, Newcastle upon Tyne",
+      "postcode": "NE1 7PG",
+      "lat": 54.9777,
+      "lng": -1.61252
+    },
+    {
+      "code": "V01358",
+      "name": "St Michaels Dental Practice",
+      "address": "158 Westoe Road, South Shields",
+      "postcode": "NE33 3PH",
+      "lat": 54.98909,
+      "lng": -1.42537
+    },
+    {
+      "code": "V20321",
+      "name": "St. Bedes (Dental Surgery)",
+      "address": "6 St. Bedes, East Boldon",
+      "postcode": "NE36 0LE",
+      "lat": 54.94478,
+      "lng": -1.42596
+    },
+    {
+      "code": "V13705",
+      "name": "Station Avenue (Dental Surgery)",
+      "address": "2 Station Avenue, Esh Winning, Durham",
+      "postcode": "DH7 9HW",
+      "lat": 54.76941,
+      "lng": -1.70397
+    },
+    {
+      "code": "V14055",
+      "name": "Station Road (Dental Surgery)",
+      "address": "79 Station Road, Ashington",
+      "postcode": "NE63 8RS",
+      "lat": 55.18349,
+      "lng": -1.57573
+    },
+    {
+      "code": "V01378",
+      "name": "Station Road Dental Practice",
+      "address": "15-17 Station Road, Hebburn",
+      "postcode": "NE31 1LA",
+      "lat": 54.97323,
+      "lng": -1.51777
+    },
+    {
+      "code": "V01667",
+      "name": "The Dental Care Clinic",
+      "address": "369 Stamfordham Road, Newcastle upon Tyne",
+      "postcode": "NE5 2LH",
+      "lat": 54.99778,
+      "lng": -1.68683
+    },
+    {
+      "code": "V01620",
+      "name": "The Dental Centre",
+      "address": "14 Front Street, Washington",
+      "postcode": "NE37 2BA",
+      "lat": 54.91273,
+      "lng": -1.51925
+    },
+    {
+      "code": "V01697",
+      "name": "The Dental Practice",
+      "address": "44 Marine Avenue, Whitley Bay",
+      "postcode": "NE26 1NF",
+      "lat": 55.04606,
+      "lng": -1.45244
+    },
+    {
+      "code": "V01634",
+      "name": "The Dental Practice 24",
+      "address": "24 Northumberland Square, North Shields",
+      "postcode": "NE30 1PW",
+      "lat": 55.01061,
+      "lng": -1.44475
+    },
+    {
+      "code": "V22693",
+      "name": "The Dental Suite",
+      "address": "Galleries Health Centre, Washington",
+      "postcode": "NE38 7NQ",
+      "lat": 54.89882,
+      "lng": -1.53125
+    },
+    {
+      "code": "V359492",
+      "name": "The Elms (Dental Surgery)",
+      "address": "19 Front Street, Concord, Washington",
+      "postcode": "NE37 2BA",
+      "lat": 54.91273,
+      "lng": -1.51925
+    },
+    {
+      "code": "V01680",
+      "name": "The Mill Dental Practice",
+      "address": "154 Newcastle Road, Sunderland",
+      "postcode": "SR5 1NA",
+      "lat": 54.92488,
+      "lng": -1.38765
+    },
+    {
+      "code": "V11063",
+      "name": "The Rectory",
+      "address": "Dairy Lane, Houghton le Spring",
+      "postcode": "DH4 5BH",
+      "lat": 54.84163,
+      "lng": -1.47507
+    },
+    {
+      "code": "V01688",
+      "name": "The Whitley Dental Clinic",
+      "address": "48 Roxburgh Terrace, Whitley Bay",
+      "postcode": "NE26 1DS",
+      "lat": 55.04273,
+      "lng": -1.4483
+    },
+    {
+      "code": "V01608",
+      "name": "The Wrekenton Dental Practice",
+      "address": "13 Long Bank, Gateshead",
+      "postcode": "NE9 7HE",
+      "lat": 54.92316,
+      "lng": -1.57567
+    },
+    {
+      "code": "V267481",
+      "name": "Unit 20-21",
+      "address": "The Killingworth Centre, Newcastle upon Tyne",
+      "postcode": "NE12 6YT",
+      "lat": 55.03646,
+      "lng": -1.5665
+    },
+    {
+      "code": "V282301",
+      "name": "Unit 3 Condercum House",
+      "address": "Unit 3, Condercum House, 171 West Road, Newcastle upon Tyne",
+      "postcode": "NE15 6PQ",
+      "lat": 54.97681,
+      "lng": -1.66232
+    },
+    {
+      "code": "V285261",
+      "name": "Unit 4 Rake House Farm",
+      "address": "Rake Lane, North Shields",
+      "postcode": "NE29 8EQ",
+      "lat": 55.02642,
+      "lng": -1.4712
+    },
+    {
+      "code": "V01652",
+      "name": "Unit 5 6",
+      "address": "Unit 5-6, Addington Drive, Wallsend",
+      "postcode": "NE28 9UY",
+      "lat": 55.01609,
+      "lng": -1.51153
+    },
+    {
+      "code": "V31999",
+      "name": "University Hospital North Durham (Uhnd)",
+      "address": "North Road, Durham",
+      "postcode": "DH1 5TW",
+      "lat": 54.78851,
+      "lng": -1.59384
+    },
+    {
+      "code": "V20021",
+      "name": "Verne Road Dental Practice",
+      "address": "33-39 Verne Road, North Shields",
+      "postcode": "NE29 7LS",
+      "lat": 55.01122,
+      "lng": -1.46909
+    },
+    {
+      "code": "V01704",
+      "name": "Village Dental Practice",
+      "address": "44A Front Street, Whickham, Newcastle upon Tyne",
+      "postcode": "NE16 4DT",
+      "lat": 54.94575,
+      "lng": -1.67538
+    },
+    {
+      "code": "V10054",
+      "name": "Wansbeck General Hospital",
+      "address": "Woodhorn Lane, Ashington",
+      "postcode": "NE63 9JJ",
+      "lat": 55.18432,
+      "lng": -1.54662
+    },
+    {
+      "code": "V01619",
+      "name": "Watch Dental Clinic",
+      "address": "3 Grainger Park Road, Newcastle upon Tyne",
+      "postcode": "NE4 8DP",
+      "lat": 54.96957,
+      "lng": -1.64897
+    },
+    {
+      "code": "V03900",
+      "name": "Waterloo Dental Practice",
+      "address": "72A Waterloo Road, Blyth",
+      "postcode": "NE24 1DG",
+      "lat": 55.12648,
+      "lng": -1.51243
+    },
+    {
+      "code": "V01734",
+      "name": "Wearside Orthodontic Centre",
+      "address": "49 Frederick Street, Sunderland",
+      "postcode": "SR1 1NF",
+      "lat": 54.90603,
+      "lng": -1.37916
+    },
+    {
+      "code": "V285148",
+      "name": "Wearside Orthodontic Centre (South Shiel",
+      "address": "8 Thomas Street, South Shields",
+      "postcode": "NE33 1PU",
+      "lat": 54.99688,
+      "lng": -1.43135
+    },
+    {
+      "code": "V01638",
+      "name": "Westgate Dental Practice",
+      "address": "7 Graingerville North, Westgate Road, Newcastle upon Tyne",
+      "postcode": "NE4 6UJ",
+      "lat": 54.97395,
+      "lng": -1.64195
+    },
+    {
+      "code": "V01349",
+      "name": "Wheldon Terrace Dental Practice P'Ship",
+      "address": "2 Wheldon Terrace, Pelton, Chester le Street",
+      "postcode": "DH2 1DA",
+      "lat": 54.87302,
+      "lng": -1.6081
+    },
+    {
+      "code": "V01623",
+      "name": "Whickham Dental Practice",
+      "address": "26 Front Street, Whickham, Newcastle upon Tyne",
+      "postcode": "NE16 4DT",
+      "lat": 54.94575,
+      "lng": -1.67538
+    },
+    {
+      "code": "V03047",
+      "name": "Whickham View Dental Surgery",
+      "address": "1-3 Whickham View, Newcastle upon Tyne",
+      "postcode": "NE15 6TB",
+      "lat": 54.97348,
+      "lng": -1.67522
+    },
+    {
+      "code": "V41194",
+      "name": "Windmill Orthodontics",
+      "address": "37A Heaton Road, Newcastle upon Tyne",
+      "postcode": "NE6 1SB",
+      "lat": 54.97903,
+      "lng": -1.58013
+    }
+  ]
+}
