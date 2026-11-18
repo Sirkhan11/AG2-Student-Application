@@ -55,10 +55,11 @@ You can preview the production build with `npm run preview`.
 
 ## The live site
 
-AG2 is live at https://ag2-dev-thomas.web.app, on Firebase Hosting, for Northumbria students only:
-sign-up and log in take only `@northumbria.ac.uk` addresses, the address must be verified before the
-app opens, and `firestore.rules` refuses every read and write from anyone else (apart from the three
-test accounts the check scripts use).
+AG2 is live at https://ag2-dev-thomas.web.app, on Firebase Hosting. With the access switch on (below),
+it's for Northumbria students only: sign-up and log in take only `@northumbria.ac.uk` addresses, the
+address must be verified before the app opens, and `firestore.rules` refuses every read and write from
+anyone else (apart from the three test accounts the check scripts use). With it off, any verified
+address can use it.
 
 ### The access switch: Northumbria only, or any email address
 
