@@ -1,17 +1,25 @@
 <script>
+  import { onMount } from 'svelte';
   import { sendPasswordResetEmail } from 'firebase/auth';
   import { getFirebaseAuth } from '#lib/firebase/client';
-  import { isUniEmail, UNI_EMAIL_MESSAGE } from '#lib/uni-email.js';
+  import { isAllowedEmail, wordingFor } from '#lib/access.js';
+  import { access, loadAccess } from '#lib/access.svelte.js';
+  import { UNI_EMAIL_MESSAGE } from '#lib/uni-email.js';
 
   let email = $state('');
   let message = $state('');
   let loading = $state(false);
+  // What the email box is called follows the access switch (access.js), read as the page opens.
+  let words = $derived(wordingFor(access.uniOnly));
+  onMount(() => void loadAccess());
 
   async function resetPassword(event) {
     event.preventDefault();
     message = '';
-    // Only Northumbria accounts can use AG2, so only their addresses are sent a reset link.
-    if (!isUniEmail(email)) {
+    // Only Northumbria accounts can use AG2, so only their addresses are sent a reset link, unless
+    // the access switch is off (access.js), which is read before deciding.
+    const uniOnly = await loadAccess();
+    if (!isAllowedEmail(email, uniOnly)) {
       message = UNI_EMAIL_MESSAGE;
       return;
     }
@@ -44,7 +52,7 @@
   </p>
 
   <form onsubmit={resetPassword}>
-    <label for="email">Northumbria email address</label>
+    <label for="email">{words.emailLabel}</label>
 
     <input
       id="email"

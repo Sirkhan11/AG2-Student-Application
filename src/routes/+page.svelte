@@ -1,16 +1,22 @@
 
 <script>
+  import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
   import { page } from '$app/state';
   import { safeNextPath } from '#lib/next-path.js';
   import { logIn } from '#lib/firebase/auth.js';
-  import { isUniEmail, UNI_EMAIL_MESSAGE } from '#lib/uni-email.js';
+  import { isAllowedEmail, wordingFor } from '#lib/access.js';
+  import { access, loadAccess } from '#lib/access.svelte.js';
+  import { UNI_EMAIL_MESSAGE } from '#lib/uni-email.js';
   import Icon from '#lib/components/Icon.svelte';
 
   let email = $state('');
   let password = $state('');
   let error = $state('');
   let loggingIn = $state(false);
+  // What the email box is called follows the access switch (access.js), read as the page opens.
+  let words = $derived(wordingFor(access.uniOnly));
+  onMount(() => void loadAccess());
 
   async function handleLogin() {
     if (!email || !password) {
@@ -19,15 +25,17 @@
     }
 
     error = '';
-    // AG2 is for Northumbria students: other addresses are turned away before anything is sent.
-    if (!isUniEmail(email)) {
+    // AG2 is for Northumbria students: other addresses are turned away before anything is sent,
+    // unless the access switch is off (access.js), which is read before deciding.
+    const uniOnly = await loadAccess();
+    if (!isAllowedEmail(email, uniOnly)) {
       error = UNI_EMAIL_MESSAGE;
       return;
     }
     loggingIn = true;
     try {
       // A real Firebase login, so pages that need a signed-in user (like /find-mentor) work.
-      await logIn(email, password);
+      await logIn(email, password, uniOnly);
       // Back to the page that sent them here (?next=), but only if it's on our own site.
       goto(safeNextPath(page.url.searchParams.get('next')) ?? '/home');
     } catch (err) {
@@ -55,7 +63,7 @@
     event.preventDefault();
     handleLogin();
   }}>
-    <label for="email">Northumbria email address</label>
+    <label for="email">{words.emailLabel}</label>
     <input
       id="email"
       class="field"

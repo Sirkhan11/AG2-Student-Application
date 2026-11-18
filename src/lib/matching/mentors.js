@@ -4,7 +4,8 @@ import { db, getFirebaseAuth } from '#lib/firebase/client.js';
 import { sendVerification } from '#lib/firebase/verify.js';
 import { saveMentor } from '#lib/signup/finish.js';
 import { waitingSignUp } from '#lib/signup/waiting.js';
-import { isUniEmail, notUniEmail } from '#lib/uni-email.js';
+import { isAllowedEmail } from '#lib/access.js';
+import { notUniEmail } from '#lib/uni-email.js';
 import { questions } from '#lib/matching/questions.js';
 import { findBlankAnswer } from '#lib/matching/answers.js';
 import { hasMentorProfile } from '#lib/matching/mentor-account.js';
@@ -129,7 +130,8 @@ export function mentorDocuments(profile, answers, summary, itemVectors) {
  * - with a login (a new account): makes the account, which signs them in, and sends the email that
  *   verifies their address. firestore.rules only let a verified Northumbria account write anything,
  *   so the profile waits in this tab (signup/waiting.js) until they've clicked the link, and
- *   finishSignUp then saves it. The address must be a Northumbria one, checked before Gemini runs.
+ *   finishSignUp then saves it. The address must be a Northumbria one (any address while the access
+ *   switch is off: access.js), checked before Gemini runs.
  * - without one (login null): saves the profile to the signed-in, verified account straight away.
  *   That's for a mentor whose waiting profile was lost (they closed the tab before verifying).
  *
@@ -142,13 +144,14 @@ export function mentorDocuments(profile, answers, summary, itemVectors) {
  * summarise.js) if Gemini fails, NOTHING_TO_MATCH if Gemini found nothing in any answer, and Firebase
  * Auth codes such as 'auth/email-already-in-use'.
  * @param {MentorProfile} profile
- * @param {{ email: string, password: string } | null} login kept apart from the profile, so it can't
- *   be saved by mistake; null to use the signed-in account
+ * @param {{ email: string, password: string, uniOnly?: boolean | null } | null} login kept apart from
+ *   the profile, so it can't be saved by mistake, with the access switch's position as the page read
+ *   it (uniOnly left out: Northumbria only); null to use the signed-in account
  * @param {import('#lib/signup/waiting.js').WaitingStore} [waiting]
  * @returns {Promise<'verify-email' | 'saved'>} what happens next: check their inbox, or nothing (saved)
  */
 export async function registerMentor(profile, login, waiting = waitingSignUp()) {
-  if (login && !isUniEmail(login.email)) throw notUniEmail();
+  if (login && !isAllowedEmail(login.email, login.uniOnly)) throw notUniEmail();
   const answers = profile.answers.map((answer) => answer.trim());
   // Safety nets: the page checks these first, but bad values must never be saved, whoever calls this.
   if (findBlankAnswer(answers) !== -1) throw new Error('Every answer needs some text.');

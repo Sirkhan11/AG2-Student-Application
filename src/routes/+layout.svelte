@@ -9,8 +9,11 @@
   import { db, getFirebaseAuth } from '#lib/firebase/client.js';
   import { sendToLogin } from '#lib/login-redirect.js';
   import { trail } from '#lib/back.js';
+  import { freshVerifiedToken } from '#lib/firebase/verify.js';
   import { finishSignUp } from '#lib/signup/finish.js';
   import { waitingSignUp } from '#lib/signup/waiting.js';
+  import { isAllowedEmail } from '#lib/access.js';
+  import { access, loadAccess } from '#lib/access.svelte.js';
   import { isUniEmail } from '#lib/uni-email.js';
   import NorthumbriaOnly from '#lib/components/NorthumbriaOnly.svelte';
   import VerifyEmail from '#lib/components/VerifyEmail.svelte';
@@ -22,8 +25,10 @@
   let finishing = $state(false);
   let finishProblem = $state('');
   // Which screen, for every page (see account-gate.js): the app, nothing yet while Firebase checks,
-  // off to log in, or (for a signed-in account) check-your-inbox or Northumbria-only.
-  let screen = $derived(gateFor(account, page.url.pathname, finishing, page.data?.publicPage === true));
+  // off to log in, or (for a signed-in account) check-your-inbox or Northumbria-only. The access
+  // switch (access.js) says whether an account from elsewhere is let in; it's read below, only for
+  // such an account (the forms read it themselves, for their wording).
+  let screen = $derived(gateFor(account, page.url.pathname, finishing, page.data?.publicPage === true, access.uniOnly));
 
   // A logged-out visitor on a page that needs an account goes to log in, which brings them back
   // here. Only once Firebase says nobody is signed in: the moment after logging in, before that's
@@ -45,6 +50,12 @@
   const TITLES = /** @type {Record<string, string>} */ ({ '/privacy': 'Privacy', '/nhs-guide': 'NHS Guide', '/gp-finder': 'Find a GP', '/late-arrivals': 'Arriving late', '/about-you': 'What the chat knows' });
   let title = $derived(TITLES[page.url.pathname] ? `${TITLES[page.url.pathname]} · AG2` : 'AG2');
 
+  // The access switch, read when a signed-in account isn't a Northumbria one (the gate shows nothing
+  // until it's read); a Northumbria account never needs it, so it costs them no read.
+  $effect(() => {
+    if (account && !isUniEmail(account.email)) void loadAccess();
+  });
+
   onMount(() =>
     watchAccount((next) => {
       account = next;
@@ -56,7 +67,7 @@
   // matching model in the background once the page has settled, so Find my mentor doesn't wait for
   // it (model-download.js). Its code only loads now, and it says nothing if it fails.
   $effect(() => {
-    const uid = account?.verified && isUniEmail(account.email) ? account.uid : null;
+    const uid = account?.verified && isAllowedEmail(account.email, access.uniOnly) ? account.uid : null;
     if (uid) import('#lib/matching/model-download-browser.js').then((model) => model.downloadAfterLogin(uid), () => {});
   });
 
@@ -70,6 +81,9 @@
     finishing = true;
     finishProblem = '';
     try {
+      // The token must say verified too, or the rules refuse the save: opened afresh after clicking
+      // the link, Firebase knows the account is verified before its saved token does (verify.js).
+      await freshVerifiedToken(getFirebaseAuth().currentUser);
       const saved = await finishSignUp(db, account.uid, waitingSignUp());
       finishing = false;
       if (saved === 'mentor') await goto('/mentor-signup?done');
@@ -116,7 +130,7 @@
 {:else if screen === 'northumbria-only' && account}
   <NorthumbriaOnly email={account.email} />
 {:else if screen === 'verify' && account}
-  <VerifyEmail email={account.email} />
+  <VerifyEmail email={account.email} uniOnly={access.uniOnly} />
 {:else if screen === 'finishing'}
   <main class="page">
     <h1>Setting up your account…</h1>

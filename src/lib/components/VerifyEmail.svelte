@@ -2,16 +2,20 @@
   import { onDestroy } from 'svelte';
   import { getFirebaseAuth } from '#lib/firebase/client.js';
   import { checkVerified, sendVerification } from '#lib/firebase/verify.js';
+  import { wordingFor } from '#lib/access.js';
   import LogoutButton from '#lib/components/LogoutButton.svelte';
   import Icon from '#lib/components/Icon.svelte';
 
   /**
    * The check-your-inbox screen. The root layout shows it instead of the app while the signed-in
    * account's email isn't verified (see account-gate.js). "I've clicked it" checks with Firebase; once
-   * it's verified, the layout takes over (it saves any sign-up that waited, then opens the app).
-   * @type {{ email: string }}
+   * it's verified, the layout takes over (it saves any sign-up that waited, then opens the app). The
+   * wording follows the access switch (access.js): "uni inbox" and "Northumbria email" only while it's
+   * on (uniOnly true, or null while it's being read).
+   * @type {{ email: string, uniOnly?: boolean | null }}
    */
-  let { email } = $props();
+  let { email, uniOnly = null } = $props();
+  let words = $derived(wordingFor(uniOnly));
 
   /** Seconds before Resend can be pressed again, so a student can't trip Firebase's limit by accident. */
   const RESEND_WAIT = 60;
@@ -75,7 +79,7 @@
 
 <main class="page">
   <span class="mail"><Icon name="mail" size={28} /></span>
-  <h1>Check your uni inbox</h1>
+  <h1>{words.inboxHeading}</h1>
   <p>
     We’ve sent a link to <strong>{email}</strong>. Click it to verify your address, then come back here
     and tap “I’ve clicked it”.
@@ -94,7 +98,7 @@
     <p role="status">{message}</p>
   {/if}
 
-  <p class="muted">Wrong address? Log out, then sign up again with your Northumbria email.</p>
+  <p class="muted">{words.wrongAddress}</p>
   <div class="logout-slot"><LogoutButton /></div>
   <p><a href="/need-help">Need help now</a></p>
 </main>

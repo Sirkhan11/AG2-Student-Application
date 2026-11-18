@@ -1,11 +1,13 @@
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { sendVerification } from '#lib/firebase/verify.js';
-import { isUniEmail, notUniEmail } from '#lib/uni-email.js';
+import { isAllowedEmail } from '#lib/access.js';
+import { notUniEmail } from '#lib/uni-email.js';
 
 // A new student's account and record, as the sign-up page (/signup) makes them. Only a Northumbria
-// address is accepted, and the record waits until the address is verified (firestore.rules only let a
-// verified Northumbria account write anything): see signup/waiting.js and signup/finish.js. If the
+// address is accepted (any address while the access switch is off: access.js), and the record waits
+// until the address is verified (firestore.rules only let a verified account the switch lets in write
+// anything): see signup/waiting.js and signup/finish.js. If the
 // details were lost (the tab closed before verifying), Home asks for them again and the sign-up page
 // saves them to the signed-in account (needsDetails, saveStudentDetails). Firebase is passed in rather
 // than taken from client.js (which only works in the browser), so the checks can run it against the
@@ -39,13 +41,16 @@ export function studentRecord({ name, email, course, interests, arrivalDate }) {
  * Creates the student's Firebase Auth account (which also signs them in) and sends the email that
  * verifies their address. Their record (studentRecord) waits in this tab until they've clicked the
  * link; finishSignUp then saves it. An address that isn't a Northumbria one is refused before any
- * account is made (code NOT_UNI_EMAIL in uni-email.js); other errors are Firebase's own, such as
- * 'auth/email-already-in-use'. If the email can't be sent, the check-your-inbox screen has Resend.
- * @param {{ auth: import('firebase/auth').Auth, waiting: import('#lib/signup/waiting.js').WaitingStore }} setup
+ * account is made (code NOT_UNI_EMAIL in uni-email.js), unless the access switch is off; other errors
+ * are Firebase's own, such as 'auth/email-already-in-use'. If the email can't be sent, the
+ * check-your-inbox screen has Resend.
+ * @param {{ auth: import('firebase/auth').Auth, waiting: import('#lib/signup/waiting.js').WaitingStore,
+ *   uniOnly?: boolean | null }} setup uniOnly: the switch's position, as the page read it (left out:
+ *   Northumbria only)
  * @param {StudentDetails & { password: string }} details the password goes only to Firebase Auth, never into the record
  */
-export async function signUpStudent({ auth, waiting }, { password, ...details }) {
-  if (!isUniEmail(details.email)) throw notUniEmail();
+export async function signUpStudent({ auth, waiting, uniOnly = true }, { password, ...details }) {
+  if (!isAllowedEmail(details.email, uniOnly)) throw notUniEmail();
   const email = details.email.trim();
   const { user } = await createUserWithEmailAndPassword(auth, email, password);
   waiting.save({ uid: user.uid, student: studentRecord({ ...details, email }) });

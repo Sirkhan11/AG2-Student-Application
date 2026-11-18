@@ -5,15 +5,21 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     // AG2 is for Northumbria students: every read and write below needs a signed-in account whose
-    // Northumbria email address (ending @northumbria.ac.uk, in any case) has been verified, however
-    // the account was made (src/lib/uni-email.js checks the same on the app's forms). The only
-    // exception is the check scripts' test accounts, by uid (isTestAccount).
-    function isNorthumbria() {
+    // email address has been verified and which the access switch lets in (hasAccess), however the
+    // account was made. Normally that's only a Northumbria address (ending @northumbria.ac.uk, in any
+    // case; src/lib/uni-email.js checks the same on the app's forms). While the switch is off, for
+    // testing with the project group, it's any verified address (anyVerifiedAddress, below). The only
+    // other exception is the check scripts' test accounts, by uid (isTestAccount).
+    function hasAccess() {
       return request.auth != null
-        && ((request.auth.token.email_verified == true
-              && request.auth.token.email is string
-              && request.auth.token.email.lower().matches('^[^@]+@northumbria[.]ac[.]uk$'))
-          || isTestAccount());
+        && (isNorthumbria() || isTestAccount() || anyVerifiedAddress());
+    }
+
+    // A verified Northumbria address. Checked first, so an account with one never reads the switch.
+    function isNorthumbria() {
+      return request.auth.token.email_verified == true
+        && request.auth.token.email is string
+        && request.auth.token.email.lower().matches('^[^@]+@northumbria[.]ac[.]uk$');
     }
 
     // The three accounts the check scripts sign in as (.env.test.local): two students and a
@@ -23,11 +29,32 @@ service cloud.firestore {
                                   'bzvM0WCSLRXYjSTA1dRHHhfrTro2'];
     }
 
+    // The access switch (src/lib/access.js): a verified address from anywhere counts only while the
+    // document config/access exists and its field uniOnly is exactly false. No document, no field or
+    // any other value means Northumbria only, so the safe side needs nothing set up. The coordinator
+    // flips it in the Firebase console (Firestore Database, config, access, uniOnly), with no deploy;
+    // it takes effect on the next request. Flipping it back changes no data: accounts from elsewhere
+    // are just refused again.
+    function anyVerifiedAddress() {
+      return request.auth.token.email_verified == true
+        && request.auth.token.email is string
+        && exists(/databases/$(database)/documents/config/access)
+        && get(/databases/$(database)/documents/config/access).data.get('uniOnly', true) == false;
+    }
+
+    // The switch itself. The app reads it before anyone signs in (the forms' wording follows it), so
+    // anyone may read it, and nobody can change it from the app: only the console. No other document
+    // under config has a rule, so nothing else there can be read or written from the app.
+    match /config/access {
+      allow read: if true;
+      allow write: if false;
+    }
+
     // Students can only read and change their own record. A write that leaves a checklist in it
     // (the checklist page's) must leave a valid one: see validChecklist below.
     match /students/{userId} {
-      allow read, delete: if isNorthumbria() && request.auth.uid == userId;
-      allow create, update: if isNorthumbria() && request.auth.uid == userId
+      allow read, delete: if hasAccess() && request.auth.uid == userId;
+      allow create, update: if hasAccess() && request.auth.uid == userId
         && (!('checklist' in request.resource.data) || validChecklist(request.resource.data.checklist));
     }
 
@@ -36,11 +63,11 @@ service cloud.firestore {
     // Mentors can create and edit their own, but can't approve themselves, and can't add
     // any other fields, so private details (like an email) can't end up here.
     match /mentors/{userId} {
-      allow read: if isNorthumbria()
+      allow read: if hasAccess()
         && (resource.data.approved == true || request.auth.uid == userId);
 
       // A new mentor starts unapproved, with no students yet.
-      allow create: if isNorthumbria() && request.auth.uid == userId
+      allow create: if hasAccess() && request.auth.uid == userId
         && onlyPublicMentorFields()
         && validItemVectors(request.resource.data.itemVectors)
         && validMaxStudents()
@@ -52,7 +79,7 @@ service cloud.firestore {
       // approve themselves, and changing their display name or item vectors sends them back
       // to the coordinator (approved: false). They can't change studentCount (only a student
       // taking a place can, below), or lower maxStudents below it.
-      allow update: if isNorthumbria() && request.auth.uid == userId
+      allow update: if hasAccess() && request.auth.uid == userId
         && onlyPublicMentorFields()
         && validItemVectors(request.resource.data.itemVectors)
         && validMaxStudents()
@@ -65,7 +92,7 @@ service cloud.firestore {
       // approved, stays exactly as it was. The mentor must be approved and have room, the
       // student must not have a match yet, and their match to this mentor must be created
       // in the same write.
-      allow update: if isNorthumbria() && request.auth.uid != userId
+      allow update: if hasAccess() && request.auth.uid != userId
         && resource.data.approved == true
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['studentCount'])
         && request.resource.data.studentCount == resource.data.studentCount + 1
@@ -73,13 +100,13 @@ service cloud.firestore {
         && !exists(/databases/$(database)/documents/matches/$(request.auth.uid))
         && getAfter(/databases/$(database)/documents/matches/$(request.auth.uid)).data.mentorId == userId;
 
-      allow delete: if isNorthumbria() && request.auth.uid == userId;
+      allow delete: if hasAccess() && request.auth.uid == userId;
     }
 
     // The private part: name, course, availability, written answers and so on.
     // Only the mentor can read or change it. The coordinator uses the Firebase console.
     match /mentorDetails/{userId} {
-      allow read, write: if isNorthumbria() && request.auth.uid == userId;
+      allow read, write: if hasAccess() && request.auth.uid == userId;
     }
 
     // A student's match, stored under their own uid, so each student has at most one.
@@ -89,8 +116,8 @@ service cloud.firestore {
     // - status 'matched': the student took one of mentorId's places in the same write.
     // - status 'coordinator': no mentor yet; the coordinator will find one.
     match /matches/{studentId} {
-      allow read: if isNorthumbria() && request.auth.uid == studentId;
-      allow create: if isNorthumbria() && request.auth.uid == studentId
+      allow read: if hasAccess() && request.auth.uid == studentId;
+      allow create: if hasAccess() && request.auth.uid == studentId
         && validMatch(request.resource.data);
     }
 
@@ -103,15 +130,15 @@ service cloud.firestore {
     // that student can read, change or delete them, with at most 10 notes of at most 100 characters
     // each (MAX_NOTES and MAX_NOTE_LENGTH in about-you.js). See validChatNotes below.
     match /chatNotes/{userId} {
-      allow read, delete: if isNorthumbria() && request.auth.uid == userId;
-      allow create, update: if isNorthumbria() && request.auth.uid == userId
+      allow read, delete: if hasAccess() && request.auth.uid == userId;
+      allow create, update: if hasAccess() && request.auth.uid == userId
         && request.resource.data.keys().hasOnly(['notes'])
         && validChatNotes(request.resource.data.notes);
     }
 
     match /mentorChangeRequests/{studentId} {
-      allow read, delete: if isNorthumbria() && request.auth.uid == studentId;
-      allow create: if isNorthumbria() && request.auth.uid == studentId
+      allow read, delete: if hasAccess() && request.auth.uid == studentId;
+      allow create: if hasAccess() && request.auth.uid == studentId
         && validChangeRequest(request.resource.data)
         && get(/databases/$(database)/documents/matches/$(studentId)).data.status == 'matched';
     }
@@ -120,7 +147,7 @@ service cloud.firestore {
     // its NSU page by scripts/import-society-pages.mjs, which uses the Admin SDK and so ignores these
     // rules. Signed-in users can read it; nobody can change it from the app.
     match /societies/{societyId} {
-      allow read: if isNorthumbria();
+      allow read: if hasAccess();
       allow write: if false;
     }
 
@@ -129,7 +156,7 @@ service cloud.firestore {
     // which uses the Admin SDK and so ignores these rules. The contacts are people's names and emails,
     // so only signed-in users can read it, and nobody can change it from the app.
     match /sportClubs/{slug} {
-      allow read: if isNorthumbria();
+      allow read: if hasAccess();
       allow write: if false;
     }
 

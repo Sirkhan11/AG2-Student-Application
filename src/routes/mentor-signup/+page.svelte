@@ -5,7 +5,9 @@
   import { findBlankAnswer, registerMentor, NOTHING_TO_MATCH } from '#lib/matching/mentors.js';
   import { SUMMARISE_FAILED } from '#lib/matching/summarise.js';
   import { watchAccount } from '#lib/firebase/auth.js';
-  import { isUniEmail, NOT_UNI_EMAIL, UNI_EMAIL_MESSAGE } from '#lib/uni-email.js';
+  import { isAllowedEmail, wordingFor } from '#lib/access.js';
+  import { access, loadAccess } from '#lib/access.svelte.js';
+  import { NOT_UNI_EMAIL, UNI_EMAIL_MESSAGE } from '#lib/uni-email.js';
 
   let name = $state('');
   let displayName = $state('');
@@ -21,6 +23,9 @@
   let status = $state('');
   let error = $state('');
   let done = $state(false);
+  // The email box's label and placeholder follow the access switch (access.js), read as the page opens.
+  let words = $derived(wordingFor(access.uniOnly));
+  onMount(() => void loadAccess());
   // Already signed in with a verified Northumbria account (their waiting profile was lost, say, by
   // closing the tab before verifying): the profile goes on that account, with no new login.
   let signedIn = $state(false);
@@ -36,8 +41,10 @@
       error = `Please write an answer for question ${blank + 1}.`;
       return;
     }
-    // AG2 is for Northumbria students: checked before Gemini runs, so nothing is spent on it.
-    if (!signedIn && !isUniEmail(email)) {
+    // AG2 is for Northumbria students: checked before Gemini runs, so nothing is spent on it, unless
+    // the access switch is off (access.js), which is read before deciding.
+    const uniOnly = await loadAccess();
+    if (!signedIn && !isAllowedEmail(email, uniOnly)) {
       error = UNI_EMAIL_MESSAGE;
       return;
     }
@@ -53,7 +60,7 @@
           availability,
           maxStudents: Number(maxStudents)
         },
-        signedIn ? null : { email, password }
+        signedIn ? null : { email, password, uniOnly }
       );
       // A new account sees the check-your-inbox screen now (the app shows it); this page shows the
       // thanks once the profile is saved, straight away when they were already signed in.
@@ -109,8 +116,8 @@
       {#if signedIn}
         <p class="muted">You’re logged in, so your mentor profile will be added to this account.</p>
       {:else}
-        <label for="email">Northumbria email address</label>
-        <input id="email" class="field" type="email" placeholder="ending @northumbria.ac.uk" bind:value={email} required />
+        <label for="email">{words.emailLabel}</label>
+        <input id="email" class="field" type="email" placeholder={words.emailPlaceholder} bind:value={email} required />
 
         <label for="password">Password</label>
         <input id="password" class="field" type="password" minlength="8" bind:value={password} required />
