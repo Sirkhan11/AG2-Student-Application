@@ -33,6 +33,8 @@
   import { getReadyForMatching, modelReady } from '#lib/matching/model-download-browser.js';
   import ChatFlowCard from '#lib/components/ChatFlowCard.svelte';
   import ChatOfferCard from '#lib/components/ChatOfferCard.svelte';
+  import YourMentorCard from '#lib/components/YourMentorCard.svelte';
+  import { chatAction } from '#lib/checkin/chat-actions.js';
   import { startsAfresh } from '#lib/checkin/keep-chat.js';
   import SocietyCard from '#lib/components/SocietyCard.svelte';
   import ServiceCard from '#lib/components/ServiceCard.svelte';
@@ -283,6 +285,9 @@
    * @param {import('#lib/checkin/chat-turns.js').ChatReply} reply
    */
   function showReply(reply) {
+    // One of the chat's own actions it wrote: an offer with Start and Not now, or (shows: 'card') a
+    // card shown straight away, such as their mentor.
+    const action = reply.offers?.[0] ? chatAction(reply.offers[0]) : null;
     chatSession.messages.push({
       role: 'assistant',
       text: reply.text,
@@ -295,7 +300,9 @@
       // A checklist task it suggested: a card with Add and No thanks. Nothing is added without a tap.
       task: reply.tasks?.[0] ? { title: reply.tasks[0], state: 'offered' } : undefined,
       // One of the chat's own actions it offered (finding a mentor): a card with Start and Not now.
-      offer: reply.offers?.[0] ? { action: reply.offers[0], state: 'offered' } : undefined,
+      offer: action && action.shows !== 'card' ? { action: action.id, state: 'offered' } : undefined,
+      // Their mentor, or the form for a different one: read and sent here, never through Gemini.
+      appCard: action?.shows === 'card' ? /** @type {'your-mentor' | 'change-mentor'} */ (action.id) : undefined,
       // Something it offered to remember: a card with Remember and Not now. Nothing is saved without a tap.
       note: reply.notes?.[0] ? { text: reply.notes[0], state: 'offered' } : undefined
     });
@@ -443,6 +450,11 @@
               onstart={() => startAction(/** @type {NonNullable<typeof item.offer>} */ (item.offer).action)}
               ondecline={() => declineAction(/** @type {NonNullable<typeof item.offer>} */ (item.offer).action)}
             />
+          </div>
+        {/if}
+        {#if item.appCard}
+          <div class="cards">
+            <YourMentorCard change={item.appCard === 'change-mentor'} />
           </div>
         {/if}
         {#if item.flow}

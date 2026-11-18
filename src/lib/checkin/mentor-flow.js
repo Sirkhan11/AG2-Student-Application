@@ -200,7 +200,7 @@ export function createMentorFlow({ check, steps, post, changed, finished }) {
     } else if (before.view === 'has-record') {
       const matched = before.match.status === 'matched';
       say({
-        text: matched ? `${alreadyHasText(before.match)} If you’d like a different mentor, you can ask the coordinator on the Your Mentor page.` : alreadyHasText(before.match),
+        text: matched ? `${alreadyHasText(before.match)} If you’d like a different mentor, just say so here and you can ask the coordinator.` : alreadyHasText(before.match),
         card: { kind: 'link', label: 'Your mentor', href: '/mentor' }
       });
       end({ outcome: 'has-record', match: before.match });

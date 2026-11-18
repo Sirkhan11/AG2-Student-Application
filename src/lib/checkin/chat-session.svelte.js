@@ -19,12 +19,13 @@ import { describeForGemini } from '#lib/checkin/opener.js';
  * what's happened to it (kept here, so it stays the same when they come back to the chat).
  * offer is one of the chat's own actions Gemini offered (chat-actions.js), shown as a card with Start
  * and Not now. note is something Gemini offered to remember (remember-notes.js), shown as a card with
- * Remember and Not now. flow is a card from an action the app is running in the chat (mentor-flow.js), such as
+ * Remember and Not now. appCard is a card the chat showed straight away (its own actions with
+ * shows: 'card': their mentor, or asking for a different one). flow is a card from an action the app is running in the chat (mentor-flow.js), such as
  * the meeting choices or the answers to check. A link with an action starts that action in the chat.
  * @typedef {{ role: 'assistant' | 'user', text: string, kind?: 'safety' | 'error' | 'unavailable',
  *   links?: { label: string, href: string, external?: boolean, kind?: 'society' | 'club' | 'service',
  *     nsuId?: number, slug?: string, serviceId?: string, action?: string }[],
- *   task?: SuggestedTask, offer?: Offer, note?: OfferedNote,
+ *   task?: SuggestedTask, offer?: Offer, note?: OfferedNote, appCard?: 'your-mentor' | 'change-mentor',
  *   flow?: (import('#lib/checkin/mentor-flow.js').FlowCard | import('#lib/checkin/checklist-flow.js').ChecklistCard) & { id: number } }} Message
  */
 

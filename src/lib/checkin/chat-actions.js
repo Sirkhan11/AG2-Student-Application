@@ -8,9 +8,11 @@
 
 /**
  * One thing the chat can do: its id (what the app's card is for), a heading and the marker for the
- * chat's instructions, the rules for when and how Gemini offers it, and (for one started from the
- * offer card, ChatOfferCard.svelte) what that card says.
- * @typedef {{ id: string, title: string, marker: string, rules: string[], card?: { title: string, text: string } }} ChatAction
+ * chat's instructions, the rules for when and how Gemini offers it, and either what its offer card
+ * says (for one started with Start, ChatOfferCard.svelte), or shows: 'card' for one whose card the
+ * page shows straight away, as it's information or a form that only sends when they tap.
+ * @typedef {{ id: string, title: string, marker: string, rules: string[], card?: { title: string, text: string },
+ *   shows?: 'card' }} ChatAction
  */
 
 /** @type {readonly ChatAction[]} */
@@ -37,6 +39,27 @@ export const CHAT_ACTIONS = Object.freeze([
       "Never ask them the matching questions, or what they want in a mentor, yourself."
     ],
     card: { title: 'Find a mentor here?', text: 'I’ll ask six short questions here in the chat. Nothing is saved until you choose Find my mentor.' }
+  },
+  {
+    id: 'your-mentor',
+    title: 'Showing them their mentor',
+    marker: '{{your-mentor}}',
+    shows: 'card',
+    rules: [
+      'When they have a mentor and ask who it is, how to get in touch with them, or how often they’re meeting, write one short sentence and {{your-mentor}}: the app shows a card with their mentor’s name, how to get in touch and how often they asked to meet, from their own record. You’re never told those, so never guess or give them yourself.',
+      'Don’t show it if they haven’t got a mentor yet, or the coordinator is still finding them one: say so instead (see what the app knows about them below).'
+    ]
+  },
+  {
+    id: 'change-mentor',
+    title: 'Asking for a different mentor',
+    marker: '{{change-mentor}}',
+    shows: 'card',
+    rules: [
+      'When they have a mentor and want a different one, write one short, kind sentence and {{change-mentor}}: the app shows a short form that goes only to the mentoring coordinator. Their mentor never sees it, and neither do you.',
+      'Never ask for their reason or what went wrong, and don’t ask them to tell you: the form has the reasons. If they might be unsafe, also point to [[Need Help Now]].',
+      'Never say you’ve asked the coordinator or that you will: only they can send it, with the form’s button.'
+    ]
   },
   {
     id: 'checklist',

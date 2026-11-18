@@ -162,7 +162,7 @@ export function describeForGemini({ match, tasks, checklistSaved = true, profile
   if (isMentor) {
     lines.push('Mentor: they’re a mentor themselves (they signed up as one), so don’t offer to find them one.');
   } else if (match?.status === 'matched') {
-    lines.push('Mentor: they have one. They’ve been matched with a student mentor, and the mentoring coordinator will introduce them. You aren’t told the mentor’s name: if they ask who it is, tell them it’s on the Your Mentor page.');
+    lines.push('Mentor: they have one. They’ve been matched with a student mentor, and the mentoring coordinator will introduce them. You aren’t told the mentor’s name or how to reach them: if they ask who it is or how to get in touch, show the card with {{your-mentor}}.');
     const reasons = (match.reasons ?? []).map((reason) => tidyText(reason, MAX_REASON_LENGTH)).filter(Boolean).slice(0, 3);
     lines.push(
       reasons.length

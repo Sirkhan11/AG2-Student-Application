@@ -5,12 +5,17 @@
   import { cancelChangeRequest, loadChangeRequest, sendChangeRequest } from '#lib/matching/change-request.js';
 
   /**
-   * On the Your Mentor page, for a student with a mentor: ask the coordinator for a different one.
-   * They pick a reason (and can add their own words); it goes only to the coordinator, never to the
-   * mentor or the chat. One open request at a time: once sent, the page says so and lets them cancel.
-   * The reason and their words are never logged.
+   * For a student with a mentor, on the Your Mentor page and in the check-in chat (YourMentorCard):
+   * ask the coordinator for a different one. They pick a reason (and can add their own words); it's
+   * saved straight to Firestore and goes only to the coordinator, never to the mentor, and never to
+   * Gemini, even in the chat: the chat's Gemini code never reads it. One open request at a time: once
+   * sent, it says so and lets them cancel. The reason and their words are never logged.
+   * open: start at the form (in the chat, when they've asked to change).
    * @typedef {'loading' | 'error' | 'none' | 'form' | 'sent'} View
    */
+  let { open = false } = $props();
+  // Its own ids, as the chat can show it more than once.
+  const htmlId = $props.id();
   let view = $state(/** @type {View} */ ('loading'));
   let request = $state(/** @type {import('#lib/matching/change-request.js').ChangeRequest | null} */ (null));
   let reason = $state('');
@@ -26,7 +31,7 @@
     if (!id) return;
     try {
       request = await loadChangeRequest(db, id);
-      view = request ? 'sent' : 'none';
+      view = request ? 'sent' : open ? 'form' : 'none';
     } catch (err) {
       console.error('Loading the change request failed:', /** @type {{ code?: string }} */ (err)?.code ?? 'error');
       view = 'error';
@@ -52,9 +57,9 @@
         console.error('Sending the change request failed:', code);
         problem = 'We couldn’t send it just now. Please try again.';
         // It may already be open (sent from another device, say): show it if so.
-        const open = await loadChangeRequest(db, id).catch(() => null);
-        if (open) {
-          request = open;
+        const existing = await loadChangeRequest(db, id).catch(() => null);
+        if (existing) {
+          request = existing;
           view = 'sent';
         }
       }
@@ -84,8 +89,8 @@
   const sentOn = (date) => (date ? ` on ${date.toLocaleDateString('en-GB', { day: 'numeric', month: 'long' })}` : '');
 </script>
 
-<section class="card change" aria-labelledby="change-title">
-  <h2 id="change-title">Want a different mentor?</h2>
+<section class="card change" aria-labelledby={`change-title-${htmlId}`}>
+  <h2 id={`change-title-${htmlId}`}>Want a different mentor?</h2>
 
   {#if view === 'loading'}
     <p class="muted" role="status">Loading…</p>
@@ -124,11 +129,11 @@
         {/each}
       </fieldset>
 
-      <label for="change-details">
+      <label for={`change-details-${htmlId}`}>
         {reason === 'something-else' ? 'Tell us a little, in your own words' : 'Anything you’d like to add (optional)'}
       </label>
       <textarea
-        id="change-details"
+        id={`change-details-${htmlId}`}
         class="field"
         rows="3"
         maxlength={MAX_DETAILS_LENGTH}
@@ -137,7 +142,7 @@
       ></textarea>
       <p class="muted small">{details.length}/{MAX_DETAILS_LENGTH}</p>
 
-      <p class="note">This goes only to the mentoring coordinator. Your mentor won’t see it, and the chat never reads it.</p>
+      <p class="note">This goes only to the mentoring coordinator. Your mentor won’t see it, and it’s never sent to Gemini.</p>
       <p class={URGENT_REASONS.includes(reason) ? 'urgent' : 'muted small'}>
         If it’s urgent, or you feel unsafe, <a href="/need-help">get help now</a>.
       </p>

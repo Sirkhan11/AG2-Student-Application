@@ -51,9 +51,12 @@ const offline = [
     assert.equal(CHANGE_REQUESTS, 'mentorChangeRequests');
     assert.deepEqual(URGENT_REASONS, ['uncomfortable']);
   }],
-  ['It stays private: no chat code reads it, nothing goes to Gemini, and the reason and words are never logged', () => {
+  ['It stays private: the chat’s code never reads it, nothing goes to Gemini, and the reason and words are never logged', () => {
+    // The form is shown in the chat too (YourMentorCard), but it saves straight to Firestore: the chat's
+    // own code (Gemini, its instructions, the session) and the chat page never touch the request.
     const chatFiles = [...filesIn('src/lib/checkin'), ...filesIn('src/routes/check-in')];
     for (const file of chatFiles) assert.doesNotMatch(readFileSync(file, 'utf8'), /change-request|change-reasons|mentorChangeRequests|ChangeMentorRequest/, file);
+    assert.doesNotMatch(readFileSync('src/lib/components/YourMentorCard.svelte', 'utf8'), /from ['"](?:firebase\/ai|#lib\/firebase\/ai\.js|#lib\/checkin\/[^'"]+|#lib\/matching\/change-request\.js)['"]/, 'the card in the chat only shows the form');
     for (const file of ['src/lib/matching/change-request.js', 'src/lib/matching/change-reasons.js', 'src/lib/components/ChangeMentorRequest.svelte']) {
       assert.doesNotMatch(readFileSync(file, 'utf8'), /from ['"](?:firebase\/ai|#lib\/firebase\/ai\.js|#lib\/matching\/summarise\.js|#lib\/checkin\/[^'"]+)['"]/, file);
     }
@@ -63,15 +66,16 @@ const offline = [
   ['The Your Mentor page offers it only with a mentor, says only the coordinator sees it, points to Need help now, and can cancel', () => {
     const page = readFileSync('src/routes/mentor/+page.svelte', 'utf8');
     assert.match(page, /\{:else if match && match\.status === 'matched'\}[\s\S]*<ChangeMentorRequest \/>\s*\{\/if\}/);
-    assert.match(COMPONENT, /This goes only to the mentoring coordinator\. Your mentor won’t see it, and the chat never reads it\./);
+    assert.match(COMPONENT, /This goes only to the mentoring coordinator\. Your mentor won’t see it, and it’s never sent to Gemini\./);
     assert.match(COMPONENT, /If it’s urgent, or you feel unsafe, <a href="\/need-help">get help now<\/a>\./);
     assert.match(COMPONENT, /URGENT_REASONS\.includes\(reason\) \? 'urgent'/, 'stronger when they don’t feel comfortable');
     assert.match(COMPONENT, />\s*\{busy \? 'Cancelling…' : 'Cancel the request'\}/);
     for (const option of CHANGE_REASONS) assert.ok(option.label.length > 5, option.id);
   }],
-  ['The chat sends them to the Your Mentor page and never asks for the reason', () => {
+  ['The chat shows the form right there ({{change-mentor}}) and never asks for the reason', () => {
     const instructions = chatInstructions('(about)', ['(opener)']);
-    assert.match(instructions, /If they ask about changing their mentor, tell them they can ask the mentoring coordinator for a different one on the \[\[Your Mentor\]\] page, where their reason goes only to the coordinator \(their mentor never sees it\)\. Don't ask for their reason or what went wrong here/);
+    assert.match(instructions, /If they ask about changing their mentor, show them the form here with \{\{change-mentor\}\} \(see Asking for a different mentor\), where their reason goes only to the mentoring coordinator \(their mentor never sees it\)\. Don't ask for their reason or what went wrong, and don't ask them to tell you\./);
+    assert.match(instructions, /Never ask for their reason or what went wrong, and don’t ask them to tell you: the form has the reasons\./);
   }]
 ];
 
