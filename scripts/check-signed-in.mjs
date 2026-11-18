@@ -126,7 +126,11 @@ for (let tries = 0; ; tries++) {
 // ---------- Chrome ----------
 const chromePort = await freePort();
 const profile = mkdtempSync(join(tmpdir(), 'ag2-signed-in-'));
-const chrome = spawn(CHROME, ['--headless=new', `--remote-debugging-port=${chromePort}`, `--user-data-dir=${profile}`, '--no-first-run', '--disable-extensions', 'about:blank'], { stdio: 'ignore' });
+// No back/forward cache: it keeps the pages left behind alive, each with Firestore's long-poll to the
+// emulator still open, and the emulator speaks HTTP/1.1, so after a few pages Chrome's six connections
+// to it were all taken and new reads waited about 50 seconds for one (the second mentor conversation,
+// after the Home dashboard came in). The live site's Firestore speaks HTTP/2, which has no such limit.
+const chrome = spawn(CHROME, ['--headless=new', `--remote-debugging-port=${chromePort}`, `--user-data-dir=${profile}`, '--no-first-run', '--disable-extensions', '--disable-features=BackForwardCache', 'about:blank'], { stdio: 'ignore' });
 
 /** @type {boolean[]} */
 const results = [];
