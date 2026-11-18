@@ -199,7 +199,8 @@ const offline = [
     assert.equal(needsDetails(undefined, false), true, 'no record');
     assert.equal(needsDetails({ checklist: [] }, false), true, 'only a checklist');
     assert.equal(needsDetails({ name: 'Sam', course: '' }, false), true, 'no course');
-    assert.equal(needsDetails({ name: 'Sam', course: 'Law' }, false), false);
+    assert.equal(needsDetails({ name: 'Sam', course: 'Law' }, false), true, 'from before the about-you questions: asked once for them');
+    assert.equal(needsDetails({ name: 'Sam', course: 'Law', studentType: 'home' }, false), false);
     assert.equal(needsDetails(undefined, true), false, 'a mentor');
     assert.match(readFileSync('src/routes/home/+page.svelte', 'utf8'), /<FinishDetailsCard \/>/);
     const card = readFileSync('src/lib/components/FinishDetailsCard.svelte', 'utf8');
@@ -207,8 +208,9 @@ const offline = [
     assert.match(card, /onclick=\{notNow\}>Not now<\/button>/);
     assert.match(card, /sessionStorage/, '"Not now" lasts until the tab closes');
     const signup = readFileSync('src/routes/signup/+page.svelte', 'utf8');
-    assert.match(signup, /if \(account\) \{\s*loading = true;\s*try \{\s*await saveStudentDetails\(db, account\.uid, account\.email, \{ name, course, interests, arrivalDate \}\);/);
-    assert.match(signup, /\{#if !account\}\s*<label for="email">/, 'no email or password boxes when logged in');
+    assert.match(signup, /if \(account\) \{\s*await saveStudentDetails\(db, account\.uid, account\.email, \{ name, studentType, course, interests, arrivalDate, wantsMentor \}\);/);
+    assert.match(signup, /filledIn = true;\s*step = 2;/, 'logged in: straight to step 2 (about you)');
+    assert.match(signup, /\{#if step === 1\}\s*<label for="email">/, 'so no email or password boxes when logged in');
   }],
   ['firestore.rules: every rule needs hasAccess() (a verified address the switch lets in: Northumbria first, then the test uids, then the switch) or is "if false"; only the switch itself is readable by anyone, and nobody can write it', () => {
     const allows = [...RULES.matchAll(/allow ([a-z, ]+): if ([^\n]+)/g)].map((m) => `${m[1]}: ${m[2]}`);
@@ -336,9 +338,9 @@ const emulated = [
     const db = firestoreAs(token(uid, 'lost.details2@northumbria.ac.uk', true));
     await setDoc(doc(db, 'students', uid), { checklist: [{ id: 'gp', title: 'Register with a GP', done: true }] }, { merge: true });
     assert.equal(await loadDetailsNeeded(db, uid), true, 'asked (reading their own missing mentor profile is allowed)');
-    await saveStudentDetails(db, uid, 'lost.details2@northumbria.ac.uk', { name: 'Sam Student', course: 'BSc Law', interests: 'chess, gigs', arrivalDate: '' });
+    await saveStudentDetails(db, uid, 'lost.details2@northumbria.ac.uk', { name: 'Sam Student', studentType: 'home', course: 'BSc Law', interests: 'chess, gigs', arrivalDate: '' });
     const saved = (await ownerRead(`students/${uid}`))?.fields ?? {};
-    assert.deepEqual(Object.keys(saved).sort(), ['arrivalDate', 'checklist', 'course', 'email', 'interests', 'name', 'role'], 'the checklist is kept');
+    assert.deepEqual(Object.keys(saved).sort(), ['arrivalDate', 'checklist', 'course', 'email', 'interests', 'name', 'role', 'studentType', 'wantsMentor'], 'the checklist is kept');
     assert.equal(await loadDetailsNeeded(db, uid), false, 'not asked again');
     await seed('mentors/uni-mentor', { approved: false, displayName: 'Alex' });
     assert.equal(await loadDetailsNeeded(firestoreAs(token('uni-mentor', 'alex.mentor@northumbria.ac.uk', true)), 'uni-mentor'), false, 'a mentor');
@@ -368,7 +370,7 @@ const emulated = [
     assert.equal(await finishSignUp(db, user.uid, waiting), 'student');
     assert.equal(waiting.load(), null, 'nothing waits any more');
     const saved = await ownerRead(`students/${user.uid}`);
-    assert.deepEqual(Object.keys(saved?.fields ?? {}).sort(), ['arrivalDate', 'course', 'email', 'interests', 'name', 'role']);
+    assert.deepEqual(Object.keys(saved?.fields ?? {}).sort(), ['arrivalDate', 'course', 'email', 'interests', 'name', 'role', 'wantsMentor']);
     assert.equal(await finishSignUp(db, user.uid, waiting), null, 'a second time does nothing');
   }],
   ['Signing up as a mentor: the profile waits too, then both documents are saved together', async () => {

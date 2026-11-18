@@ -7,7 +7,8 @@
   import { loadMyMatch } from '#lib/matching/matches.js';
   import { hasMentorProfile } from '#lib/matching/mentor-account.js';
   import { forgetAllNotes, forgetNote, loadMyNotes } from '#lib/checkin/chat-notes.js';
-  import { aboutYou, dateInWords, MAX_NOTES, stylesInWords } from '#lib/checkin/about-you.js';
+  import { aboutYou, dateInWords, MAX_NOTES, stylesInWords, TELL_CHAT_STUDENT_TYPE } from '#lib/checkin/about-you.js';
+  import { studentTypeInWords } from '#lib/students/student-type.js';
   import { notesChanged } from '#lib/checkin/chat-session.svelte.js';
 
   // "What the chat knows about you": everything the check-in chat is told about the student (the
@@ -125,6 +126,16 @@
         <dd>{about.firstName ?? 'Not given'}</dd>
         <dt>Course</dt>
         <dd>{about.course ?? 'Not given'}</dd>
+        <dt>Home or international</dt>
+        <dd>
+          {#if !TELL_CHAT_STUDENT_TYPE}
+            The chat isn’t told this.
+          {:else if about.studentType}
+            You said you’re {studentTypeInWords(about.studentType)}, so it gives you that version of things like registering with a GP.
+          {:else}
+            Not given
+          {/if}
+        </dd>
         <dt>Interests</dt>
         <dd>{about.interests.length ? about.interests.join(', ') : 'None given'}</dd>
         <dt>Arrival date</dt>
@@ -150,6 +161,7 @@
           but not what yours say.
         </dd>
       </dl>
+      <p class="muted">Your name, course, interests, arrival date and the rest of what you gave at sign-up: <a href="/signup">change them</a>.</p>
     </section>
 
     <section class="card" aria-labelledby="notes-title">

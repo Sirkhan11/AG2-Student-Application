@@ -3,6 +3,7 @@
   import BottomNav from '#lib/components/BottomNav.svelte';
   import LogoutButton from '#lib/components/LogoutButton.svelte';
   import FinishDetailsCard from '#lib/components/FinishDetailsCard.svelte';
+  import FindMentorCard from '#lib/components/FindMentorCard.svelte';
   import Icon from '#lib/components/Icon.svelte';
   import ProgressRing from '#lib/components/ProgressRing.svelte';
   import { loadChecklist, loadMyName } from '#lib/checklist/store.js';
@@ -52,6 +53,8 @@
 
   <!-- Only if their sign-up details were lost before they verified their email. -->
   <FinishDetailsCard />
+  <!-- Only if they asked for a mentor at sign-up and haven't found one yet. -->
+  <FindMentorCard />
 
   <!-- The chat grows out of this when it's tapped (page-transitions.js). -->
   <a class="ask" href="/check-in">

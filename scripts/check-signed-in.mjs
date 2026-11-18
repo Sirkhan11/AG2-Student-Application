@@ -367,6 +367,7 @@ try {
   const form = await waitFor(`location.pathname === '/signup' && ${has('You’re logged in, so these are saved to your account.')} && !document.querySelector('#email') && !document.querySelector('#password')`);
   await fill('#name', 'Alex Student');
   await fill('#course', 'BSc History');
+  await evaluate(`(document.querySelector('input[name=studentType][value=home]').click(), true)`);
   await evaluate(`(document.querySelector('form button[type=submit]').click(), true)`);
   const saved = await waitFor(`location.pathname === '/home' && document.querySelector('main h1')?.textContent.trim() === 'Hi Alex'`);
   await sleep(800);

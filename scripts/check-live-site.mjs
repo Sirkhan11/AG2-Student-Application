@@ -118,8 +118,13 @@ try {
 
     await go('/signup');
     requests.length = 0;
-    await fill('#name', 'Test Person'); await fill('#email', 'someone@gmail.com'); await fill('#password', 'whatever-123'); await fill('#course', 'Law'); await click('button[type=submit]');
-    report('Student sign-up: a Gmail address is refused, and no account is made', (await waitFor(has(UNI))) && authCalls().length === 0, authCalls().join(', '));
+    // The two-step sign-up's first step: email, password and confirm password (a site from before it has no Confirm password box).
+    if (await waitFor(`document.querySelector('#confirm')`, 4000)) {
+      await fill('#email', 'someone@gmail.com'); await fill('#password', 'whatever-1234'); await fill('#confirm', 'whatever-1234'); await click('button[type=submit]');
+      report('Student sign-up: a Gmail address is refused at step 1 (Continue), and no account is made', (await waitFor(has(UNI))) && authCalls().length === 0, authCalls().join(', '));
+    } else {
+      report('Student sign-up: a Gmail address is refused at step 1 (Continue), and no account is made', false, 'no Confirm password box: the site deployed is from before the two-step sign-up');
+    }
     report('Student sign-up: no testing line while the switch is on', !(await evaluate(has(wordingFor(false).testingNote))));
 
     await go('/mentor-signup');

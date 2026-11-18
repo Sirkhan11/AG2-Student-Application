@@ -117,15 +117,19 @@ try {
     await page.fill('#password', password);
     await page.evaluate(`(document.querySelector('form button[type=submit]').click(), true)`);
   };
-  /** Signs up as a student through the form; true once the check-your-inbox screen shows. @param {Page} page @param {string} name @param {string} email */
+  /** Signs up as a student through the two steps; true once the check-your-inbox screen shows. @param {Page} page @param {string} name @param {string} email */
   const signUp = async (page, name, email) => {
     await page.go('/signup');
     await page.waitFor(page.has('Create your account'));
-    await page.fill('#name', name);
     await page.fill('#email', email);
     await page.fill('#password', password);
+    await page.fill('#confirm', password);
+    await page.press('Continue');
+    await page.waitFor(page.has('Step 2 of 2'));
+    await page.fill('#name', name);
+    await page.evaluate(`(document.querySelector('input[name=studentType][value=home]').click(), true)`);
     await page.fill('#course', 'BSc Testing');
-    await page.evaluate(`(document.querySelector('form button[type=submit]').click(), true)`);
+    await page.press('Finish');
     return page.waitFor(`${page.has(OFF.inboxHeading)} && ${page.has(email)} && ${page.has('Junk')}`);
   };
 

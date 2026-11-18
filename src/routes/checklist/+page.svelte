@@ -9,7 +9,7 @@
   import { buzz } from '#lib/motion.js';
   import { howToFor, isOutside } from '#lib/checklist/how-to.js';
   import { watchSignedIn } from '#lib/firebase/auth.js';
-  import { loadChecklist, saveChange } from '#lib/checklist/store.js';
+  import { loadMyRecord, saveChange } from '#lib/checklist/store.js';
   import { createChecklistSync } from '#lib/checklist/sync.js';
   import {
     ChecklistError,
@@ -71,11 +71,16 @@
     })
   );
 
+  /** Home or international, from sign-up (student-type.js): the how-tos leave out or add what applies. */
+  let studentType = $state(/** @type {import('#lib/students/student-type.js').StudentType | null} */ (null));
+
   async function load() {
     loading = true;
     loadFailed = false;
     try {
-      sync = createChecklistSync(await loadChecklist(), {
+      const record = await loadMyRecord();
+      studentType = record.studentType;
+      sync = createChecklistSync(record.checklist.tasks, {
         save: saveChange,
         onUpdate: (state) => {
           if (waiting > 0 && state.waiting === 0 && state.problem === null) announcement = 'All changes saved.';
@@ -241,7 +246,7 @@
               </div>
             </form>
           {:else}
-            {@const howTo = howToFor(task.id)}
+            {@const howTo = howToFor(task.id, studentType)}
             <div class="task-row">
               <span class="box">
                 <input
@@ -278,6 +283,9 @@
                     <li>{step}</li>
                   {/each}
                 </ol>
+                {#if howTo.pointer}
+                  <p class="pointer"><a href={howTo.pointer.href}>{howTo.pointer.label}</a></p>
+                {/if}
                 {#if isOutside(howTo.link)}
                   <a class="secondary-button" href={howTo.link.href} target="_blank" rel="noopener noreferrer" aria-label={`${howTo.link.label} (opens in a new tab)`}>{howTo.link.label} ↗</a>
                 {:else}

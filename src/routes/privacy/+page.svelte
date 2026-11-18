@@ -20,7 +20,7 @@
     <h2>Kept in your account</h2>
     <p>In Google’s Firebase database, which is in London (europe-west2):</p>
     <ul>
-      <li><strong>What you gave when you signed up:</strong> your name, Northumbria email address, course, interests and arrival date.</li>
+      <li><strong>What you gave when you signed up:</strong> your name, Northumbria email address, course, interests, arrival date, whether you’re a home or international student, and whether you’d like a mentor.</li>
       <li><strong>Your checklist:</strong> its tasks, which ones you’ve ticked, and any you’ve added.</li>
       <li><strong>Things you asked the chat to remember:</strong> up to 10 short notes, with when you saved each.</li>
       <li>
@@ -62,7 +62,7 @@
     <p>AG2 uses Gemini, through Google’s Firebase AI Logic, for the check-in chat and to find your mentor.</p>
     <h3>In the check-in chat</h3>
     <ul>
-      <li>Your first name, and the course, interests and arrival date you gave when you signed up.</li>
+      <li>Your first name, and the course, interests and arrival date you gave when you signed up, and whether you said you’re a home or international student (one word, so it gives you the right version of things like registering with a GP).</li>
       <li>Whether you have a mentor, why you were matched and how often you asked to meet.</li>
       <li>The short summary of your answers from finding a mentor.</li>
       <li>Your checklist progress: which of the standard tasks you’ve done, and how many of your own (not what they say).</li>

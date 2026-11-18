@@ -2,6 +2,7 @@ import { arrayUnion, doc, getDoc, runTransaction, setDoc } from 'firebase/firest
 import { db, getFirebaseAuth } from '#lib/firebase/client.js';
 import { ADDED_DEFAULTS, applyToLatest, CHECKLIST_FIELD, ChecklistError, checklistFrom, OFFERED_FIELD } from '#lib/checklist/tasks.js';
 import { firstName } from '#lib/students/greeting.js';
+import { studentTypeFrom } from '#lib/students/student-type.js';
 
 /** @typedef {import('#lib/checklist/tasks.js').Task} Task */
 /** @typedef {import('#lib/checklist/tasks.js').Change} Change */
@@ -28,7 +29,8 @@ function myRecord() {
  * The checklist page, the check-in chat and the "What the chat knows about you" page all load
  * through this, so they can't disagree.
  * @returns {Promise<{ checklist: { tasks: Task[], saved: boolean }, name: string | null, course: unknown,
- *   interests: unknown, arrivalDate: unknown, matchingSummary: unknown }>}
+ *   interests: unknown, arrivalDate: unknown, matchingSummary: unknown,
+ *   studentType: import('#lib/students/student-type.js').StudentType | null, wantsMentor: boolean }>}
  */
 export async function loadMyRecord() {
   const data = (await getDoc(myRecord())).data();
@@ -38,7 +40,11 @@ export async function loadMyRecord() {
     course: data?.course ?? null,
     interests: data?.interests ?? null,
     arrivalDate: data?.arrivalDate ?? null,
-    matchingSummary: data?.matchingSummary ?? null
+    matchingSummary: data?.matchingSummary ?? null,
+    // From the sign-up page's about-you step (student-type.js): home or international, and whether
+    // they'd like a mentor. Null and false for an account from before those questions.
+    studentType: studentTypeFrom(data?.studentType),
+    wantsMentor: data?.wantsMentor === true
   };
 }
 

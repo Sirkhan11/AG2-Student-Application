@@ -133,8 +133,41 @@ export const HOW_TO = Object.freeze({
   }
 });
 
-/** A task's how-to, or null for one of their own. @param {string} id */
-export const howToFor = (id) => HOW_TO[id] ?? null;
+/**
+ * Steps that only apply to students who need a UK student visa, by task. A home student (what they
+ * said at sign-up: student-type.js) doesn't see them; an international student, or one who hasn't said,
+ * does. Each must be one of that task's steps: check-sign-up.mjs checks.
+ */
+export const VISA_ONLY_STEPS = Object.freeze({ enrol: Object.freeze([HOW_TO.enrol.steps[0]]) });
+
+/**
+ * A page in the app that helps international students with a task, by task: Arriving late, for the CAS
+ * deadline and catching up, which only applies to students on a visa. The app can't tell whether anyone
+ * is late (it doesn't know the deadline), so it points to the guide rather than deciding.
+ * @type {Readonly<Record<string, Link>>}
+ */
+export const INTERNATIONAL_POINTERS = Object.freeze({
+  enrol: { label: 'Arriving after your CAS deadline, or after teaching has started? Read Arriving late', href: '/late-arrivals' }
+});
+
+/**
+ * A task's how-to for this student, or null for one of their own. With what they said at sign-up: a
+ * home student doesn't get the visa-only steps (VISA_ONLY_STEPS); an international student also gets
+ * the pointer for them (INTERNATIONAL_POINTERS), or null.
+ * @param {string} id
+ * @param {import('#lib/students/student-type.js').StudentType | null} [studentType]
+ * @returns {(HowTo & { pointer: Link | null }) | null}
+ */
+export function howToFor(id, studentType = null) {
+  const howTo = HOW_TO[id];
+  if (!howTo) return null;
+  const visaOnly = VISA_ONLY_STEPS[/** @type {keyof typeof VISA_ONLY_STEPS} */ (id)] ?? [];
+  return {
+    ...howTo,
+    steps: studentType === 'home' ? howTo.steps.filter((step) => !visaOnly.includes(step)) : howTo.steps,
+    pointer: studentType === 'international' ? (INTERNATIONAL_POINTERS[id] ?? null) : null
+  };
+}
 
 /** Whether a link leaves the app (opens in a new tab). @param {Link} link */
 export const isOutside = (link) => /^https?:\/\//.test(link.href);

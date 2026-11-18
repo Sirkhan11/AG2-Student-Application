@@ -1,6 +1,7 @@
 // What the check-in chat is always told about a student, besides their mentor and checklist (those
 // are in describeForGemini, opener.js): the "about you" record.
-// - From sign-up: their first name (never the rest of their name), course, interests and arrival date.
+// - From sign-up: their first name (never the rest of their name), course, interests, arrival date,
+//   and (one word, while TELL_CHAT_STUDENT_TYPE is on) whether they're a home or international student.
 // - From finding a mentor: a summary of their answers (what they're into, what they'd rather avoid,
 //   and how they like to do things), kept in their record as matchingSummary.
 // - Up to MAX_NOTES things they chose for the chat to remember (remember-notes.js).
@@ -10,6 +11,15 @@
 
 import { blankContactDetails } from '#lib/checkin/private-details.js';
 import { firstName } from '#lib/students/greeting.js';
+import { studentTypeFrom } from '#lib/students/student-type.js';
+
+/**
+ * Whether the chat is told, in one word, if they said they're a home or international student when
+ * they signed up (student-type.js), so it gives the right version of things like registering with a
+ * GP. One setting, in case Thomas decides against it: off, the chat isn't told, and the "What the chat
+ * knows about you" page says so.
+ */
+export const TELL_CHAT_STUDENT_TYPE = true;
 
 const MAX_INTERESTS = 10;
 const MAX_INTEREST_LENGTH = 40;
@@ -136,13 +146,14 @@ export const isoDate = (now) => `${now.getFullYear()}-${twoDigits(now.getMonth()
 /**
  * The record, tidied for Gemini.
  * @typedef {{ firstName: string | null, course: string | null, interests: string[], arrivalDate: string | null,
+ *   studentType: import('#lib/students/student-type.js').StudentType | null,
  *   summary: MatchingSummary | null, notes: string[] }} AboutYou
  */
 
 /**
  * The about-you record from what the app has: the student's own record (students/{uid}) and the
  * notes they chose (chatNotes/{uid}). Only their first name is taken from their name.
- * @param {{ name?: unknown, course?: unknown, interests?: unknown, arrivalDate?: unknown,
+ * @param {{ name?: unknown, course?: unknown, interests?: unknown, arrivalDate?: unknown, studentType?: unknown,
  *   matchingSummary?: unknown, notes?: unknown } | null | undefined} record
  * @returns {AboutYou}
  */
@@ -153,6 +164,7 @@ export function aboutYou(record) {
     ...tidyProfile(record),
     firstName: first && first === name ? first : null,
     arrivalDate: dateInWords(record?.arrivalDate) ? String(record?.arrivalDate).trim() : null,
+    studentType: TELL_CHAT_STUDENT_TYPE ? studentTypeFrom(record?.studentType) : null,
     summary: record?.matchingSummary ? summaryForChat(/** @type {any} */ (record.matchingSummary)) : null,
     notes: tidyList(record?.notes, MAX_NOTES, MAX_NOTE_LENGTH)
   };
@@ -173,6 +185,7 @@ export function aboutYouForGemini(about, today = null) {
       : "Their first name: not known, so don't use a name or ask for one."
   );
   if (about.course) lines.push(`Their course (from when they signed up): ${about.course}.`);
+  if (about.studentType) lines.push(about.studentType === 'home' ? "They're a home student (from the UK), from when they signed up." : "They're an international student (here on a student visa, usually), from when they signed up.");
   if (about.interests.length) lines.push(`Interests they gave when they signed up: ${about.interests.join(', ')}.`);
   const arrival = dateInWords(about.arrivalDate);
   if (arrival) lines.push(`Their arrival date (from when they signed up): ${arrival}.${dateInWords(today) ? ` Today is ${dateInWords(today)}.` : ''}`);

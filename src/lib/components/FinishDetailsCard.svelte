@@ -51,7 +51,7 @@
 {#if show}
   <section class="card details" aria-labelledby="details-title">
     <h2 id="details-title">Finish your details</h2>
-    <p>Add your name, course and interests, so the chat can suggest things that fit you. It takes a minute.</p>
+    <p>A few quick questions (your name, course and interests, and whether you’re a home or international student), so the app can put the right information first. It takes a minute.</p>
     <div class="actions">
       <a class="primary-button" href="/signup">Add my details</a>
       <button class="secondary-button" type="button" onclick={notNow}>Not now</button>
