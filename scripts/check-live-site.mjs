@@ -105,9 +105,9 @@ try {
   await fill('#email', 'someone@gmail.com'); await click('button[type=submit]');
   report('Forgot password: a Gmail address is refused, and no reset email is asked for', (await waitFor(has(UNI))) && authCalls().length === 0, authCalls().join(', '));
 
-  // 2. Logged out: the five public pages open; every other page goes to log in and back; what's left
+  // 2. Logged out: the six public pages open; every other page goes to log in and back; what's left
   //    out never shows; Need help has Northumbria's own support; the tab says AG2.
-  const PUBLIC = { '/': 'Welcome back', '/signup': 'Create your account', '/forgot-password': 'Reset your password', '/mentor-signup': 'Become a mentor', '/need-help': 'Need help now?' };
+  const PUBLIC = { '/': 'Welcome back', '/signup': 'Create your account', '/forgot-password': 'Reset your password', '/mentor-signup': 'Become a mentor', '/need-help': 'Need help now?', '/privacy': 'What AG2 keeps about you' };
   for (const [path, heading] of Object.entries(PUBLIC)) {
     await go(path);
     await sleep(800);

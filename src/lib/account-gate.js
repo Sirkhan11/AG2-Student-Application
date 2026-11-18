@@ -6,8 +6,8 @@ import { isUniEmail } from '#lib/uni-email.js';
 // verified yet sees only the check-your-inbox screen. firestore.rules refuse all of them anyway. Need
 // help now always opens. No Firebase here, so the checks can test it in Node.
 
-/** Pages a logged-out visitor can open: log in, sign up, forgot password, mentor sign-up and Need help. */
-export const PUBLIC_PAGES = Object.freeze(['/', '/signup', '/forgot-password', '/mentor-signup', '/need-help']);
+/** Pages a logged-out visitor can open: log in, sign up, forgot password, mentor sign-up, Need help and Privacy (so it can be read before signing up). */
+export const PUBLIC_PAGES = Object.freeze(['/', '/signup', '/forgot-password', '/mentor-signup', '/need-help', '/privacy']);
 
 /** Pages every account can open, whatever its state: urgent support. */
 export const ALWAYS_OPEN = Object.freeze(['/need-help']);

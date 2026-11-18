@@ -42,7 +42,7 @@
   );
 
   /** Each page's tab title; every other page is just "AG2". */
-  const TITLES = /** @type {Record<string, string>} */ ({ '/nhs-guide': 'NHS Guide', '/gp-finder': 'Find a GP', '/late-arrivals': 'Arriving late', '/about-you': 'What the chat knows' });
+  const TITLES = /** @type {Record<string, string>} */ ({ '/privacy': 'Privacy', '/nhs-guide': 'NHS Guide', '/gp-finder': 'Find a GP', '/late-arrivals': 'Arriving late', '/about-you': 'What the chat knows' });
   let title = $derived(TITLES[page.url.pathname] ? `${TITLES[page.url.pathname]} · AG2` : 'AG2');
 
   onMount(() =>

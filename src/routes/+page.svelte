@@ -86,6 +86,7 @@
     <a href="/signup">Create an account</a>
     <a href="/mentor-signup">Become a mentor</a>
     <a href="/forgot-password">Forgot password?</a>
+    <a href="/privacy">Privacy</a>
   </div>
 
   <a class="help-link" href="/need-help">
