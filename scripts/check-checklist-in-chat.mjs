@@ -155,7 +155,8 @@ const offline = [
     const instructions = oneLine(chatInstructions('(about)', ['(opener)']));
     for (const words of [
       'Going through their checklist ({{checklist}}):',
-      'Offer it when they ask what to do next, ask about their checklist or what’s left on it, or once after they’ve found a mentor (in a later reply, not your message straight after)',
+      'Offer it when they ask what to do next (such as "what now?", "what should I do next?" or "okay great now what"), ask about their checklist or what’s left on it, or once after they’ve found a mentor (in a later reply, not your message straight after)',
+      'When they ask what to do next, this is your answer: don’t suggest societies or other things instead, and don’t ask about reminders in the same reply.',
       'When you offer it, don’t link to the [[Checklist]] page or list their tasks yourself.',
       'Don’t offer it if their checklist is all done, or again in this chat after they’ve said not now or stopped, unless they ask',
       'Never tick a task or say one is done: only they can, with the card’s Done button.'

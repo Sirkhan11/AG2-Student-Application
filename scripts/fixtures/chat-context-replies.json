@@ -1,32 +1,32 @@
 {
   "about": "Check-in chat replies for check-chat-context.mjs (made-up students). Regenerate with --refresh rather than edit.",
   "model": "gemini-3.5-flash-lite",
-  "promptFingerprint": "eb6a5e4e73fe",
-  "made": "2026-11-17T21:25:48.627Z",
+  "promptFingerprint": "cbc73ca664b8",
+  "made": "2026-11-18T00:49:44.834Z",
   "replies": {
     "why matched": {
       "ask": "Why did you match me with my mentor?",
-      "reply": "We matched you because you both enjoy live music and gigs, and you like similar weekends like going to the cinema. Your mentor is also the laid-back kind of person you asked for."
+      "reply": "You were matched because you both share interests like live music and gigs, and you enjoy similar weekends at the cinema. They are also the laid-back kind of mentor you asked for."
     },
     "how often": {
       "ask": "How often will we meet?",
-      "reply": "You'll meet with your mentor every two weeks."
+      "reply": "You asked to meet with your mentor every two weeks."
     },
     "checklist": {
       "ask": "What's left on my checklist?",
-      "reply": "You have [[Book]] and [[Book]] left to do, plus finding a dentist."
+      "reply": "I can go through your checklist with you here, one task at a time. {{checklist}}"
     },
     "who is my mentor": {
       "ask": "Who is my mentor?",
-      "reply": "You can find your mentor's name and how to get in touch on the [[Your Mentor]] page."
+      "reply": "Here is your mentor. {{your-mentor}}"
     },
     "course society": {
       "ask": "Can you suggest a society for my course?",
-      "reply": "Since you study English Literature, [[English]] fits your course."
+      "reply": "Since you are studying BA English Literature, [[English]] is a great fit for meeting others on your course."
     },
     "why matched, waiting": {
       "ask": "Why did you match me with my mentor?",
-      "reply": "The mentoring coordinator is matching you by hand, so they will let you know the reasons once your match is ready."
+      "reply": "The mentoring coordinator is still finding you a mentor by hand, so you haven't been matched with one just yet."
     },
     "why matched, no mentor": {
       "ask": "Why did you match me with my mentor?",
@@ -34,7 +34,7 @@
     },
     "change mentor": {
       "ask": "I don’t think my mentor is right for me. Can I change?",
-      "reply": "You can ask the mentoring coordinator for a different one on the [[Your Mentor]] page."
+      "reply": "You can ask the mentoring coordinator for someone else here, and only they will see why. {{change-mentor}}"
     }
   }
 }

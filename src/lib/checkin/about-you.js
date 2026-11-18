@@ -169,7 +169,7 @@ export function aboutYouForGemini(about, today = null) {
   const lines = [];
   lines.push(
     about.firstName
-      ? `Their first name: ${about.firstName}. It's the only name you're told. Use it now and then, naturally, as a friend would: not in every message.`
+      ? `Their first name: ${about.firstName}. It's the only name you're told. Use it sparingly, as a friend would: perhaps in your first reply, then only once in a while. Most replies shouldn't include it, and never add it just to thank them or say goodbye.`
       : "Their first name: not known, so don't use a name or ask for one."
   );
   if (about.course) lines.push(`Their course (from when they signed up): ${about.course}.`);

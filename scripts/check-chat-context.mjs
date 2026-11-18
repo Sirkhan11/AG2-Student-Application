@@ -66,18 +66,19 @@ const CANT_KNOW = [
  * link: a society the reply must link.
  * also: a second pattern the reply must match; noAskWhy: the reply mustn't ask why, or for a reason.
  * notPage: the reply mustn't send them to the Find a mentor page (the chat finds a mentor itself).
- * @type {{ id: string, student: string, ask: string, why: string, expect?: RegExp, also?: RegExp, link?: string, noCantKnow?: boolean, noAskWhy?: boolean, notPage?: boolean }[]}
+ * card: one of the chat's cards the reply must show (chat-actions.js), such as their mentor's.
+ * @type {{ id: string, student: string, ask: string, why: string, expect?: RegExp, also?: RegExp, link?: string, noCantKnow?: boolean, noAskWhy?: boolean, notPage?: boolean, card?: string }[]}
  */
 const CASES = [
   { id: 'why matched', student: 'matched', ask: 'Why did you match me with my mentor?', why: 'uses the saved reasons', expect: /live music|gigs|cinema|laid[- ]back/i, noCantKnow: true },
   { id: 'how often', student: 'matched', ask: 'How often will we meet?', why: 'the frequency they asked for', expect: /two weeks|fortnight/i },
-  { id: 'checklist', student: 'matched', ask: "What's left on my checklist?", why: 'names a task not done yet', expect: /society|dentist/i },
-  { id: 'who is my mentor', student: 'matched', ask: 'Who is my mentor?', why: 'points to the Your Mentor page, with no name', expect: /your mentor/i },
+  { id: 'checklist', student: 'matched', ask: "What's left on my checklist?", why: 'offers to go through it here ({{checklist}})', card: 'checklist' },
+  { id: 'who is my mentor', student: 'matched', ask: 'Who is my mentor?', why: 'shows the mentor card ({{your-mentor}}), never a name', card: 'your-mentor' },
   { id: 'course society', student: 'matched', ask: 'Can you suggest a society for my course?', why: 'uses their course', link: 'English' },
   { id: 'why matched, waiting', student: 'waiting', ask: 'Why did you match me with my mentor?', why: 'the coordinator is finding one', expect: /coordinator/i },
   // No mentor yet: the chat offers to find one right here (the {{mentor}} card), never the Find a mentor page.
   { id: 'why matched, no mentor', student: 'no mentor', ask: 'Why did you match me with my mentor?', why: 'says they haven’t got one; any offer is the card, never the page', expect: /(?:haven.t|have not|don.t have|do not have)[^.]*mentor|no mentor|not been matched|n.t been matched|haven.t been matched|yet/i, notPage: true },
-  { id: 'change mentor', student: 'matched', ask: 'I don’t think my mentor is right for me. Can I change?', why: 'the Your Mentor page, where only the coordinator sees the reason; never asks why', expect: /your mentor/i, also: /coordinator/i, noAskWhy: true }
+  { id: 'change mentor', student: 'matched', ask: 'I don’t think my mentor is right for me. Can I change?', why: 'shows the form here ({{change-mentor}}), where only the coordinator sees the reason; never asks why', card: 'change-mentor', also: /coordinator/i, noAskWhy: true }
 ];
 
 /** Offering to find a mentor in words ("I can find you one here"), which must come with the card's marker. */
@@ -142,6 +143,7 @@ for (const test of CASES) {
     test.notPage && /find a mentor page|\[\[find a mentor\]\]/i.test(entry.reply) ? 'sends them to the Find a mentor page' : '',
     OFFERS_IN_WORDS.test(entry.reply) && !offersInReply(entry.reply).offers.includes('mentor') ? 'offers to find a mentor in words, without the card' : '',
     test.link && !links.some((link) => link.label === test.link) ? `doesn't suggest ${test.link}` : '',
+    test.card && !offersInReply(entry.reply).offers.includes(test.card) ? `doesn't show the ${test.card} card` : '',
     test.noCantKnow && CANT_KNOW.some((pattern) => pattern.test(entry.reply)) ? 'says it can\'t know' : '',
     ...NEVER_SHOWN.filter((pattern) => pattern.test(entry.reply)).map((pattern) => `shows something it was never told (${pattern.source})`)
   ].filter(Boolean);
