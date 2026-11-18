@@ -119,9 +119,22 @@
     gap: 8px;
   }
 
+  /* The box takes the room and Find stays its own size (the shared .field and .primary-button are
+     full width, which squeezed the box to a sliver). */
+  .row {
+    align-items: stretch;
+  }
+
   .row input {
     flex: 1;
     min-width: 0;
+    margin: 0;
+  }
+
+  .row .primary-button {
+    flex: none;
+    width: auto;
+    padding: 10px 18px;
   }
 
   .small {
