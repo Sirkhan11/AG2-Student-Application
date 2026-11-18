@@ -1,3 +1,4 @@
+import { understandReply } from '#lib/checkin/mentor-replies.js';
 import { isCrisis, SAFETY_MESSAGE } from '#lib/checkin/safety.js';
 import { findBlankAnswer } from '#lib/matching/answers.js';
 import {
@@ -21,7 +22,9 @@ import {
 // they're usually free, and shows their answers with Change and Find my mentor. Nothing is saved until
 // they tap Find my mentor, and Stop (or typing "stop") ends it at any point before that, with nothing
 // saved. The answers stay in the chat session: the page sends what they type here to this flow, never
-// to Gemini. The steps it shares with the page (checks, matching, saving, what each outcome says) are
+// to Gemini. What each message means is worked out on the phone (mentor-replies.js): most are their
+// answer, however short, and some are about the questions ("will that be saved?", "can I try again?",
+// "start again?"), which it answers or does (agent1.md A13). The steps it shares with the page (checks, matching, saving, what each outcome says) are
 // in find-mentor-steps.js. No Firebase here (the steps are passed in), so the checks run it in Node.
 // A message that suggests they may be at risk (safety.js) is never one of the answers: the chat page
 // answers it with the support message before the flow sees it, and the questions stop there, with
@@ -48,7 +51,8 @@ import {
 /**
  * Where the flow is, for the page: kind (which of the chat's actions); active while it's running;
  * step; live is the card whose buttons work now (null for none).
- * @typedef {{ kind: 'mentor', active: boolean, step: 'checking' | 'question' | 'frequency' | 'availability' | 'review' | 'busy'
+ * confirm: a question for the chat was typed instead of an answer, so it asks whether to keep it.
+ * @typedef {{ kind: 'mentor', active: boolean, step: 'checking' | 'question' | 'confirm' | 'frequency' | 'availability' | 'review' | 'busy'
  *   | 'gemini-failed' | 'gemini-unavailable' | 'error' | 'done', live: number | null }} FlowState
  */
 
@@ -61,8 +65,14 @@ import {
  *   summary?: import('#lib/matching/summary-prompt.js').Summary | null }} FlowResult
  */
 
-/** What the student types to stop. */
-const STOP = /^\s*stop\s*[.!]?\s*$/i;
+/** Asked whether anything is saved: true, and the same question again. */
+export const ABOUT_SAVING = 'Nothing’s saved yet: your answers are only saved when you choose Find my mentor at the end, and you can change any of them before then.';
+/** Starting again: nothing they've typed so far is kept. */
+export const STARTING_AGAIN = 'Starting again, with nothing kept.';
+/** An exclamation, not an answer ("ooo poop"). */
+export const NOT_KEPT = 'I won’t keep that as your answer.';
+/** The buttons for a question typed instead of an answer. */
+const KEEP_OR_AGAIN = [{ id: 'keep', label: 'Keep it as my answer' }, { id: 'again', label: 'Answer again' }];
 
 /** After the support message, when the questions stop for it: what's happened to them, and that they can come back. */
 export const SET_ASIDE = 'I’ve stopped the mentor questions, and nothing from them has been saved. We can come back to them whenever you like.';
@@ -86,6 +96,8 @@ export function createMentorFlow({ check, steps, post, changed, finished }) {
   let question = 0;
   /** Changing one answer from the review: go back to the review after it, not on through the rest. */
   let changing = false;
+  /** A question for the chat, typed instead of an answer, kept only if they say so (step 'confirm'). */
+  let pending = '';
   /** What Try again repeats after an error. @type {() => Promise<void>} */
   let again = async () => {};
   let cards = 0;
@@ -221,7 +233,7 @@ export function createMentorFlow({ check, steps, post, changed, finished }) {
     } else {
       // The matching model starts loading now, so it's ready by Find my mentor (model-download.js).
       steps.getReady?.();
-      say({ text: `Answer six short questions so we can match you with a student mentor who shares your interests and the way you like to do things. ${ANSWERS_NOTE} Type stop at any time to stop: nothing is saved until you choose Find my mentor.` });
+      say({ text: `Answer six short questions so we can match you with a student mentor who shares your interests and the way you like to do things. ${ANSWERS_NOTE} You can go back, start again or stop at any time: nothing is saved until you choose Find my mentor.` });
       ask(0);
     }
   }
@@ -237,9 +249,56 @@ export function createMentorFlow({ check, steps, post, changed, finished }) {
     begin();
   }
 
+  /** Their answer to the question being asked, then on to the next (or back to the review). @param {string} typed */
+  function keep(typed) {
+    answers[question] = typed;
+    finder.forget();
+    if (changing) review();
+    else if (question < questions.length - 1) ask(question + 1);
+    else askFrequency();
+  }
+
+  /** Whatever's being asked now, again: after a nudge, a note, or a question about saving. */
+  function askAgain() {
+    if (state.step === 'question' || state.step === 'confirm') ask(question);
+    else if (state.step === 'frequency') askFrequency();
+    else if (state.step === 'availability') askAvailability();
+    else if (state.step === 'review') review();
+  }
+
+  /** The question before, again: "can I try again?" (or, from how often, the last question). */
+  function back() {
+    if (state.step === 'review') {
+      say({ text: 'Tap Change under the answer you’d like to change.' });
+    } else if (state.step === 'availability') {
+      say({ text: 'Of course.' });
+      askFrequency();
+    } else if (state.step === 'frequency') {
+      say({ text: 'Of course.' });
+      ask(questions.length - 1);
+    } else {
+      say({ text: 'Of course.' });
+      // Changing one from the review: that question again. Otherwise the one they answered last.
+      ask(changing ? question : Math.max(0, question - 1));
+    }
+  }
+
+  /** From question 1 again, with nothing kept. */
+  function restart() {
+    answers = questions.map(() => '');
+    meetingFrequency = '';
+    availability = '';
+    changing = false;
+    pending = '';
+    finder.forget();
+    say({ text: STARTING_AGAIN });
+    ask(0);
+  }
+
   /**
-   * What the student typed while the flow is running: an answer, or "stop". Returns true when the
-   * flow took it, which it always does while active: it's never sent to Gemini.
+   * What the student typed while the flow is running: an answer, or something about the questions
+   * (mentor-replies.js), which it acts on. Returns true when the flow took it, which it always does
+   * while active: it's never sent to Gemini.
    * @param {string} text
    */
   function reply(text) {
@@ -250,21 +309,64 @@ export function createMentorFlow({ check, steps, post, changed, finished }) {
       setAside();
       return true;
     }
-    if (STOP.test(text)) {
+    const typed = text.trim();
+    // Asked whether to keep a question as their answer: yes, no, or something else entirely.
+    if (state.step === 'confirm') {
+      if (/^(yes|yeah|yep|y|keep( it)?|keep it as my answer)[.!]*$/i.test(typed)) {
+        choose('keep');
+        return true;
+      }
+      if (/^(no|nope|n|answer again)[.!]*$/i.test(typed)) {
+        choose('again');
+        return true;
+      }
+      set({ step: 'question', live: null });
+    }
+    const meant = understandReply(typed);
+    if (meant === 'stop') {
       stop();
       return true;
     }
-    const typed = text.trim();
+    if (state.step === 'busy') return true;
+    if (!['question', 'frequency', 'availability', 'review'].includes(state.step)) {
+      say({ text: 'Please use the buttons above, or type stop to stop.' });
+      return true;
+    }
+    if (meant === 'restart') {
+      restart();
+      return true;
+    }
+    if (meant === 'redo') {
+      back();
+      return true;
+    }
+    if (meant === 'about-saving') {
+      say({ text: ABOUT_SAVING });
+      askAgain();
+      return true;
+    }
+    if (meant === 'nudge') {
+      askAgain();
+      return true;
+    }
+    if (meant === 'not-an-answer' && state.step === 'question') {
+      say({ text: NOT_KEPT });
+      askAgain();
+      return true;
+    }
     if (state.step === 'question') {
       if (findBlankAnswer([typed]) !== -1) {
         say({ text: `Please answer question ${question + 1}.`, question: true });
         return true;
       }
-      answers[question] = typed;
-      finder.forget();
-      if (changing) review();
-      else if (question < questions.length - 1) ask(question + 1);
-      else askFrequency();
+      // A question for the chat, not an answer: kept only if they say so.
+      if (meant === 'check') {
+        pending = typed;
+        set({ step: 'confirm' });
+        say({ text: `Is that your answer to question ${question + 1}? I can answer other questions once we’ve finished these.`, card: { kind: 'choices', choices: KEEP_OR_AGAIN } });
+        return true;
+      }
+      keep(typed);
     } else if (state.step === 'frequency') {
       const choice = MEETING_FREQUENCIES.find((id) => id === typed.toLowerCase());
       if (choice) choose(choice);
@@ -278,14 +380,30 @@ export function createMentorFlow({ check, steps, post, changed, finished }) {
       availability = typed;
       finder.forget();
       review();
-    } else if (state.step !== 'busy') {
+    } else {
       say({ text: 'Please use the buttons above, or type stop to stop.' });
     }
     return true;
   }
 
-  /** A meeting choice from the buttons. @param {string} frequency */
+  /**
+   * A button on the live choices card: how often they'd like to meet, or (for a question typed instead
+   * of an answer) keep it, or answer again.
+   * @param {string} frequency
+   */
   function choose(frequency) {
+    if (state.active && state.step === 'confirm') {
+      if (frequency === 'keep') {
+        say({ role: 'user', text: 'Keep it as my answer' });
+        set({ step: 'question', live: null });
+        keep(pending);
+      } else if (frequency === 'again') {
+        say({ role: 'user', text: 'Answer again' });
+        ask(question);
+      }
+      pending = '';
+      return;
+    }
     if (!state.active || state.step !== 'frequency' || !MEETING_FREQUENCIES.includes(frequency)) return;
     meetingFrequency = frequency;
     finder.forget();

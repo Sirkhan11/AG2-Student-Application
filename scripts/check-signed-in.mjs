@@ -17,7 +17,8 @@
 //   it goes to the coordinator) shows the result in the chat; a mentor account isn't offered it; and
 //   the Find a mentor page still works through the same shared steps;
 // - in the chat, a message that suggests they may be at risk, during the mentor questions: the support
-//   message, the questions stop with nothing saved, and it never reaches Gemini (agent1.md A13);
+//   message, the questions stop with nothing saved, and it never reaches Gemini (agent1.md A13); and
+//   what Thomas typed during them is understood rather than kept as an answer (A13, part 2);
 // - the GP finder keeps "Use my location" on the phone: scripts/check-gp-finder-privacy.mjs, logged in.
 // Nothing real is touched (project demo-ag2). Typed GP searches ask postcodes.io, as the page does.
 // Run from the project folder (the emulators need Java 21 or newer):
@@ -463,6 +464,18 @@ try {
   await answer('actually can you find me a mentor now');
   await (await next)();
   requests.length = 0;
+  // agent1.md A13, part 2: what Thomas typed during the questions, understood on the phone, not kept.
+  next = await another('Nothing’s saved yet');
+  await answer('will that last message be saved as a answer');
+  const aboutSaving = await (await next)();
+  next = await another('I won’t keep that as your answer');
+  await answer('ooo poop');
+  const notKept = await (await next)();
+  next = await another('Starting again, with nothing kept');
+  await answer('start again?');
+  const restarted = await (await next)();
+  report('A13: during the questions, "will that last message be saved…", "ooo poop" and "start again?" are each understood (not kept as answers), with no Gemini',
+    aboutSaving && notKept && restarted && geminiCalls().length === 0, `${aboutSaving} ${notKept} ${restarted} ${geminiCalls().length} Gemini calls`);
   for (const [i, reply] of ['Settling in', 'Climbing and films', 'A long walk', 'Planning ahead, with others', 'Making friends', 'Someone patient'].entries()) {
     next = i < 5 ? await another(`Question ${i + 2} of 6`) : await another('How often would you like to meet?');
     await answer(reply);

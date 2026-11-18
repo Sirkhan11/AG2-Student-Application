@@ -12,6 +12,9 @@
 //   told covers mentors, Not now and the outcome.
 // - The chat page sends what's typed during it to the flow, never to Gemini; the Find a mentor page
 //   uses the same shared steps.
+// - What's typed during the questions is understood on the phone (mentor-replies.js; agent1.md A13,
+//   part 2): Thomas's own messages one by one, short and long answers, an answer with a question
+//   mark, a question for the chat (checked first), changing their mind twice; Stop and Change as before.
 // - A message that suggests they may be at risk (safety.js), at any point in the questions: the support
 //   message, the questions stop with nothing saved, and it's never kept or sent (agent1.md A13); the
 //   chat page checks every message first, and the finder refuses too.
@@ -26,7 +29,8 @@ import { chatInstructions } from '#lib/checkin/chat-prompt.js';
 import { chatTools } from '#lib/checkin/chat-tools.js';
 import { scriptedGemini } from './lib/scripted-gemini.mjs';
 import { chatWith } from '#lib/checkin/chat-turns.js';
-import { createMentorFlow, SET_ASIDE } from '#lib/checkin/mentor-flow.js';
+import { ABOUT_SAVING, createMentorFlow, NOT_KEPT, SET_ASIDE, STARTING_AGAIN } from '#lib/checkin/mentor-flow.js';
+import { understandReply } from '#lib/checkin/mentor-replies.js';
 import { isCrisis, SAFETY_MESSAGE } from '#lib/checkin/safety.js';
 import { chatOptions, describeForGemini, matchLine } from '#lib/checkin/opener.js';
 import { ANSWERS_NOTE, checkAnswers, createFinder, findingMessage, MAX_AVAILABILITY_LENGTH, outcomeText, questions, SAYS } from '#lib/matching/find-mentor-steps.js';
@@ -96,8 +100,128 @@ async function runTo(t, point) {
   if (point === 'after Gemini failed') await t.flow.confirm();
 }
 
+/** The text of the question being asked now, as the flow last posted it. @param {ReturnType<typeof flowWith>} t */
+const asking = (t) => [...t.posts].reverse().find((post) => /^Question \d of 6/.test(post.text))?.text ?? '';
+
 /** @type {[string, () => void | Promise<void>][]} */
 const checks = [
+  // ---------- Understanding what's typed during the questions (agent1.md A13, part 2) ----------
+  ['Thomas’s own messages, one by one: what’s saved (answered, the same question again), try again (the last question again), "ooo poop" (not kept), start again (nothing kept), please (the question again); nothing saved or sent', async () => {
+    const t = flowWith();
+    t.flow.start();
+    await tick();
+    t.flow.reply('Making friends');
+    assert.equal(asking(t), `Question 2 of 6: ${questions[1]}`);
+    const at = () => t.posts.length;
+    let from = at();
+    t.flow.reply('will that last message be saved as a answer');
+    assert.deepEqual(t.posts.slice(from).map((post) => post.text), [ABOUT_SAVING, `Question 2 of 6: ${questions[1]}`], 'a true answer, then the same question');
+    from = at();
+    t.flow.reply('oh no i didnt answer correctly can i try again?');
+    assert.deepEqual(t.posts.slice(from).map((post) => post.text), ['Of course.', `Question 1 of 6: ${questions[0]}`], 'yes, and back to the question they answered');
+    from = at();
+    t.flow.reply('ooo poop');
+    assert.deepEqual(t.posts.slice(from).map((post) => post.text), [NOT_KEPT, `Question 1 of 6: ${questions[0]}`], 'not kept as what they enjoy, or anything else');
+    from = at();
+    t.flow.reply('start again?');
+    assert.deepEqual(t.posts.slice(from).map((post) => post.text), [STARTING_AGAIN, `Question 1 of 6: ${questions[0]}`], 'starts again');
+    from = at();
+    t.flow.reply('please?');
+    assert.deepEqual(t.posts.slice(from).map((post) => post.text), [`Question 1 of 6: ${questions[0]}`], 'understood: here’s question 1');
+    // Then his real answers, and none of those messages is among them.
+    for (const answer of ANSWERS) t.flow.reply(answer);
+    t.flow.choose('weekly');
+    t.flow.reply('Weekday afternoons');
+    const review = t.last().card;
+    assert.equal(review.kind, 'review');
+    assert.deepEqual(review.items.slice(0, 6).map((/** @type {any} */ item) => item.answer), ANSWERS, 'only his answers');
+    assert.equal(t.saved(), 0, 'nothing saved or sent before Find my mentor');
+  }],
+  ['Real answers are kept however short or long, and an answer with a question mark is an answer; a question for the chat is checked first (Keep it as my answer, or Answer again)', async () => {
+    const t = flowWith();
+    t.flow.start();
+    await tick();
+    const short = ['Football', 'nothing', 'idk', 'Climbing? I think', 'Planning ahead, with others?'];
+    for (const answer of short) t.flow.reply(answer);
+    assert.equal(asking(t), `Question 6 of 6: ${questions[5]}`, 'five kept, on to question 6');
+    t.flow.reply('What societies are there?');
+    assert.equal(t.state()?.step, 'confirm');
+    assert.equal(t.last().text, 'Is that your answer to question 6? I can answer other questions once we’ve finished these.');
+    assert.deepEqual(t.last().card.choices.map((/** @type {any} */ choice) => choice.label), ['Keep it as my answer', 'Answer again']);
+    t.flow.choose('again');
+    assert.equal(asking(t), `Question 6 of 6: ${questions[5]}`, 'Answer again: the question again');
+    t.flow.reply('Is it OK to want someone who’s also into games?');
+    t.flow.reply('yes');
+    assert.equal(t.last().text, 'How often would you like to meet?', 'yes: kept, and on');
+    t.flow.choose('weekly');
+    t.flow.reply('Weekday afternoons');
+    assert.equal(t.last().card.items[5].answer, 'Is it OK to want someone who’s also into games?', 'kept, as they said yes');
+    // A long one, from the review's Change: kept whole.
+    const long = 'Someone patient who gets that I’m new to the city, likes a plan, and doesn’t mind me asking lots of questions about everything at first.';
+    t.flow.change(5);
+    t.flow.reply(long);
+    const answers = t.last().card.items.slice(0, 6).map((/** @type {any} */ item) => item.answer);
+    assert.deepEqual(answers, [...short, long]);
+  }],
+  ['Changing their mind twice: "can I try again?", a new answer, "actually can I try again?", another; only the last is kept', async () => {
+    const t = flowWith();
+    t.flow.start();
+    await tick();
+    t.flow.reply('Settling in');
+    t.flow.reply('Football');
+    t.flow.reply('can i try again?');
+    assert.equal(asking(t), `Question 2 of 6: ${questions[1]}`);
+    t.flow.reply('Gaming');
+    t.flow.reply('actually can I try again?');
+    assert.equal(asking(t), `Question 2 of 6: ${questions[1]}`);
+    t.flow.reply('Climbing');
+    for (const answer of ANSWERS.slice(2)) t.flow.reply(answer);
+    t.flow.choose('weekly');
+    t.flow.reply('Weekday afternoons');
+    assert.deepEqual(t.last().card.items.slice(0, 2).map((/** @type {any} */ item) => item.answer), ['Settling in', 'Climbing']);
+  }],
+  ['Stop still works ("stop", "can I stop?"), the review keeps Change, and a message that suggests they may be at risk still stops everything at the new step (Part 1 holds)', async () => {
+    for (const words of ['stop', 'can I stop?']) {
+      const t = flowWith();
+      t.flow.start();
+      await tick();
+      t.flow.reply('Settling in');
+      t.flow.reply(words);
+      assert.equal(t.state()?.active, false, words);
+      assert.equal(t.saved(), 0, words);
+    }
+    const t = flowWith();
+    await toReview(t);
+    t.flow.reply('can i try again?');
+    assert.equal(t.last().text, 'Tap Change under the answer you’d like to change.', 'at the review, Change is the way');
+    t.flow.reply('Is that OK?');
+    assert.equal(t.state()?.step, 'review');
+    const asked = flowWith();
+    asked.flow.start();
+    await tick();
+    asked.flow.reply('What societies are there?');
+    assert.equal(asked.state()?.step, 'confirm');
+    asked.flow.reply('I want to die');
+    assert.equal(asked.state()?.active, false, 'stopped');
+    assert.ok(asked.posts.some((post) => post.kind === 'safety'));
+    assert.equal(asked.saved(), 0);
+  }],
+  ['What a message means, on the phone (no Gemini): Thomas’s five, and answers that stay answers', () => {
+    const expect = {
+      'will that last message be saved as a answer': 'about-saving', 'is this saved?': 'about-saving', 'who can see my answers?': 'about-saving',
+      'oh no i didnt answer correctly can i try again?': 'redo', 'can i change my last answer': 'redo', 'go back': 'redo', 'i didnt mean that': 'redo',
+      'ooo poop': 'not-an-answer', 'lol': 'not-an-answer',
+      'start again?': 'restart', 'start over': 'restart',
+      'please?': 'nudge', 'ok': 'nudge', 'hi': 'nudge',
+      'stop': 'stop', 'can I stop?': 'stop',
+      'What societies are there?': 'check', 'How do I join a society?': 'check',
+      Football: 'answer', nothing: 'answer', idk: 'answer', no: 'answer', 'Climbing? I think': 'answer', 'evenings?': 'answer',
+      'I’d like help saving money': 'answer', 'I’d like to try climbing again': 'answer', 'I want to start again at the gym': 'answer', '': 'answer'
+    };
+    for (const [text, kind] of Object.entries(expect)) assert.equal(understandReply(text), kind, text);
+    assert.doesNotMatch(source('src/lib/checkin/mentor-replies.js'), /from ['"](?:firebase|#lib\/firebase)/, 'no Gemini or Firebase: worked out on the phone');
+  }],
+
   // ---------- A message that suggests they may be at risk (agent1.md A13) ----------
   ['"I want to kill myself" at question 4: the support message, not question 5; it isn’t kept as an answer, the questions stop, and nothing is saved or sent (A13’s probe, which failed before)', async () => {
     const t = flowWith();
