@@ -90,9 +90,10 @@ change:
 npm run build:live    # a static site in build/, then scripts/check-live-build.mjs checks it
 ```
 
-The live build leaves out the server routes (Blackboard, which says "coming soon" there until IT
-register AG2, and the pretend Blackboard) and the team's pages (`/dev`, `/matching-demo`,
-`/matching-test`). Dev (`npm run dev`) is unchanged.
+The live build leaves out the server routes (the full Blackboard connection, which the checklist
+says is still to come until IT register AG2, and the pretend Blackboard) and the team's pages
+(`/dev`, `/matching-demo`, `/matching-test`). Dev (`npm run dev`) is unchanged. Deadlines from a
+student's own Blackboard calendar link are on the live site, through the app's one function (below).
 
 The project's `.npmrc` is engine-strict and firebase-tools lists Node 20 to 24, so the Firebase
 commands need `--engine-strict=false` on newer Node. The emulators need Java 21 or newer.
@@ -105,11 +106,69 @@ node --env-file=.env scripts/check-live-site.mjs
 # Check the rules and the sign-up flow in the emulators (nothing real is touched)
 npx --engine-strict=false firebase-tools emulators:exec --only auth,firestore --project demo-ag2 "node scripts/check-uni-rules.mjs"
 
-# Deploy the site and the rules together, so they always match
+# Deploy the site and the rules together, so they always match (the function is deployed on its
+# own: see "Deadlines from Blackboard's calendar link" below; a bare `deploy` would include it)
 npx --engine-strict=false firebase-tools login
 npx --engine-strict=false firebase-tools deploy --only hosting,firestore:rules --project ag2-dev-thomas
 node --env-file=.env scripts/check-live-site.mjs --base https://ag2-dev-thomas.web.app
 ```
+
+### Deadlines from Blackboard's calendar link (the app's one function)
+
+Every student has a private link to their own Blackboard calendar (in Blackboard: Calendar, the cog,
+the three dots, Share calendar, Copy). Pasted once on Your deadlines (`/deadlines`, reached from Home,
+the checklist and More), the app shows what's due: the next few on Home and the checklist, and the full
+list on the page, each with Add to calendar. Blackboard only lets its own pages read that link, so the
+app's one Cloud Function, `readDeadlines` (`functions/index.js`), fetches it: the app sends the link in
+the body of the call, the function fetches the calendar, hands back the titles and times (nothing
+else), and keeps nothing: no Firestore write, nothing logged. The link lives in the student's browser
+only (`localStorage`, key `ag2.deadlines.<uid>`, `src/lib/deadlines/store.js`), is forgotten with
+"Forget this link" or on log out, and is never near Gemini. These are deadlines from the calendar and
+nothing else (most don't say which module); the full Blackboard connection still waits for IT.
+
+- **Who can call it:** the rules' own gate (`functions/shared/access-gate.js`): a signed-in account
+  with a verified Northumbria address, or any verified address while the access switch is off, or a
+  test account; and from the AG2 app (App Check, enforced as it is for Gemini). Anyone else is
+  refused (unauthenticated or permission denied) before anything is fetched. In emulators mode the app
+  sends a pretend App Check token, which the Functions emulator accepts (`src/lib/firebase/app-check.js`).
+- **What it fetches:** only a link of exactly Blackboard's shape,
+  `https://elp.northumbria.ac.uk/webapps/calendar/calendarFeed/<32 hex characters>/learn.ics`
+  (`functions/shared/calendar-link.js`, used by the app too), over HTTPS, following no redirects, with
+  an 8-second limit, up to 512 KB, and only if what comes back is a calendar
+  (`functions/lib/read-deadlines.js`). In the emulator, and only there, it fetches the same path from
+  the checks' pretend Blackboard instead (`functions/.env.demo-ag2`, read by the emulator for the demo
+  project only).
+- **Where it runs:** `europe-west2` (London, with Firestore), 256 MiB, one CPU, ten requests at a time
+  and at most two instances (`setGlobalOptions` in `functions/index.js`), so a mistake or misuse can't
+  run up a bill. Node 22.
+- **What it costs:** Cloud Functions need the Blaze (pay as you go) plan. Firebase's pricing page
+  (https://firebase.google.com/pricing, read on 18 November 2026) lists each month's no-cost amounts:
+  2 million invocations, 400,000 GB-seconds, 200,000 CPU-seconds and 5 GB outbound, then $0.40 per
+  million invocations and $0.12 per GB; Cloud Build 120 minutes a day (a deploy uses a few), then
+  $0.003 a minute; 500 MB of container storage in Artifact Registry. A student's app reads the calendar
+  at most every four hours (`REFRESH_AFTER_MS` in `src/lib/deadlines/read.js`), so 300 students are
+  roughly 50,000 short calls a month: well inside the no-cost amounts. Set a budget alert on the project
+  all the same.
+- **Deploying it** (Thomas's yes first: the first deploy of a function switches on Google Cloud
+  services on the project, Cloud Functions, Cloud Run, Cloud Build and Artifact Registry among them,
+  and the CLI names each as it goes; when it asks about a clean-up policy for old container images,
+  take it, or old images count towards the 500 MB):
+  ```sh
+  npm --prefix functions install
+  npx --engine-strict=false firebase-tools deploy --only functions --project ag2-dev-thomas
+  ```
+  Until it's deployed, the page says "The deadlines service isn't switched on yet" when a link is
+  pasted, and nothing else changes.
+- **Checks:** `node scripts/check-deadlines.mjs` (offline: the link's shape and near-misses, the
+  calendar reader, the function's read with a stand-in fetch, the gate, what's kept on the phone, the
+  words, and that the chat can't reach any of it); in the emulators with the Functions emulator, the
+  same script also calls the function (who it refuses, what it fetches, a pretend Blackboard that
+  redirects, is slow, is wrong or is huge) and runs the app in Chrome (connect, see, forget, log out,
+  and the link in no request but the function's):
+  ```sh
+  npm --prefix functions install
+  npx --engine-strict=false firebase-tools emulators:exec --only auth,firestore,functions --project demo-ag2 "node scripts/check-deadlines.mjs"
+  ```
 
 ### Mentors who share their email address (for the mentoring coordinator)
 

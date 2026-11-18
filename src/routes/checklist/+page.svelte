@@ -2,6 +2,7 @@
   import { tick } from 'svelte';
   import BottomNav from '#lib/components/BottomNav.svelte';
   import BlackboardSection from '#lib/components/BlackboardSection.svelte';
+  import DeadlinesCard from '#lib/components/DeadlinesCard.svelte';
   import Ask4HelpLink from '#lib/components/Ask4HelpLink.svelte';
   import Burst from '#lib/components/Burst.svelte';
   import Icon from '#lib/components/Icon.svelte';
@@ -335,6 +336,12 @@
       {/if}
       <button class="primary-button" type="submit" disabled={full}><Icon name="plus" size={20} stroke={2.6} /> Add task</button>
     </form>
+  {/if}
+
+  <!-- Their deadlines, from their own Blackboard calendar link (DeadlinesCard): on the live site the
+       one thing from Blackboard until IT agree to the full connection, which the section below says. -->
+  {#if signedIn === true}
+    <DeadlinesCard />
   {/if}
 
   {#if signedIn === true}

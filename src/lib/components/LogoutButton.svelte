@@ -3,6 +3,7 @@
   import { signOut } from 'firebase/auth';
   import { getFirebaseAuth } from '#lib/firebase/client.js';
   import { disconnectBlackboard } from '#lib/blackboard/api.js';
+  import { forgetAllDeadlines } from '#lib/deadlines/store.js';
   import { LIVE } from '#lib/live.js';
   import { waitingSignUp } from '#lib/signup/waiting.js';
 
@@ -19,6 +20,9 @@
       if (!LIVE) {
         await disconnectBlackboard().catch((err) => console.error('Blackboard disconnect on logout failed:', err?.message));
       }
+      // The Blackboard calendar link and the deadlines it gave, kept on this phone (deadlines/store.js):
+      // the link is a key to that calendar, so nobody else on this browser gets it.
+      forgetAllDeadlines();
       // And a sign-up still waiting for its email to be verified.
       waitingSignUp().clear();
       await signOut(getFirebaseAuth());

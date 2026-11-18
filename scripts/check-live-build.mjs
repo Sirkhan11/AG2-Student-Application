@@ -94,8 +94,9 @@ const checks = [
   ['The local emulators (vite dev --mode emulators, for the browser checks) are nowhere in it', () => {
     assert.deepEqual([...filesWith('127.0.0.1:9099'), ...filesWith('127.0.0.1:8080'), ...filesWith('demo-ag2')], []);
   }],
-  ['The checklist’s Blackboard section says it’s coming soon', () => {
-    assert.ok(filesWith('Coming soon: your modules, deadlines and announcements from Blackboard').length > 0);
+  ['The checklist’s Blackboard section says the full connection is still to come, and the deadlines page is there', () => {
+    assert.ok(filesWith('still to come here, if IT agree to connect AG2').length > 0);
+    assert.ok(filesWith('Copy the link in Blackboard').length > 0, 'the deadlines page');
   }],
   ['robots.txt asks search engines not to list the site', () => {
     assert.match(readFileSync(join(LIVE_OUTPUT, 'robots.txt'), 'utf8'), /^User-agent: \*\nDisallow: \/$/m);
