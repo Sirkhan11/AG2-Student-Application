@@ -1,4 +1,3 @@
-import { doc, getDoc } from 'firebase/firestore';
 import { isUniEmail } from '#lib/uni-email.js';
 
 // The access switch: whether AG2 takes only Northumbria addresses (as it will for students) or any
@@ -9,9 +8,12 @@ import { isUniEmail } from '#lib/uni-email.js';
 // so the forms and the rules always agree. Only the exact value false opens the app to any address: no
 // document, no field, or any other value means Northumbria only, the safe side. Either way the address
 // must be verified, so people still prove it's theirs, and flipping the switch back deletes nothing:
-// accounts from elsewhere just see the Northumbria-only screen until it's flipped again. Firestore is
-// passed in to readUniOnly, so the checks can run it against the emulator; access.svelte.js keeps the
-// value for the pages.
+// accounts from elsewhere just see the Northumbria-only screen until it's flipped again.
+// It's read with one plain request to Firestore's REST API rather than the Firestore SDK: the forms
+// read it before anyone has logged in, and starting the SDK's streaming connection then (which every
+// log-in afterwards restarts) is needless, and against the emulator it leaves channels open until the
+// browser's checks stall. Where to ask is passed in (client.js knows: the emulator or Google), so the
+// checks can run it against the emulator; access.svelte.js keeps the value for the pages.
 
 /** The switch's document: its collection, id and field. */
 export const ACCESS_COLLECTION = 'config';
@@ -28,15 +30,45 @@ export function uniOnlyFrom(data) {
 }
 
 /**
- * Reads the switch. If it can't be read (offline, say), Northumbria only, as for a missing document.
- * @param {import('firebase/firestore').Firestore} db
+ * A document's fields as plain values, from the way Firestore's REST API gives them
+ * ({ uniOnly: { booleanValue: false } }). Booleans, strings, whole numbers and nulls; anything else is
+ * left as it came, which is never false.
+ * @param {Record<string, Record<string, unknown>> | undefined} fields
+ * @returns {Record<string, unknown> | undefined}
+ */
+export function fieldsFrom(fields) {
+  if (!fields) return undefined;
+  return Object.fromEntries(
+    Object.entries(fields).map(([key, value]) => [
+      key,
+      'booleanValue' in value ? value.booleanValue
+        : 'stringValue' in value ? value.stringValue
+          : 'integerValue' in value ? Number(value.integerValue)
+            : 'nullValue' in value ? null
+              : value
+    ])
+  );
+}
+
+/**
+ * Reads the switch with one request to Firestore's REST API: the document's fields, or nothing when
+ * there's no document (404). firestore.rules let anyone read it. If it can't be read (offline, refused,
+ * or no answer within 4 seconds), Northumbria only, as for a missing document.
+ * @param {{ documentsUrl: string, apiKey?: string }} where the project's documents on Firestore's REST
+ *   API (firestoreRest in client.js: the emulator's in emulators mode, Google's otherwise), and the web
+ *   API key, which Google's wants and the emulator doesn't
  * @returns {Promise<boolean>} true: Northumbria only
  */
-export async function readUniOnly(db) {
+export async function readUniOnly({ documentsUrl, apiKey }) {
   try {
-    return uniOnlyFrom((await getDoc(doc(db, ACCESS_COLLECTION, ACCESS_DOCUMENT))).data());
+    const url = `${documentsUrl}/${ACCESS_COLLECTION}/${ACCESS_DOCUMENT}${apiKey ? `?key=${encodeURIComponent(apiKey)}` : ''}`;
+    const response = await fetch(url, { signal: AbortSignal.timeout(4000) });
+    if (response.status === 404) return true;
+    if (!response.ok) throw new Error(`Firestore answered ${response.status}`);
+    const { fields } = /** @type {{ fields?: Record<string, Record<string, unknown>> }} */ (await response.json());
+    return uniOnlyFrom(fieldsFrom(fields));
   } catch (err) {
-    console.error('Reading the access switch failed:', /** @type {{ code?: string }} */ (err)?.code ?? err);
+    console.error('Reading the access switch failed:', /** @type {{ message?: string }} */ (err)?.message ?? err);
     return true;
   }
 }

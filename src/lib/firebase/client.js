@@ -41,3 +41,13 @@ export function getFirebaseAuth() {
 
 export const db = getFirestore(app);
 if (EMULATORS) connectFirestoreEmulator(db, '127.0.0.1', 8080);
+
+/**
+ * Where Firestore's REST API has this project's documents, for the one thing the app reads with a
+ * plain request rather than the SDK: the access switch (src/lib/access.js), read before anyone has
+ * logged in. The emulator's in emulators mode (no key), Google's otherwise, with the web API key.
+ * @type {{ documentsUrl: string, apiKey?: string }}
+ */
+export const firestoreRest = EMULATORS
+  ? { documentsUrl: 'http://127.0.0.1:8080/v1/projects/demo-ag2/databases/(default)/documents' }
+  : { documentsUrl: `https://firestore.googleapis.com/v1/projects/${firebaseConfig.projectId}/databases/(default)/documents`, apiKey: firebaseConfig.apiKey };

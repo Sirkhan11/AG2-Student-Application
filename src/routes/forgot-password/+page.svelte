@@ -1,4 +1,5 @@
 <script>
+  import { onMount } from 'svelte';
   import { sendPasswordResetEmail } from 'firebase/auth';
   import { getFirebaseAuth } from '#lib/firebase/client';
   import { isAllowedEmail, wordingFor } from '#lib/access.js';
@@ -8,8 +9,9 @@
   let email = $state('');
   let message = $state('');
   let loading = $state(false);
-  // What the email box is called follows the access switch (access.js).
+  // What the email box is called follows the access switch (access.js), read as the page opens.
   let words = $derived(wordingFor(access.uniOnly));
+  onMount(() => void loadAccess());
 
   async function resetPassword(event) {
     event.preventDefault();

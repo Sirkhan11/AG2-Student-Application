@@ -17,8 +17,10 @@
   let arrivalDate = $state('');
   let error = $state('');
   let loading = $state(false);
-  // The email box's label and placeholder, and the testing line, follow the access switch (access.js).
+  // The email box's label and placeholder, and the testing line, follow the access switch (access.js),
+  // read as the page opens.
   let words = $derived(wordingFor(access.uniOnly));
+  onMount(() => void loadAccess());
   // Already logged in with a verified account: their details were lost before they verified (the tab
   // closed), and Home sent them here. The form saves the details to that account, with no new login.
   /** @type {{ uid: string, email: string } | null} */

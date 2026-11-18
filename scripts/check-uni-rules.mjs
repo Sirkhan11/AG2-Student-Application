@@ -24,7 +24,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { initializeApp } from 'firebase/app';
 import { applyActionCode, connectAuthEmulator, createUserWithEmailAndPassword, getAuth, reload } from 'firebase/auth';
 import { collection, connectFirestoreEmulator, deleteDoc, doc, getDoc, getDocs, getFirestore, query, setDoc, updateDoc, where } from 'firebase/firestore';
-import { ACCESS_COLLECTION, ACCESS_DOCUMENT, isAllowedEmail, readUniOnly, uniOnlyFrom, wordingFor } from '#lib/access.js';
+import { ACCESS_COLLECTION, ACCESS_DOCUMENT, fieldsFrom, isAllowedEmail, readUniOnly, uniOnlyFrom, wordingFor } from '#lib/access.js';
 import { ALWAYS_OPEN, gateFor, PUBLIC_PAGES } from '#lib/account-gate.js';
 import { firstName, greetingFor } from '#lib/students/greeting.js';
 import { checkVerified, freshVerifiedToken, sendVerification } from '#lib/firebase/verify.js';
@@ -68,6 +68,11 @@ const offline = [
     assert.equal(uniOnlyFrom({ uniOnly: null }), true, 'null');
     assert.equal(uniOnlyFrom({ uniOnly: false }), false, 'exactly false');
     assert.equal(`${ACCESS_COLLECTION}/${ACCESS_DOCUMENT}`, 'config/access', 'the document the rules read');
+    assert.deepEqual(fieldsFrom({ uniOnly: { booleanValue: false }, note: { stringValue: 'x' }, n: { integerValue: '3' }, nothing: { nullValue: null }, when: { timestampValue: '2026-01-01T00:00:00Z' } }),
+      { uniOnly: false, note: 'x', n: 3, nothing: null, when: { timestampValue: '2026-01-01T00:00:00Z' } }, 'the REST API’s fields as plain values');
+    assert.equal(fieldsFrom(undefined), undefined, 'a document with no fields');
+    assert.equal(uniOnlyFrom(fieldsFrom({ uniOnly: { booleanValue: false } })), false);
+    assert.equal(uniOnlyFrom(fieldsFrom({ uniOnly: { stringValue: 'false' } })), true, 'a string, as the console could hold');
     for (const uniOnly of [true, null, undefined]) {
       assert.equal(isAllowedEmail('sam@northumbria.ac.uk', uniOnly), true, `Northumbria, switch ${uniOnly}`);
       assert.equal(isAllowedEmail('sam@gmail.com', uniOnly), false, `Gmail, switch ${uniOnly}`);
@@ -167,7 +172,7 @@ const offline = [
       const page = readFileSync(file, 'utf8');
       assert.match(page, /const uniOnly = await loadAccess\(\);\s*if \(!(?:signedIn && !)?isAllowedEmail\(email, uniOnly\)\) \{\s*(?:error|message) = UNI_EMAIL_MESSAGE;\s*return;/, file);
       assert.match(page, /<label for="email">\{words\.emailLabel\}<\/label>/, `${file}: the label follows the switch`);
-      assert.match(page, /let words = \$derived\(wordingFor\(access\.uniOnly\)\);/, `${file}: from the switch as read`);
+      assert.match(page, /let words = \$derived\(wordingFor\(access\.uniOnly\)\);\s*onMount\(\(\) => void loadAccess\(\)\);/, `${file}: from the switch, read as the page opens`);
       assert.doesNotMatch(page, /Northumbria email address|ending @northumbria/, `${file}: no Northumbria wording typed into the page`);
     }
     assert.match(readFileSync('src/routes/+page.svelte', 'utf8'), /await logIn\(email, password, uniOnly\);/);
@@ -180,7 +185,8 @@ const offline = [
     assert.match(readFileSync('src/lib/matching/mentors.js', 'utf8'), /if \(login && !isAllowedEmail\(login\.email, login\.uniOnly\)\) throw notUniEmail\(\);\n  const answers/, 'before Gemini runs');
     const layout = readFileSync('src/routes/+layout.svelte', 'utf8');
     assert.match(layout, /gateFor\(account, page\.url\.pathname, finishing, page\.data\?\.publicPage === true, access\.uniOnly\)/);
-    assert.match(layout, /onMount\(\(\) => void loadAccess\(\)\);/, 'the switch is read as the app loads');
+    assert.match(layout, /\$effect\(\(\) => \{\s*if \(account && !isUniEmail\(account\.email\)\) void loadAccess\(\);\s*\}\);/, 'the layout reads the switch only for an account from elsewhere');
+    assert.doesNotMatch(layout, /onMount\(\(\) => void loadAccess\(\)\);/, 'not on every page load: a Northumbria student never reads it');
     assert.match(layout, /await freshVerifiedToken\(getFirebaseAuth\(\)\.currentUser\);\s*const saved = await finishSignUp\(db, account\.uid, waitingSignUp\(\)\);/, 'a token that says verified before the save');
     assert.match(layout, /<NorthumbriaOnly email=\{account\.email\} \/>/);
     assert.match(layout, /<VerifyEmail email=\{account\.email\} uniOnly=\{access\.uniOnly\} \/>/);
@@ -227,6 +233,8 @@ const FIRESTORE = process.env.FIRESTORE_EMULATOR_HOST;
 const AUTH = process.env.FIREBASE_AUTH_EMULATOR_HOST;
 const PROJECT = process.env.GCLOUD_PROJECT ?? 'demo-ag2';
 const [firestoreHost, firestorePort] = (FIRESTORE ?? ':').split(':');
+/** Firestore's REST API in the emulator, as the app reads the switch (firestoreRest in client.js). */
+const REST = { documentsUrl: `http://${FIRESTORE}/v1/projects/${PROJECT}/databases/(default)/documents` };
 
 /** Writes a document as the emulator's owner, which the rules don't apply to. @param {string} path @param {Record<string, unknown>} fields */
 async function seed(path, fields) {
@@ -443,7 +451,6 @@ const emulated = [
     for (const [who, claims] of everyone) {
       const db = firestoreAs(/** @type {object | undefined} */ (claims));
       assert.equal((await getDoc(doc(db, 'config', 'access'))).data()?.uniOnly, false, `${who} can read the switch`);
-      assert.equal(await readUniOnly(db), false, `${who}, as the app reads it`);
       assert.equal(await allowed(() => setDoc(doc(db, 'config', 'access'), { uniOnly: true })), false, `${who} can't replace it`);
       assert.equal(await allowed(() => updateDoc(doc(db, 'config', 'access'), { uniOnly: true })), false, `${who} can't change it`);
       assert.equal(await allowed(() => deleteDoc(doc(db, 'config', 'access'))), false, `${who} can't delete it`);
@@ -451,6 +458,8 @@ const emulated = [
       assert.equal(await allowed(() => setDoc(doc(db, 'config', 'other'), { uniOnly: false })), false, `${who} can't write another config document`);
     }
     assert.equal((await ownerRead('config/access'))?.fields?.uniOnly?.booleanValue, false, 'still off, untouched');
+    assert.equal(await readUniOnly(REST), false, 'as the app reads it: one plain request, with no account');
+    assert.equal(await readUniOnly({ documentsUrl: 'http://127.0.0.1:1/nowhere' }), true, 'if it can’t be read at all: Northumbria only');
   }],
   ['Only exactly false opens it: true, a string "false", a missing field and a missing document all mean Northumbria only (a Northumbria account is never affected); flipping it back on deletes nothing', async () => {
     const gmail = token('sw-gmail', 'sam@gmail.com', true);
@@ -458,7 +467,7 @@ const emulated = [
     const northumbriaOnly = async (/** @type {string} */ position) => {
       assert.equal(await allowed(() => getDoc(doc(firestoreAs(gmail), 'students', gmail.sub))), false, `Gmail, ${position}`);
       assert.equal(await allowed(() => getDoc(doc(firestoreAs(uni), 'students', uni.sub))), true, `Northumbria, ${position}`);
-      assert.equal(await readUniOnly(firestoreAs()), true, `as the app reads it, ${position}`);
+      assert.equal(await readUniOnly(REST), true, `as the app reads it, ${position}`);
     };
     await seed('config/access', { uniOnly: true });
     await northumbriaOnly('uniOnly true');
@@ -472,7 +481,7 @@ const emulated = [
     await northumbriaOnly('no document');
     assert.equal((await ownerRead(`students/${gmail.sub}`))?.fields?.name?.stringValue, 'Test', 'the record made while the switch was off is still there');
     await seed('config/access', { uniOnly: false });
-    assert.equal(await readUniOnly(firestoreAs()), false, 'off again, as the app reads it');
+    assert.equal(await readUniOnly(REST), false, 'off again, as the app reads it');
     assert.equal(await allowed(() => getDoc(doc(firestoreAs(gmail), 'students', gmail.sub))), true, 'off again: Gmail is back in, with their record');
     await ownerDelete('config/access');
   }],

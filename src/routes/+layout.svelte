@@ -14,6 +14,7 @@
   import { waitingSignUp } from '#lib/signup/waiting.js';
   import { isAllowedEmail } from '#lib/access.js';
   import { access, loadAccess } from '#lib/access.svelte.js';
+  import { isUniEmail } from '#lib/uni-email.js';
   import NorthumbriaOnly from '#lib/components/NorthumbriaOnly.svelte';
   import VerifyEmail from '#lib/components/VerifyEmail.svelte';
 
@@ -25,8 +26,8 @@
   let finishProblem = $state('');
   // Which screen, for every page (see account-gate.js): the app, nothing yet while Firebase checks,
   // off to log in, or (for a signed-in account) check-your-inbox or Northumbria-only. The access
-  // switch (access.js) says whether an account from elsewhere is let in; it's read below, as the app
-  // loads.
+  // switch (access.js) says whether an account from elsewhere is let in; it's read below, only for
+  // such an account (the forms read it themselves, for their wording).
   let screen = $derived(gateFor(account, page.url.pathname, finishing, page.data?.publicPage === true, access.uniOnly));
 
   // A logged-out visitor on a page that needs an account goes to log in, which brings them back
@@ -49,8 +50,11 @@
   const TITLES = /** @type {Record<string, string>} */ ({ '/privacy': 'Privacy', '/nhs-guide': 'NHS Guide', '/gp-finder': 'Find a GP', '/late-arrivals': 'Arriving late', '/about-you': 'What the chat knows' });
   let title = $derived(TITLES[page.url.pathname] ? `${TITLES[page.url.pathname]} · AG2` : 'AG2');
 
-  // The access switch, read once a page load: the gate and the forms' wording follow it.
-  onMount(() => void loadAccess());
+  // The access switch, read when a signed-in account isn't a Northumbria one (the gate shows nothing
+  // until it's read); a Northumbria account never needs it, so it costs them no read.
+  $effect(() => {
+    if (account && !isUniEmail(account.email)) void loadAccess();
+  });
 
   onMount(() =>
     watchAccount((next) => {

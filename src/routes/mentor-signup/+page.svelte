@@ -23,8 +23,9 @@
   let status = $state('');
   let error = $state('');
   let done = $state(false);
-  // The email box's label and placeholder follow the access switch (access.js).
+  // The email box's label and placeholder follow the access switch (access.js), read as the page opens.
   let words = $derived(wordingFor(access.uniOnly));
+  onMount(() => void loadAccess());
   // Already signed in with a verified Northumbria account (their waiting profile was lost, say, by
   // closing the tab before verifying): the profile goes on that account, with no new login.
   let signedIn = $state(false);

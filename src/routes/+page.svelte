@@ -1,5 +1,6 @@
 
 <script>
+  import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
   import { page } from '$app/state';
   import { safeNextPath } from '#lib/next-path.js';
@@ -13,8 +14,9 @@
   let password = $state('');
   let error = $state('');
   let loggingIn = $state(false);
-  // What the email box is called follows the access switch (access.js).
+  // What the email box is called follows the access switch (access.js), read as the page opens.
   let words = $derived(wordingFor(access.uniOnly));
+  onMount(() => void loadAccess());
 
   async function handleLogin() {
     if (!email || !password) {
