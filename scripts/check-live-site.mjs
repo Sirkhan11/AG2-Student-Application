@@ -202,13 +202,17 @@ try {
   report('...and its "Wrong address?" line follows the switch', await evaluate(has(words.wrongAddress)));
   await clickText('I’ve clicked it');
   report('"I’ve clicked it" before clicking the link says it isn’t verified yet', await waitFor(has('It isn’t verified yet')));
+  // A fresh page load doesn't read the switch for a Northumbria account (access.svelte.js: only the
+  // forms, and the layout for an account from elsewhere, read it), so from here on its heading is
+  // Northumbria's whichever way the switch is: "Check your uni inbox".
+  const AFRESH = wordingFor(null).inboxHeading;
   await go('/home');
-  report('Home still shows only the check-your-inbox screen', await waitFor(`${has(INBOX)} && !${has('How can we help you today?')}`));
+  report(`Home still shows only the check-your-inbox screen ("${AFRESH}" on a fresh page load)`, await waitFor(`${has(AFRESH)} && !${has('How can we help you today?')}`));
   /** @type {string[]} */
   const sentAway = [];
   for (const path of ['/checklist', '/gp-finder', '/mentor', '/societies', '/check-in']) {
     await go(path);
-    if (!(await waitFor(`location.pathname === ${JSON.stringify(path)} && ${has(INBOX)}`, 8000))) sentAway.push(path);
+    if (!(await waitFor(`location.pathname === ${JSON.stringify(path)} && ${has(AFRESH)}`, 8000))) sentAway.push(path);
   }
   report('Signed in but not verified yet, they’re never sent to log in: every page shows check-your-inbox', sentAway.length === 0, sentAway.join(', '));
   await go('/need-help');
