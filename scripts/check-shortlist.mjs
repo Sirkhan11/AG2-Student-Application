@@ -77,6 +77,14 @@ check('"not" and "don’t like" rule out what follows, to the end of the sentenc
   assert.ok(names('Not really into gaming but I love swimming').includes('Swimming'));
 });
 
+check('asking with "not" rules nothing out: "can you not check if there is a gym society?" (Thomas, on the live site), "is there not…", "why not"; "can you not suggest sport" still does', () => {
+  for (const asked of ['can you not check if there is a gym society?', 'Could you not find a gym society for me?', 'is there not a gym society?', 'Is there no gym society?']) {
+    assert.ok(names(asked).includes('Olympic Weightlifting'), asked);
+  }
+  assert.ok(names('why not the gym then').includes('Olympic Weightlifting'));
+  assert.ok(!names('can you not suggest sport please').includes('Sport'), '"please don’t" still rules it out');
+});
+
 check('an answer ("No, I like football") rules nothing out, and nor does "not sure"', () => {
   assert.ok(names('No, I like football mostly').includes('Football'));
   assert.ok(names('Not really, more into swimming').includes('Swimming'));
