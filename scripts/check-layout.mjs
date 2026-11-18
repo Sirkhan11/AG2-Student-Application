@@ -12,6 +12,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { ALWAYS_OPEN, PUBLIC_PAGES } from '#lib/account-gate.js';
+import { HOW_TO } from '#lib/checklist/how-to.js';
 import { TAB_PATHS, TABS } from '#lib/nav-tabs.js';
 import { CHECKED_ON, URGENT_HELP } from '#lib/need-help/urgent.js';
 import { TABS as TRANSITION_TABS, transitionFor } from '#lib/page-transitions.js';
@@ -79,6 +80,21 @@ const offline = [
     assert.match(page, /const dentistHowTo = HOW_TO\.dentist;/, 'the checklist’s steps, not a second copy');
     assert.match(page, /if \(wanted\.kind === 'postcode' \|\| wanted\.kind === 'district'\) dentist = \{ href: findADentistUrl\(wanted\.value\), label: wanted\.value \};/, 'as the chat’s dentist card does');
     assert.doesNotMatch(page, /localStorage|sessionStorage|indexedDB|document\.cookie/, 'nothing typed is stored');
+  }],
+  ['The checklist: each task with a screen in the app has a button that does it (Find a GP; Find one, the dentist tab; Browse, societies; See them, the contacts), ticked tasks keep "How to", and deleting is tucked under "How to", one tap once it’s open', () => {
+    const buttons = Object.fromEntries(Object.entries(HOW_TO).filter(([, how]) => how.do).map(([id, how]) => [id, [how.do?.label, how.do?.href]]));
+    assert.deepEqual(buttons, { gp: ['Find a GP', '/gp-finder'], society: ['Browse', '/societies'], dentist: ['Find one', '/gp-finder?tab=dentist'], contacts: ['See them', '/need-help'] });
+    assert.equal(HOW_TO.enrol.do, undefined, 'Enrol is done on the Student Portal, not a screen in the app: it keeps How to');
+    const page = source('src/routes/checklist/+page.svelte');
+    assert.match(page, /\{#if howTo\?\.do && !task\.done\}\s*<!--[^>]*-->\s*<a class="secondary-button do" href=\{howTo\.do\.href\}>\{howTo\.do\.label\}/, 'the button on the row, until it’s ticked');
+    const rowStart = page.indexOf('<div class="task-row">');
+    const row = page.slice(rowStart, page.indexOf('</div>', rowStart));
+    assert.doesNotMatch(row, /Delete \$\{task\.title\}/, 'no bin on the row');
+    const details = page.slice(page.indexOf('<details class="how-to">'), page.indexOf('</details>'));
+    assert.match(details, /<button class="secondary-button delete-task" type="button" onclick=\{\(\) => removeTask\(task\)\} aria-label=\{`Delete \$\{task\.title\}`\}>Delete this task<\/button>\s*<Ask4HelpLink about=\{task\.title\} \/>/);
+    assert.match(page, /\{#each tasks as task \(task\.id\)\}/, 'ticked tasks stay in the list');
+    assert.match(page, /class:finished=\{task\.done\}/, 'and look done');
+    assert.match(source('src/routes/privacy/+page.svelte'), /<strong>Checklist tasks:<\/strong> open “How to” \(or “Stuck\?”\) under the task on your checklist, then Delete this task\./, 'Privacy says where deleting lives now');
   }]
 ];
 

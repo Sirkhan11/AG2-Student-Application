@@ -9,8 +9,10 @@
 /**
  * steps: what to do, in order; link: where to do it (a page in the app, or an outside page);
  * sources: the official pages the steps come from; chat: something the chat itself can do for it,
- * as a button that asks it (going through the checklist in the chat, checklist-flow.js).
- * @typedef {{ steps: string[], link: Link, sources: Link[], chat?: { label: string, ask: string } }} HowTo
+ * as a button that asks it (going through the checklist in the chat, checklist-flow.js); do: the
+ * screen in the app that gets the task done, as a short button on the task itself on the checklist
+ * page (only tasks with such a screen have one; the rest keep "How to").
+ * @typedef {{ steps: string[], link: Link, sources: Link[], chat?: { label: string, ask: string }, do?: Link }} HowTo
  */
 
 /**
@@ -91,6 +93,7 @@ export const HOW_TO = Object.freeze({
       'The surgery should tell you when you’re registered, usually within 5 days.'
     ],
     link: { label: 'Find a GP', href: '/gp-finder' },
+    do: { label: 'Find a GP', href: '/gp-finder' },
     sources: [SOURCES.registerGp, SOURCES.northumbriaGp]
   },
   'student-id': {
@@ -109,6 +112,7 @@ export const HOW_TO = Object.freeze({
       'To join, go to its page on the Students’ Union website, choose the Student membership and add it to your basket. (Associate membership is for alumni, staff and students elsewhere.)'
     ],
     link: { label: 'Browse societies', href: '/societies' },
+    do: { label: 'Browse', href: '/societies' },
     chat: { label: 'Suggest some for me', ask: 'Could you suggest a society that would suit me?' },
     sources: [SOURCES.society, SOURCES.associate]
   },
@@ -120,6 +124,7 @@ export const HOW_TO = Object.freeze({
       'If you can’t find one, your local integrated care board (ICB), which runs dental services in your area, may be able to tell you where to get an appointment.'
     ],
     link: { label: 'NHS Find a dentist', href: 'https://www.nhs.uk/service-search/find-a-dentist/' },
+    do: { label: 'Find one', href: '/gp-finder?tab=dentist' },
     sources: [SOURCES.dentist]
   },
   contacts: {
@@ -129,6 +134,7 @@ export const HOW_TO = Object.freeze({
       'For police, ambulance or fire in an emergency, call 999. For the police when it isn’t an emergency, call 101.'
     ],
     link: { label: 'Need help now', href: '/need-help' },
+    do: { label: 'See them', href: '/need-help' },
     sources: [SOURCES.security, SOURCES.safety, SOURCES.ask4HelpPhone]
   }
 });

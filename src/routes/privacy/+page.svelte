@@ -133,7 +133,7 @@
     <h2>Deleting it</h2>
     <ul>
       <li><strong>Things the chat remembers:</strong> Delete, or Delete all, on <a href="/about-you">What the chat knows about you</a>.</li>
-      <li><strong>Checklist tasks:</strong> the bin next to each task on your checklist.</li>
+      <li><strong>Checklist tasks:</strong> open “How to” (or “Stuck?”) under the task on your checklist, then Delete this task.</li>
       <li><strong>A request for a different mentor:</strong> Cancel, on Your Mentor.</li>
       <li><strong>The chat:</strong> log out. It’s never saved.</li>
       <li><strong>On your phone:</strong> clear this site’s data in your browser’s settings.</li>
