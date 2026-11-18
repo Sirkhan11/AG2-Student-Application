@@ -376,8 +376,13 @@
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .bar span {
+    .bar span,
+    .ask {
       transition: none;
+    }
+
+    .ask:active {
+      transform: none;
     }
   }
 </style>

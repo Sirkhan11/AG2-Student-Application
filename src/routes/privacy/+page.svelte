@@ -20,7 +20,7 @@
     <h2>Kept in your account</h2>
     <p>In Google’s Firebase database, which is in London (europe-west2):</p>
     <ul>
-      <li><strong>What you gave when you signed up:</strong> your name, Northumbria email address, course, interests, arrival date, whether you’re a home or international student, and whether you’d like a mentor.</li>
+      <li><strong>What you gave when you signed up:</strong> your name, email address, course, interests, arrival date, whether you’re a home or international student, and whether you’d like a mentor.</li>
       <li><strong>Your checklist:</strong> its tasks, which ones you’ve ticked, and any you’ve added.</li>
       <li><strong>Things you asked the chat to remember:</strong> up to 10 short notes, with when you saved each.</li>
       <li>
