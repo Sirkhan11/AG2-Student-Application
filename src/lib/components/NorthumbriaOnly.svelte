@@ -15,6 +15,6 @@
     You’re signed in as <strong>{email}</strong>, which isn’t a Northumbria address. Log out, then log
     in or sign up with your Northumbria email (ending @northumbria.ac.uk).
   </p>
-  <LogoutButton />
+  <div class="logout-slot"><LogoutButton /></div>
   <p><a href="/need-help">Need help now</a></p>
 </main>

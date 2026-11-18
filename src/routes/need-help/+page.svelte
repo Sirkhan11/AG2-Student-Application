@@ -88,21 +88,16 @@
   /* 999: red, as an emergency button should be. */
   .emergency {
     background: var(--danger);
-    box-shadow:
-      0 4px 0 #b3262b,
-      0 10px 20px rgb(229 72 77 / 0.25);
   }
 
   @media (hover: hover) {
     .emergency:hover:not(:disabled) {
-      background: #ec5b60;
+      background: #b91c1c;
     }
   }
 
   .emergency:active {
-    box-shadow:
-      0 1px 0 #b3262b,
-      0 4px 10px rgb(229 72 77 / 0.22);
+    background: #b91c1c;
   }
 
   .nsu-link,

@@ -3,7 +3,7 @@
   import { getFirebaseAuth } from '#lib/firebase/client.js';
   import { checkVerified, sendVerification } from '#lib/firebase/verify.js';
   import LogoutButton from '#lib/components/LogoutButton.svelte';
-  import Mascot from '#lib/components/Mascot.svelte';
+  import Icon from '#lib/components/Icon.svelte';
 
   /**
    * The check-your-inbox screen. The root layout shows it instead of the app while the signed-in
@@ -74,7 +74,7 @@
 </script>
 
 <main class="page">
-  <span class="mascot"><Mascot mood="calm" size={96} /></span>
+  <span class="mail"><Icon name="mail" size={28} /></span>
   <h1>Check your uni inbox</h1>
   <p>
     We’ve sent a link to <strong>{email}</strong>. Click it to verify your address, then come back here
@@ -95,15 +95,20 @@
   {/if}
 
   <p class="muted">Wrong address? Log out, then sign up again with your Northumbria email.</p>
-  <LogoutButton />
+  <div class="logout-slot"><LogoutButton /></div>
   <p><a href="/need-help">Need help now</a></p>
 </main>
 
 <style>
-  .mascot {
-    display: flex;
-    justify-content: center;
-    margin-bottom: 4px;
+  .mail {
+    display: grid;
+    place-items: center;
+    width: 60px;
+    height: 60px;
+    margin: 8px 0 12px;
+    border-radius: 50%;
+    color: var(--violet);
+    background: var(--violet-soft);
   }
 
   .actions {

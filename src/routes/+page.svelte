@@ -6,7 +6,6 @@
   import { logIn } from '#lib/firebase/auth.js';
   import { isUniEmail, UNI_EMAIL_MESSAGE } from '#lib/uni-email.js';
   import Icon from '#lib/components/Icon.svelte';
-  import Mascot from '#lib/components/Mascot.svelte';
 
   let email = $state('');
   let password = $state('');
@@ -45,7 +44,7 @@
 
 <main class="page">
   <header class="hello">
-    <Mascot mood="wave" size={112} />
+    <span class="mark" aria-hidden="true">AG2</span>
     <h1>Welcome back</h1>
     <p class="muted">
       Log in to your AG2 student support account.
@@ -103,9 +102,24 @@
     margin: 8px 0 6px;
   }
 
+  /* The app's mark, as on a phone's home screen. */
+  .mark {
+    display: grid;
+    place-items: center;
+    width: 64px;
+    height: 64px;
+    margin: 16px 0 14px;
+    border-radius: 16px;
+    color: white;
+    background: var(--violet);
+    font-weight: 700;
+    font-size: 20px;
+    letter-spacing: -0.02em;
+  }
+
   .hello h1 {
-    font-size: 36px;
-    margin: 6px 0 4px;
+    font-size: 28px;
+    margin: 0 0 4px;
   }
 
   .hello p {
@@ -128,11 +142,11 @@
     gap: 8px;
     margin-top: 40px;
     padding: 14px;
-    border: 2px solid var(--danger-line);
-    border-radius: var(--radius-pill);
+    border: 1px solid var(--danger-line);
+    border-radius: var(--radius-m);
     background: var(--danger-soft);
     color: var(--danger-ink);
     text-align: center;
-    font-weight: 800;
+    font-weight: 600;
   }
 </style>

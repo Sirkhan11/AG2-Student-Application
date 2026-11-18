@@ -3,7 +3,6 @@
   import BottomNav from '#lib/components/BottomNav.svelte';
   import ChangeMentorRequest from '#lib/components/ChangeMentorRequest.svelte';
   import Icon from '#lib/components/Icon.svelte';
-  import Mascot from '#lib/components/Mascot.svelte';
   import { loadMyMatch } from '#lib/matching/matches.js';
 
   /**
@@ -48,14 +47,14 @@
 
   {:else if view === 'none'}
     <div class="card hero">
-      <Mascot mood="wave" size={92} />
+      <span class="hero-icon"><Icon name="mentor" size={28} /></span>
       <p>You haven’t got a mentor yet. Answer a few short questions and we’ll match you with a student mentor.</p>
       <a class="primary-button" href="/find-mentor">Find a mentor</a>
     </div>
 
   {:else if view === 'waiting'}
     <div class="card hero">
-      <Mascot mood="calm" size={92} />
+      <span class="hero-icon"><Icon name="clock" size={28} /></span>
       <p>We’re finding you a mentor, and we’ll let you know soon.</p>
     </div>
 
@@ -100,13 +99,22 @@
   }
 
   .hero p {
-    margin: 4px 0 14px;
-    font-weight: 600;
+    margin: 8px 0 14px;
+  }
+
+  .hero-icon {
+    display: grid;
+    place-items: center;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    color: var(--violet);
+    background: var(--violet-soft);
   }
 
   /* Matched: a warm card with a badge, and why, ticked off. */
   .matched {
-    background: linear-gradient(160deg, var(--sun-soft) 0%, white 45%);
+    border-color: #d9dcfb;
   }
 
   .matched-head {
@@ -124,10 +132,9 @@
     place-items: center;
     width: 52px;
     height: 52px;
-    border-radius: 18px;
+    border-radius: 14px;
     color: white;
-    background: linear-gradient(135deg, var(--coral) 0%, var(--violet) 100%);
-    box-shadow: 0 6px 14px rgb(107 60 245 / 0.28);
+    background: var(--violet);
     flex: none;
   }
 
@@ -143,7 +150,6 @@
     display: flex;
     gap: 8px;
     align-items: flex-start;
-    font-weight: 600;
   }
 
   .reasons :global(.icon) {

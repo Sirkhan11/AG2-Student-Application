@@ -2,15 +2,15 @@
   import BottomNav from '#lib/components/BottomNav.svelte';
   import Icon from '#lib/components/Icon.svelte';
 
-  /** Each place, with its own icon and colour (the same as Home's tiles). */
+  /** Each place, with its icon (as on Home's tiles). */
   const menu = /** @type {const} */ ([
-    { name: 'NHS Guide', href: '/nhs-guide', icon: 'heart', tone: 'coral' },
-    { name: 'Late Arrivals', href: '/late-arrivals', icon: 'clock', tone: 'sun' },
-    { name: 'GP and Dentist Finder', href: '/gp-finder', icon: 'medical', tone: 'coral' },
-    { name: 'Societies', href: '/societies', icon: 'people', tone: 'violet' },
-    { name: 'Students’ Union', href: '/students-union', icon: 'star', tone: 'sun' },
-    { name: 'What the chat knows about you', href: '/about-you', icon: 'sparkle', tone: 'violet' },
-    { name: 'Privacy', href: '/privacy', icon: 'shield', tone: 'mint' }
+    { name: 'NHS Guide', href: '/nhs-guide', icon: 'heart' },
+    { name: 'Late Arrivals', href: '/late-arrivals', icon: 'clock' },
+    { name: 'GP and Dentist Finder', href: '/gp-finder', icon: 'medical' },
+    { name: 'Societies', href: '/societies', icon: 'people' },
+    { name: 'Students’ Union', href: '/students-union', icon: 'star' },
+    { name: 'What the chat knows about you', href: '/about-you', icon: 'sparkle' },
+    { name: 'Privacy', href: '/privacy', icon: 'shield' }
   ]);
 </script>
 
@@ -21,7 +21,7 @@
   <nav class="menu" aria-label="More">
     {#each menu as item (item.href)}
       <a class="menu-item" href={item.href}>
-        <span class="menu-icon {item.tone}"><Icon name={item.icon} size={22} /></span>
+        <span class="menu-icon"><Icon name={item.icon} size={20} /></span>
         <span class="menu-name">{item.name}</span>
         <span class="go"><Icon name="arrow" size={18} /></span>
       </a>
@@ -30,7 +30,7 @@
 
   <nav class="menu" aria-label="Account">
     <a class="menu-item" href="/">
-      <span class="menu-icon ink"><Icon name="logout" size={22} /></span>
+      <span class="menu-icon"><Icon name="logout" size={20} /></span>
       <span class="menu-name">Log out (prototype only)</span>
     </a>
   </nav>
@@ -44,7 +44,6 @@
     border-radius: var(--radius-l);
     background: white;
     border: 1px solid var(--line);
-    box-shadow: var(--shadow-2);
     overflow: hidden;
   }
 
@@ -52,10 +51,10 @@
     display: flex;
     align-items: center;
     gap: 14px;
-    min-height: 60px;
-    padding: 10px 16px;
+    min-height: 54px;
+    padding: 8px 14px;
     color: var(--ink);
-    font-weight: 800;
+    font-weight: 500;
     transition: background-color var(--dur-1) ease;
   }
 
@@ -75,40 +74,17 @@
   .menu-icon {
     display: grid;
     place-items: center;
-    width: 40px;
-    height: 40px;
-    border-radius: 13px;
+    width: 34px;
+    height: 34px;
+    border-radius: 9px;
+    color: var(--violet);
+    background: var(--violet-soft);
     flex: none;
   }
 
   .go {
     color: var(--ink-3);
     transition: transform var(--dur-2) var(--ease-spring);
-  }
-
-  .coral {
-    background: var(--coral-soft);
-    color: var(--coral-press);
-  }
-
-  .violet {
-    background: var(--violet-soft);
-    color: var(--violet);
-  }
-
-  .sun {
-    background: var(--sun-soft);
-    color: #b07800;
-  }
-
-  .mint {
-    background: var(--mint-soft);
-    color: var(--mint-press);
-  }
-
-  .ink {
-    background: #ecebf2;
-    color: var(--ink-2);
   }
 
   @media (prefers-reduced-motion: no-preference) {

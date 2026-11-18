@@ -319,10 +319,14 @@ try {
   report('The tab says AG2, or the page’s name with AG2', (await evaluate('document.title')) === 'Find a GP · AG2' || (await evaluate('document.title')) === 'AG2', await evaluate('document.title'));
 
   // 4. "← Back": to the page they came from, or Home when opened directly.
-  /** @param {string} path */
+  /**
+   * Back, then waits for the page it goes to (Home or More, which have no "← Back") to be on screen:
+   * the address changes first, and the page a moment later, once the page change has started.
+   * @param {string} path
+   */
   const backTo = async (path) => {
     await clickText('← Back');
-    return waitFor(`location.pathname === ${JSON.stringify(path)}`, 8000);
+    return waitFor(`location.pathname === ${JSON.stringify(path)} && ![...document.querySelectorAll('button, a')].some((e) => e.textContent.trim().includes('← Back'))`, 8000);
   };
   /** @param {string} selector @param {string} path */
   const tap = async (selector, path) => {
@@ -333,7 +337,7 @@ try {
   await waitFor(has('How can we help you today?'));
   const fromHome = (await tap('a.feature-card[href="/gp-finder"]', '/gp-finder')) && (await backTo('/home'));
   await evaluate(`(document.querySelector('a.feature-card[href="/more"]').click(), true)`);
-  await waitFor(`location.pathname === '/more'`);
+  await waitFor(`location.pathname === '/more' && document.querySelector('a.menu-item') !== null`);
   const fromMore = (await tap('a.menu-item[href="/nhs-guide"]', '/nhs-guide')) && (await backTo('/more'));
   await go('/late-arrivals');
   await waitFor(has('← Back'));

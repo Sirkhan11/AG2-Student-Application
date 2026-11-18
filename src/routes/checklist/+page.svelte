@@ -5,7 +5,6 @@
   import Ask4HelpLink from '#lib/components/Ask4HelpLink.svelte';
   import Burst from '#lib/components/Burst.svelte';
   import Icon from '#lib/components/Icon.svelte';
-  import Mascot from '#lib/components/Mascot.svelte';
   import ProgressRing from '#lib/components/ProgressRing.svelte';
   import { buzz } from '#lib/motion.js';
   import { howToFor, isOutside } from '#lib/checklist/how-to.js';
@@ -197,7 +196,7 @@
         <progress class="visually-hidden" aria-labelledby="progress-label" value={completed} max={tasks.length || 1}></progress>
       </div>
       {#if allDone}
-        <span class="cheer"><Mascot mood="cheer" size={62} /></span>
+        <span class="cheer"><Icon name="check" size={22} stroke={3} /></span>
       {/if}
     </div>
 
@@ -346,9 +345,7 @@
   }
 
   .progress-card.all-done {
-    margin-top: 40px;
-    background: linear-gradient(135deg, #e6fbf3 0%, #fff 70%);
-    border-color: #b8ecd8;
+    border-color: #bfe9cf;
   }
 
   .ring {
@@ -368,15 +365,20 @@
   }
 
   .progress-words strong {
-    font-family: var(--font-display);
-    font-size: 20px;
+    font-size: 18px;
+    font-weight: 650;
   }
 
-  /* All done: the mascot peeks over the card's corner, cheering. */
+  /* All done: a green tick badge. */
   .cheer {
-    position: absolute;
-    right: 14px;
-    top: -40px;
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    color: white;
+    background: var(--mint);
+    flex: none;
   }
 
   .tasks {
@@ -393,13 +395,11 @@
     border-radius: var(--radius-m);
     background: white;
     border: 1px solid var(--line);
-    box-shadow: var(--shadow-1);
     transition: background-color var(--dur-2) var(--ease-out), border-color var(--dur-2) var(--ease-out);
   }
 
   .task.done {
-    background: #f6fdf9;
-    border-color: #c9efdf;
+    background: white;
   }
 
   .task-row {
@@ -424,7 +424,7 @@
     height: 30px;
     margin: 0;
     border-radius: 50%;
-    border: 2.5px solid #cbbdf0;
+    border: 2px solid #c9c9d3;
     background: white center / 18px no-repeat;
     cursor: pointer;
     transition:
@@ -447,7 +447,7 @@
     align-items: center;
     cursor: pointer;
     overflow-wrap: anywhere;
-    font-weight: 700;
+    font-weight: 500;
   }
 
   /* Done: a line drawn through it, and the words go quiet. */
@@ -497,9 +497,9 @@
     align-items: center;
     gap: 6px;
     min-height: 34px;
-    color: var(--violet);
-    font-weight: 800;
-    font-size: 15px;
+    color: var(--violet-ink);
+    font-weight: 600;
+    font-size: 14px;
     cursor: pointer;
     list-style: none;
   }
@@ -526,7 +526,7 @@
     padding: 0 12px 12px;
     margin-left: 28px;
     border-radius: var(--radius-s);
-    background: var(--violet-soft);
+    background: var(--panel);
   }
 
   .how-to ol {
@@ -575,8 +575,7 @@
   }
 
   .add label {
-    font-family: var(--font-display);
-    font-size: 18px;
+    font-size: 17px;
   }
 
   .add .primary-button {

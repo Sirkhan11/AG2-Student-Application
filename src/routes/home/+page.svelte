@@ -4,7 +4,6 @@
   import LogoutButton from '#lib/components/LogoutButton.svelte';
   import FinishDetailsCard from '#lib/components/FinishDetailsCard.svelte';
   import Icon from '#lib/components/Icon.svelte';
-  import Mascot from '#lib/components/Mascot.svelte';
   import ProgressRing from '#lib/components/ProgressRing.svelte';
   import { loadChecklist, loadMyName } from '#lib/checklist/store.js';
   import { watchAccount } from '#lib/firebase/auth.js';
@@ -34,24 +33,21 @@
     })
   );
 
-  /** The places to go, each with its own colour. */
+  /** The places to go. Need Help is red, so it's easy to find. */
   const features = /** @type {const} */ ([
-    { title: 'GP Finder', icon: 'medical', href: '/gp-finder', tone: 'coral' },
-    { title: 'Societies', icon: 'people', href: '/societies', tone: 'violet' },
-    { title: 'Students’ Union', icon: 'star', href: '/students-union', tone: 'sun' },
-    { title: 'Your Mentor', icon: 'mentor', href: '/mentor', tone: 'sky' },
+    { title: 'GP Finder', icon: 'medical', href: '/gp-finder', tone: '' },
+    { title: 'Societies', icon: 'people', href: '/societies', tone: '' },
+    { title: 'Students’ Union', icon: 'star', href: '/students-union', tone: '' },
+    { title: 'Your Mentor', icon: 'mentor', href: '/mentor', tone: '' },
     { title: 'Need Help', icon: 'help', href: '/need-help', tone: 'danger' },
-    { title: 'More', icon: 'more', href: '/more', tone: 'ink' }
+    { title: 'More', icon: 'more', href: '/more', tone: '' }
   ]);
 </script>
 
 <main class="page">
   <header class="hero">
-    <div>
-      <h1 class:waiting={greeting === null}>{greeting ?? 'Hi there'}</h1>
-      <p class="lead">How can we help you today?</p>
-    </div>
-    <Mascot mood="wave" size={96} />
+    <h1 class:waiting={greeting === null}>{greeting ?? 'Hi there'}</h1>
+    <p class="lead">How can we help you today?</p>
   </header>
 
   <!-- Only if their sign-up details were lost before they verified their email. -->
@@ -59,12 +55,12 @@
 
   <!-- The chat grows out of this when it's tapped (page-transitions.js). -->
   <a class="ask" href="/check-in">
-    <span class="ask-icon"><Icon name="sparkle" size={26} /></span>
+    <span class="ask-icon"><Icon name="sparkle" size={22} /></span>
     <span class="ask-words">
       <strong>Ask me anything</strong>
-      <span>Tick off tasks, find societies, get help</span>
+      <span>Tasks, societies, help and more</span>
     </span>
-    <span class="ask-go"><Icon name="arrow" size={22} /></span>
+    <span class="ask-go"><Icon name="arrow" size={20} /></span>
   </a>
 
   {#if progress}
@@ -81,13 +77,13 @@
   <div class="feature-grid">
     {#each features as feature (feature.href)}
       <a class="feature-card {feature.tone}" href={feature.href}>
-        <span class="feature-icon"><Icon name={feature.icon} size={24} /></span>
+        <span class="feature-icon"><Icon name={feature.icon} size={22} /></span>
         <strong>{feature.title}</strong>
       </a>
     {/each}
   </div>
 
-  <div class="logout-container">
+  <div class="logout-container logout-slot">
     <LogoutButton />
   </div>
 
@@ -100,87 +96,70 @@
   }
 
   .hero {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    margin: 6px 0 18px;
+    margin: 8px 0 18px;
   }
 
   .hero h1 {
-    font-size: 38px;
-    margin: 0 0 4px;
+    font-size: 30px;
+    margin: 0 0 2px;
   }
 
   .lead {
     margin: 0;
-    color: var(--ink-2);
-    font-weight: 600;
+    color: var(--ink-3);
   }
 
-  /* The way into the chat: bold, warm, and pressable. */
+  /* The way into the chat: like a search box, so it reads as "ask here". */
   .ask {
     display: flex;
     align-items: center;
-    gap: 14px;
-    padding: 18px;
+    gap: 12px;
+    padding: 14px;
     border-radius: var(--radius-l);
-    color: white;
-    background:
-      radial-gradient(120% 140% at 0% 0%, #8f63ff 0%, rgb(143 99 255 / 0) 55%),
-      linear-gradient(120deg, var(--violet) 0%, #7d3bea 55%, var(--coral) 140%);
-    box-shadow:
-      0 5px 0 var(--violet-press),
-      0 16px 32px rgb(75 31 208 / 0.3);
-    transition: transform var(--dur-2) var(--ease-bounce), box-shadow var(--dur-2) var(--ease-out);
+    color: var(--ink);
+    background: white;
+    border: 1px solid var(--line);
+    box-shadow: var(--shadow-2);
+    transition: transform var(--dur-2) var(--ease-spring);
   }
 
   .ask-icon {
     display: grid;
     place-items: center;
-    width: 48px;
-    height: 48px;
-    border-radius: 16px;
-    background: rgb(255 255 255 / 0.18);
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    color: white;
+    background: var(--violet);
     flex: none;
   }
 
   .ask-words {
     display: flex;
     flex-direction: column;
-    gap: 2px;
     flex: 1;
     min-width: 0;
   }
 
   .ask-words strong {
-    font-family: var(--font-display);
-    font-size: 21px;
-    font-weight: 800;
+    font-size: 17px;
+    font-weight: 600;
   }
 
   .ask-words span {
-    font-weight: 600;
-    opacity: 0.88;
+    color: var(--ink-3);
     font-size: 14px;
   }
 
   .ask-go {
-    display: grid;
-    place-items: center;
-    width: 38px;
-    height: 38px;
-    border-radius: 50%;
-    background: white;
-    color: var(--violet);
+    color: var(--ink-3);
     flex: none;
   }
 
-  .ask:active {
-    transform: translateY(4px) scale(0.985);
-    box-shadow:
-      0 1px 0 var(--violet-press),
-      0 6px 14px rgb(75 31 208 / 0.24);
+  .ask:active,
+  .progress:active,
+  .feature-card:active {
+    transform: scale(0.98);
     transition-duration: var(--dur-tap);
   }
 
@@ -188,14 +167,14 @@
     display: flex;
     align-items: center;
     gap: 14px;
-    margin: 16px 0;
-    padding: 14px 16px;
+    margin: 12px 0;
+    padding: 14px;
     border-radius: var(--radius-l);
     background: white;
     border: 1px solid var(--line);
-    box-shadow: var(--shadow-2);
+    box-shadow: var(--shadow-1);
     color: var(--ink);
-    transition: transform var(--dur-2) var(--ease-bounce);
+    transition: transform var(--dur-2) var(--ease-spring);
   }
 
   .progress-words {
@@ -206,78 +185,55 @@
   }
 
   .progress-words strong {
-    font-family: var(--font-display);
-    font-size: 18px;
+    font-size: 16px;
+    font-weight: 600;
   }
 
   .progress-words span {
     color: var(--ink-3);
-    font-weight: 600;
     font-size: 14px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
 
-  .progress:active,
-  .feature-card:active {
-    transform: scale(0.97);
-    transition-duration: var(--dur-tap);
+  .progress > :global(.icon) {
+    color: var(--ink-3);
   }
 
   .feature-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
-    margin-top: 16px;
+    gap: 10px;
+    margin-top: 12px;
   }
 
   .feature-card {
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
-    gap: 18px;
-    min-height: 112px;
-    padding: 16px;
+    gap: 12px;
+    padding: 14px;
     border-radius: var(--radius-l);
     background: white;
     border: 1px solid var(--line);
     box-shadow: var(--shadow-1);
     color: var(--ink);
-    transition: transform var(--dur-2) var(--ease-bounce);
+    transition: transform var(--dur-2) var(--ease-spring);
   }
 
   .feature-card strong {
-    font-family: var(--font-display);
-    font-size: 17px;
+    font-size: 15px;
+    font-weight: 600;
   }
 
   .feature-icon {
     display: grid;
     place-items: center;
-    width: 44px;
-    height: 44px;
-    border-radius: 14px;
-  }
-
-  .coral .feature-icon {
-    background: var(--coral-soft);
-    color: var(--coral-press);
-  }
-
-  .violet .feature-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
     background: var(--violet-soft);
     color: var(--violet);
-  }
-
-  .sun .feature-icon {
-    background: var(--sun-soft);
-    color: #b07800;
-  }
-
-  .sky .feature-icon {
-    background: #e0f0ff;
-    color: #1b6fc2;
   }
 
   .danger .feature-icon {
@@ -285,14 +241,10 @@
     color: var(--danger);
   }
 
-  .ink .feature-icon {
-    background: #ecebf2;
-    color: var(--ink-2);
-  }
-
   .logout-container {
     display: flex;
-    justify-content: center;
+    flex-direction: column;
+    align-items: center;
     margin: 24px 0;
   }
 

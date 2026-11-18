@@ -1,56 +1,42 @@
-/* AG2's look: warm paper, a bold violet with coral, sun and mint, soft depth, friendly type, and
-   motion that springs. Every page uses these tokens and classes, so they change together.
+/* AG2's look: calm and clear. Neutral surfaces, one indigo accent used sparingly, hairline borders
+   and the phone's own font, so it feels like a proper app; the life is in the motion, which springs.
+   Every page uses these tokens and classes, so they change together.
    Motion: transform and opacity only, so it stays smooth on a phone. Anything that moves is inside
    prefers-reduced-motion: no-preference; with Reduce Motion on, things fade or appear instead. */
 
-/* The fonts live in the app (src/lib/assets/fonts, with their licences), so nothing asks Google. */
-@font-face {
-  font-family: 'Bricolage Grotesque';
-  font-style: normal;
-  font-weight: 500 800;
-  font-display: swap;
-  src: url('./lib/assets/fonts/bricolage-grotesque-latin.woff2') format('woff2');
-  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
-}
-
-@font-face {
-  font-family: 'Nunito';
-  font-style: normal;
-  font-weight: 400 900;
-  font-display: swap;
-  src: url('./lib/assets/fonts/nunito-latin.woff2') format('woff2');
-  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
-}
-
 :root {
-  /* Colour */
-  --ink: #1e1638;
-  --ink-2: #4b4466;
-  --ink-3: #6f6889;
-  --paper: #fff8f0;
-  --paper-2: #fdeee0;
+  /* Neutrals */
+  --ink: #15151c;
+  --ink-2: #3f3f4b;
+  --ink-3: #6b6b78;
+  --paper: #f6f6f8;
+  --paper-2: #efeff3;
   --card: #ffffff;
-  --line: #ece4f6;
-  --violet: #6b3cf5;
-  --violet-press: #4b1fd0;
-  --violet-soft: #efe8ff;
-  --violet-ink: #3d1cad;
-  --coral: #ff6a4d;
-  --coral-press: #de4a2c;
-  --coral-soft: #ffe8e1;
-  --sun: #ffc93c;
-  --sun-soft: #fff3d1;
-  --mint: #12b886;
-  --mint-press: #0b8f68;
-  --mint-soft: #dbf6eb;
-  --sky: #3aa0ff;
-  --danger: #e5484d;
-  --danger-soft: #fde9e9;
-  --danger-line: #f3c0bd;
-  --danger-ink: #a8232a;
-  --sun-ink: #6b4a00;
-  --mint-ink: #0a5c43;
-  --panel: #f7f3fd;
+  --line: #e5e5eb;
+  --panel: #f6f6f9;
+
+  /* The accent (still called violet in the code), used sparingly: actions, links, the active tab. */
+  --violet: #4f46e5;
+  --violet-press: #4338ca;
+  --violet-soft: #eef0ff;
+  --violet-ink: #3b33c4;
+
+  /* Colours with a meaning: done, a warning, danger. Coral, sun and sky also colour the confetti. */
+  --mint: #16a34a;
+  --mint-press: #15803d;
+  --mint-soft: #ecfdf3;
+  --mint-ink: #166534;
+  --sun: #f59e0b;
+  --sun-soft: #fff7e8;
+  --sun-ink: #92400e;
+  --coral: #f97362;
+  --coral-press: #dc4a37;
+  --coral-soft: #fff1ef;
+  --sky: #38bdf8;
+  --danger: #dc2626;
+  --danger-soft: #fef2f2;
+  --danger-line: #f6caca;
+  --danger-ink: #991b1b;
 
   /* The first names for these, still used by some components. */
   --primary: var(--violet);
@@ -58,20 +44,23 @@
   --white: #ffffff;
   --border: var(--line);
 
-  /* Depth: soft, slightly violet shadows. */
-  --shadow-1: 0 1px 2px rgb(30 22 56 / 0.06), 0 2px 6px rgb(30 22 56 / 0.05);
-  --shadow-2: 0 2px 4px rgb(30 22 56 / 0.05), 0 10px 24px rgb(75 31 208 / 0.1);
-  --shadow-3: 0 6px 12px rgb(30 22 56 / 0.08), 0 24px 48px rgb(75 31 208 / 0.18);
+  /* Depth: barely there. */
+  --shadow-1: 0 1px 2px rgb(16 16 24 / 0.04);
+  --shadow-2: 0 1px 2px rgb(16 16 24 / 0.04), 0 4px 14px rgb(16 16 24 / 0.05);
+  --shadow-3: 0 8px 28px rgb(16 16 24 / 0.12);
 
   /* Shape */
-  --radius-s: 12px;
-  --radius-m: 18px;
-  --radius-l: 24px;
+  --radius-s: 10px;
+  --radius-m: 14px;
+  --radius-l: 18px;
   --radius-pill: 999px;
 
-  /* Type */
-  --font-display: 'Bricolage Grotesque', 'Nunito', system-ui, sans-serif;
-  --font-body: 'Nunito', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  /* Type: the phone's own font (San Francisco on an iPhone, Roboto on Android), so nothing downloads. */
+  --font-display: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-body: var(--font-display);
+
+  /* The bottom bar's height, above the phone's home bar: pages leave room for it. */
+  --nav-height: 58px;
 
   /* Motion. Springs as CSS easing curves (a damped spring's path, sampled): spring overshoots a
      little (8%), bounce more (20%), for taps and celebrations. */
@@ -86,12 +75,12 @@
 
   font-family: var(--font-body);
   font-size: 16px;
-  line-height: 1.45;
+  line-height: 1.5;
   color: var(--ink);
   background: var(--paper);
+  -webkit-font-smoothing: antialiased;
   -webkit-tap-highlight-color: transparent;
-  text-rendering: optimizeLegibility;
-  /* Radio buttons, checkboxes and sliders in the app's violet. */
+  /* Radio buttons, checkboxes and sliders in the accent. */
   accent-color: var(--violet);
 }
 
@@ -102,12 +91,7 @@
 body {
   margin: 0;
   min-width: 320px;
-  /* Warm paper with two soft glows, fixed so scrolling stays cheap. */
-  background:
-    radial-gradient(60vmax 50vmax at -10% -10%, #ffe1d6 0%, rgb(255 225 214 / 0) 60%),
-    radial-gradient(60vmax 50vmax at 110% 15%, #ece2ff 0%, rgb(236 226 255 / 0) 60%),
-    var(--paper);
-  background-attachment: fixed;
+  background: var(--paper);
 }
 
 button,
@@ -125,25 +109,25 @@ button {
 a {
   color: var(--violet-ink);
   text-decoration: none;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 h1,
 h2,
 h3 {
   font-family: var(--font-display);
-  letter-spacing: -0.015em;
-  line-height: 1.15;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
 }
 
 :focus-visible {
-  outline: 3px solid var(--sun);
+  outline: 2px solid var(--violet);
   outline-offset: 2px;
   border-radius: 6px;
 }
 
 ::selection {
-  background: var(--sun-soft);
+  background: var(--violet-soft);
 }
 
 .page {
@@ -151,18 +135,18 @@ h3 {
   max-width: 480px;
   min-height: 100dvh;
   margin: 0 auto;
-  padding: 22px 18px 120px;
+  padding: 20px 16px calc(var(--nav-height) + 48px + env(safe-area-inset-bottom));
 }
 
 .page h1 {
-  font-size: 32px;
-  font-weight: 800;
-  margin: 0 0 12px;
+  font-size: 28px;
+  font-weight: 700;
+  margin: 0 0 8px;
 }
 
 .page h2 {
-  font-size: 21px;
-  font-weight: 750;
+  font-size: 19px;
+  font-weight: 650;
 }
 
 .muted {
@@ -174,94 +158,82 @@ h3 {
   background: var(--card);
   border: 1px solid var(--line);
   border-radius: var(--radius-l);
-  box-shadow: var(--shadow-2);
-  padding: 18px;
-  margin: 14px 0;
+  box-shadow: var(--shadow-1);
+  padding: 16px;
+  margin: 12px 0;
 }
 
-/* Buttons that feel pressable: a ledge underneath that they sink into, springing back up. */
+/* Buttons: flat, with a quick springy press. */
 .primary-button,
 .secondary-button {
   -webkit-user-select: none;
   user-select: none;
   touch-action: manipulation;
+  text-align: center;
+  font-weight: 600;
   transition:
-    transform var(--dur-2) var(--ease-bounce),
-    box-shadow var(--dur-2) var(--ease-out),
+    transform var(--dur-2) var(--ease-spring),
     background-color var(--dur-1) ease,
-    color var(--dur-1) ease;
+    border-color var(--dur-1) ease;
 }
 
 .primary-button {
   display: block;
   width: 100%;
-  padding: 15px 18px;
+  padding: 13px 18px;
   border: 0;
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius-m);
   background: var(--violet);
   color: white;
-  font-weight: 800;
-  font-size: 17px;
-  letter-spacing: 0.01em;
-  text-align: center;
-  box-shadow:
-    0 4px 0 var(--violet-press),
-    0 10px 22px rgb(75 31 208 / 0.28);
+  font-size: 16px;
 }
 
 .secondary-button {
   display: inline-block;
-  padding: 10px 16px;
-  border: 2px solid var(--line);
-  border-radius: var(--radius-pill);
+  padding: 9px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-s);
   background: white;
   color: var(--violet-ink);
-  font-weight: 800;
-  text-align: center;
-  box-shadow: 0 3px 0 var(--line);
+  font-size: 15px;
 }
 
 .primary-button:active:not(:disabled),
 .secondary-button:active:not(:disabled) {
+  transform: scale(0.97);
   transition-duration: var(--dur-tap);
-  transition-timing-function: ease-out;
 }
 
 .primary-button:active:not(:disabled) {
-  transform: translateY(3px) scale(0.985);
-  box-shadow:
-    0 1px 0 var(--violet-press),
-    0 4px 10px rgb(75 31 208 / 0.22);
+  background: var(--violet-press);
 }
 
 .secondary-button:active:not(:disabled) {
-  transform: translateY(2px) scale(0.97);
-  box-shadow: 0 1px 0 var(--line);
+  background: var(--panel);
 }
 
 @media (hover: hover) {
   .primary-button:hover:not(:disabled) {
-    background: #7a50ff;
+    background: var(--violet-press);
   }
 
   .secondary-button:hover:not(:disabled) {
-    border-color: #d9ccf5;
+    border-color: #d4d4dc;
   }
 }
 
 .primary-button:disabled,
 .secondary-button:disabled {
   cursor: not-allowed;
-  opacity: 0.55;
-  box-shadow: none;
+  opacity: 0.5;
 }
 
 .field {
   display: block;
   width: 100%;
-  padding: 13px 14px;
-  margin: 8px 0 16px;
-  border: 2px solid var(--line);
+  padding: 12px 14px;
+  margin: 6px 0 16px;
+  border: 1px solid #d9d9e0;
   border-radius: var(--radius-m);
   background: white;
   transition:
@@ -272,11 +244,11 @@ h3 {
 .field:focus {
   outline: none;
   border-color: var(--violet);
-  box-shadow: 0 0 0 4px var(--violet-soft);
+  box-shadow: 0 0 0 3px rgb(79 70 229 / 0.15);
 }
 
 label {
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .error {
@@ -285,6 +257,17 @@ label {
 
 .success {
   color: var(--mint-press);
+}
+
+/* The shared Log out button (LogoutButton.svelte) wherever it's placed: a quiet secondary button. */
+.logout-slot button {
+  padding: 9px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-s);
+  background: white;
+  color: var(--ink-2);
+  font-weight: 600;
+  font-size: 15px;
 }
 
 /* Read out by screen readers but not shown, such as "(opens in a new tab)" on links. */

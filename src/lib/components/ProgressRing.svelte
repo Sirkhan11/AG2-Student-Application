@@ -76,7 +76,7 @@
 
   .count {
     font-family: var(--font-display);
-    font-weight: 800;
+    font-weight: 650;
     font-size: var(--count-size, 19px);
     color: var(--ink);
   }

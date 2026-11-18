@@ -15,7 +15,6 @@
   import CalendarCard from '#lib/components/CalendarCard.svelte';
   import Burst from '#lib/components/Burst.svelte';
   import Icon from '#lib/components/Icon.svelte';
-  import Mascot from '#lib/components/Mascot.svelte';
   import { arrive, buzz, playedOnce } from '#lib/motion.js';
   import { onMount } from 'svelte';
   import { createChecklistEdits } from '#lib/checkin/checklist-edits.js';
@@ -535,7 +534,7 @@
 
 <main class="page chat-page">
   <header class="chat-head">
-    <span class="avatar"><Mascot size={50} /></span>
+    <span class="avatar"><Icon name="sparkle" size={22} /></span>
     <div>
       <h1>Check-in Chat</h1>
       <p class="muted">
@@ -769,7 +768,7 @@
   .chat-page {
     display: flex;
     flex-direction: column;
-    padding-bottom: calc(96px + env(safe-area-inset-bottom));
+    padding-bottom: calc(var(--nav-height) + 10px + env(safe-area-inset-bottom));
   }
 
   .chat-head {
@@ -780,7 +779,7 @@
   }
 
   .chat-head h1 {
-    font-size: 26px;
+    font-size: 22px;
     margin: 0;
   }
 
@@ -791,11 +790,11 @@
   .avatar {
     display: grid;
     place-items: center;
-    width: 58px;
-    height: 58px;
+    width: 44px;
+    height: 44px;
     border-radius: 50%;
-    background: white;
-    box-shadow: var(--shadow-2);
+    color: white;
+    background: var(--violet);
     flex: none;
   }
 
@@ -803,7 +802,7 @@
     margin: 10px 0 4px;
     padding: 10px 14px;
     border-radius: var(--radius-m);
-    background: rgb(255 255 255 / 0.7);
+    background: white;
     border: 1px solid var(--line);
   }
 
@@ -811,7 +810,7 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    font-weight: 800;
+    font-weight: 600;
     color: var(--ink-2);
     cursor: pointer;
     list-style: none;
@@ -843,29 +842,26 @@
     position: relative;
     align-self: flex-start;
     max-width: 86%;
-    padding: 12px 15px;
-    border-radius: 20px 20px 20px 6px;
+    padding: 10px 14px;
+    border-radius: 18px 18px 18px 6px;
     background: white;
     border: 1px solid var(--line);
-    box-shadow: var(--shadow-1);
-    font-weight: 600;
     color: var(--ink);
     transform-origin: 0% 100%;
   }
 
   .bubble.user {
     align-self: flex-end;
-    border: 0;
-    border-radius: 20px 20px 6px 20px;
+    border-color: var(--violet);
+    border-radius: 18px 18px 6px 18px;
     color: white;
-    background: linear-gradient(135deg, #8457ff 0%, var(--violet) 70%);
-    box-shadow: 0 6px 16px rgb(75 31 208 / 0.22);
+    background: var(--violet);
     transform-origin: 100% 100%;
   }
 
   .bubble.safety {
-    background: var(--coral-soft);
-    border-color: #f5b6a7;
+    background: var(--danger-soft);
+    border-color: var(--danger-line);
   }
 
   .bubble.failed {
@@ -878,9 +874,9 @@
     align-items: center;
     gap: 10px;
     background: var(--mint-soft);
-    border-color: #b8ecd8;
-    color: #0a5c43;
-    font-weight: 800;
+    border-color: #bfe9cf;
+    color: var(--mint-ink);
+    font-weight: 600;
   }
 
   /* Confetti only for a tick that's just happened, not one they scroll back to. */
@@ -892,8 +888,8 @@
     position: relative;
     display: grid;
     place-items: center;
-    width: 26px;
-    height: 26px;
+    width: 24px;
+    height: 24px;
     border-radius: 50%;
     background: var(--mint);
     color: white;
@@ -901,8 +897,8 @@
   }
 
   .bubble.matched {
-    background: linear-gradient(135deg, var(--sun-soft) 0%, white 75%);
-    border-color: #ffe08a;
+    background: var(--violet-soft);
+    border-color: #d9dcfb;
   }
 
   /* A sparkle on Gemini's first reply, only as it arrives: it pops, twirls and fades. */
@@ -963,8 +959,9 @@
   }
 
   .chip {
-    border-color: #d8cbff;
-    color: var(--violet);
+    border-color: #d9dcfb;
+    border-radius: var(--radius-pill);
+    color: var(--violet-ink);
     background: white;
   }
 
@@ -986,16 +983,14 @@
   /* The message box stays at the bottom, above the bar, while the conversation scrolls. */
   .composer {
     position: sticky;
-    bottom: calc(96px + env(safe-area-inset-bottom));
+    bottom: calc(var(--nav-height) + 10px + env(safe-area-inset-bottom));
     z-index: 5;
     display: flex;
     align-items: center;
     gap: 8px;
     padding: 6px 6px 6px 8px;
     border-radius: var(--radius-pill);
-    background: rgb(255 255 255 / 0.94);
-    -webkit-backdrop-filter: blur(12px);
-    backdrop-filter: blur(12px);
+    background: white;
     border: 1px solid var(--line);
     box-shadow: var(--shadow-2);
   }
@@ -1017,25 +1012,23 @@
   .send {
     display: grid;
     place-items: center;
-    width: 44px;
-    height: 44px;
+    width: 40px;
+    height: 40px;
     border: 0;
     border-radius: 50%;
     color: white;
     background: var(--violet);
-    box-shadow: 0 3px 0 var(--violet-press);
     flex: none;
     transition: transform var(--dur-2) var(--ease-bounce);
   }
 
   .send:active:not(:disabled) {
-    transform: translateY(2px) scale(0.92);
+    transform: scale(0.9);
     transition-duration: var(--dur-tap);
   }
 
   .send:disabled {
-    opacity: 0.45;
-    box-shadow: none;
+    opacity: 0.4;
   }
 
   .stop {
@@ -1045,7 +1038,6 @@
   }
 
   .need-help {
-    font-weight: 800;
     white-space: nowrap;
   }
 
