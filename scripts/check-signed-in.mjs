@@ -260,8 +260,8 @@ try {
   await press('Ask the coordinator to match me');
   const onToChat = await waitFor(`location.pathname === '/check-in' && ${has('We’re finding you a mentor')}`, 60000);
   report('The Find a mentor page still works with the shared steps: Gemini can’t here, so the coordinator, then on to the chat', formShown && pageFailed && onToChat);
-  await go('/home');
-  await waitFor(has('How can we help you today?'));
+  await go('/more');
+  await waitFor(has('Log out'));
   await clickText('Log out');
   await waitFor(`location.pathname === '/'`);
 
@@ -340,21 +340,22 @@ try {
   };
   await go('/home');
   await waitFor(has('How can we help you today?'));
-  const fromHome = (await tap('a.feature-card[href="/gp-finder"]', '/gp-finder')) && (await backTo('/home'));
-  await evaluate(`(document.querySelector('a.feature-card[href="/more"]').click(), true)`);
+  await waitFor(`document.querySelector('.dash a[href="/mentor"]')`);
+  const fromHome = (await tap('.dash a[href="/mentor"]', '/mentor')) && (await backTo('/home'));
+  await evaluate(`(document.querySelector('nav.bottom-nav a[href="/more"]').click(), true)`);
   await waitFor(`location.pathname === '/more' && document.querySelector('a.menu-item') !== null`);
   const fromMore = (await tap('a.menu-item[href="/nhs-guide"]', '/nhs-guide')) && (await backTo('/more'));
   await go('/late-arrivals');
   await waitFor(has('← Back'));
   const direct = await backTo('/home');
-  const help = (await tap('a.feature-card[href="/need-help"]', '/need-help')) && (await backTo('/home'));
-  report('"← Back" returns to where they came from (GP finder to Home, NHS guide to More, Need help to Home); opened directly, it goes Home', fromHome && fromMore && direct && help,
+  const help = (await tap('a.help-pill[href="/need-help"]', '/need-help')) && (await backTo('/home'));
+  report('"← Back" returns to where they came from (Your mentor to Home, NHS guide to More, Need help to Home); opened directly, it goes Home', fromHome && fromMore && direct && help,
     `${fromHome} ${fromMore} ${direct} ${help}`);
 
   // 5. Lost details: "Hi there", the card, and saving them on the sign-up page. On the way, Back after
   //    being sent to log in goes Home, not back to the log-in page.
-  await go('/home');
-  await waitFor(has('How can we help you today?'));
+  await go('/more');
+  await waitFor(has('Log out'));
   await clickText('Log out');
   await waitFor(`location.pathname === '/'`);
   await go('/gp-finder');
@@ -373,7 +374,9 @@ try {
   await sleep(800);
   report('Details lost: Home says "Hi there" and asks; the sign-up page saves them to the account, and Home then says "Hi Alex"', asked && form && saved && !(await evaluate(has('Finish your details'))));
 
-  // 6. Finding a mentor in the chat.
+  // 6. Finding a mentor in the chat. (Log out is on More: the bar's tab, so this stays one page load.)
+  await evaluate(`(document.querySelector('nav.bottom-nav a[href="/more"]').click(), true)`);
+  await waitFor(`location.pathname === '/more' && ${has('Log out')}`);
   await clickText('Log out');
   await waitFor(`location.pathname === '/'`);
   await logIn(nia);
@@ -444,8 +447,8 @@ try {
     `${reviewAgain} ${nothingBefore} ${quietBefore} ${geminiFailed} ${result} ${match?.fields?.status?.stringValue} ${answers.length}`);
 
   // A mentor account isn't offered a mentor.
-  await go('/home');
-  await waitFor(has('How can we help you today?'));
+  await go('/more');
+  await waitFor(has('Log out'));
   await clickText('Log out');
   await waitFor(`location.pathname === '/'`);
   await logIn(mo);

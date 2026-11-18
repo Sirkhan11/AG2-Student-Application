@@ -1,6 +1,7 @@
 <script>
   import BottomNav from '#lib/components/BottomNav.svelte';
   import Icon from '#lib/components/Icon.svelte';
+  import LogoutButton from '#lib/components/LogoutButton.svelte';
 
   /** Each place, with its icon. Your Mentor is here (and on Home) since Societies took its place in the bottom bar (nav-tabs.js). */
   const menu = /** @type {const} */ ([
@@ -29,12 +30,10 @@
     {/each}
   </nav>
 
-  <nav class="menu" aria-label="Account">
-    <a class="menu-item" href="/">
-      <span class="menu-icon"><Icon name="logout" size={20} /></span>
-      <span class="menu-name">Log out (prototype only)</span>
-    </a>
-  </nav>
+  <!-- The real log out (it signs out of Firebase and forgets what waits on this device), now that Home has no Log out. -->
+  <div class="logout-slot">
+    <LogoutButton />
+  </div>
 
   <BottomNav />
 </main>

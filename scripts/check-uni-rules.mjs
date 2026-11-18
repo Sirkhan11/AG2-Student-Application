@@ -138,7 +138,7 @@ const offline = [
     assert.doesNotMatch(home, /Hi Sam<\/h1>/, 'no name typed into the page');
     assert.match(home, /<h1 class:waiting=\{greeting === null\}>\{greeting \?\? 'Hi there'\}<\/h1>/);
     assert.match(home, /\.waiting \{\s*visibility: hidden;/);
-    assert.match(home, /greeting = greetingFor\(await loadMyName\(\)\);/);
+    assert.match(home, /const record = await loadMyRecord\(\);\s*greeting = greetingFor\(record\.name\);/, 'from their record, which has only the first name (loadMyRecord)');
     for (const file of readdirSync('src/lib/checkin').map((name) => `src/lib/checkin/${name}`)) {
       assert.doesNotMatch(readFileSync(file, 'utf8'), /loadMyName|greetingFor/, file);
     }

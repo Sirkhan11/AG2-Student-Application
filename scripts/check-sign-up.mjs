@@ -97,7 +97,9 @@ const offline = [
     assert.equal(needsDetails({ course: 'Law', studentType: 'home' }, false), true, 'no name');
     assert.equal(needsDetails(undefined, true), false, 'a mentor');
     assert.match(source('src/lib/components/FinishDetailsCard.svelte'), /home or international student/, 'the card says what it asks');
-    assert.match(source('src/routes/home/+page.svelte'), /<FinishDetailsCard \/>\s*<!--[^>]*-->\s*<FindMentorCard \/>/, 'Home has both cards');
+    const home = source('src/routes/home/+page.svelte');
+    assert.match(home, /<FinishDetailsCard \/>/, 'Home has the card');
+    assert.match(home, /wantsMentor \? 'You asked to be matched with a second- or third-year mentor\.' : /, 'and its mentor card says so when they ticked the box');
   }],
   ['The interests to pick are everyday words the chat’s suggestions understand: each gives it societies, clubs or services to suggest', () => {
     assert.ok(INTEREST_CHOICES.length >= 8 && INTEREST_CHOICES.length <= 12, `${INTEREST_CHOICES.length} choices`);
@@ -373,10 +375,8 @@ async function inTheBrowser(where) {
       const saved = await recordOf(uid);
       report('Once verified, the record is saved with the answers (home, the course, the three interests, a mentor wanted) and Home greets them by name',
         home && saved?.studentType === 'home' && saved?.wantsMentor === true && saved?.course === 'BSc Computer Science' && JSON.stringify(saved?.interests) === JSON.stringify(['Climbing', 'Gaming', 'Chess']) && saved?.name === 'New Student', JSON.stringify(saved));
-      report('Home offers to find their mentor (they ticked the box), with Find my mentor going to the questions', (await page.waitFor(page.has('Find your mentor'))) && (await page.evaluate(`[...document.querySelectorAll('a')].some((a) => a.textContent.trim() === 'Find my mentor' && a.getAttribute('href') === '/find-mentor')`)));
+      report('Home’s mentor card says they asked to be matched, with Find my mentor going to the questions', (await page.waitFor(page.has('You asked to be matched with a second- or third-year mentor.'))) && (await page.evaluate(`[...document.querySelectorAll('a')].some((a) => a.textContent.trim() === 'Find my mentor' && a.getAttribute('href') === '/find-mentor')`)));
       report('...and no Finish your details card: nothing is missing', !(await page.evaluate(page.has('Finish your details'))));
-      await page.press('Not now');
-      report('"Not now" hides the mentor offer', await page.waitFor(`!${page.has('Find your mentor')}`));
       await page.go('/nhs-guide');
       await page.waitFor(`document.querySelector('main section h2')`);
       report('A home student’s NHS guide starts with Register with a GP, with the visa section further down under its own title', (await firstSection(page)) === 'Register with a GP' && (await page.evaluate(page.has(VISA_SECTION_TITLE))), await firstSection(page));
@@ -395,7 +395,7 @@ async function inTheBrowser(where) {
       await page.go('/about-you');
       report('What the chat knows about you says they said they’re an international student, with a way to change it', (await page.waitFor(page.has('You said you’re an international student'))) && (await page.evaluate(`[...document.querySelectorAll('a')].some((a) => a.textContent.trim() === 'change them' && a.getAttribute('href') === '/signup')`)));
       await page.go('/home');
-      report('No mentor offer for a student who didn’t tick the box', (await page.waitFor(page.has('Hi Ines'))) && !(await page.evaluate(page.has('Find your mentor'))));
+      report('A student who didn’t tick the box still sees the mentor card, without "You asked"', (await page.waitFor(page.has('Hi Ines'))) && (await page.waitFor(page.has('Find my mentor'))) && !(await page.evaluate(page.has('You asked to be matched'))));
     });
 
     // 3. An account from before the questions: asked once, with what's known filled in.
