@@ -184,8 +184,9 @@ export async function openChrome(base) {
       await evaluate(`(document.querySelector('form button[type=submit]').click(), true)`);
       return waitFor(`location.pathname === '/home'`);
     },
+    /** Logs out from More, where Log out lives (Home is a dashboard without it), and waits for the log-in page. */
     async logOut() {
-      await page.go('/home');
+      await page.go('/more');
       await waitFor(has('Log out'));
       await evaluate(`([...document.querySelectorAll('button, a')].find((el) => el.textContent.trim() === 'Log out')?.click(), true)`);
       return waitFor(`location.pathname === '/'`);

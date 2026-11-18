@@ -9,7 +9,7 @@
   import { buzz } from '#lib/motion.js';
   import { howToFor, isOutside } from '#lib/checklist/how-to.js';
   import { watchSignedIn } from '#lib/firebase/auth.js';
-  import { loadChecklist, saveChange } from '#lib/checklist/store.js';
+  import { loadMyRecord, saveChange } from '#lib/checklist/store.js';
   import { createChecklistSync } from '#lib/checklist/sync.js';
   import {
     ChecklistError,
@@ -71,11 +71,16 @@
     })
   );
 
+  /** Home or international, from sign-up (student-type.js): the how-tos leave out or add what applies. */
+  let studentType = $state(/** @type {import('#lib/students/student-type.js').StudentType | null} */ (null));
+
   async function load() {
     loading = true;
     loadFailed = false;
     try {
-      sync = createChecklistSync(await loadChecklist(), {
+      const record = await loadMyRecord();
+      studentType = record.studentType;
+      sync = createChecklistSync(record.checklist.tasks, {
         save: saveChange,
         onUpdate: (state) => {
           if (waiting > 0 && state.waiting === 0 && state.problem === null) announcement = 'All changes saved.';
@@ -168,7 +173,7 @@
   <h1>Your checklist</h1>
   <p class="muted">
     Complete these tasks to help you settle in. Your checklist is saved to your account, so it’s the
-    same on any device. Open “How to” under a task for the steps.
+    same on any device. Tap a task’s button to do it, and open “How to” under it for the steps (and to delete it).
   </p>
   <Ask4HelpLink />
 
@@ -241,7 +246,7 @@
               </div>
             </form>
           {:else}
-            {@const howTo = howToFor(task.id)}
+            {@const howTo = howToFor(task.id, studentType)}
             <div class="task-row">
               <span class="box">
                 <input
@@ -255,6 +260,10 @@
                 {/if}
               </span>
               <label for={`task-${task.id}`} class:finished={task.done}><span class="title">{task.title}</span></label>
+              {#if howTo?.do && !task.done}
+                <!-- The screen in the app that gets it done, as on the wireframe ("Find one", "Browse"). -->
+                <a class="secondary-button do" href={howTo.do.href}>{howTo.do.label}<span class="visually-hidden">: {task.title}</span></a>
+              {/if}
               {#if !isDefault(task.id)}
                 <button
                   id={`edit-button-${task.id}`}
@@ -265,9 +274,6 @@
                   <Icon name="edit" size={19} />
                 </button>
               {/if}
-              <button class="icon-button delete" onclick={() => removeTask(task)} aria-label={`Delete ${task.title}`}>
-                <Icon name="trash" size={19} />
-              </button>
             </div>
             <!-- How to do it (the standard tasks: how-to.js), and Ask4Help for every task. -->
             <details class="how-to">
@@ -278,6 +284,9 @@
                     <li>{step}</li>
                   {/each}
                 </ol>
+                {#if howTo.pointer}
+                  <p class="pointer"><a href={howTo.pointer.href}>{howTo.pointer.label}</a></p>
+                {/if}
                 {#if isOutside(howTo.link)}
                   <a class="secondary-button" href={howTo.link.href} target="_blank" rel="noopener noreferrer" aria-label={`${howTo.link.label} (opens in a new tab)`}>{howTo.link.label} ↗</a>
                 {:else}
@@ -290,6 +299,8 @@
                   {/each}
                 </p>
               {/if}
+              <!-- Deleting lives here rather than on every row, so the bin isn't the most prominent thing on the page. -->
+              <button class="secondary-button delete-task" type="button" onclick={() => removeTask(task)} aria-label={`Delete ${task.title}`}>Delete this task</button>
               <Ask4HelpLink about={task.title} />
             </details>
           {/if}
@@ -478,8 +489,24 @@
     color: var(--violet);
   }
 
-  .delete:hover {
-    color: var(--danger);
+  /* The button that does the task: small, beside its name. */
+  .do {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    width: auto;
+    min-height: 36px;
+    margin: 0;
+    padding: 6px 12px;
+    font-size: 14px;
+  }
+
+  .delete-task {
+    display: inline-flex;
+    align-items: center;
+    width: auto;
+    margin: 8px 0 4px;
+    color: var(--danger-ink);
   }
 
   .edit {

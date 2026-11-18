@@ -9,8 +9,10 @@
 /**
  * steps: what to do, in order; link: where to do it (a page in the app, or an outside page);
  * sources: the official pages the steps come from; chat: something the chat itself can do for it,
- * as a button that asks it (going through the checklist in the chat, checklist-flow.js).
- * @typedef {{ steps: string[], link: Link, sources: Link[], chat?: { label: string, ask: string } }} HowTo
+ * as a button that asks it (going through the checklist in the chat, checklist-flow.js); do: the
+ * screen in the app that gets the task done, as a short button on the task itself on the checklist
+ * page (only tasks with such a screen have one; the rest keep "How to").
+ * @typedef {{ steps: string[], link: Link, sources: Link[], chat?: { label: string, ask: string }, do?: Link }} HowTo
  */
 
 /**
@@ -91,6 +93,7 @@ export const HOW_TO = Object.freeze({
       'The surgery should tell you when you’re registered, usually within 5 days.'
     ],
     link: { label: 'Find a GP', href: '/gp-finder' },
+    do: { label: 'Find a GP', href: '/gp-finder' },
     sources: [SOURCES.registerGp, SOURCES.northumbriaGp]
   },
   'student-id': {
@@ -109,6 +112,7 @@ export const HOW_TO = Object.freeze({
       'To join, go to its page on the Students’ Union website, choose the Student membership and add it to your basket. (Associate membership is for alumni, staff and students elsewhere.)'
     ],
     link: { label: 'Browse societies', href: '/societies' },
+    do: { label: 'Browse', href: '/societies' },
     chat: { label: 'Suggest some for me', ask: 'Could you suggest a society that would suit me?' },
     sources: [SOURCES.society, SOURCES.associate]
   },
@@ -120,6 +124,7 @@ export const HOW_TO = Object.freeze({
       'If you can’t find one, your local integrated care board (ICB), which runs dental services in your area, may be able to tell you where to get an appointment.'
     ],
     link: { label: 'NHS Find a dentist', href: 'https://www.nhs.uk/service-search/find-a-dentist/' },
+    do: { label: 'Find one', href: '/gp-finder?tab=dentist' },
     sources: [SOURCES.dentist]
   },
   contacts: {
@@ -129,12 +134,46 @@ export const HOW_TO = Object.freeze({
       'For police, ambulance or fire in an emergency, call 999. For the police when it isn’t an emergency, call 101.'
     ],
     link: { label: 'Need help now', href: '/need-help' },
+    do: { label: 'See them', href: '/need-help' },
     sources: [SOURCES.security, SOURCES.safety, SOURCES.ask4HelpPhone]
   }
 });
 
-/** A task's how-to, or null for one of their own. @param {string} id */
-export const howToFor = (id) => HOW_TO[id] ?? null;
+/**
+ * Steps that only apply to students who need a UK student visa, by task. A home student (what they
+ * said at sign-up: student-type.js) doesn't see them; an international student, or one who hasn't said,
+ * does. Each must be one of that task's steps: check-sign-up.mjs checks.
+ */
+export const VISA_ONLY_STEPS = Object.freeze({ enrol: Object.freeze([HOW_TO.enrol.steps[0]]) });
+
+/**
+ * A page in the app that helps international students with a task, by task: Arriving late, for the CAS
+ * deadline and catching up, which only applies to students on a visa. The app can't tell whether anyone
+ * is late (it doesn't know the deadline), so it points to the guide rather than deciding.
+ * @type {Readonly<Record<string, Link>>}
+ */
+export const INTERNATIONAL_POINTERS = Object.freeze({
+  enrol: { label: 'Arriving after your CAS deadline, or after teaching has started? Read Arriving late', href: '/late-arrivals' }
+});
+
+/**
+ * A task's how-to for this student, or null for one of their own. With what they said at sign-up: a
+ * home student doesn't get the visa-only steps (VISA_ONLY_STEPS); an international student also gets
+ * the pointer for them (INTERNATIONAL_POINTERS), or null.
+ * @param {string} id
+ * @param {import('#lib/students/student-type.js').StudentType | null} [studentType]
+ * @returns {(HowTo & { pointer: Link | null }) | null}
+ */
+export function howToFor(id, studentType = null) {
+  const howTo = HOW_TO[id];
+  if (!howTo) return null;
+  const visaOnly = VISA_ONLY_STEPS[/** @type {keyof typeof VISA_ONLY_STEPS} */ (id)] ?? [];
+  return {
+    ...howTo,
+    steps: studentType === 'home' ? howTo.steps.filter((step) => !visaOnly.includes(step)) : howTo.steps,
+    pointer: studentType === 'international' ? (INTERNATIONAL_POINTERS[id] ?? null) : null
+  };
+}
 
 /** Whether a link leaves the app (opens in a new tab). @param {Link} link */
 export const isOutside = (link) => /^https?:\/\//.test(link.href);

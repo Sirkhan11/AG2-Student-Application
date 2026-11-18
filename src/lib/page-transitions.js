@@ -8,8 +8,10 @@
 //   the other way.
 // With Reduce Motion on, every one is a short fade instead: nothing slides or grows.
 
-/** The bottom bar's pages: moving between them is a crossfade, not a slide. */
-export const TABS = Object.freeze(['/home', '/checklist', '/check-in', '/mentor', '/more']);
+import { TAB_PATHS } from '#lib/nav-tabs.js';
+
+/** The bottom bar's pages (nav-tabs.js, the one place they're listed): moving between them is a crossfade, not a slide. */
+export const TABS = TAB_PATHS;
 
 /** How deep a page is: the bar's pages are the top, and each part of a path goes one deeper. @param {string} path */
 const depth = (path) => (TABS.includes(path) ? 0 : path.split('/').filter(Boolean).length);

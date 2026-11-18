@@ -1,5 +1,6 @@
 <script>
   import { watchSignedIn } from '#lib/firebase/auth.js';
+  import BackLink from '#lib/components/BackLink.svelte';
   import BottomNav from '#lib/components/BottomNav.svelte';
   import ChangeMentorRequest from '#lib/components/ChangeMentorRequest.svelte';
   import Icon from '#lib/components/Icon.svelte';
@@ -36,6 +37,9 @@
 </script>
 
 <main class="page">
+  <!-- Reached from Home or More since Societies took its place in the bottom bar (nav-tabs.js). -->
+  <BackLink />
+
   <h1>Your mentor</h1>
 
   {#if view === 'checking'}

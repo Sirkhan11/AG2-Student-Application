@@ -1,16 +1,27 @@
 <script>
+  import { page } from '$app/state';
   import BackLink from '#lib/components/BackLink.svelte';
   import BottomNav from '#lib/components/BottomNav.svelte';
+  import { HOW_TO } from '#lib/checklist/how-to.js';
   import { REGISTERING } from '#lib/nhs/guide.js';
-  import { distanceText, findADentistUrl, findAGpUrl, LIST_DATE, mailHref, OTHER_NATIONS, practicePageUrl, RESULTS, telHref } from '#lib/gp/finder.js';
+  import { classifySearch, distanceText, findADentistUrl, findAGpUrl, LIST_DATE, mailHref, OTHER_NATIONS, practicePageUrl, RESULTS, telHref } from '#lib/gp/finder.js';
   import { GpSearch } from '#lib/gp/search.svelte.js';
 
-  // Finds the GP surgeries nearest a student, anywhere in England. The search itself (and what it
-  // keeps private: the location never leaves the phone) is in src/lib/gp/search.svelte.js, which the
-  // check-in chat's GP finder card shares.
+  // One finder for GPs and dentists, with a tab for each, as the group's wireframe. The GP tab finds
+  // the surgeries nearest a student, anywhere in England: the search itself (and what it keeps
+  // private: the location never leaves the phone) is in src/lib/gp/search.svelte.js, which the
+  // check-in chat's GP finder card shares. The results come first; each has "How to register" (its NHS
+  // page), and the registering facts sit below them. The Dentist tab (/gp-finder?tab=dentist) holds
+  // what the app has for dentists: NHS Find a dentist for a postcode (the postcode is only used to
+  // open it, as the chat's dentist card does) and the checklist's steps for finding one.
+
+  /** Which tab is showing, from the address, so the checklist's "Find one" can open the Dentist tab. */
+  let tab = $derived(page.url.searchParams.get('tab') === 'dentist' ? 'dentist' : 'gp');
 
   /** The registering facts, shared with the NHS guide so the two pages say the same. @type {import('#lib/nhs/guide.js').Point[]} */
   const registering = [REGISTERING.free, REGISTERING.documents, REGISTERING.studentRegistration, REGISTERING.healthHub];
+  /** The checklist's steps for finding a dentist, from the NHS (how-to.js). */
+  const dentistHowTo = HOW_TO.dentist;
 
   let query = $state('');
   /** @type {HTMLInputElement | undefined} */
@@ -22,184 +33,269 @@
     event.preventDefault();
     void finder.search(query);
   }
+
+  // The dentist search: NHS Find a dentist for the postcode or district typed, or a note. Nothing is
+  // looked up or saved: the link is made on the phone.
+  let dentistQuery = $state('');
+  let dentist = $state(/** @type {{ href: string, label: string } | null} */ (null));
+  let dentistNote = $state('');
+
+  /** @param {SubmitEvent} event */
+  function findDentist(event) {
+    event.preventDefault();
+    const wanted = classifySearch(dentistQuery);
+    dentist = null;
+    dentistNote = '';
+    if (wanted.kind === 'postcode' || wanted.kind === 'district') dentist = { href: findADentistUrl(wanted.value), label: wanted.value };
+    else dentistNote = 'Type a postcode (NE1 8ST) or a postcode district (NE6).';
+  }
 </script>
 
 
 <main class="page">
   <BackLink />
 
-  <h1>Find a GP</h1>
-  <p class="muted">
-    Search near where you live in term time. Each surgery’s NHS page says whether it’s taking new
-    patients and how to register.
-  </p>
+  <h1>Find a GP or dentist</h1>
 
-  <form class="search" onsubmit={search}>
-    <label for="search">Postcode, district or place</label>
-    <div class="row">
-      <input id="search" class="field" bind:this={searchBox} bind:value={query} autocomplete="postal-code" placeholder="NE1 8ST, NE6 or Heaton" />
-      <button class="primary-button" type="submit" disabled={finder.busy !== ''}>
-        {finder.busy === 'search' ? 'Searching…' : 'Find GPs'}
-      </button>
-    </div>
-  </form>
+  <nav class="tabs" aria-label="GP or dentist">
+    <a href="/gp-finder" class:active={tab === 'gp'} aria-current={tab === 'gp' ? 'page' : undefined}>GP</a>
+    <a href="/gp-finder?tab=dentist" class:active={tab === 'dentist'} aria-current={tab === 'dentist' ? 'page' : undefined}>Dentist</a>
+  </nav>
 
-  <button class="secondary-button location" type="button" onclick={() => finder.useMyLocation()} disabled={finder.busy !== ''}>
-    {finder.busy === 'location' ? 'Finding where you are…' : 'Use my location'}
-  </button>
-  <p class="muted small">
-    Your location stays on your phone: it isn’t saved or sent anywhere. A postcode or place you type is
-    looked up on postcodes.io.
-  </p>
+  {#if tab === 'gp'}
+    <p class="muted">
+      Search near where you live in term time. Each surgery’s NHS page says whether it’s taking new
+      patients and how to register.
+    </p>
 
-  <div aria-live="polite">
-    {#if finder.note}
-      <p class="note" role="alert">{finder.note}</p>
-    {/if}
-
-    {#if finder.choices}
-      <div class="card">
-        <h2>Which {finder.choices[0].label}?</h2>
-        <ul class="choices">
-          {#each finder.choices as place (`${place.label}|${place.county}`)}
-            <li>
-              <button class="secondary-button" type="button" onclick={() => finder.choose(place)}>
-                {place.label}, {place.county}
-              </button>
-            </li>
-          {/each}
-        </ul>
+    <form class="search" onsubmit={search}>
+      <label for="search">Postcode, district or place</label>
+      <div class="row">
+        <input id="search" class="field" bind:this={searchBox} bind:value={query} autocomplete="postal-code" placeholder="NE1 8ST, NE6 or Heaton" />
+        <button class="primary-button" type="submit" disabled={finder.busy !== ''}>
+          {finder.busy === 'search' ? 'Searching…' : 'Find GPs'}
+        </button>
       </div>
-    {/if}
+    </form>
 
-    {#if finder.nation}
-      <div class="card">
-        <p>That’s in {finder.nation}. We only list surgeries in England, so use {finder.nation}’s own GP finder:</p>
-        <a class="primary-button" href={OTHER_NATIONS[finder.nation].href} target="_blank" rel="noopener noreferrer" aria-label={`${OTHER_NATIONS[finder.nation].label} (opens in a new tab)`}>
-          {OTHER_NATIONS[finder.nation].label} ↗
-        </a>
-      </div>
-    {/if}
+    <button class="secondary-button location" type="button" onclick={() => finder.useMyLocation()} disabled={finder.busy !== ''}>
+      {finder.busy === 'location' ? 'Finding where you are…' : 'Use my location'}
+    </button>
+    <p class="muted small">
+      Your location stays on your phone: it isn’t saved or sent anywhere. A postcode or place you type is
+      looked up on postcodes.io.
+    </p>
 
-    {#if finder.results}
-      {#if finder.results.farFromEngland}
-        <div class="card nations">
-          <p>You look to be outside England. If you’re in Scotland, Wales or Northern Ireland, use its own GP finder:</p>
-          <ul>
-            {#each Object.values(OTHER_NATIONS) as link (link.href)}
-              <li><a href={link.href} target="_blank" rel="noopener noreferrer" aria-label={`${link.label} (opens in a new tab)`}>{link.label} ↗</a></li>
+    <div aria-live="polite">
+      {#if finder.note}
+        <p class="note" role="alert">{finder.note}</p>
+      {/if}
+
+      {#if finder.choices}
+        <div class="card">
+          <h2>Which {finder.choices[0].label}?</h2>
+          <ul class="choices">
+            {#each finder.choices as place (`${place.label}|${place.county}`)}
+              <li>
+                <button class="secondary-button" type="button" onclick={() => finder.choose(place)}>
+                  {place.label}, {place.county}
+                </button>
+              </li>
             {/each}
           </ul>
-          <p class="muted small">The nearest surgeries in England are below.</p>
         </div>
       {/if}
 
-      <h2>Nearest GP surgeries to {finder.results.label}</h2>
-      {#if finder.results.source === 'england'}
-        <p class="muted small">Each surgery’s NHS page has its email address and website.</p>
+      {#if finder.nation}
+        <div class="card">
+          <p>That’s in {finder.nation}. We only list surgeries in England, so use {finder.nation}’s own GP finder:</p>
+          <a class="primary-button" href={OTHER_NATIONS[finder.nation].href} target="_blank" rel="noopener noreferrer" aria-label={`${OTHER_NATIONS[finder.nation].label} (opens in a new tab)`}>
+            {OTHER_NATIONS[finder.nation].label} ↗
+          </a>
+        </div>
       {/if}
-      <ol class="results">
-        {#each finder.results.practices.slice(0, finder.shown) as practice (practice.code)}
-          <li class="card practice">
-            <h3>{practice.name}</h3>
-            <p>{practice.address}, {practice.postcode}</p>
-            <p class="muted">{distanceText(practice.distanceKm)} away in a straight line</p>
-            <dl class="contact">
-              {#if practice.phone}
-                <div>
-                  <dt>Phone</dt>
-                  <dd><a href={telHref(practice.phone)} aria-label={`Call ${practice.name} on ${practice.phone}`}>{practice.phone}</a></dd>
-                </div>
-              {/if}
-              {#if practice.email}
-                <div>
-                  <dt>Email</dt>
-                  <dd><a href={mailHref(practice.email)}>{practice.email}</a></dd>
-                </div>
-              {/if}
-              {#if practice.website}
-                <div>
-                  <dt>Website</dt>
-                  <dd>
-                    <a href={practice.website} target="_blank" rel="noopener noreferrer" aria-label={`${practice.name}’s website (opens in a new tab)`}>
-                      {practice.website.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '')} ↗
-                    </a>
-                  </dd>
-                </div>
-              {/if}
-            </dl>
-            <a
-              class="primary-button"
-              href={practicePageUrl(practice)}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label={`${practice.name} on the NHS website: registering and new patients (opens in a new tab)`}
-            >
-              NHS page: register ↗
-            </a>
+
+      {#if finder.results}
+        {#if finder.results.farFromEngland}
+          <div class="card nations">
+            <p>You look to be outside England. If you’re in Scotland, Wales or Northern Ireland, use its own GP finder:</p>
+            <ul>
+              {#each Object.values(OTHER_NATIONS) as link (link.href)}
+                <li><a href={link.href} target="_blank" rel="noopener noreferrer" aria-label={`${link.label} (opens in a new tab)`}>{link.label} ↗</a></li>
+              {/each}
+            </ul>
+            <p class="muted small">The nearest surgeries in England are below.</p>
+          </div>
+        {/if}
+
+        <h2>Nearest GP surgeries to {finder.results.label}</h2>
+        {#if finder.results.source === 'england'}
+          <p class="muted small">Each surgery’s NHS page has its email address and website.</p>
+        {/if}
+        <ol class="results">
+          {#each finder.results.practices.slice(0, finder.shown) as practice (practice.code)}
+            <li class="card practice">
+              <h3>{practice.name}</h3>
+              <p>{practice.address}, {practice.postcode}</p>
+              <p class="muted">{distanceText(practice.distanceKm)} away in a straight line</p>
+              <dl class="contact">
+                {#if practice.phone}
+                  <div>
+                    <dt>Phone</dt>
+                    <dd><a href={telHref(practice.phone)} aria-label={`Call ${practice.name} on ${practice.phone}`}>{practice.phone}</a></dd>
+                  </div>
+                {/if}
+                {#if practice.email}
+                  <div>
+                    <dt>Email</dt>
+                    <dd><a href={mailHref(practice.email)}>{practice.email}</a></dd>
+                  </div>
+                {/if}
+                {#if practice.website}
+                  <div>
+                    <dt>Website</dt>
+                    <dd>
+                      <a href={practice.website} target="_blank" rel="noopener noreferrer" aria-label={`${practice.name}’s website (opens in a new tab)`}>
+                        {practice.website.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '')} ↗
+                      </a>
+                    </dd>
+                  </div>
+                {/if}
+              </dl>
+              <!-- The practice's NHS page: whether it's taking new patients, and how to register. -->
+              <a
+                class="secondary-button register"
+                href={practicePageUrl(practice)}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={`How to register with ${practice.name}, on the NHS website (opens in a new tab)`}
+              >
+                How to register ↗
+              </a>
+            </li>
+          {/each}
+        </ol>
+        {#if finder.results.practices.length > finder.shown}
+          <button class="secondary-button more" type="button" onclick={() => (finder.shown += RESULTS)}>
+            Show {Math.min(RESULTS, finder.results.practices.length - finder.shown)} more
+          </button>
+        {/if}
+        <p>
+          <a href={findAGpUrl(finder.results.nhsSearch)} target="_blank" rel="noopener noreferrer" aria-label="More surgeries on NHS Find a GP (opens in a new tab)">
+            More surgeries on NHS Find a GP ↗
+          </a>
+        </p>
+      {/if}
+    </div>
+
+    <p class="muted small remind">Phone the practice to check before you visit: what’s listed can be out of date.</p>
+
+    <!-- Below the results, so they come first; nothing from it is lost. -->
+    <section class="card">
+      <h2>Registering</h2>
+      <ul class="points">
+        {#each registering as point, i (i)}
+          <li>
+            {point.text}
+            {#if point.source}
+              <a class="source" href={point.source.href} target="_blank" rel="noopener noreferrer" aria-label={`Source: ${point.source.label} (opens in a new tab)`}>
+                Source: {point.source.label} ↗
+              </a>
+            {/if}
+            {#if point.link}
+              <a class="source" href={point.link.href} target="_blank" rel="noopener noreferrer" aria-label={`${point.link.label} (opens in a new tab)`}>
+                {point.link.label} ↗
+              </a>
+            {/if}
           </li>
         {/each}
-      </ol>
-      {#if finder.results.practices.length > finder.shown}
-        <button class="secondary-button more" type="button" onclick={() => (finder.shown += RESULTS)}>
-          Show {Math.min(RESULTS, finder.results.practices.length - finder.shown)} more
-        </button>
+      </ul>
+      <a href="/nhs-guide#gp">More in the NHS Guide</a>
+    </section>
+
+    <p class="muted small">
+      Every active GP surgery in England, from NHS England’s Organisation Data Service (list last changed
+      on {LIST_DATE}). Surgeries in Tyne and Wear, Northumberland and County Durham also show the phone
+      number, email and website from their NHS page. Contains NHS England data, under the Open Government
+      Licence. Distances are worked out on your phone.
+    </p>
+  {:else}
+    <p class="muted">
+      NHS dentists are separate from GP surgeries. The NHS website lists the ones near you, and says
+      whether each is taking new NHS patients.
+    </p>
+
+    <form class="search" onsubmit={findDentist}>
+      <label for="dentist-search">Your postcode or district</label>
+      <div class="row">
+        <input id="dentist-search" class="field" bind:value={dentistQuery} autocomplete="postal-code" placeholder="NE1 8ST or NE6" />
+        <button class="primary-button" type="submit">Find dentists</button>
+      </div>
+    </form>
+    <p class="muted small">It’s only used to open NHS Find a dentist for it. Nothing is saved.</p>
+
+    <div aria-live="polite">
+      {#if dentistNote}
+        <p class="note" role="alert">{dentistNote}</p>
       {/if}
-      <p>
-        <a href={findAGpUrl(finder.results.nhsSearch)} target="_blank" rel="noopener noreferrer" aria-label="More surgeries on NHS Find a GP (opens in a new tab)">
-          More surgeries on NHS Find a GP ↗
+      {#if dentist}
+        <a class="primary-button" href={dentist.href} target="_blank" rel="noopener noreferrer" aria-label={`NHS Find a dentist near ${dentist.label} (opens in a new tab)`}>
+          NHS Find a dentist near {dentist.label} ↗
         </a>
+      {/if}
+    </div>
+
+    <p class="muted small remind">Phone the practice to check before you visit: what’s listed can be out of date.</p>
+
+    <section class="card">
+      <h2>Finding an NHS dentist</h2>
+      <ol class="points">
+        {#each dentistHowTo.steps as step, i (i)}
+          <li>{step}</li>
+        {/each}
+      </ol>
+      <a class="secondary-button" href={findADentistUrl(dentist?.label ?? finder.results?.nhsSearch ?? null)} target="_blank" rel="noopener noreferrer" aria-label="NHS Find a dentist (opens in a new tab)">
+        NHS Find a dentist ↗
+      </a>
+      <p class="sources">
+        {dentistHowTo.sources.length > 1 ? 'Sources:' : 'Source:'}
+        {#each dentistHowTo.sources as link, i (link.href)}
+          <a href={link.href} target="_blank" rel="noopener noreferrer" aria-label={`${link.label} (opens in a new tab)`}>{link.label} ↗</a>{i < dentistHowTo.sources.length - 1 ? '; ' : ''}
+        {/each}
       </p>
-    {/if}
-  </div>
-
-  <section class="card">
-    <h2>Registering</h2>
-    <ul class="points">
-      {#each registering as point, i (i)}
-        <li>
-          {point.text}
-          {#if point.source}
-            <a class="source" href={point.source.href} target="_blank" rel="noopener noreferrer" aria-label={`Source: ${point.source.label} (opens in a new tab)`}>
-              Source: {point.source.label} ↗
-            </a>
-          {/if}
-          {#if point.link}
-            <a class="source" href={point.link.href} target="_blank" rel="noopener noreferrer" aria-label={`${point.link.label} (opens in a new tab)`}>
-              {point.link.label} ↗
-            </a>
-          {/if}
-        </li>
-      {/each}
-    </ul>
-    <a href="/nhs-guide#gp">More in the NHS Guide</a>
-  </section>
-
-  <section class="card">
-    <h2>Dentists</h2>
-    <p>NHS dentists are separate from GP surgeries. The NHS website lists the ones near you.</p>
-    <a
-      class="secondary-button"
-      href={findADentistUrl(finder.results?.nhsSearch)}
-      target="_blank"
-      rel="noopener noreferrer"
-      aria-label="NHS Find a dentist (opens in a new tab)"
-    >
-      NHS Find a dentist ↗
-    </a>
-  </section>
-
-  <p class="muted small">
-    Every active GP surgery in England, from NHS England’s Organisation Data Service (list last changed
-    on {LIST_DATE}). Surgeries in Tyne and Wear, Northumberland and County Durham also show the phone
-    number, email and website from their NHS page. Contains NHS England data, under the Open Government
-    Licence. Distances are worked out on your phone.
-  </p>
+    </section>
+  {/if}
 
   <BottomNav />
 </main>
 
 <style>
+  /* GP or dentist: two tabs, one of which is showing, like the societies and sport switch. */
+  .tabs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px;
+    margin: 0 0 16px;
+    padding: 4px;
+    border-radius: var(--radius-s);
+    background: var(--violet-soft);
+  }
+
+  .tabs a {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    border-radius: 9px;
+    font-weight: bold;
+  }
+
+  .tabs a.active {
+    background: #fff;
+    box-shadow: var(--shadow-1);
+    color: var(--ink);
+  }
+
   .search label {
     display: block;
     margin-bottom: 4px;
@@ -232,6 +328,10 @@
 
   .small {
     font-size: 13px;
+  }
+
+  .remind {
+    margin: 12px 0;
   }
 
   .note {
@@ -277,6 +377,12 @@
 
   .practice p {
     margin: 0 0 4px;
+  }
+
+  .register {
+    width: auto;
+    display: inline-flex;
+    min-height: 40px;
   }
 
   .contact {
@@ -326,5 +432,11 @@
     margin-top: 2px;
     font-size: 13px;
     overflow-wrap: anywhere;
+  }
+
+  .sources {
+    margin: 10px 0 0;
+    font-size: 13px;
+    color: var(--ink-3);
   }
 </style>

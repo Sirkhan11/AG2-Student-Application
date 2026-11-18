@@ -66,7 +66,7 @@ const offline = [
   }],
   ['The checklist page shows each standard task’s steps, its link and its sources under “How to”, and the student’s own tasks “Stuck?”', () => {
     const page = oneLine(source('src/routes/checklist/+page.svelte'));
-    assert.match(page, /\{@const howTo = howToFor\(task\.id\)\}/);
+    assert.match(page, /\{@const howTo = howToFor\(task\.id, studentType\)\}/, 'for this student: a home student doesn’t see the visa-only steps (check-sign-up.mjs)');
     assert.match(page, /<summary>\{howTo \? 'How to' : 'Stuck\?'\}<span class="visually-hidden">: \{task\.title\}<\/span><\/summary>/);
     assert.match(page, /\{#each howTo\.steps as step, i \(i\)\} <li>\{step\}<\/li> \{\/each\}/);
     assert.match(page, /\{#each howTo\.sources as source, i \(source\.href\)\}/);

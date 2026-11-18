@@ -51,11 +51,13 @@ service cloud.firestore {
     }
 
     // Students can only read and change their own record. A write that leaves a checklist in it
-    // (the checklist page's) must leave a valid one: see validChecklist below.
+    // (the checklist page's) must leave a valid one (validChecklist below), and one that leaves the
+    // sign-up page's about-you answers in it must leave allowed ones (validAboutYou).
     match /students/{userId} {
       allow read, delete: if hasAccess() && request.auth.uid == userId;
       allow create, update: if hasAccess() && request.auth.uid == userId
-        && (!('checklist' in request.resource.data) || validChecklist(request.resource.data.checklist));
+        && (!('checklist' in request.resource.data) || validChecklist(request.resource.data.checklist))
+        && validAboutYou(request.resource.data);
     }
 
     // The public part of a mentor's profile: only what matching needs.
@@ -232,6 +234,16 @@ service cloud.firestore {
       let mentor = /databases/$(database)/documents/mentors/$(mentorId);
       return get(mentor).data.approved == true
         && getAfter(mentor).data.studentCount == get(mentor).data.studentCount + 1;
+    }
+
+    // The sign-up page's about-you answers, when the record has them (src/lib/students/signup.js):
+    // home or international is one of those two words, whether they'd like a mentor is true or false,
+    // and the interests are a list of at most 15 (the page keeps 10). A record from before these
+    // questions has none of them, and still saves. Only the student reads their record (above).
+    function validAboutYou(record) {
+      return (!('studentType' in record) || record.studentType in ['home', 'international'])
+        && (!('wantsMentor' in record) || record.wantsMentor is bool)
+        && (!('interests' in record) || (record.interests is list && record.interests.size() <= 15));
     }
 
     // One settling-in task: only id, title and done, with a title of at most 100 characters

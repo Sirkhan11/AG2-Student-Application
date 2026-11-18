@@ -181,3 +181,23 @@ export const SECTIONS = [
     ]
   }
 ];
+
+/** The title "What you've paid for" gets when it's moved down for a home student: it says who it's for. */
+export const VISA_SECTION_TITLE = 'On a student visa? What you’ve paid for';
+
+/**
+ * The sections in the order for this student, from what they said at sign-up (student-type.js). An
+ * international student, or one who hasn't said, sees "What you've paid for" first, as now: it's about
+ * the visa health surcharge. A home student sees "Register with a GP" first, and that section moves
+ * down, just above "Words you'll hear", under a title that says who it's for. Nothing is left out:
+ * everyone can still reach everything.
+ * @param {import('#lib/students/student-type.js').StudentType | null} studentType
+ * @returns {Section[]}
+ */
+export function sectionsFor(studentType) {
+  if (studentType !== 'home') return SECTIONS;
+  const paid = /** @type {Section} */ (SECTIONS.find((section) => section.id === 'paid'));
+  const rest = SECTIONS.filter((section) => section.id !== 'paid');
+  const words = rest.findIndex((section) => section.id === 'words');
+  return [...rest.slice(0, words), { ...paid, title: VISA_SECTION_TITLE }, ...rest.slice(words)];
+}

@@ -1,11 +1,30 @@
 <script>
   import BackLink from '#lib/components/BackLink.svelte';
   import BottomNav from '#lib/components/BottomNav.svelte';
-  import { COSTS_CHECKED_ON, SECTIONS, withFigures } from '#lib/nhs/guide.js';
+  import { watchSignedIn } from '#lib/firebase/auth.js';
+  import { loadMyRecord } from '#lib/checklist/store.js';
+  import { COSTS_CHECKED_ON, sectionsFor, withFigures } from '#lib/nhs/guide.js';
 
   // How the NHS works for a new student in England, in short sections they can scan. The content
   // is in src/lib/nhs/guide.js: every fact links to its official source, and the money figures come
-  // from nhs-costs.json, with the date they were checked.
+  // from nhs-costs.json, with the date they were checked. The order follows what they said at
+  // sign-up (sectionsFor): a home student sees registering with a GP first and the visa section
+  // further down; an international student, or one who hasn't said, sees the visa section first.
+
+  /** The sections in their order: null until the student's record has been read (nothing shows meanwhile, so the order never jumps). */
+  let sections = $state(/** @type {import('#lib/nhs/guide.js').Section[] | null} */ (null));
+
+  $effect(() =>
+    watchSignedIn(async (signedIn) => {
+      if (!signedIn) return;
+      try {
+        sections = sectionsFor((await loadMyRecord()).studentType);
+      } catch (err) {
+        console.error('Loading the record for the NHS guide failed:', /** @type {{ code?: string }} */ (err)?.code ?? 'error');
+        sections = sectionsFor(null);
+      }
+    })
+  );
 </script>
 
 
@@ -18,15 +37,18 @@
     Costs checked on {COSTS_CHECKED_ON}; they change every April.
   </p>
 
+  {#if !sections}
+    <p class="muted" role="status">Loading…</p>
+  {:else}
   <nav class="contents" aria-label="Sections">
     <ul>
-      {#each SECTIONS as section (section.id)}
+      {#each sections as section (section.id)}
         <li><a href={`#${section.id}`}>{section.title}</a></li>
       {/each}
     </ul>
   </nav>
 
-  {#each SECTIONS as section (section.id)}
+  {#each sections as section (section.id)}
     <section class="card" id={section.id} aria-labelledby={`${section.id}-title`}>
       <h2 id={`${section.id}-title`}>{section.title}</h2>
       <p>{section.intro}</p>
@@ -74,6 +96,7 @@
       {/if}
     </section>
   {/each}
+  {/if}
 
   <BottomNav />
 </main>
