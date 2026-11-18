@@ -2,7 +2,9 @@
 // every time, so each case is asked several times and counts as passing when at least 80% of its runs
 // do what we'd expect (4 of 5, or 3 of 3). Every request goes through the chat's own code (chat-turns.js:
 // the modes, the app's short list, the instructions, the reply shapes and the checks on each reply),
-// with Gemini over REST, so what's measured is what a student would see.
+// and on to Gemini through the Firebase SDK, exactly as the app sends it (chat-over-rest.mjs), so
+// what's measured is what a student would see. (Until 18 November the requests were rebuilt from two
+// fields instead, so the replies saved before then were asked a little differently from the app.)
 //
 // The groups (made-up students only, no real people):
 // - suggestions: one student from each fixture group (scripts/fixtures/matching-cases.json) says what

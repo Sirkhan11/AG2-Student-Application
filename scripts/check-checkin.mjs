@@ -487,6 +487,38 @@ const checks = [
     } finally {
       console.error = quiet;
     }
+  }],
+  ['The measurements ask Gemini through the Firebase SDK, so Gemini gets exactly the body the app sends: a field Gemini doesn’t accept reaches it and is refused, as on the live site on 18 November', async () => {
+    const { restModel } = await import('./lib/chat-over-rest.mjs');
+    const { unknownFields } = await import('./lib/stand-in-gemini.mjs');
+    /** @type {any[]} */
+    const bodies = [];
+    // A made-up Gemini that refuses unknown fields as the real one does.
+    const gemini = {
+      config: { apiKey: 'made-up-key', projectId: 'demo-ag2', appId: '1:1:web:1' },
+      /** @param {string} _model @param {string} body */
+      send: async (_model, body) => {
+        const sent = JSON.parse(body);
+        bodies.push(sent);
+        const unknown = unknownFields(sent);
+        return unknown.length
+          ? { status: 400, text: JSON.stringify({ error: { code: 400, message: `Invalid JSON payload received. Unknown name "${unknown[0]}": Cannot find field.`, status: 'INVALID_ARGUMENT' } }) }
+          : { status: 200, text: JSON.stringify({ candidates: [{ content: { role: 'model', parts: [{ text: '{"action":"none","page":"none","say":"Hello!"}' }] }, finishReason: 'STOP' }] }) };
+      }
+    };
+    const model = restModel(gemini);
+    const asked = { contents: [{ role: 'user', parts: [{ type: 'text', text: 'hi' }] }], systemInstruction: 'Be kind.', generationConfig: { responseMimeType: 'application/json' } };
+    const answer = await model.generateContent(/** @type {any} */ (asked));
+    assert.equal(answer.response.text(), '{"action":"none","page":"none","say":"Hello!"}');
+    assert.deepEqual(bodies[0].systemInstruction, { role: 'system', parts: [{ text: 'Be kind.' }] }, 'as the SDK shapes it');
+    assert.deepEqual(bodies[0].contents, [{ role: 'user', parts: [{ text: 'hi' }] }], 'as the SDK shapes it');
+    await assert.rejects(model.generateContent(/** @type {any} */ ({ ...asked, tasks: ['Enrol'] })), /400/);
+    assert.deepEqual(bodies[1].tasks, ['Enrol'], 'sent on, as the app’s SDK would');
+    // And the chat itself sends only what Gemini accepts.
+    const chat = chatWith(model, { facts: { match: null, tasks: defaultTasks(), checklistSaved: true, profile: null, isMentor: false, mentorNote: null, today: '2026-11-18' }, opener: ['Hi!'] });
+    const reply = await chat.send('hello');
+    assert.equal(reply.text, 'Hello!');
+    assert.deepEqual(unknownFields(bodies.at(-1)), []);
   }]
 ];
 
