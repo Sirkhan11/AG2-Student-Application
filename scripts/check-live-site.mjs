@@ -18,8 +18,10 @@
 //   forms (a never-verified example.com address), read and write nothing, including the switch;
 // - logged out, the switch can be read (the forms read it before anyone signs in) but not written.
 // For those parts it makes two throwaway accounts in the project .env points at, with made-up
-// addresses and random passwords: making them sends no email, Send the link is never pressed, and both are
-// deleted at the end. Nothing secret is printed, and the live switch is never changed.
+// addresses and random passwords: making them sends no email, Send the link is never pressed, and both
+// are deleted at the end, even if the check fails halfway or is stopped (scripts/lib/throwaway-
+// accounts.mjs, which also deletes any an earlier run left behind). Nothing secret is printed, and the
+// live switch is never changed.
 // Run from the project folder, against the local preview (npm run build:live, then
 // npx --engine-strict=false firebase-tools emulators:start --only hosting --project demo-ag2) or the live site:
 //   node --env-file=.env scripts/check-live-site.mjs [--base https://ag2-dev-thomas.web.app]
@@ -32,9 +34,10 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { initializeApp } from 'firebase/app';
-import { createUserWithEmailAndPassword, deleteUser, getAuth, signInWithEmailAndPassword, signOut } from 'firebase/auth';
+import { createUserWithEmailAndPassword, getAuth, signInWithEmailAndPassword, signOut } from 'firebase/auth';
 import { collection, doc, getDoc, getDocs, getFirestore, query, serverTimestamp, setDoc, where } from 'firebase/firestore/lite';
 import { fieldsFrom, uniOnlyFrom, wordingFor } from '#lib/access.js';
+import { cleanUpWhenStopped, deleteLeftovers, deleteThrowaway, writeDown } from './lib/throwaway-accounts.mjs';
 
 const baseAt = process.argv.indexOf('--base');
 const BASE = (baseAt > 0 ? process.argv[baseAt + 1] : 'http://127.0.0.1:5005').replace(/\/$/, '');
@@ -44,17 +47,19 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const results = [];
 const report = (name, ok, detail = '') => { results.push(ok); console.log(`${ok ? 'PASS' : 'FAIL'}  ${name}${detail ? `  (${detail})` : ''}`); };
 
-// The throwaway account (made before Chrome starts; no email is sent by making it).
+// The throwaway accounts: made inside the part that cleans up, below, and written down first
+// (throwaway-accounts.mjs), so none is left behind even if the check fails halfway or is stopped.
+// Making them sends no email.
 const env = process.env;
 const app = initializeApp({ apiKey: env.VITE_FIREBASE_API_KEY, authDomain: env.VITE_FIREBASE_AUTH_DOMAIN, projectId: env.VITE_FIREBASE_PROJECT_ID, appId: env.VITE_FIREBASE_APP_ID });
 const auth = getAuth(app);
 const db = getFirestore(app);
 const throwaway = { email: `ag2-verify-check-${randomBytes(4).toString('hex')}@northumbria.ac.uk`, password: randomBytes(18).toString('base64url') };
 const outsider = { email: `ag2-rules-check-${randomBytes(4).toString('hex')}@example.com`, password: randomBytes(18).toString('base64url') };
-for (const account of [throwaway, outsider]) {
-  await createUserWithEmailAndPassword(auth, account.email, account.password);
-  await signOut(auth);
-}
+const PROJECT = env.VITE_FIREBASE_PROJECT_ID ?? '';
+// Any an earlier run left behind (it was killed before it could clean up) go first.
+const leftovers = await deleteLeftovers(app, PROJECT);
+if (leftovers) console.log(`Deleted ${leftovers} throwaway account${leftovers === 1 ? '' : 's'} an earlier run left behind.`);
 
 // The live access switch, read exactly as the forms read it (readUniOnly in src/lib/access.js): one
 // plain request to Firestore's REST API, logged out. 200 is the document (uniOnly among its fields) and
@@ -76,7 +81,29 @@ console.log(`The access switch (config/access): ${access.problem ? `can't be rea
 const profile = mkdtempSync(join(tmpdir(), 'ag2-live-site-'));
 const chrome = spawn(CHROME, ['--headless=new', `--remote-debugging-port=${PORT}`, `--user-data-dir=${profile}`, '--no-first-run', '--disable-extensions', '--window-size=390,844', 'about:blank'], { stdio: 'ignore' });
 let ws;
+let cleanedUp = false;
+/** Closes Chrome and deletes the throwaway accounts: at the end, after a failure, or when stopped. */
+async function cleanUp() {
+  if (cleanedUp) return;
+  cleanedUp = true;
+  ws?.close();
+  chrome.kill();
+  await sleep(300);
+  rmSync(profile, { recursive: true, force: true });
+  for (const account of [throwaway, outsider]) {
+    const gone = await deleteThrowaway(app, account);
+    const which = `${account.email.split('-').slice(0, 3).join('-')}-…`;
+    if (gone === 'deleted') console.log(`A throwaway account (${which}) was deleted.`);
+    else if (gone === 'failed') console.log(`Deleting a throwaway account (${which}) FAILED: it's written down, so the next run deletes it (or node --env-file=.env scripts/delete-check-accounts.mjs now).`);
+  }
+}
+cleanUpWhenStopped(cleanUp);
 try {
+  for (const account of [throwaway, outsider]) {
+    writeDown(account, PROJECT);
+    await createUserWithEmailAndPassword(auth, account.email, account.password);
+    await signOut(auth);
+  }
   let target;
   for (let i = 0; i < 60 && !target; i++) {
     try { target = (await (await fetch(`http://127.0.0.1:${PORT}/json/list`)).json()).find((t) => t.type === 'page'); } catch { await sleep(250); }
@@ -271,19 +298,7 @@ try {
   const written = await setDoc(doc(db, 'config', 'access'), { probe: 'check-live-site' }, { merge: true }).then(() => 'allowed', (err) => String(err.code));
   report('Logged out, the switch can’t be written', written === 'permission-denied', written);
 } finally {
-  ws?.close();
-  chrome.kill();
-  await sleep(300);
-  rmSync(profile, { recursive: true, force: true });
-  for (const account of [throwaway, outsider]) {
-    try {
-      const { user } = await signInWithEmailAndPassword(auth, account.email, account.password);
-      await deleteUser(user);
-      console.log(`A throwaway account (${account.email.split('-').slice(0, 3).join('-')}-…) was deleted.`);
-    } catch (err) {
-      console.log(`Deleting a throwaway account FAILED (${err?.code}). Delete ag2-verify-check-* and ag2-rules-check-* in the console.`);
-    }
-  }
+  await cleanUp();
 }
 console.log(`\n${results.filter(Boolean).length}/${results.length} checks passed (${BASE}, the switch ${uniOnly ? 'on: Northumbria only' : 'off: any email address'})`);
 process.exit(results.every(Boolean) ? 0 : 1);

@@ -9,7 +9,8 @@
 // same login as the deploys), so no email is sent. It logs in on the live site in headless Chrome,
 // waits for Gemini's first message, sends one ordinary message, and checks Gemini answered every
 // request (HTTP 200) and the chat showed a reply rather than its error message. Then the account
-// deletes itself.
+// deletes itself, even if the check failed halfway or was stopped (scripts/lib/throwaway-accounts.mjs,
+// which also deletes any an earlier run left behind).
 //
 // About three Gemini requests (the first message, then the message and a search), counted in the
 // scripts' daily budget. App Check: the debug token stands in for
@@ -25,11 +26,10 @@ import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { initializeApp } from 'firebase/app';
-import { deleteUser, getAuth, signInWithEmailAndPassword } from 'firebase/auth';
-import { deleteDoc, doc, getFirestore } from 'firebase/firestore';
 import { ERROR_MESSAGE, UNAVAILABLE_MESSAGE } from '#lib/checkin/chat-turns.js';
 import { BUDGET_FILE, budgetFrom, countRequest, requestsOn, today } from './lib/gemini-rest.mjs';
 import { openChrome, sleep } from './lib/emulator-app.mjs';
+import { cleanUpWhenStopped, deleteLeftovers, deleteThrowaway, writeDown } from './lib/throwaway-accounts.mjs';
 
 const at = process.argv.indexOf('--base');
 const BASE = (at === -1 ? 'https://ag2-dev-thomas.web.app' : process.argv[at + 1]).replace(/\/$/, '');
@@ -57,23 +57,44 @@ const report = (name, ok, detail = '') => {
   console.log(`${ok ? 'PASS' : 'FAIL'}  ${name}${detail ? `  (${detail})` : ''}`);
 };
 
-// The throwaway account, imported already verified. Its password is hashed with a one-off key
-// (HMAC-SHA256), which is how auth:import takes passwords; Firebase checks it when it logs in.
+// The throwaway account: made inside the part that cleans up, below, and written down first
+// (throwaway-accounts.mjs), so it's never left behind, even if the check fails halfway or is stopped.
+const client = initializeApp({ apiKey: env.VITE_FIREBASE_API_KEY, authDomain: env.VITE_FIREBASE_AUTH_DOMAIN, projectId: env.VITE_FIREBASE_PROJECT_ID, appId: env.VITE_FIREBASE_APP_ID });
+const PROJECT = env.VITE_FIREBASE_PROJECT_ID ?? '';
+// Any an earlier run left behind (it was killed before it could clean up) go first.
+const leftovers = await deleteLeftovers(client, PROJECT);
+if (leftovers) console.log(`Deleted ${leftovers} throwaway account${leftovers === 1 ? '' : 's'} an earlier run left behind.`);
 const account = { email: `ag2-chat-check-${randomBytes(4).toString('hex')}@northumbria.ac.uk`, password: randomBytes(18).toString('base64url') };
 const uid = `chatcheck${randomBytes(10).toString('hex')}`;
-const hashKey = randomBytes(32);
-const folder = mkdtempSync(join(tmpdir(), 'ag2-live-chat-'));
-try {
-  const file = join(folder, 'account.json');
-  const passwordHash = createHmac('sha256', hashKey).update(account.password).digest('base64');
-  writeFileSync(file, JSON.stringify({ users: [{ localId: uid, email: account.email, emailVerified: true, passwordHash }] }));
-  execFileSync('npx', ['--yes', '--engine-strict=false', 'firebase-tools', 'auth:import', file, '--hash-algo=HMAC_SHA256', `--hash-key=${hashKey.toString('base64')}`, '--project', env.VITE_FIREBASE_PROJECT_ID], { stdio: 'ignore' });
-} finally {
-  rmSync(folder, { recursive: true, force: true });
+/** Chrome, once it's open. @type {Awaited<ReturnType<typeof openChrome>> | undefined} */
+let chrome;
+let cleanedUp = false;
+/** Closes Chrome and deletes the account, with anything it saved: at the end, after a failure, or when stopped. */
+async function cleanUp() {
+  if (cleanedUp) return;
+  cleanedUp = true;
+  await chrome?.close();
+  if ((await deleteThrowaway(client, account)) === 'failed') {
+    console.log("Couldn't delete the throwaway account: it's written down, so the next run deletes it (or node --env-file=.env scripts/delete-check-accounts.mjs now).");
+  }
 }
-
-const page = await openChrome(BASE);
+cleanUpWhenStopped(cleanUp);
 try {
+  // Imported already verified. Its password is hashed with a one-off key (HMAC-SHA256), which is how
+  // auth:import takes passwords; Firebase checks it when it logs in.
+  writeDown(account, PROJECT);
+  const hashKey = randomBytes(32);
+  const folder = mkdtempSync(join(tmpdir(), 'ag2-live-chat-'));
+  try {
+    const file = join(folder, 'account.json');
+    const passwordHash = createHmac('sha256', hashKey).update(account.password).digest('base64');
+    writeFileSync(file, JSON.stringify({ users: [{ localId: uid, email: account.email, emailVerified: true, passwordHash }] }));
+    execFileSync('npx', ['--yes', '--engine-strict=false', 'firebase-tools', 'auth:import', file, '--hash-algo=HMAC_SHA256', `--hash-key=${hashKey.toString('base64')}`, '--project', PROJECT], { stdio: 'ignore' });
+  } finally {
+    rmSync(folder, { recursive: true, force: true });
+  }
+
+  const page = (chrome = await openChrome(BASE));
   // Before the site's own code runs: App Check's debug mode, as on localhost.
   await page.send('Page.addScriptToEvaluateOnNewDocument', { source: `self.FIREBASE_APPCHECK_DEBUG_TOKEN = ${JSON.stringify(env.VITE_APPCHECK_DEBUG_TOKEN)};` });
   /** Gemini's answers to the page (HTTP status), and errors the page logged. */
@@ -119,16 +140,7 @@ try {
   const geminiErrors = errors.filter((error) => /AI:|generateContent|Gemini/.test(error));
   report('No Gemini errors in the page', geminiErrors.length === 0, geminiErrors.join(' | ').slice(0, 400));
 } finally {
-  await page.close();
-  // Nothing of the throwaway account is left behind: it deletes what it may have saved, then itself.
-  const client = initializeApp({ apiKey: env.VITE_FIREBASE_API_KEY, authDomain: env.VITE_FIREBASE_AUTH_DOMAIN, projectId: env.VITE_FIREBASE_PROJECT_ID, appId: env.VITE_FIREBASE_APP_ID });
-  try {
-    const signedIn = await signInWithEmailAndPassword(getAuth(client), account.email, account.password);
-    for (const path of [`chatNotes/${uid}`, `students/${uid}`]) await deleteDoc(doc(getFirestore(client), path)).catch(() => {});
-    await deleteUser(signedIn.user);
-  } catch (err) {
-    console.log(`Couldn't delete the throwaway account (${/** @type {{ code?: string }} */ (err).code ?? 'error'}): delete it in the console (its address starts ag2-chat-check-).`);
-  }
+  await cleanUp();
 }
 
 const passed = results.filter(Boolean).length;
