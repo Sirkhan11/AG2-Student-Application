@@ -16,7 +16,7 @@ const CORS = [
 
 /**
  * Starts answering the page's Gemini requests. Replies are used in the order they're queued; with
- * none queued, it says "Thanks for telling me."
+ * none queued, it says "Thanks for telling me." (as a check-in chat reply: JSON, see chat-prompt.js).
  * @param {(method: string, params?: object) => Promise<any>} send the page's DevTools session
  * @param {(handler: (message: any) => void) => void} listen adds a handler for every DevTools message
  */
@@ -39,7 +39,7 @@ export async function standInGemini(send, listen) {
       // Not JSON: kept as nothing.
     }
     requests.push({ url: request.url, body });
-    const text = replies.shift() ?? 'Thanks for telling me.';
+    const text = replies.shift() ?? JSON.stringify({ action: 'none', page: 'none', say: 'Thanks for telling me.' });
     const answer = {
       candidates: [{ content: { role: 'model', parts: [{ text }] }, finishReason: 'STOP', index: 0 }],
       usageMetadata: { promptTokenCount: 1, candidatesTokenCount: 1, totalTokenCount: 2 }
@@ -53,8 +53,12 @@ export async function standInGemini(send, listen) {
   });
   await send('Fetch.enable', { patterns: GEMINI_HOSTS.map((host) => ({ urlPattern: `*${host}*` })) });
   return {
-    /** Queues the text of a reply. @param {string} text */
-    replyWith: (text) => void replies.push(text),
+    /**
+     * Queues a reply: text as it is (such as a summary's JSON), or a check-in chat reply's fields,
+     * sent as the JSON the chat asks for (no action or page unless given).
+     * @param {string | Record<string, unknown>} reply
+     */
+    replyWith: (reply) => void replies.push(typeof reply === 'string' ? reply : JSON.stringify({ action: 'none', page: 'none', ...reply })),
     /** Every request the app has sent to Gemini. */
     requests,
     /** What the last request told Gemini (its system instruction), or ''. */

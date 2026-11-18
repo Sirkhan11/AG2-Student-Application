@@ -1,5 +1,4 @@
 import { watchSignedIn } from '#lib/firebase/auth.js';
-import { describeForGemini } from '#lib/checkin/opener.js';
 
 // The check-in chat's conversation, kept in memory while the app is open in this browser tab, so
 // switching to another page (such as Mentor) and back doesn't wipe it, cards and all. Nothing is
@@ -13,7 +12,7 @@ import { describeForGemini } from '#lib/checkin/opener.js';
 /**
  * One bubble. kind marks the fixed safety message, an error, or the chat being unavailable (Gemini's
  * credit has run out). links are shown under it: a suggested society, Northumbria Sport club or NSU
- * service as a card with its details (see reply-links.js), anything else as a button (external ones
+ * service as a card with its details (see catalogue.js), anything else as a button (external ones
  * open in a new tab).
  * task is a checklist task the chat suggested, shown as a card with Add and No thanks; state says
  * what's happened to it (kept here, so it stays the same when they come back to the chat).
@@ -119,16 +118,16 @@ export function setChatFacts(next) {
 }
 
 /**
- * Tells Gemini what the app knows now, keeping the conversation so far (see retell in chat.js): after
- * a mentor is found in the chat, or when the student's notes change (one saved from a card in the
- * chat, or deleted on the "What the chat knows about you" page). Does nothing if no chat is running
- * in this tab: the next one is told when it starts.
- * @param {Partial<Parameters<typeof describeForGemini>[0]>} change
+ * Tells Gemini what the app knows now, keeping the conversation so far (see retell in chat-turns.js):
+ * after a mentor is found in the chat, or when the student's notes change (one saved from a card in
+ * the chat, or deleted on the "What the chat knows about you" page). Does nothing if no chat is
+ * running in this tab: the next one is told when it starts.
+ * @param {Partial<Parameters<typeof import('#lib/checkin/opener.js').describeForGemini>[0]>} change
  */
 export function tellGemini(change) {
   if (!facts) return;
   facts = { ...facts, ...change };
-  gemini?.retell(describeForGemini(facts));
+  gemini?.retell(facts);
 }
 
 /**

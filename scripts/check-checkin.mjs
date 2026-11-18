@@ -1,7 +1,9 @@
 // Checks the check-in chat's first message and what Gemini is told (src/lib/checkin/opener.js), the
-// crisis check that runs before anything is sent to Gemini (src/lib/checkin/safety.js), how the
-// chat answers when Gemini fails (src/lib/checkin/chat-turns.js, with made-up models), and its
-// checklist reminders (src/lib/checkin/task-suggestions.js, with a made-up checklist store).
+// crisis check that runs before anything is sent to Gemini (src/lib/checkin/safety.js), how each
+// JSON reply is checked before the student sees it (chat-replies.js), how the chat answers when
+// Gemini fails (src/lib/checkin/chat-turns.js, with made-up models), and its checklist reminders
+// (src/lib/checkin/task-suggestions.js, with a made-up checklist store). The short list of
+// suggestions has its own check (check-shortlist.mjs).
 // Nothing here needs Gemini or Firebase.
 //
 // Run from the project folder:
@@ -12,17 +14,16 @@ import { readFileSync } from 'node:fs';
 import { buildOpener, describeForGemini, tidyProfile } from '#lib/checkin/opener.js';
 import { blankContactDetails } from '#lib/checkin/private-details.js';
 import { isCrisis } from '#lib/checkin/safety.js';
-import { chatInstructions, CLUB_LIST, SERVICE_LIST, SOCIETY_LIST } from '#lib/checkin/chat-prompt.js';
-import { CLUBS } from '#lib/sport/clubs.js';
-import { linksInReply, MAX_LINKS } from '#lib/checkin/reply-links.js';
+import { chatRequest, CHAT_PAGES } from '#lib/checkin/chat-prompt.js';
+import { MAX_LINKS, readChatReply, REMINDER_OFFER, tidySay } from '#lib/checkin/chat-replies.js';
 import { startsAfresh } from '#lib/checkin/keep-chat.js';
 import { chatWith, ERROR_MESSAGE, UNAVAILABLE_MESSAGE } from '#lib/checkin/chat-turns.js';
 import { isOutOfCredit } from '#lib/firebase/ai-errors.js';
 import { APP_PAGES, findPage } from '#lib/checkin/app-pages.js';
 import { opensChatFromHome, WAIT_FOR_CHAT_MS } from '#lib/page-transitions.js';
-import { SERVICES } from '#lib/nsu/services.js';
-import { SOCIETIES } from '#lib/societies/societies.js';
-import { addSuggestedTask, existingTask, sameTask, stateFor, tasksInReply } from '#lib/checkin/task-suggestions.js';
+import { suggestionNamed } from '#lib/suggestions/catalogue.js';
+import { shortlist } from '#lib/suggestions/shortlist.js';
+import { addSuggestedTask, existingTask, sameTask, stateFor } from '#lib/checkin/task-suggestions.js';
 import { ChecklistError, defaultTasks, MAX_TASKS } from '#lib/checklist/tasks.js';
 
 /** The five default tasks (see DEFAULT_TASKS in src/lib/checklist/tasks.js), with the given ids ticked. @param {string[]} [done] */
@@ -39,6 +40,13 @@ const matched = /** @type {const} */ ({
   status: 'matched', mentorId: 'm1', mentorName: 'Alex', reasons: [], meetingFrequency: 'weekly', availability: null
 });
 const waiting = /** @type {const} */ ({ status: 'coordinator', meetingFrequency: 'weekly', availability: null });
+
+/** A made-up Gemini reply, as JSON. @param {Record<string, unknown>} reply */
+const json = (reply) => JSON.stringify({ action: 'none', page: 'none', ...reply });
+/** A short list, as the app would pick it, for these names. @param {string[]} names */
+const listOf = (names) => names.map((name) => ({ suggestion: /** @type {import('#lib/suggestions/catalogue.js').Suggestion} */ (suggestionNamed(name)), why: ['they said "x"'] }));
+/** Facts for a made-up chat with no records. */
+const noFacts = { match: null, tasks: null };
 
 /** @type {[string, () => void | Promise<void>][]} */
 const checks = [
@@ -147,23 +155,37 @@ const checks = [
       'I think I\'m in danger'
     ]) assert.equal(isCrisis(text), true, text);
   }],
-  // ---------- The societies Gemini may suggest ----------
-  ['Gemini\'s society list: one per line, with categories, group notes and notes on misleading names, and no women-only societies', () => {
-    const lines = SOCIETY_LIST.split('\n');
-    assert.ok(lines.includes('Climbing (Recreational Sport)'));
-    assert.ok(lines.includes('Conservation of Fine Art (Academic; conserving artworks)'));
-    assert.ok(lines.includes('Formula Student (Recreational Sport; building a racing car for an engineering competition)'));
-    assert.ok(lines.includes('Ukrainian (International and Cultural; Ukrainian community, everyone welcome)'));
-    assert.ok(lines.includes('Christian Union (Faith and Belief; for Christians)'));
-    assert.ok(!SOCIETY_LIST.includes('Girls Who Run') && !SOCIETY_LIST.includes('Women in Business'));
-    assert.ok(!SOCIETY_LIST.includes('Nigerian (International and Cultural; for the Nigerian community)\nNigerian'), 'London societies are left out');
+  // ---------- What Gemini is told about what it may suggest ----------
+  ['Each suggestion is told with what it is: a society’s category and notes, a club, a service’s group, summary and topics', () => {
+    assert.equal(suggestionNamed('Climbing')?.about, "a Students' Union society (Recreational Sport)");
+    assert.equal(suggestionNamed('Conservation of Fine Art')?.about, "a Students' Union society (Academic; conserving artworks)");
+    assert.equal(suggestionNamed('Ukrainian')?.about, "a Students' Union society (International and Cultural; Ukrainian community, everyone welcome)");
+    assert.equal(suggestionNamed('Christian Union')?.about, "a Students' Union society (Faith and Belief; for Christians: only for someone who has said they are)");
+    assert.match(String(suggestionNamed('Swimming')?.about), /^a Northumbria Sport club \(joining needs a paid membership/);
+    assert.match(String(suggestionNamed('Food Pantry')?.about), /^an NSU service \(Money and food\): /);
+    assert.match(String(suggestionNamed('Advice Centre')?.about), /It covers: .*Academic misconduct/);
+    assert.equal(suggestionNamed('Girls Who Run'), null, 'women-only societies are never suggested');
+    assert.equal(suggestionNamed('Freshers Week wristband'), null);
   }],
-  ['Gemini\'s services list: groups and summaries, the Advice Centre\'s topics, and no Freshers Week wristband', () => {
-    const lines = SERVICE_LIST.split('\n');
-    assert.equal(lines.length, 20, 'the 21 services minus the wristband');
-    assert.ok(lines.some((line) => line.startsWith('Food Pantry (Money and food): ')));
-    assert.ok(lines.some((line) => line.startsWith('Advice Centre (Help and advice): ') && line.includes('Topics: ') && line.includes('Academic misconduct')));
-    assert.ok(!SERVICE_LIST.includes('Freshers'));
+  ['Gemini is told only this turn\'s short list, with why each is on it, and the schema allows no other name', () => {
+    const list = shortlist({ message: 'I love swimming' });
+    const request = chatRequest({ about: '(about)', opener: ['(opener)'], shortlist: list, options: { mentor: 'no', checklist: 'no', hasMentor: false } });
+    assert.match(request.systemInstruction, /You may suggest:\n- Swimming: a Northumbria Sport club .*Picked because: they said "swimming"\./);
+    assert.ok(!request.systemInstruction.includes('Climbing'), 'nothing that isn\'t on the list');
+    const schema = /** @type {any} */ (request.generationConfig.responseSchema);
+    assert.deepEqual(schema.properties.suggest.items.enum, list.map(({ suggestion }) => suggestion.name));
+    assert.equal(schema.properties.suggest.maxItems, 3);
+    assert.deepEqual(schema.propertyOrdering.at(-1), 'say', 'the words come after the decisions');
+    const none = chatRequest({ about: '(about)', opener: ['(opener)'], shortlist: [], options: { mentor: 'no', checklist: 'no', hasMentor: false } });
+    assert.equal(/** @type {any} */ (none.generationConfig.responseSchema).properties.suggest, undefined, 'nothing to suggest: no suggest at all');
+    assert.match(none.systemInstruction, /You may suggest:\n\(none this time\)/);
+  }],
+  ['Only the actions the app allows now are offered: a mentor only without one, their mentor only when matched, the checklist only with tasks left', () => {
+    const actions = (/** @type {any} */ options) => chatRequest({ about: '', opener: [], shortlist: [], options }).actions;
+    assert.deepEqual(actions({ mentor: 'yes', checklist: 'yes', hasMentor: false }), ['checklist', 'mentor', 'reminder', 'remember']);
+    assert.deepEqual(actions({ mentor: 'no', checklist: 'no', hasMentor: true }), ['your-mentor', 'change-mentor', 'reminder', 'remember']);
+    const asked = chatRequest({ about: '', opener: [], shortlist: [], options: { mentor: 'if-asked', checklist: 'if-asked', hasMentor: false } }).systemInstruction;
+    assert.equal(asked.match(/they said not now earlier, so only if they ask/g)?.length, 2);
   }],
 
   // ---------- Keeping the conversation when they visit another page ----------
@@ -176,82 +198,58 @@ const checks = [
     assert.equal(startsAfresh({ ...back, fromFindMentor: true }), true, 'they\'ve just asked for a mentor');
   }],
 
-  // ---------- Turning a reply's [[Name]]s into links ----------
-  ['Each link says which society or service it is (for its card); societies open in the app, services on NSU\'s site, Societies at /societies', () => {
-    const { text, links } = linksInReply('Try [[Climbing]], the [[Food Pantry]] and [[Societies]].', 'Newcastle');
-    assert.equal(text, 'Try Climbing, the Food Pantry and Societies.');
-    assert.deepEqual(links, [
+  // ---------- Reading a reply: only what the app allowed ----------
+  ['Each card says which society, club or service it is; societies and clubs open in the app, services on NSU\'s site, Societies at /societies', () => {
+    const reply = readChatReply(json({ suggest: ['Climbing', 'Food Pantry', 'Societies'], say: 'Try Climbing, the Food Pantry or Societies.' }), { shortlist: listOf(['Climbing', 'Food Pantry', 'Societies']), actions: [] });
+    assert.deepEqual(reply?.links, [
       { label: 'Climbing', href: '/societies/15', external: false, kind: 'society', nsuId: 15 },
       { label: 'Food Pantry', href: 'https://mynsu.co.uk/foodpantry', external: true, kind: 'service', serviceId: 'food-pantry' },
       { label: 'Societies', href: '/societies', external: false, kind: 'service', serviceId: 'societies' }
     ]);
+    const club = readChatReply(json({ suggest: ['Swimming'], say: 'Swimming.' }), { shortlist: listOf(['Swimming']), actions: [] });
+    assert.deepEqual(club?.links, [{ label: 'Swimming', href: '/sport/swimming', external: false, kind: 'club', slug: 'swimming' }]);
   }],
-  ['Made-up names stay plain text; plain words like "music" never become links; each link once', () => {
-    const { text, links } = linksInReply('[[Music]] and [[music]], or [[Underwater Basket Weaving]]. I love music.', 'Newcastle');
-    assert.equal(text, 'Music and Music, or Underwater Basket Weaving. I love music.');
-    assert.deepEqual(links.map((link) => link.label), ['Music']);
+  ['A name that isn\'t on this turn\'s short list never becomes a card, however it\'s written; each once', () => {
+    const reply = readChatReply(json({ suggest: ['Climbing', 'climbing', 'Underwater Basket Weaving', 'Girls Who Run', 'Cost of Location', 'Music'], say: 'Ideas.' }), { shortlist: listOf(['Climbing', 'Film']), actions: [] });
+    assert.deepEqual(reply?.links.map((link) => link.label), ['Climbing']);
+    assert.deepEqual(reply?.suggested, ['Climbing']);
   }],
-  ['A club name gives a club card (in the app at /sport/<slug>); Hockey is the club and Ice Hockey the society', () => {
-    const { text, links } = linksInReply('Try [[Swimming]], [[Hockey]] or [[Ice Hockey]].', 'Newcastle');
-    assert.equal(text, 'Try Swimming, Hockey or Ice Hockey.');
-    assert.deepEqual(links.map((link) => [link.label, link.kind, link.href]), [
-      ['Swimming', 'club', '/sport/swimming'],
-      ['Hockey', 'club', '/sport/hockey'],
-      ['Ice Hockey', 'society', `/societies/${links[2].nsuId}`]
-    ]);
-    assert.equal(links[0].slug, 'swimming');
+  [`At most ${MAX_LINKS} links, cards and the page button together`, () => {
+    const many = readChatReply(json({ suggest: ['Film', 'Swimming', 'Food Pantry', 'Music'], page: 'NHS Guide', say: 'Ideas.' }), { shortlist: listOf(['Film', 'Swimming', 'Food Pantry', 'Music']), actions: [] });
+    assert.deepEqual(many?.links.map((link) => link.label), ['Film', 'Swimming', 'Food Pantry']);
   }],
-  ['Gemini\'s club list is exactly the 38 clubs\' names, one per line, and nothing else', () => {
-    assert.deepEqual(CLUB_LIST.split('\n'), CLUBS.map((club) => club.name));
-    assert.ok(!CLUB_LIST.includes('@'));
-  }],
-  [`At most ${MAX_LINKS} links (so at most ${MAX_LINKS} cards), societies, clubs and services together; made-up names give none`, () => {
-    const mixed = linksInReply('[[Swimming]], [[Climbing]], [[Food Pantry]], [[Rowing]] and [[Underwater Hockey]]', 'Newcastle');
-    assert.deepEqual(mixed.links.map((link) => link.kind), ['club', 'society', 'service']);
-    assert.ok(!mixed.links.some((link) => link.label === 'Underwater Hockey'));
-  }],
-  [`At most ${MAX_LINKS} links (so at most ${MAX_LINKS} cards), societies and services together`, () => {
-    const { links } = linksInReply('[[Music]], [[Gigs]], [[Rock]], [[Events]], [[Film]]', 'Newcastle');
-    assert.equal(links.length, MAX_LINKS);
-    assert.ok(links.every((link) => link.kind === 'society' || link.kind === 'service'));
-  }],
-  ['Never linked, whatever Gemini writes: a women-only society, or the Freshers Week wristband', () => {
-    const { text, links } = linksInReply('Maybe [[Girls Who Run]] or the [[Freshers Week wristband]].', 'Newcastle');
-    assert.equal(text, 'Maybe Girls Who Run or the Freshers Week wristband.');
-    assert.deepEqual(links, []);
-  }],
-  ['App pages link like societies, by name or an obvious variant, as buttons that keep Gemini\'s words', () => {
-    const { text, links } = linksInReply('Have a look at your [[Checklist]], then the [[GP and Dentist Finder]] and your [[mentor]] page.', 'Newcastle');
-    assert.equal(text, 'Have a look at your Checklist, then the GP and Dentist Finder and your mentor page.');
-    assert.deepEqual(links, [
-      { label: 'Checklist', href: '/checklist', external: false },
-      { label: 'GP Finder', href: '/gp-finder', external: false },
-      { label: 'Your Mentor', href: '/mentor', external: false }
-    ]);
+  ['A page is a button under the reply; the Checklist is never one (the chat goes through it itself), and nor is a made-up page', () => {
+    const page = (/** @type {string} */ name) => readChatReply(json({ page: name, say: 'See here.' }), { shortlist: [], actions: [] })?.links ?? [];
+    assert.deepEqual(page('GP Finder'), [{ label: 'GP Finder', href: '/gp-finder', external: false }]);
+    assert.deepEqual(page('Checklist'), []);
+    assert.deepEqual(page('Find a mentor'), []);
+    assert.ok(!CHAT_PAGES.includes('Checklist'));
     assert.equal(findPage('  need   HELP now '), APP_PAGES.find((page) => page.href === '/need-help'));
     assert.equal(findPage('Find a GP')?.href, '/gp-finder');
-    assert.equal(findPage('Checklists'), null, 'only the names and their variants');
   }],
-  ['App pages share the limit of 3 with societies, clubs and services', () => {
-    const { links } = linksInReply('[[Film]], [[Swimming]], [[Food Pantry]] and your [[Checklist]]', 'Newcastle');
-    assert.deepEqual(links.map((link) => link.label), ['Film', 'Swimming', 'Food Pantry']);
+  ['Only an action the app allowed counts; a reminder must fit on the checklist; a note must pass the screen', () => {
+    const read = (/** @type {Record<string, unknown>} */ reply, actions = ['reminder', 'remember', 'mentor']) => readChatReply(json({ say: 'Okay.', ...reply }), { shortlist: [], actions })?.action ?? null;
+    assert.deepEqual(read({ action: 'mentor' }), { id: 'mentor' });
+    assert.equal(read({ action: 'your-mentor' }), null, 'not allowed this turn');
+    assert.deepEqual(read({ action: 'reminder', reminder: ' "Open a bank account." ' }), { id: 'reminder', text: 'Open a bank account' });
+    assert.equal(read({ action: 'reminder', reminder: `Do ${'x'.repeat(100)}` }), null, 'too long for the checklist');
+    assert.equal(read({ action: 'reminder', reminder: 'Call [phone number]' }), null, 'a blanked contact detail');
+    assert.equal(read({ action: 'reminder', reminder: '' }), null);
+    assert.deepEqual(read({ action: 'remember', remember: 'Plans the week every Sunday' }), { id: 'remember', text: 'Plans the week every Sunday' });
+    assert.equal(read({ action: 'remember', remember: 'Worried about money' }), null, 'never money or worries');
   }],
-  ['The student never sees the [[ ]] format: stray or unclosed brackets are taken out, and an unclosed one never swallows the next name', () => {
-    const { text, links } = linksInReply('See [[Checklist and [[Film]]. Or [[Unknown Thing]].]] [[]]', 'Newcastle');
-    assert.equal(text, 'See Checklist and Film. Or Unknown Thing.');
-    assert.deepEqual(links.map((link) => link.label), ['Film']);
+  ['The student never sees a marker, and a last sentence offering to remember goes (the card asks that); "Remember to…" stays', () => {
+    assert.equal(tidySay('See [[Checklist and {{task: x}} [[Film]]. {{mentor}}'), 'See Checklist and Film.');
+    const say = (/** @type {string} */ text, action = 'none') => readChatReply(json({ action, remember: 'Plans on Sundays', say: text }), { shortlist: [], actions: ['remember'] })?.say;
+    assert.equal(say('Nice plan! Want me to remember that for next time?', 'remember'), 'Nice plan!');
+    assert.equal(say('Nice plan! I can remember that if you like.'), 'Nice plan!');
+    assert.equal(say('Remember to bring photo ID.'), 'Remember to bring photo ID.');
   }],
-  ['No app page (or its variants) has the same name as a society, club or service', () => {
-    const names = APP_PAGES.flatMap((page) => [page.name, ...page.also]);
-    const key = (/** @type {string} */ name) => name.toLowerCase().replace(/\s+/g, ' ').trim();
-    const taken = new Set([...SOCIETIES.map((society) => key(society.name)), ...SERVICES.map((service) => key(service.name)), ...CLUBS.map((club) => key(club.name))]);
-    assert.deepEqual(names.filter((name) => taken.has(key(name))), []);
-  }],
-  ['The chat is told the app pages as [[ ]] links, and never to mention, explain or show the brackets', () => {
-    const instructions = chatInstructions('(about)', ['(opener)']);
-    for (const page of APP_PAGES) assert.ok(instructions.includes(`[[${page.name}]]`), page.name);
-    assert.match(instructions, /Never mention, explain or show them to the student/);
-    assert.ok(!/Pointing them to pages in the app by name: GP and Dentist Finder/.test(instructions), 'the old plain-text page list is gone');
+  ['A reply that isn\'t JSON, or has nothing to say or show, isn\'t read as a reply', () => {
+    assert.equal(readChatReply('Hello there.', { shortlist: [], actions: [] }), null);
+    assert.equal(readChatReply('[]', { shortlist: [], actions: [] }), null);
+    assert.equal(readChatReply(json({ say: '  ' }), { shortlist: [], actions: [] }), null);
+    assert.deepEqual(readChatReply(json({ action: 'mentor', say: '' }), { shortlist: [], actions: ['mentor'] })?.action, { id: 'mentor' }, 'a card on its own is fine');
   }],
   ['Opening the chat from Home slides it down (not with reduced motion); the bottom bar stays still; other pages just open', () => {
     assert.equal(opensChatFromHome('/home', '/check-in'), true);
@@ -270,10 +268,6 @@ const checks = [
     assert.match(layout, /prefers-reduced-motion: reduce/);
     assert.match(readFileSync('src/routes/check-in/+page.svelte', 'utf8'), /data-chat-ready/);
   }],
-  ['No service has the same name as a society, so a [[Name]] can only mean one thing', () => {
-    const societies = new Set(SOCIETIES.map((society) => society.name.toLowerCase()));
-    assert.deepEqual(SERVICES.filter((service) => societies.has(service.name.toLowerCase())).map((service) => service.name), []);
-  }],
   ['Everyday phrases are not', () => {
     for (const text of [
       'This essay is killing me',
@@ -283,29 +277,7 @@ const checks = [
       'Not sure which society to join'
     ]) assert.equal(isCrisis(text), false, text);
   }],
-  // ---------- Checklist reminders: {{task: }} suggestions and the Add card ----------
-  ['A suggested task: the student sees it in quotes, never the {{task: }} marker, and it\'s offered for the card', () => {
-    const { text, tasks } = tasksInReply('Shall I add {{task: Open a bank account}} to your checklist?');
-    assert.equal(text, 'Shall I add “Open a bank account” to your checklist?');
-    assert.deepEqual(tasks, ['Open a bank account']);
-  }],
-  ['However the marker is written, the student never sees it, and only the first task is offered (one at a time)', () => {
-    assert.deepEqual(tasksInReply('{{ Task : "Buy a bus pass." }}').tasks, ['Buy a bus pass']);
-    const two = tasksInReply('First {{task: Open a bank account}}, then {{task: Get a bus pass}}.');
-    assert.deepEqual(two.tasks, ['Open a bank account']);
-    assert.equal(two.text, 'First “Open a bank account”, then “Get a bus pass”.');
-    for (const reply of ['Try {{task: Open a bank', 'Done }} and {{ and {{task:', 'Empty {{task: }} here', 'Odd {{task:}}', '{{TASK:Call home}}']) {
-      const { text } = tasksInReply(reply);
-      assert.ok(!/\{\{|\}\}|task\s*:/i.test(text), `${reply} -> ${text}`);
-    }
-    assert.equal(tasksInReply('Empty {{task: }} here').text, 'Empty here');
-    assert.deepEqual(tasksInReply('Empty {{task: }} here').tasks, []);
-  }],
-  ['A task over 100 characters or with a blanked contact detail is shown but not offered; a [[Name]] inside keeps its name', () => {
-    assert.deepEqual(tasksInReply(`{{task: Do ${'x'.repeat(100)}}}`).tasks, []);
-    assert.deepEqual(tasksInReply('{{task: Call [phone number]}}').tasks, []);
-    assert.deepEqual(tasksInReply('{{task: Go to a [[Chess]] meet}}').tasks, ['Go to a Chess meet']);
-  }],
+  // ---------- Checklist reminders: the Add card ----------
   ['A suggestion that\'s already on the checklist points to that task (a standard one or their own); a full list has no room', () => {
     const list = [...defaultTasks(), { id: 'own-1', title: 'Call home about rent', done: false }];
     assert.deepEqual(stateFor(list, 'Register with a GP surgery'), { state: 'exists', existing: 'Register with a GP' });
@@ -366,43 +338,65 @@ const checks = [
     assert.match(note, /This chat isn’t saved: it stays while the app is open in this tab, until you log out/);
     assert.match(note, /If it suggests a reminder and you tap Add, that task is saved to your checklist,/);
   }],
-  ['The chat is told to ask about reminders once at a natural point, one {{task: }} at a time, never to say it\'s added, and to point to a task already there', () => {
-    const instructions = chatInstructions('(about)', ['(opener)']);
-    assert.match(instructions, /Once in the conversation, at a natural point, ask whether there's anything they'd like reminding about while they settle in/);
-    assert.match(instructions, /Not while they're worried or upset\. Ask this only once/);
-    assert.match(instructions, /written as \{\{task: Open a bank account\}\}/);
-    assert.match(instructions, /Suggest one task at a time/);
-    assert.match(instructions, /Never say you've added a task or that you will: only they can, with the card's Add button\./);
-    assert.match(instructions, /If it's already on their checklist .* don't suggest it again: say it's already there and point them to their \[\[Checklist\]\]\./);
-    assert.match(instructions, /The double square brackets and the \{\{ \}\} markers are only for the app/);
+  ['The chat is told to ask about reminders once at a natural point, to give one short task, and that only their tap adds it', () => {
+    const { systemInstruction } = chatRequest({ about: '(about)', opener: ['(opener)'], shortlist: [], options: { mentor: 'no', checklist: 'no', hasMentor: false } });
+    assert.match(systemInstruction, /Once in the conversation, at a natural point .* ask whether there's anything they'd like reminding about while they settle in\. Only once\./);
+    assert.match(systemInstruction, /"reminder": they name something they'd like reminding about\. Put one short task for it in reminder/);
+    assert.match(systemInstruction, /only their tap adds it, so in say just offer it, such as "Here's a reminder you can add to your checklist\." Never say you've added or set it\./);
+    assert.match(systemInstruction, /Never say you've done something for them, or that you will\./);
   }],
-  ['chatWith gives the page the suggested task without its marker, and Gemini keeps seeing its own marker (so it knows it asked)', async () => {
+  ['Whatever Gemini says: a reminder already on their checklist says so instead of a card, and "I’ve added it" never shows', () => {
+    const read = (/** @type {Record<string, unknown>} */ reply) => readChatReply(json({ action: 'reminder', ...reply }), { shortlist: [], actions: ['reminder'], tasks: defaultTasks() });
+    const there = read({ reminder: 'Register with a GP', say: 'I have set a reminder for you to register with a GP.' });
+    assert.deepEqual([there?.say, there?.action], ['That’s already on your checklist: “Register with a GP”.', null]);
+    assert.deepEqual([read({ reminder: 'Open a bank account', say: 'I’ve added that to your list.' })?.say], [REMINDER_OFFER]);
+    assert.equal(read({ reminder: 'Open a bank account', say: 'Good idea. I have added opening a bank account to your reminders. Anything else?' })?.say, 'Good idea. Anything else?');
+    assert.equal(read({ reminder: 'Open a bank account', say: 'Good idea. Here it is for you to add.' })?.say, 'Good idea. Here it is for you to add.');
+  }],
+  ['No Remember card while they’re asking something, and no Your Mentor button with their mentor’s card', async () => {
     /** @type {any[]} */
     const requests = [];
-    const chat = chatWith({
-      generateContent: async (/** @type {any} */ request) => {
-        requests.push(structuredClone(request));
-        return /** @type {any} */ ({ response: { text: () => 'Shall I add {{task: Buy a winter coat}}? Your [[Checklist]] has the rest.', candidates: [{ finishReason: 'STOP' }] } });
-      }
-    });
+    const chat = chatWith({ generateContent: async (/** @type {any} */ request) => (requests.push(request), /** @type {any} */ ({ response: { text: () => json({ say: 'Nice.' }), candidates: [] } })) }, { facts: noFacts, opener: ['Hi!'] });
+    await chat.send('I love films. Any societies?');
+    await chat.send('I plan my week every Sunday.');
+    assert.ok(!requests[0].generationConfig.responseSchema.properties.action.enum.includes('remember'));
+    assert.ok(requests[1].generationConfig.responseSchema.properties.action.enum.includes('remember'));
+    const card = readChatReply(json({ action: 'your-mentor', page: 'Your Mentor', say: 'Here they are.' }), { shortlist: [], actions: ['your-mentor'] });
+    assert.deepEqual(card?.links, []);
+  }],
+  ['chatWith gives the page the suggested task for its card, and Gemini sees only what it said', async () => {
+    /** @type {any[]} */
+    const requests = [];
+    const chat = chatWith(
+      {
+        generateContent: async (/** @type {any} */ request) => {
+          requests.push(structuredClone(request));
+          return /** @type {any} */ ({ response: { text: () => json({ action: 'reminder', reminder: 'Buy a winter coat', say: 'Good idea, here it is.' }), candidates: [{ finishReason: 'STOP' }] } });
+        }
+      },
+      { facts: { match: null, tasks: defaultTasks() }, opener: ['Hi!'] }
+    );
     const reply = await chat.send('Can you remind me to buy a coat?');
-    assert.equal(reply.text, 'Shall I add “Buy a winter coat”? Your Checklist has the rest.');
+    assert.equal(reply.text, 'Good idea, here it is.');
     assert.deepEqual(reply.tasks, ['Buy a winter coat']);
-    assert.deepEqual(reply.links?.map((link) => link.href), ['/checklist']);
     await chat.send('Thanks');
-    assert.match(requests[1].contents[1].parts[0].text, /\{\{task: Buy a winter coat\}\}/);
+    assert.equal(requests[1].contents[1].parts[0].text, 'Good idea, here it is.');
+    assert.equal(requests[1].generationConfig.responseMimeType, 'application/json');
   }],
 
   // ---------- When Gemini answers or fails (made-up models) ----------
   ['A reply comes back as a reply, and the conversation so far is sent with each message', async () => {
     /** @type {number[]} */
     const sent = [];
-    const chat = chatWith({
-      generateContent: async (/** @type {any} */ request) => {
-        sent.push(request.contents.length);
-        return /** @type {any} */ ({ response: { text: () => 'Hello there.', candidates: [{ finishReason: 'STOP' }] } });
-      }
-    });
+    const chat = chatWith(
+      {
+        generateContent: async (/** @type {any} */ request) => {
+          sent.push(request.contents.length);
+          return /** @type {any} */ ({ response: { text: () => json({ say: 'Hello there.' }), candidates: [{ finishReason: 'STOP' }] } });
+        }
+      },
+      { facts: noFacts, opener: ['Hi!'] }
+    );
     assert.deepEqual(await chat.send('Hi'), { kind: 'reply', text: 'Hello there.', links: [], tasks: [], offers: [], notes: [] });
     await chat.send('How are you?');
     assert.deepEqual(sent, [1, 3]);
@@ -417,12 +411,15 @@ const checks = [
     assert.doesNotMatch(UNAVAILABLE_MESSAGE, /try again/i);
 
     let calls = 0;
-    const outOfCredit = chatWith({
-      generateContent: async () => {
-        calls++;
-        throw Object.assign(new Error('[402 Payment Required]'), { customErrorData: { status: 402 } });
-      }
-    });
+    const outOfCredit = chatWith(
+      {
+        generateContent: async () => {
+          calls++;
+          throw Object.assign(new Error('[402 Payment Required]'), { customErrorData: { status: 402 } });
+        }
+      },
+      { facts: noFacts, opener: ['Hi!'] }
+    );
     const quiet = console.error;
     console.error = () => {};
     try {
@@ -437,18 +434,23 @@ const checks = [
   }],
   ['Any other failure (such as too many requests) says try again in a minute, and the next message is sent as normal', async () => {
     let calls = 0;
-    const busy = chatWith({
-      generateContent: async () => {
-        calls++;
-        throw Object.assign(new Error('[429 Too Many Requests]'), { customErrorData: { status: 429 } });
-      }
-    });
+    const busy = chatWith(
+      {
+        generateContent: async () => {
+          calls++;
+          throw Object.assign(new Error('[429 Too Many Requests]'), { customErrorData: { status: 429 } });
+        }
+      },
+      { facts: noFacts, opener: ['Hi!'] }
+    );
     const quiet = console.error;
     console.error = () => {};
     try {
       assert.deepEqual(await busy.send('Hi'), { kind: 'error', text: ERROR_MESSAGE });
       assert.deepEqual(await busy.send('Hi again'), { kind: 'error', text: ERROR_MESSAGE });
       assert.equal(calls, 2);
+      const garbled = chatWith({ generateContent: async () => /** @type {any} */ ({ response: { text: () => 'Not JSON at all', candidates: [] } }) }, { facts: noFacts, opener: ['Hi!'] });
+      assert.deepEqual(await garbled.send('Hi'), { kind: 'error', text: ERROR_MESSAGE }, 'a reply the app can\'t read is never shown');
     } finally {
       console.error = quiet;
     }

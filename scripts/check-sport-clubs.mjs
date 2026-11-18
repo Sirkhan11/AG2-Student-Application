@@ -2,8 +2,8 @@
 // the data is what we expect and holds no contact details, lookups work, and no club has exactly the
 // same name as a society or an NSU service, so a name in a chat reply can only mean one thing (a
 // later refresh that adds a clash fails here). Also how a club's contacts and training times are
-// shown (src/lib/sport/display.js), with made-up people, and that the chat's instructions hold no
-// "@" and only the clubs' names. No Gemini or Firebase.
+// shown (src/lib/sport/display.js), with made-up people, and that what the chat is told about a club
+// is only its name and that it's a club, with no "@". No Gemini or Firebase.
 //
 // Given the private pages file (kept outside the repo), it also checks nothing from it (about text,
 // notes, contacts' names or emails) is in the chat's instructions, printing counts only:
@@ -18,16 +18,21 @@ import { CLUBS, CLUBS_COLLECTED_AT, CLUBS_SOURCE, clubBySlug, findClub, searchCl
 import { findSociety, SOCIETIES } from '#lib/societies/societies.js';
 import { SERVICES } from '#lib/nsu/services.js';
 import { contactGroups, membershipBlocks } from '#lib/sport/display.js';
-import { chatInstructions, CLUB_LIST } from '#lib/checkin/chat-prompt.js';
+import { chatRequest } from '#lib/checkin/chat-prompt.js';
 import { buildOpener, describeForGemini } from '#lib/checkin/opener.js';
+import { SUGGESTIONS } from '#lib/suggestions/catalogue.js';
 import { homedir } from 'node:os';
 import { MIN_CLUBS } from './lib/sport-collect.mjs';
 
-/** The chat's full instructions for a made-up student, as Gemini receives them. */
-const INSTRUCTIONS = chatInstructions(
-  describeForGemini({ match: null, tasks: null }),
-  buildOpener({ match: null, tasks: null, justSignedUp: false }).messages
-);
+/** Every club as the chat can be told about it, on one turn's short list. */
+const CLUB_SUGGESTIONS = SUGGESTIONS.filter((suggestion) => suggestion.kind === 'club');
+/** The chat's full instructions for a made-up student, as Gemini would receive them with every club on the short list. */
+const INSTRUCTIONS = chatRequest({
+  about: describeForGemini({ match: null, tasks: null }),
+  opener: buildOpener({ match: null, tasks: null, justSignedUp: false }).messages,
+  shortlist: CLUB_SUGGESTIONS.map((suggestion) => ({ suggestion, why: ['they said "sport"'] })),
+  options: { mentor: 'yes', checklist: 'no', hasMentor: false }
+}).systemInstruction;
 
 const key = (/** @type {string} */ name) => name.toLowerCase().replace(/\s+/g, ' ').trim();
 
@@ -100,10 +105,12 @@ const checks = [
       { text: 'Includes BUCS entry', items: [] }
     ]);
   }],
-  ['The chat\'s instructions hold no "@", and their club list is only the clubs\' names', () => {
+  ['The chat is told only a club\'s name and that it\'s a club (the card has the rest), with no "@"', () => {
     assert.ok(!INSTRUCTIONS.includes('@'));
-    assert.ok(INSTRUCTIONS.includes(`Northumbria Sport clubs, all at the Newcastle campus (one per line):\n${CLUB_LIST}\n`));
-    assert.deepEqual(CLUB_LIST.split('\n'), CLUBS.map((club) => club.name));
+    assert.deepEqual(CLUB_SUGGESTIONS.map((suggestion) => suggestion.name), CLUBS.map((club) => club.name));
+    const about = new Set(CLUB_SUGGESTIONS.map((suggestion) => suggestion.about));
+    assert.deepEqual([...about], ['a Northumbria Sport club (joining needs a paid membership; its card has the prices, training times and who to contact)']);
+    for (const club of CLUBS) assert.ok(INSTRUCTIONS.includes(`- ${club.name}: a Northumbria Sport club (`), club.name);
   }],
   ['Hockey is the club and Ice Hockey the society, never the other way round', () => {
     assert.equal(findClub('Hockey')?.slug, 'hockey');

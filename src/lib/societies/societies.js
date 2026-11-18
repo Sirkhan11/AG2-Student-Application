@@ -111,7 +111,7 @@ export const NAME_NOTES = {
 
 /**
  * True for societies the check-in chat may suggest: everything except those with a restricted
- * AUDIENCE. Chat replies are turned into links by src/lib/checkin/reply-links.js.
+ * AUDIENCE. The chat's suggestions come from src/lib/suggestions/catalogue.js.
  */
 export function suggestible(/** @type {Society} */ society) {
   return !Object.hasOwn(AUDIENCE, society.nsuId);

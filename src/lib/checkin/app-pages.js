@@ -1,6 +1,6 @@
-// The app's own pages the check-in chat can link, written [[Name]] like societies, clubs and services
-// (see reply-links.js), for what the chat can't do itself yet. The chat's instructions list them by
-// name (chat-prompt.js). Finding a mentor isn't one: the chat does that itself (chat-actions.js).
+// The app's own pages the check-in chat can link to, as a button under a reply, for what the chat
+// can't do itself yet. Gemini picks one by name in its reply (chat-prompt.js); the Checklist is never
+// one, as the chat goes through that itself. Finding a mentor isn't one either (chat-actions.js).
 // No Firebase here, so the checks can use it in Node.
 
 /**

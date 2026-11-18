@@ -1,7 +1,8 @@
-// Checks their mentor in the check-in chat (YourMentorCard.svelte): {{your-mentor}} shows a card with
-// the mentor's name, how to get in touch and how often they asked to meet, read from the student's own
-// record so Gemini never sees them; {{change-mentor}} opens the form for a different mentor
-// (ChangeMentorRequest), which goes only to the coordinator; Gemini never asks for the reason.
+// Checks their mentor in the check-in chat (YourMentorCard.svelte): the your-mentor action shows a card
+// with the mentor's name, how to get in touch and how often they asked to meet, read from the student's
+// own record so Gemini never sees them; the change-mentor action opens the form for a different mentor
+// (ChangeMentorRequest), which goes only to the coordinator; Gemini never asks for the reason. Both
+// are only allowed for a student with a mentor.
 // 1. Offline, in Node: the two actions show their card straight away; the instructions; what Gemini
 //    is told (never the mentor's name or how to reach them); the card; the request kept out of the
 //    chat's own code, with its own ids.
@@ -19,9 +20,10 @@ import assert from 'node:assert/strict';
 import { randomBytes } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { CHAT_ACTIONS, chatAction, offersInReply } from '#lib/checkin/chat-actions.js';
-import { chatInstructions } from '#lib/checkin/chat-prompt.js';
-import { describeForGemini } from '#lib/checkin/opener.js';
+import { CHAT_ACTIONS, chatAction } from '#lib/checkin/chat-actions.js';
+import { chatRequest } from '#lib/checkin/chat-prompt.js';
+import { readChatReply } from '#lib/checkin/chat-replies.js';
+import { chatOptions, describeForGemini } from '#lib/checkin/opener.js';
 import { emulators, openChrome, owner, sleep, startApp } from './lib/emulator-app.mjs';
 import { standInGemini } from './lib/stand-in-gemini.mjs';
 
@@ -31,28 +33,29 @@ const MATCH = /** @type {const} */ ({ status: 'matched', mentorId: 'mentor-alex'
 
 /** @type {[string, () => void | Promise<void>][]} */
 const offline = [
-  ['Their mentor ({{your-mentor}}) and asking for a different one ({{change-mentor}}) show their card straight away; finding a mentor and the checklist still have Start and Not now', () => {
-    assert.deepEqual(offersInReply('Here’s your mentor. {{your-mentor}}'), { text: 'Here’s your mentor.', offers: ['your-mentor'] });
-    assert.deepEqual(offersInReply('You can ask the coordinator here. {{change-mentor}}'), { text: 'You can ask the coordinator here.', offers: ['change-mentor'] });
+  ['Their mentor (your-mentor) and asking for a different one (change-mentor) show their card straight away, only for a student with a mentor; finding a mentor and the checklist still have Start and Not now', () => {
+    const read = (/** @type {string} */ action, /** @type {string[]} */ actions) => readChatReply(JSON.stringify({ action, page: 'none', say: 'Here.' }), { shortlist: [], actions })?.action ?? null;
+    assert.deepEqual(read('your-mentor', ['your-mentor', 'change-mentor']), { id: 'your-mentor' });
+    assert.deepEqual(read('change-mentor', ['your-mentor', 'change-mentor']), { id: 'change-mentor' });
+    assert.equal(read('your-mentor', ['mentor']), null, 'not without a mentor');
+    assert.equal(chatOptions({ match: MATCH, tasks: null }).hasMentor, true);
+    assert.equal(chatOptions({ match: { status: 'coordinator', meetingFrequency: 'weekly', availability: null }, tasks: null }).hasMentor, false);
+    assert.equal(chatOptions({ match: null, tasks: null }).hasMentor, false);
     assert.equal(chatAction('your-mentor')?.shows, 'card');
     assert.equal(chatAction('change-mentor')?.shows, 'card');
-    assert.deepEqual(CHAT_ACTIONS.filter((action) => action.shows !== 'card' && !action.marker.includes(':')).map((action) => action.id), ['mentor', 'checklist']);
+    assert.deepEqual(CHAT_ACTIONS.filter((action) => action.shows !== 'card').map((action) => action.id), ['mentor', 'checklist']);
   }],
   ['The instructions: show the card when they ask who their mentor is or how to reach them, never guessing; the form when they want a different one, never asking why', () => {
-    const instructions = oneLine(chatInstructions('(about)', ['(opener)']));
+    const instructions = oneLine(chatRequest({ about: '(about)', opener: ['(opener)'], shortlist: [], options: { mentor: 'no', checklist: 'no', hasMentor: true } }).systemInstruction);
     for (const words of [
-      'If they ask who their mentor is or how to get in touch, show them the card here with {{your-mentor}} (see Showing them their mentor): you\'re never told their mentor\'s name or contact details.',
-      'the app shows a card with their mentor’s name, how to get in touch and how often they asked to meet, from their own record. You’re never told those, so never guess or give them yourself.',
-      'Don’t show it if they haven’t got a mentor yet, or the coordinator is still finding them one',
-      'If they ask about changing their mentor, show them the form here with {{change-mentor}}',
-      'Never ask for their reason or what went wrong, and don’t ask them to tell you: the form has the reasons.',
-      'Never say you’ve asked the coordinator or that you will: only they can send it, with the form’s button.'
+      `"your-mentor": they ask who their mentor is or how to get in touch. The app shows a card with their mentor's name, how to get in touch and how often they asked to meet. You're never told their mentor's name or contact details, so never guess them.`,
+      `"change-mentor": they want a different mentor. In say, one short, kind sentence saying they can ask the mentoring coordinator here, and only the coordinator will see why. The app shows a short form that goes only to the coordinator, never to their mentor or you. Never ask why or what went wrong.`,
+      'Never say you\'ve done something for them, or that you will.'
     ]) assert.ok(instructions.includes(words), words);
-    assert.doesNotMatch(instructions, /name and how to get in touch are on the \[\[Your Mentor\]\] page/);
   }],
-  ['Gemini is never told the mentor’s name or how to reach them: it shows the card instead', () => {
+  ['Gemini is never told the mentor’s name or how to reach them', () => {
     const told = describeForGemini({ match: { ...MATCH, mentorName: null }, tasks: null, profile: null });
-    assert.match(told, /You aren’t told the mentor’s name or how to reach them: if they ask who it is or how to get in touch, show the card with \{\{your-mentor\}\}\./);
+    assert.match(told, /You aren’t told the mentor’s name or how to reach them\./);
     const page = source('src/routes/check-in/+page.svelte');
     assert.match(page, /const withoutName = match\?\.status === 'matched' \? \{ \.\.\.match, mentorName: null \} : match;/, 'the first messages Gemini sees have no name');
     assert.doesNotMatch(describeForGemini({ match: MATCH, tasks: null, profile: null }), /Alex Mentor/, 'even if a name were passed in');
@@ -149,7 +152,7 @@ async function inTheBrowser(where) {
       await page.waitFor(`document.querySelector('[data-chat-ready]')`, 30000);
 
       // 1. Who's my mentor: the card, with nothing about the mentor sent to Gemini.
-      gemini.replyWith('Here’s your mentor. {{your-mentor}}');
+      gemini.replyWith({ action: 'your-mentor', say: 'Here’s your mentor.' });
       await ask(page, gemini, 'Who’s my mentor, and how do I get in touch?');
       const shown = await page.waitFor(`[...document.querySelectorAll('[aria-label="Your mentor"]')].at(-1)?.innerText.includes('Alex Mentor')`);
       const card = oneLine(await page.evaluate(`[...document.querySelectorAll('[aria-label="Your mentor"]')].at(-1)?.innerText ?? ''`));
@@ -160,14 +163,14 @@ async function inTheBrowser(where) {
         JSON.stringify(card.slice(0, 120)));
 
       // 2. A different mentor: the form, sent to Firestore only; the reason never reaches Gemini.
-      gemini.replyWith('Of course. You can ask the coordinator here, and only they will see why. {{change-mentor}}');
+      gemini.replyWith({ action: 'change-mentor', say: 'Of course. You can ask the coordinator here, and only they will see why.' });
       await ask(page, gemini, 'I’d like a different mentor please');
       const form = await page.waitFor(`[...document.querySelectorAll('fieldset legend')].some((l) => l.textContent.includes('Why would you like a different mentor?'))`);
       await page.evaluate(`(() => { const radio = [...document.querySelectorAll('input[name="change-reason"]')][1]; radio.click(); const box = [...document.querySelectorAll('textarea[id^="change-details-"]')].at(-1); Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value').set.call(box, ${JSON.stringify(DETAILS)}); box.dispatchEvent(new Event('input', { bubbles: true })); return true; })()`);
       await page.press('Send to the coordinator');
       const saved = await page.waitFor(`document.body.innerText.includes('You’ve asked the mentoring coordinator for a different mentor')`);
       const request = (await db.read(`mentorChangeRequests/${ivy}`))?.fields;
-      gemini.replyWith('Thanks for letting me know.');
+      gemini.replyWith({ say: 'Thanks for letting me know.' });
       await ask(page, gemini, 'Thanks');
       const later = JSON.stringify(gemini.requests.slice(-1));
       const reason = request?.reason?.stringValue ?? '(none)';
@@ -176,16 +179,19 @@ async function inTheBrowser(where) {
         `form ${form}, sent ${saved}`);
     });
 
-    // 3. Jo has no mentor: the card says so.
+    // 3. Jo has no mentor: the app never shows the mentor card, even if Gemini picks it.
     await inFreshChrome(async (page, gemini) => {
       await page.logIn('jo.mentor@northumbria.ac.uk', password);
       await page.go('/check-in');
       await page.waitFor(`document.querySelector('[data-chat-ready]')`, 30000);
-      gemini.replyWith('Here’s where things are. {{your-mentor}}');
+      gemini.replyWith({ action: 'your-mentor', say: 'You haven’t got a mentor yet.' });
       await ask(page, gemini, 'Who is my mentor?');
-      report('A student without a mentor: the card says so, with no form',
-        await page.waitFor(`[...document.querySelectorAll('[aria-label="Your mentor"]')].at(-1)?.innerText.includes('You haven’t got a mentor yet.')`)
-          && !(await page.evaluate(`Boolean(document.querySelector('input[name="change-reason"]'))`)));
+      const replied = await page.waitFor(`[...document.querySelectorAll('.bubble')].at(-1)?.innerText.includes('You haven’t got a mentor yet.')`);
+      const told = gemini.requests.at(-1)?.body?.generationConfig?.responseSchema?.properties?.action?.enum ?? [];
+      report('A student without a mentor: Gemini isn’t offered the mentor card, and the app shows none (and no form) even if it picks it',
+        replied && !told.includes('your-mentor') && !(await page.evaluate(`Boolean(document.querySelector('[aria-label="Your mentor"]'))`))
+          && !(await page.evaluate(`Boolean(document.querySelector('input[name="change-reason"]'))`)),
+        `actions offered: ${told.join(', ')}`);
     });
   } finally {
     app.stop();

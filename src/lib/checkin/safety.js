@@ -46,3 +46,23 @@ export function isCrisis(text) {
   const normalised = text.toLowerCase().replace(/[‘’]/g, "'");
   return CRISIS_PATTERNS.some((pattern) => pattern.test(normalised));
 }
+
+/**
+ * Words that suggest someone is worried or upset (short of a crisis): straight after finding a mentor,
+ * the chat then says nothing rather than suggest things (afterMatch in chat-turns.js). Erring on the
+ * side of quiet: a message that isn't sent costs nothing.
+ */
+const WORRIED = [
+  /\b(worr|stress|anxious|anxiety|lonely|homesick|upset|scared|afraid|panick|overwhelm|nervous|miserable|unhappy|struggl|crying|grief|griev)/,
+  /\bfeel(ing|s)? (really |so |very |quite |a bit |pretty )?(down|low|alone|awful|horrible|terrible|rubbish|sad|lost|isolated)\b/,
+  /\b(horrible|awful|terrible|rough|hard|bad|tough) (week|day|time|few days)\b/
+];
+
+/**
+ * True if the message suggests the student is worried or upset.
+ * @param {string} text
+ */
+export function seemsWorried(text) {
+  const normalised = text.toLowerCase().replace(/[‘’]/g, "'");
+  return isCrisis(text) || WORRIED.some((pattern) => pattern.test(normalised));
+}

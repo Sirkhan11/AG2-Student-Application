@@ -1,7 +1,6 @@
 // Things a student chooses for the check-in chat to remember, for later chats: up to MAX_NOTES, each
-// one short line (about-you.js). Gemini offers one by writing {{remember: Planning to join a running
-// club}}. The app takes the marker out and shows a card with Remember and Not now, and only their tap
-// saves it (chat-notes.js). Whatever Gemini writes, some things are never offered (screenNote):
+// one short line (about-you.js). Gemini offers one as its reply's remember action (chat-prompt.js).
+// The app shows a card with Remember and Not now, and only their tap saves it (chat-notes.js). Whatever Gemini writes, some things are never offered (screenNote):
 // anything about their health, money, worries or safety, other people, or contact details. They can
 // see and delete what's saved on the "What the chat knows about you" page. No Firebase here, so the
 // checks can test it in Node.
@@ -11,9 +10,6 @@ import { blankContactDetails } from '#lib/checkin/private-details.js';
 import { isCrisis } from '#lib/checkin/safety.js';
 
 export { MAX_NOTE_LENGTH, MAX_NOTES };
-
-/** A remember marker as Gemini writes it: {{remember: Something about them}}. */
-const MARKER = /\{\{\s*remember\s*:\s*([^{}]{1,300}?)\s*\}\}/gi;
 
 /**
  * Topics the chat never offers to remember, whatever Gemini writes: a backstop to its instructions.
@@ -47,40 +43,13 @@ export function screenNote(text) {
 }
 
 /** A note as Gemini wrote it, tidied: one line, no [[ ]] or quotes around it, no full stop. @param {string} raw */
-const tidyNote = (raw) =>
+export const tidyNote = (raw) =>
   raw
     .replace(/\[\[|\]\]/g, '')
     .replace(/\s+/g, ' ')
+    .trim()
     .replace(/^["'“”‘’]+|["'“”‘’.!?]+$/g, '')
     .trim();
-
-/** The sentence asking about remembering, at the end of what's left, for when the note isn't offered. */
-const ASKS_TO_REMEMBER = /[^.!?\n]*\b(remember|note (of|down|that)|keep (a )?note|save (that|this|it))\b[^.!?\n]*[.!?]?\s*$/i;
-
-/**
- * Takes the remember markers out of a reply: the text the student sees, and the note offered (the
- * first one that passes screenNote: one at a time). When the first note can't be offered, the
- * sentence asking about it goes too, so they're never asked about a card that isn't there. Any
- * half-written marker is taken out. Runs before tasksInReply, which takes out any marker it doesn't know.
- * @param {string} reply
- * @returns {{ text: string, notes: string[] }}
- */
-export function notesInReply(reply) {
-  /** @type {string[]} */
-  const notes = [];
-  let refused = false;
-  let text = reply.replace(MARKER, (_, raw) => {
-    const note = tidyNote(String(raw));
-    if (notes.length === 0 && !refused) {
-      if (screenNote(note) === null) notes.push(note);
-      else refused = true;
-    }
-    return '';
-  });
-  text = text.replace(/\{\{\s*remember\s*:?[^{}]*(\}\}?)?/gi, '');
-  if (refused) text = text.replace(ASKS_TO_REMEMBER, '');
-  return { text: text.replace(/[ \t]{2,}/g, ' ').replace(/[ \t]+([.,!?])/g, '$1').trim(), notes };
-}
 
 /** Lower case, letters and numbers only, for spotting the same note twice. @param {string} note */
 const simple = (note) => note.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();

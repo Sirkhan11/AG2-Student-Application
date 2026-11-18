@@ -13,7 +13,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import costs from '#lib/nhs/nhs-costs.json' with { type: 'json' };
 import { COSTS_CHECKED_ON, REGISTERING, SECTIONS, SOURCES, withFigures } from '#lib/nhs/guide.js';
 import { findPage } from '#lib/checkin/app-pages.js';
-import { chatInstructions } from '#lib/checkin/chat-prompt.js';
+import { chatRequest, CHAT_PAGES } from '#lib/checkin/chat-prompt.js';
 
 /**
  * Where official sources live: GOV.UK, the NHS website, the NHSBSA, Northumbria University, and the
@@ -75,9 +75,9 @@ const checks = [
   }],
   ['The chat can link the guide, and is told to answer NHS questions briefly with no prices', () => {
     assert.equal(findPage('NHS Guide')?.href, '/nhs-guide');
-    const instructions = chatInstructions('(about)', ['(opener)']);
-    assert.match(instructions, /how the NHS works, whether they pay to see a doctor or how to register with a GP, answer in one short sentence without any prices/);
-    assert.ok(instructions.includes('[[NHS Guide]]'));
+    const instructions = chatRequest({ about: '(about)', opener: ['(opener)'], shortlist: [], options: { mentor: 'no', checklist: 'no', hasMentor: false } }).systemInstruction;
+    assert.match(instructions, /"NHS Guide" when they ask how the NHS works, whether they pay to see a doctor or how to register with a GP \(answer in one short sentence, without prices or other figures\)/);
+    assert.ok(CHAT_PAGES.includes('NHS Guide'));
     assert.doesNotMatch(instructions, /£/, 'the chat is never given the figures');
   }]
 ];

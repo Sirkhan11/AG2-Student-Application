@@ -162,7 +162,7 @@ export function describeForGemini({ match, tasks, checklistSaved = true, profile
   if (isMentor) {
     lines.push('Mentor: they’re a mentor themselves (they signed up as one), so don’t offer to find them one.');
   } else if (match?.status === 'matched') {
-    lines.push('Mentor: they have one. They’ve been matched with a student mentor, and the mentoring coordinator will introduce them. You aren’t told the mentor’s name or how to reach them: if they ask who it is or how to get in touch, show the card with {{your-mentor}}.');
+    lines.push('Mentor: they have one. They’ve been matched with a student mentor, and the mentoring coordinator will introduce them. You aren’t told the mentor’s name or how to reach them.');
     const reasons = (match.reasons ?? []).map((reason) => tidyText(reason, MAX_REASON_LENGTH)).filter(Boolean).slice(0, 3);
     lines.push(
       reasons.length
@@ -174,9 +174,9 @@ export function describeForGemini({ match, tasks, checklistSaved = true, profile
   } else if (match === null && mentorNote === 'no-mentors') {
     lines.push('Mentor: they asked in this chat, but there are no mentors available yet, so don’t offer again in this chat.');
   } else if (match === null) {
-    lines.push('Mentor: they haven’t got one yet. If they want one, you can find them one here in the chat (see Finding them a student mentor).');
-    if (mentorNote === 'declined') lines.push('They said not now to finding a mentor in this chat: don’t offer it again unless they ask for a mentor. If they do, offer it as usual, with {{mentor}}.');
-    if (mentorNote === 'stopped') lines.push('They started finding a mentor in this chat and stopped: don’t offer it again unless they ask for a mentor. If they do, offer it as usual, with {{mentor}}.');
+    lines.push('Mentor: they haven’t got one yet.');
+    if (mentorNote === 'declined') lines.push('They said not now to finding a mentor in this chat.');
+    if (mentorNote === 'stopped') lines.push('They started finding a mentor in this chat and stopped.');
   } else {
     lines.push('Mentor: not known.');
   }
@@ -196,8 +196,28 @@ export function describeForGemini({ match, tasks, checklistSaved = true, profile
     lines.push('Checklist: not known.');
   }
 
-  if (checklistNote === 'declined') lines.push('They said not now to going through their checklist here: don’t offer it again unless they ask.');
-  if (checklistNote === 'stopped') lines.push('They went through some of their checklist here and stopped: don’t offer it again unless they ask.');
+  if (checklistNote === 'declined') lines.push('They said not now to going through their checklist here.');
+  if (checklistNote === 'stopped') lines.push('They went through some of their checklist here and stopped.');
   if (walkthrough) lines.push(walkthroughLines(walkthrough));
   return [...aboutYouForGemini(about, today), ...lines].join('\n');
+}
+
+/**
+ * What the app allows in an ordinary chat turn, from what it knows (ChatOptions in chat-prompt.js), so
+ * Gemini is only ever offered actions that make sense now:
+ * - finding a mentor: only with no match record (not a mentor themselves, and not when there were no
+ *   mentors available); after they said not now or stopped, only if they ask
+ * - going through their checklist: only with something left to do; after not now or stopping, only if
+ *   they ask
+ * - showing their mentor, or asking for a different one: only when they've been matched
+ * @param {Parameters<typeof describeForGemini>[0]} facts
+ * @returns {import('#lib/checkin/chat-prompt.js').ChatOptions}
+ */
+export function chatOptions({ match, tasks, isMentor = false, mentorNote = null, checklistNote = null }) {
+  const left = (tasks ?? []).some((task) => !task.done);
+  return {
+    mentor: isMentor || match !== null || mentorNote === 'no-mentors' ? 'no' : mentorNote ? 'if-asked' : 'yes',
+    checklist: !left ? 'no' : checklistNote ? 'if-asked' : 'yes',
+    hasMentor: match?.status === 'matched'
+  };
 }

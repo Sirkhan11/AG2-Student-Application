@@ -6,9 +6,10 @@
 //   questions in order, how often (buttons), when free, the answers with Change, Find my mentor;
 //   Gemini failing (Try again, or the coordinator), the credit running out (the coordinator only), any
 //   other failure (that step again, never Gemini twice); Stop or "stop" at any point, saving nothing.
-// - Gemini only offers it: the {{mentor}} marker becomes a card, the student never sees it, and the
-//   chat's instructions (built from chat-actions.js) say the chat does things itself; [[Find a mentor]]
-//   is no longer a page link; what Gemini is told covers mentors, Not now and the outcome.
+// - Gemini only offers it: its reply's mentor action becomes a card, only when the app allows it (no
+//   mentor, not a mentor; after Not now or Stop only if they ask; never with no mentors available),
+//   and the chat's instructions say the app does it; Find a mentor is no page link; what Gemini is
+//   told covers mentors, Not now and the outcome.
 // - The chat page sends what's typed during it to the flow, never to Gemini; the Find a mentor page
 //   uses the same shared steps.
 // The same flow runs in Chrome against the emulators in scripts/check-signed-in.mjs.
@@ -17,11 +18,12 @@
 
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { CHAT_ACTIONS, chatAction, offersInReply } from '#lib/checkin/chat-actions.js';
-import { chatInstructions } from '#lib/checkin/chat-prompt.js';
+import { chatAction } from '#lib/checkin/chat-actions.js';
+import { chatRequest, coreInstructions } from '#lib/checkin/chat-prompt.js';
+import { readChatReply } from '#lib/checkin/chat-replies.js';
 import { chatWith } from '#lib/checkin/chat-turns.js';
 import { createMentorFlow } from '#lib/checkin/mentor-flow.js';
-import { buildOpener, describeForGemini } from '#lib/checkin/opener.js';
+import { buildOpener, chatOptions, describeForGemini } from '#lib/checkin/opener.js';
 import { APP_PAGES, findPage } from '#lib/checkin/app-pages.js';
 import { ANSWERS_NOTE, checkAnswers, createFinder, findingMessage, MAX_AVAILABILITY_LENGTH, outcomeText, questions, SAYS } from '#lib/matching/find-mentor-steps.js';
 import { SUMMARISE_FAILED } from '#lib/matching/errors.js';
@@ -250,57 +252,62 @@ const checks = [
   }],
 
   // ---------- Gemini only offers it ----------
-  ['{{mentor}} in a reply becomes an offer; the student never sees a marker; other bare markers just go', () => {
-    assert.deepEqual(offersInReply('I can find you one here. {{mentor}}'), { text: 'I can find you one here.', offers: ['mentor'] });
-    assert.deepEqual(offersInReply('{{ Mentor }} Shall we?'), { text: 'Shall we?', offers: ['mentor'] });
-    assert.deepEqual(offersInReply('Here {{task}} and {{made-up}}.'), { text: 'Here and.', offers: [] });
-    assert.deepEqual(offersInReply('{{mentor}} {{mentor}}').offers, ['mentor'], 'one offer at a time');
+  ['The mentor action in a reply becomes an offer card, only when the app allows it this turn', () => {
+    const reply = (/** @type {string[]} */ actions) => readChatReply(JSON.stringify({ action: 'mentor', page: 'none', say: 'I can find you one here.' }), { shortlist: [], actions });
+    assert.deepEqual(reply(['mentor', 'reminder'])?.action, { id: 'mentor' });
+    assert.equal(reply(['reminder'])?.action, null, 'not allowed now: no card');
     assert.equal(chatAction('mentor')?.card?.title, 'Find a mentor here?');
   }],
-  ['chatWith returns the offer for the card; Gemini keeps seeing its own marker; nothing from the flow is ever in its history', async () => {
+  ['When the app allows it: no mentor and not a mentor; after Not now or Stop only if they ask; never with one, as a mentor, or with none available', () => {
+    assert.equal(chatOptions({ match: null, tasks: null }).mentor, 'yes');
+    assert.equal(chatOptions({ match: null, tasks: null, mentorNote: 'declined' }).mentor, 'if-asked');
+    assert.equal(chatOptions({ match: null, tasks: null, mentorNote: 'stopped' }).mentor, 'if-asked');
+    assert.equal(chatOptions({ match: null, tasks: null, mentorNote: 'no-mentors' }).mentor, 'no');
+    assert.equal(chatOptions({ match: null, tasks: null, isMentor: true }).mentor, 'no');
+    assert.equal(chatOptions({ match: { status: 'coordinator', meetingFrequency: 'weekly', availability: null }, tasks: null }).mentor, 'no');
+    assert.equal(chatOptions({ match: undefined, tasks: null }).mentor, 'no', 'not known: not offered');
+  }],
+  ['chatWith returns the offer for the card; Gemini sees only what it said; nothing from the flow is ever in its history', async () => {
     /** @type {any[]} */
     const sent = [];
-    const chat = chatWith({
-      generateContent: async (/** @type {any} */ request) => {
-        sent.push(structuredClone(request));
-        return /** @type {any} */ ({ response: { text: () => 'I can find you one here. {{mentor}}', candidates: [{ finishReason: 'STOP' }] } });
-      }
-    });
+    const chat = chatWith(
+      {
+        generateContent: async (/** @type {any} */ request) => {
+          sent.push(structuredClone(request));
+          return /** @type {any} */ ({ response: { text: () => JSON.stringify({ action: 'mentor', page: 'none', say: 'I can find you one here.' }), candidates: [{ finishReason: 'STOP' }] } });
+        }
+      },
+      { facts: { match: null, tasks: null }, opener: ['Hi!'] }
+    );
     const reply = await chat.send('I need a mentor to help me organise my work');
     assert.deepEqual([reply.text, reply.offers], ['I can find you one here.', ['mentor']]);
     await chat.send('Thanks');
-    assert.match(sent[1].contents[1].parts[0].text, /\{\{mentor\}\}/);
+    assert.equal(sent[1].contents[1].parts[0].text, 'I can find you one here.');
     assert.equal(sent[1].contents.length, 3, 'only what was sent to Gemini: no flow answers');
   }],
-  ['The chat’s instructions: it does things itself; "Things you can do in the chat" comes from one list; pages only for what it can’t do; no [[Find a mentor]]', () => {
-    const t = chatInstructions('(about)', ['(opener)']);
-    assert.match(t, /The chat is the main way students use AG2\. When they want something the app can do here in the chat \(see Things you can do in the chat below\), offer to do it here rather than sending them to a page\. Pages are only for things the chat can't do yet\./);
-    assert.match(t, /Things you can do in the chat:\n- You only ever offer one of these, by writing its marker in your reply, after a short sentence for the student\. The marker is what shows them the card: if you say you can do something here, its marker must be in that same reply\. Nothing starts or is saved until they tap the card/);
-    assert.match(t, /Never ask the app's questions yourself, never collect the answers, and never say it's done or that it will be/);
-    assert.match(t, /- Offer one thing at a time, and never instead of helping with what they asked\./);
-    assert.match(t, /Don't bring it up otherwise: when they ask about something else \(societies, sport, keeping fit, the NHS and so on\), help with that, and never offer a mentor instead\./);
-    for (const action of CHAT_ACTIONS) {
-      assert.ok(t.includes(`${action.title} (${action.marker}):`), action.id);
-      for (const rule of action.rules) assert.ok(t.includes(`- ${rule}`), `${action.id}: ${rule.slice(0, 40)}`);
-    }
-    assert.match(t, /Offer it only when they ask for a mentor, ask for someone to help them settle in or organise their work, say yes to the mentor offer in your first messages, or talk about their mentor when they haven’t got one yet/);
-    assert.doesNotMatch(t, /\[\[Find a mentor\]\]/);
+  ['The chat’s instructions: the app does things, only when they tap; the mentor rule; no Find a mentor page; every safety rule', () => {
+    const t = chatRequest({ about: '(about)', opener: ['(opener)'], shortlist: [], options: { mentor: 'yes', checklist: 'yes', hasMentor: false } }).systemInstruction;
+    assert.match(t, /You only write words\. The app shows any cards and links, and does every action itself, only when the student taps\. Never say you've done something for them, or that you will\./);
+    assert.match(t, /Choose an action only when it's what they asked for, and never instead of helping with what they asked\./);
+    assert.match(t, /"mentor": they ask for a mentor or for someone to help them settle in or organise their work, or say yes to the mentor offer in the first messages\. In say, one short sentence saying you can find them one here\. The app then asks its own questions: never ask them yourself\. Don't offer it when they ask about something else\./);
+    assert.doesNotMatch(t, /Find a mentor/);
     assert.equal(findPage('Find a mentor'), null);
     assert.deepEqual(APP_PAGES.map((page) => page.name), ['Checklist', 'NHS Guide', 'GP Finder', 'Your Mentor', 'Need Help Now', 'What the chat knows']);
-    assert.match(t, /If they ask about changing their mentor, show them the form here with \{\{change-mentor\}\}/, 'changing mentor happens here too');
-    assert.match(t, /call 999 if they're in danger now, NHS 111 for urgent help, Samaritans free on 116 123 at any time, and \[\[Need Help Now\]\]/, 'every safety rule');
-    assert.match(t, /Keep replies short: one to three sentences\./);
-    assert.match(t, /Suggesting societies, Northumbria Sport clubs and NSU services \(the app shows them as cards\) is part of what the chat does/);
-    assert.match(t, /If they haven't been matched yet \(the coordinator is finding them one, or they haven't got one\), say so plainly: never make up a match or reasons\./);
-    assert.match(t, /Ask at most one question at a time\./);
+    const matched = chatRequest({ about: '', opener: [], shortlist: [], options: { mentor: 'no', checklist: 'no', hasMentor: true } }).systemInstruction;
+    assert.match(matched, /"change-mentor": they want a different mentor/, 'changing mentor happens here too');
+    assert.doesNotMatch(matched, /"mentor":/, 'never offered to someone who has one');
+    const core = coreInstructions('(about)', ['(opener)']);
+    assert.match(core, /call 999 if they're in danger now, NHS 111 for urgent help, and Samaritans free on 116 123 at any time, and show the Need Help Now page/, 'every safety rule');
+    assert.match(core, /one to three short sentences, plain text, no markdown, lists or emoji\. Ask at most one question\./);
+    assert.match(t, /If they haven't got a mentor yet, say so plainly\./);
   }],
   ['What Gemini is told: a mentor account isn’t offered one; no mentor yet: it can offer here; Not now, Stop and the outcome stop it offering again', () => {
     const base = { tasks: null };
     assert.match(describeForGemini({ ...base, match: null, isMentor: true }), /Mentor: they’re a mentor themselves \(they signed up as one\), so don’t offer to find them one\./);
-    assert.match(describeForGemini({ ...base, match: null }), /Mentor: they haven’t got one yet\. If they want one, you can find them one here in the chat \(see Finding them a student mentor\)\./);
+    assert.match(describeForGemini({ ...base, match: null }), /Mentor: they haven’t got one yet\./);
     assert.doesNotMatch(describeForGemini({ ...base, match: null }), /Find a mentor page/);
-    assert.match(describeForGemini({ ...base, match: null, mentorNote: 'declined' }), /They said not now to finding a mentor in this chat: don’t offer it again unless they ask for a mentor\. If they do, offer it as usual, with \{\{mentor\}\}\./);
-    assert.match(describeForGemini({ ...base, match: null, mentorNote: 'stopped' }), /They started finding a mentor in this chat and stopped: don’t offer it again unless they ask for a mentor\. If they do, offer it as usual, with \{\{mentor\}\}\./);
+    assert.match(describeForGemini({ ...base, match: null, mentorNote: 'declined' }), /They said not now to finding a mentor in this chat\./);
+    assert.match(describeForGemini({ ...base, match: null, mentorNote: 'stopped' }), /They started finding a mentor in this chat and stopped\./);
     assert.match(describeForGemini({ ...base, match: null, mentorNote: 'no-mentors' }), /there are no mentors available yet, so don’t offer again in this chat/);
     const matched = describeForGemini({ ...base, match: { status: 'matched', mentorId: 'm1', mentorName: 'Alex', reasons: ['You share interests: films'], meetingFrequency: 'weekly', availability: null } });
     assert.match(matched, /Mentor: they have one\./);

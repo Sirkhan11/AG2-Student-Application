@@ -17,7 +17,7 @@ import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { initializeApp } from 'firebase/app';
 import { connectFirestoreEmulator, doc, getDoc, getFirestore, serverTimestamp, setDoc, updateDoc, deleteDoc } from 'firebase/firestore';
-import { chatInstructions } from '#lib/checkin/chat-prompt.js';
+import { chatRequest } from '#lib/checkin/chat-prompt.js';
 import { CHANGE_REASONS, checkedChangeRequest, MAX_DETAILS_LENGTH, URGENT_REASONS } from '#lib/matching/change-reasons.js';
 import { cancelChangeRequest, CHANGE_REQUESTS, loadChangeRequest, sendChangeRequest } from '#lib/matching/change-request.js';
 
@@ -72,10 +72,12 @@ const offline = [
     assert.match(COMPONENT, />\s*\{busy \? 'Cancelling…' : 'Cancel the request'\}/);
     for (const option of CHANGE_REASONS) assert.ok(option.label.length > 5, option.id);
   }],
-  ['The chat shows the form right there ({{change-mentor}}) and never asks for the reason', () => {
-    const instructions = chatInstructions('(about)', ['(opener)']);
-    assert.match(instructions, /If they ask about changing their mentor, show them the form here with \{\{change-mentor\}\} \(see Asking for a different mentor\), where their reason goes only to the mentoring coordinator \(their mentor never sees it\)\. Don't ask for their reason or what went wrong, and don't ask them to tell you\./);
-    assert.match(instructions, /Never ask for their reason or what went wrong, and don’t ask them to tell you: the form has the reasons\./);
+  ['The chat shows the form right there (its change-mentor action, only for a student with a mentor) and never asks for the reason', () => {
+    const request = (/** @type {boolean} */ hasMentor) => chatRequest({ about: '(about)', opener: ['(opener)'], shortlist: [], options: { mentor: 'no', checklist: 'no', hasMentor } });
+    const instructions = request(true).systemInstruction;
+    assert.match(instructions, /"change-mentor": they want a different mentor\. In say, one short, kind sentence saying they can ask the mentoring coordinator here, and only the coordinator will see why\. The app shows a short form that goes only to the coordinator, never to their mentor or you\. Never ask why or what went wrong\./);
+    assert.ok(request(true).actions.includes('change-mentor'));
+    assert.ok(!request(false).actions.includes('change-mentor'), 'no form without a mentor');
   }]
 ];
 

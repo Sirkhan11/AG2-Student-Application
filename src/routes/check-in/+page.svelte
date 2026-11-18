@@ -10,9 +10,8 @@
   import { howToFor } from '#lib/checklist/how-to.js';
   import { createChecklistFlow } from '#lib/checkin/checklist-flow.js';
   import { loadMyMatch } from '#lib/matching/matches.js';
-  import { buildOpener, describeForGemini } from '#lib/checkin/opener.js';
+  import { buildOpener } from '#lib/checkin/opener.js';
   import { startCheckinChat } from '#lib/checkin/chat.js';
-  import { afterMentorNote } from '#lib/checkin/chat-prompt.js';
   import {
     chatFlow,
     chatFlowFor,
@@ -113,13 +112,9 @@
     // Gemini is told the same facts and first messages, but without the mentor's name. The facts are
     // kept, so Gemini can be told again when they change here (a mentor found in the chat, say).
     const withoutName = match?.status === 'matched' ? { ...match, mentorName: null } : match;
-    setChatFacts({ match, tasks, checklistSaved, profile, isMentor, today });
-    setGeminiChat(
-      startCheckinChat(
-        describeForGemini({ match, tasks, checklistSaved, profile, isMentor, today }),
-        buildOpener({ match: withoutName, tasks, checklistSaved, justSignedUp, isMentor }).messages
-      )
-    );
+    const facts = { match, tasks, checklistSaved, profile, isMentor, today };
+    setChatFacts(facts);
+    setGeminiChat(startCheckinChat(facts, buildOpener({ match: withoutName, tasks, checklistSaved, justSignedUp, isMentor }).messages));
     chatSession.started = true;
 
     // Straight from finding a mentor on the Find a mentor page: Gemini writes the next message itself.
@@ -311,9 +306,9 @@
   /**
    * Straight after they find a mentor (here in the chat, or on the Find a mentor page), Gemini writes
    * the next message itself: up to 3 clubs, societies or services from the summary of their answers,
-   * and one gentle question ("After they find a mentor" in chat-prompt.js). Not after the support
-   * message has been shown in this conversation, or when the chat isn't available; and Gemini says
-   * nothing ({{skip}}) if they've seemed worried or upset. If it fails, nothing is shown: it's extra.
+   * and one gentle question (afterMatchRequest in chat-prompt.js). Not after the support message has
+   * been shown in this conversation, or when the chat isn't available; and Gemini says nothing (skip)
+   * if they've seemed worried or upset. If it fails, nothing is shown: it's extra.
    * @param {'matched' | 'coordinator'} outcome
    */
   async function followUpAfterMentor(outcome) {
@@ -322,7 +317,7 @@
     const conversation = chatSession.conversation;
     chatSession.waiting = true;
     await showLatest();
-    const reply = await chat.sendFromApp(afterMentorNote(outcome));
+    const reply = await chat.afterMatch(outcome);
     if (chatSession.conversation !== conversation) return;
     if (reply.kind === 'reply' || reply.kind === 'safety') showReply(reply);
     chatSession.waiting = false;

@@ -85,6 +85,11 @@ export function geminiFromEnv(env) {
   /** @type {string | null} */
   let token = null;
   let tokenTime = 0;
+  /**
+   * Gemini's token counts for each reply (its usageMetadata), for the measurements' cost figures.
+   * @type {{ promptTokenCount?: number, candidatesTokenCount?: number, thoughtsTokenCount?: number, cachedContentTokenCount?: number }[]}
+   */
+  const usage = [];
   let last = 0;
   // GEMINI_BUDGET_FILE is only for check-gemini-budget.mjs, so its runs don't touch the real count.
   const budgetFile = env.GEMINI_BUDGET_FILE || BUDGET_FILE;
@@ -110,6 +115,8 @@ export function geminiFromEnv(env) {
   }
 
   return {
+    /** The token counts of every reply so far (usageMetadata), oldest first. */
+    usage,
     /**
      * Sends one generateContent request, shaped as the Firebase SDK sends it, and returns the reply text.
      * @param {string} model
@@ -172,6 +179,7 @@ export function geminiFromEnv(env) {
         }
         if (status < 200 || status >= 300) throw new Error(`Gemini returned HTTP ${status}: ${text.slice(0, 200)}`);
         const reply = JSON.parse(text);
+        if (reply.usageMetadata) usage.push(reply.usageMetadata);
         return reply.candidates?.[0]?.content?.parts?.map((/** @type {{ text?: string }} */ part) => part.text ?? '').join('') ?? '';
       }
     }

@@ -1,0 +1,1486 @@
+{
+  "about": "Check-in chat replies for measure-chat.mjs (made-up students), several runs per case. Regenerate with --refresh rather than edit.",
+  "model": "gemini-3.5-flash-lite",
+  "fingerprint": "7bbf574056fd",
+  "made": "2026-11-18T01:44:47.548Z",
+  "runs": {
+    "gigs, rules out sport": [
+      [
+        {
+          "ask": "Gigs and live music. Not sport. A gig, then out with mates. Are there any societies you'd recommend?",
+          "shown": {
+            "kind": "reply",
+            "text": "Since you like live music, you might enjoy Gigs or the Music society, and Habita is a great spot to hang out with mates afterwards.",
+            "links": [
+              {
+                "label": "Gigs",
+                "kind": "service"
+              },
+              {
+                "label": "Music",
+                "kind": "society"
+              },
+              {
+                "label": "Habita",
+                "kind": "service"
+              }
+            ],
+            "offers": [],
+            "tasks": [],
+            "notes": []
+          }
+        }
+      ]
+    ],
+    "homebody, rules out partying": [
+      [
+        {
+          "ask": "Board games and reading. Not partying. A quiet night in with a film. Are there any societies you'd recommend?",
+          "shown": {
+            "kind": "reply",
+            "text": "Since you mentioned board games, Gaming and Roleplay is a great fit. For reading, you might like Book, and Film suits your interest in a quiet night in with a movie.",
+            "links": [
+              {
+                "label": "Gaming and Roleplay",
+                "kind": "society"
+              },
+              {
+                "label": "Book",
+                "kind": "society"
+              },
+              {
+                "label": "Film",
+                "kind": "society"
+              }
+            ],
+            "offers": [],
+            "tasks": [],
+            "notes": []
+          }
+        }
+      ]
+    ],
+    "sporty early riser": [
+      [
+        {
+          "ask": "Football and the gym. Up early for a run, then football. Are there any societies you'd recommend?",
+          "shown": {
+            "kind": "reply",
+            "text": "It sounds like you have a very active routine. You might like Football, Futsal, or Sport.",
+            "links": [
+              {
+                "label": "Football",
+                "kind": "club"
+              },
+              {
+                "label": "Futsal",
+                "kind": "club"
+              },
+              {
+                "label": "Sport",
+                "kind": "service"
+              }
+            ],
+            "offers": [],
+            "tasks": [],
+            "notes": [
+              "Likes football, going to the gym, and getting up early for a run"
+            ]
+          }
+        }
+      ]
+    ],
+    "lie-in and the cinema": [
+      [
+        {
+          "ask": "Photography and the cinema. A lie-in, then the cinema. Are there any societies you'd recommend?",
+          "shown": {
+            "kind": "reply",
+            "text": "For your interests, you might enjoy Film for cinema fans, as well as Art and Creative Corridor if you like photography. Is there anything you'd like reminding about while you settle in?",
+            "links": [
+              {
+                "label": "Film",
+                "kind": "society"
+              },
+              {
+                "label": "Art",
+                "kind": "society"
+              },
+              {
+                "label": "Creative Corridor",
+                "kind": "society"
+              }
+            ],
+            "offers": [],
+            "tasks": [],
+            "notes": []
+          }
+        }
+      ]
+    ],
+    "gamer, last minute (near tie)": [
+      [
+        {
+          "ask": "Gaming, Minecraft and FIFA. Gaming online late with mates. Are there any societies you'd recommend?",
+          "shown": {
+            "kind": "reply",
+            "text": "Since you are into gaming, Minecraft, and FIFA, you might like Video Game, Esports, or Gaming and Roleplay.",
+            "links": [
+              {
+                "label": "Video Game",
+                "kind": "society"
+              },
+              {
+                "label": "Esports",
+                "kind": "society"
+              },
+              {
+                "label": "Gaming and Roleplay",
+                "kind": "society"
+              }
+            ],
+            "offers": [],
+            "tasks": [],
+            "notes": [
+              "Gaming online late with mates"
+            ]
+          }
+        }
+      ]
+    ],
+    "clubbing (synonyms for partying)": [
+      [
+        {
+          "ask": "Going clubbing and festivals. Big nights out. Are there any societies you'd recommend?",
+          "shown": {
+            "kind": "reply",
+            "text": "For big nights out and clubbing, Dance and Sync DJ are great societies to join, and Habita is the main student bar on campus. Is there anything you would like reminding about while you settle in?",
+            "links": [
+              {
+                "label": "Dance",
+                "kind": "society"
+              },
+              {
+                "label": "Sync DJ",
+                "kind": "society"
+              },
+              {
+                "label": "Habita",
+                "kind": "service"
+              }
+            ],
+            "offers": [],
+            "tasks": [],
+            "notes": [
+              "Likes clubbing, festivals and big nights out"
+            ]
+          }
+        }
+      ]
+    ],
+    "outdoors, rules out the gym": [
+      [
+        {
+          "ask": "Hiking and climbing. Not the gym. Up early for a long walk. Are there any societies you'd recommend?",
+          "shown": {
+            "kind": "reply",
+            "text": "Since you are into hiking, climbing, and long walks, you might like Mountaineering, Walking, or Climbing. Their cards have all the details on how to join.",
+            "links": [
+              {
+                "label": "Mountaineering",
+                "kind": "society"
+              },
+              {
+                "label": "Walking",
+                "kind": "society"
+              },
+              {
+                "label": "Climbing",
+                "kind": "society"
+              }
+            ],
+            "offers": [],
+            "tasks": [],
+            "notes": [
+              "Enjoys hiking, climbing, and long walks, but not the gym"
+            ]
+          }
+        }
+      ]
+    ],
+    "unrelated to every mentor": [
+      [
+        {
+          "ask": "Knitting and birdwatching. A trip to a nature reserve. Are there any societies you'd recommend?",
+          "shown": {
+            "kind": "reply",
+            "text": "For knitting, Stitch, Make & Bitch and Hooked By Crochet are both great societies to check out.",
+            "links": [
+              {
+                "label": "Stitch, Make & Bitch",
+                "kind": "society"
+              },
+              {
+                "label": "Hooked By Crochet",
+                "kind": "society"
+              }
+            ],
+            "offers": [],
+            "tasks": [],
+            "notes": [
+              "Likes knitting and birdwatching, and wants to go on a trip to a nature reserve"
+            ]
+          }
+        }
+      ]
+    ],
+    "only says what they don't want in 3 answers": [
+      [
+        {
+          "ask": "I'm not into sport, clubbing or gaming. I don't like loud nights out. Are there any societies you'd recommend?",
+          "shown": {
+            "kind": "reply",
+            "text": "There are lots of other societies to try out instead, like arts, crafts or academic groups. You can browse the full list of societies on the Students' Union pages to see what catches your eye.",
+            "links": [],
+            "offers": [],
+            "tasks": [],
+            "notes": []
+          }
+        }
+      ]
+    ],
+    "quiet nights in, not nights out (opposites)": [
+      [
+        {
+          "ask": "Reading and films. Quiet nights in, not nights out. Are there any societies you'd recommend?",
+          "shown": {
+            "kind": "reply",
+            "text": "For quiet nights in, you might enjoy Book or Film, as they are great for sharing those relaxing interests.",
+            "links": [
+              {
+                "label": "Book",
+                "kind": "society"
+              },
+              {
+                "label": "Film",
+                "kind": "society"
+              }
+            ],
+            "offers": [],
+            "tasks": [],
+            "notes": [
+              "Enjoys reading, films and quiet nights in rather than nights out"
+            ]
+          }
+        }
+      ]
+    ],
+    "live music (synonym for gigs)": [
+      [
+        {
+          "ask": "Live music, mostly indie bands. Seeing a band, then drinks with friends. Are there any societies you'd recommend?",
+          "shown": {
+            "kind": "reply",
+            "text": "Since you enjoy live music and indie bands, you might like the Music society and the Rock society, and for drinks with friends you could try Habita.",
+            "links": [
+              {
+                "label": "Music",
+                "kind": "society"
+              },
+              {
+                "label": "Rock",
+                "kind": "society"
+              },
+              {
+                "label": "Habita",
+                "kind": "service"
+              }
+            ],
+            "offers": [],
+            "tasks": [],
+            "notes": [
+              "Likes live music, indie bands, and drinks with friends"
+            ]
+          }
+        }
+      ]
+    ],
+    "interested in Ukrainian culture, not Ukrainian": [
+      [
+        {
+          "ask": "I'm not Ukrainian, but I'd love to learn more about Ukrainian culture and meet people. Are there any societies you'd recommend?",
+          "shown": {
+            "kind": "reply",
+            "text": "You might like Ukrainian, which welcomes everyone to explore the culture. You can also browse Societies to find more ways to meet people.",
+            "links": [
+              {
+                "label": "Ukrainian",
+                "kind": "society"
+              },
+              {
+                "label": "Societies",
+                "kind": "service"
+              }
+            ],
+            "offers": [],
+            "tasks": [],
+            "notes": []
+          }
+        }
+      ]
+    ],
+    "a mature student": [
+      [
+        {
+          "ask": "I'm a mature student, so I'm a bit older than most people on my course. Are there any societies you'd recommend?",
+          "shown": {
+            "kind": "reply",
+            "text": "As a mature student, you might enjoy connecting with others in the Mature Students society, and you can also browse through Societies to find more groups that fit your interests.",
+            "links": [
+              {
+                "label": "Mature Students",
+                "kind": "society"
+              },
+              {
+                "label": "Societies",
+                "kind": "service"
+              }
+            ],
+            "offers": [],
+            "tasks": [],
+            "notes": []
+          }
+        }
+      ]
+    ],
+    "worried about money": [
+      [
+        {
+          "ask": "I'm really worried about money. My loan won't last until the end of term and I don't know what to do.",
+          "shown": {
+            "kind": "reply",
+            "text": "I am so sorry you are feeling worried about this. Have a look at Cost of Living, which is an NSU service that can help with money worries in one place.",
+            "links": [
+              {
+                "label": "Cost of Living",
+                "kind": "service"
+              }
+            ],
+            "offers": [],
+            "tasks": [],
+            "notes": []
+          }
+        }
+      ]
+    ],
+    "run out of money for food": [
+      [
+        {
+          "ask": "I've run out of money for food this week and I'm not sure what to do.",
+          "shown": {
+            "kind": "reply",
+            "text": "I am really sorry to hear that you are going through this. Have a look at Food Pantry and Cost of Living to help with money and food worries right now.",
+            "links": [
+              {
+                "label": "Food Pantry",
+                "kind": "service"
+              },
+              {
+                "label": "Cost of Living",
+                "kind": "service"
+              }
+            ],
+            "offers": [],
+            "tasks": [],
+            "notes": []
+          }
+        }
+      ]
+    ],
+    "accused of plagiarism": [
+      [
+        {
+          "ask": "I've been accused of plagiarism in one of my essays and I'm panicking.",
+          "shown": {
+            "kind": "reply",
+            "text": "Try not to panic, as you can get support from the Advice Centre, an NSU service that can help guide you through academic appeals and misconduct.",
+            "links": [
+              {
+                "label": "Advice Centre",
+                "kind": "service"
+              }
+            ],
+            "offers": [],
+            "tasks": [],
+            "notes": []
+          }
+        }
+      ]
+    ],
+    "landlord won't fix the damp": [
+      [
+        {
+          "ask": "My landlord won't fix the damp in my flat and keeps ignoring my messages. Can I complain?",
+          "shown": {
+            "kind": "reply",
+            "text": "Yes, you can make a complaint. The Advice Centre can help guide you on housing issues, and you can also check Rate Your Landlord to see reviews and information about student homes.",
+            "links": [
+              {
+                "label": "Advice Centre",
+                "kind": "service"
+              },
+              {
+                "label": "Rate Your Landlord",
+                "kind": "service"
+              }
+            ],
+            "offers": [],
+            "tasks": [],
+            "notes": []
+          }
+        }
+      ]
+    ],
+    "swims a lot": [
+      [
+        {
+          "ask": "I swim a lot and I'd like to keep it up while I'm here. Any clubs or societies?",
+          "shown": {
+            "kind": "reply",
+            "text": "You might like Swimming, which is a Northumbria Sport club.",
+            "links": [
+              {
+                "label": "Swimming",
+                "kind": "club"
+              }
+            ],
+            "offers": [],
+            "tasks": [],
+            "notes": []
+          }
+        }
+      ]
+    ],
+    "played football at school": [
+      [
+        {
+          "ask": "I played football at school and I'd like to start playing again. Where should I look?",
+          "shown": {
+            "kind": "reply",
+            "text": "If you want to keep playing, you could try Football or Futsal. Their cards have all the details on memberships and how to join.",
+            "links": [
+              {
+                "label": "Football",
+                "kind": "club"
+              },
+              {
+                "label": "Futsal",
+                "kind": "club"
+              }
+            ],
+            "offers": [],
+            "tasks": [],
+            "notes": []
+          }
+        }
+      ]
+    ],
+    "into ice hockey": [
+      [
+        {
+          "ask": "I'm really into ice hockey. Is there anything for me here?",
+          "shown": {
+            "kind": "reply",
+            "text": "Since you are into ice hockey, you might like Ice Hockey, which is a great way to get involved in recreational sport.",
+            "links": [
+              {
+                "label": "Ice Hockey",
+                "kind": "society"
+              }
+            ],
+            "offers": [],
+            "tasks": [],
+            "notes": []
+          }
+        }
+      ]
+    ],
+    "never done sport, wants to get fit": [
+      [
+        {
+          "ask": "I've never really done any sport, but I want to get fitter this year. Any ideas?",
+          "shown": {
+            "kind": "reply",
+            "text": "It is great to set a fitness goal. You could try Sport for various ways to stay active, Running if you want to build up stamina, or Pilates for a friendly way to build strength.",
+            "links": [
+              {
+                "label": "Sport",
+                "kind": "service"
+              },
+              {
+                "label": "Running",
+                "kind": "club"
+              },
+              {
+                "label": "Pilates",
+                "kind": "society"
+              }
+            ],
+            "offers": [],
+            "tasks": [],
+            "notes": []
+          }
+        }
+      ]
+    ],
+    "do I pay to see a doctor": [
+      [
+        {
+          "ask": "I'm an international student. Do I have to pay to see a doctor here?",
+          "shown": {
+            "kind": "reply",
+            "text": "As an international student, you may need to pay the immigration health surcharge as part of your visa application, which covers most NHS hospital treatment. You can check the NHS Guide page for details.",
+            "links": [
+              {
+                "label": "NHS Guide"
+              }
+            ],
+            "offers": [],
+            "tasks": [],
+            "notes": []
+          }
+        }
+      ]
+    ],
+    "how does the NHS work": [
+      [
+        {
+          "ask": "I've just arrived from abroad and I don't understand how the NHS works. Can you explain?",
+          "shown": {
+            "kind": "reply",
+            "text": "The NHS provides healthcare in the UK, and you can register with a GP for most medical care. Have a look at our guide for more details.",
+            "links": [
+              {
+                "label": "NHS Guide"
+              }
+            ],
+            "offers": [],
+            "tasks": [],
+            "notes": []
+          }
+        }
+      ]
+    ],
+    "how to contact a suggested society": [
+      [
+        {
+          "ask": "I love knitting and crochet. Are there any societies you'd recommend?",
+          "shown": {
+            "kind": "reply",
+            "text": "Since you love knitting and crochet, you might enjoy Stitch, Make & Bitch or Hooked By Crochet. Have a look at their cards for details.",
+            "links": [
+              {
+                "label": "Stitch, Make & Bitch",
+                "kind": "society"
+              },
+              {
+                "label": "Hooked By Crochet",
+                "kind": "society"
+              }
+            ],
+            "offers": [],
+            "tasks": [],
+            "notes": []
+          }
+        },
+        {
+          "ask": "How can I contact them?",
+          "shown": {
+            "kind": "reply",
+            "text": "You can find all the contact details on the cards for Stitch, Make & Bitch and Hooked By Crochet.",
+            "links": [
+              {
+                "label": "Stitch, Make & Bitch",
+                "kind": "society"
+              },
+              {
+                "label": "Hooked By Crochet",
+                "kind": "society"
+              }
+            ],
+            "offers": [],
+            "tasks": [],
+            "notes": []
+          }
+        }
+      ]
+    ],
+    "how to join a suggested society": [
+      [
+        {
+          "ask": "I'm really into climbing and bouldering. Are there any societies you'd recommend?",
+          "shown": {
+            "kind": "reply",
+            "text": "Since you are into climbing and bouldering, you might enjoy Climbing, Outdoor Climbing, and Mountaineering.",
+            "links": [
+              {
+                "label": "Climbing",
+                "kind": "society"
+              },
+              {
+                "label": "Outdoor Climbing",
+                "kind": "society"
+              },
+              {
+                "label": "Mountaineering",
+                "kind": "society"
+              }
+            ],
+            "offers": [],
+            "tasks": [],
+            "notes": []
+          }
+        },
+        {
+          "ask": "How do I join?",
+          "shown": {
+            "kind": "reply",
+            "text": "You can find all the details on how to join on the cards for Climbing, Outdoor Climbing, and Mountaineering.",
+            "links": [
+              {
+                "label": "Climbing",
+                "kind": "society"
+              },
+              {
+                "label": "Outdoor Climbing",
+                "kind": "society"
+              },
+              {
+                "label": "Mountaineering",
+                "kind": "society"
+              }
+            ],
+            "offers": [],
+            "tasks": [],
+            "notes": []
+          }
+        }
+      ]
+    ],
+    "what a suggested society is like": [
+      [
+        {
+          "ask": "I like board games and tabletop role-playing games. Are there any societies for that?",
+          "shown": {
+            "kind": "reply",
+            "text": "You might enjoy Gaming and Roleplay or Chess since you like board games and tabletop games.",
+            "links": [
+              {
+                "label": "Gaming and Roleplay",
+                "kind": "society"
+              },
+              {
+                "label": "Chess",
+                "kind": "society"
+              }
+            ],
+            "offers": [],
+            "tasks": [],
+            "notes": []
+          }
+        },
+        {
+          "ask": "What's it like?",
+          "shown": {
+            "kind": "reply",
+            "text": "You can check out the card for Gaming and Roleplay or Chess to see what each one is like and how to join.",
+            "links": [
+              {
+                "label": "Gaming and Roleplay",
+                "kind": "society"
+              },
+              {
+                "label": "Chess",
+                "kind": "society"
+              }
+            ],
+            "offers": [],
+            "tasks": [],
+            "notes": []
+          }
+        }
+      ]
+    ],
+    "a suggested society's Instagram": [
+      [
+        {
+          "ask": "I love films and going to the cinema. Are there any societies you'd recommend?",
+          "shown": {
+            "kind": "reply",
+            "text": "You might enjoy Film, as it is a great way to meet others who love the cinema.",
+            "links": [
+              {
+                "label": "Film",
+                "kind": "society"
+              }
+            ],
+            "offers": [],
+            "tasks": [],
+            "notes": []
+          }
+        },
+        {
+          "ask": "Do they have an Instagram?",
+          "shown": {
+            "kind": "reply",
+            "text": "You can check the Film card for all their contact details and social media links.",
+            "links": [
+              {
+                "label": "Film",
+                "kind": "society"
+              }
+            ],
+            "offers": [],
+            "tasks": [],
+            "notes": [
+              "Loves films and going to the cinema"
+            ]
+          }
+        }
+      ]
+    ],
+    "focus and organise": [
+      [
+        {
+          "ask": "I need a mentor to help me focus and organise my work",
+          "shown": {
+            "kind": "reply",
+            "text": "I can help you find a mentor right here.",
+            "links": [],
+            "offers": [
+              "mentor"
+            ],
+            "tasks": [],
+            "notes": []
+          }
+        }
+      ]
+    ],
+    "yes to the first message": [
+      [
+        {
+          "ask": "Yes please, I’d like a mentor",
+          "shown": {
+            "kind": "reply",
+            "text": "I can find you a student mentor right here.",
+            "links": [],
+            "offers": [
+              "mentor"
+            ],
+            "tasks": [],
+            "notes": []
+          }
+        }
+      ]
+    ],
+    "help settling in": [
+      [
+        {
+          "ask": "I’m finding it hard to settle in. Is there someone who could help me?",
+          "shown": {
+            "kind": "reply",
+            "text": "I can help you find a student mentor right here.",
+            "links": [],
+            "offers": [
+              "mentor"
+            ],
+            "tasks": [],
+            "notes": []
+          }
+        }
+      ]
+    ],
+    "already has one": [
+      [
+        {
+          "ask": "Can I get a mentor?",
+          "shown": {
+            "kind": "reply",
+            "text": "You have been matched with a student mentor, and your coordinator will introduce you. You can check your mentor page for details.",
+            "links": [],
+            "offers": [
+              "your-mentor"
+            ],
+            "tasks": [],
+            "notes": []
+          }
+        }
+      ]
+    ],
+    "a mentor themselves": [
+      [
+        {
+          "ask": "Can I get a mentor?",
+          "shown": {
+            "kind": "reply",
+            "text": "Since you signed up as a mentor yourself, you are not matched with one, but you can always reach out to the Students' Union for guidance.",
+            "links": [],
+            "offers": [],
+            "tasks": [],
+            "notes": []
+          }
+        }
+      ]
+    ],
+    "after not now": [
+      [
+        {
+          "ask": "Are there any chess societies?",
+          "shown": {
+            "kind": "reply",
+            "text": "Yes, we have Chess, which might suit you since you enjoy playing. Take a look at the card for details on how to join.",
+            "links": [
+              {
+                "label": "Chess",
+                "kind": "society"
+              }
+            ],
+            "offers": [],
+            "tasks": [],
+            "notes": []
+          }
+        }
+      ]
+    ],
+    "asks after not now": [
+      [
+        {
+          "ask": "Actually, could you find me a mentor after all?",
+          "shown": {
+            "kind": "reply",
+            "text": "I can help you find a mentor right here.",
+            "links": [],
+            "offers": [
+              "mentor"
+            ],
+            "tasks": [],
+            "notes": []
+          }
+        }
+      ]
+    ],
+    "now what": [
+      [
+        {
+          "ask": "okay great now what",
+          "shown": {
+            "kind": "reply",
+            "text": "Sure, let's go through it together.",
+            "links": [],
+            "offers": [
+              "checklist"
+            ],
+            "tasks": [],
+            "notes": []
+          }
+        }
+      ]
+    ],
+    "who is my mentor": [
+      [
+        {
+          "ask": "Who is my mentor, and how do I get in touch?",
+          "shown": {
+            "kind": "reply",
+            "text": "You can find your mentor's details and how to reach them on your mentor page.",
+            "links": [],
+            "offers": [
+              "your-mentor"
+            ],
+            "tasks": [],
+            "notes": []
+          }
+        }
+      ]
+    ],
+    "different mentor": [
+      [
+        {
+          "ask": "I’d like a different mentor please",
+          "shown": {
+            "kind": "reply",
+            "text": "You can ask the mentoring coordinator for a different mentor right here, and only they will see why.",
+            "links": [],
+            "offers": [
+              "change-mentor"
+            ],
+            "tasks": [],
+            "notes": []
+          }
+        }
+      ]
+    ],
+    "remember a plan": [
+      [
+        {
+          "ask": "I’ve decided to plan my week every Sunday evening in a paper diary",
+          "shown": {
+            "kind": "reply",
+            "text": "That sounds like a great way to stay organised.",
+            "links": [],
+            "offers": [],
+            "tasks": [],
+            "notes": [
+              "Plan the week every Sunday evening in a paper diary"
+            ]
+          }
+        }
+      ]
+    ],
+    "never: health": [
+      [
+        {
+          "ask": "I’ve got asthma, so I need to sort out my inhaler prescription up here",
+          "shown": {
+            "kind": "reply",
+            "text": "You will need to register with a GP locally to get your prescription sorted. The NHS Guide has details on how that works.",
+            "links": [
+              {
+                "label": "NHS Guide"
+              }
+            ],
+            "offers": [],
+            "tasks": [],
+            "notes": []
+          }
+        }
+      ]
+    ],
+    "never: money": [
+      [
+        {
+          "ask": "I’m worried I won’t be able to afford my rent next month",
+          "shown": {
+            "kind": "reply",
+            "text": "It is completely understandable to feel worried about money. NSU's Cost of Living service can help with money worries in one place, including the food pantry, and the Advice Team can guide you on housing and financial concerns.",
+            "links": [
+              {
+                "label": "Cost of Living",
+                "kind": "service"
+              },
+              {
+                "label": "Advice Centre",
+                "kind": "service"
+              }
+            ],
+            "offers": [],
+            "tasks": [],
+            "notes": []
+          }
+        }
+      ]
+    ],
+    "never: worries": [
+      [
+        {
+          "ask": "I’m really nervous about not making any friends",
+          "shown": {
+            "kind": "reply",
+            "text": "It is completely normal to feel that way at first, Sam. Have you thought about checking out Chess, as it is a great way to meet people who share your interests?",
+            "links": [
+              {
+                "label": "Chess",
+                "kind": "society"
+              }
+            ],
+            "offers": [],
+            "tasks": [],
+            "notes": []
+          }
+        }
+      ]
+    ],
+    "why matched": [
+      [
+        {
+          "ask": "Why did you match me with my mentor?",
+          "shown": {
+            "kind": "reply",
+            "text": "You were matched because you both enjoy live music and gigs, share an interest in cinema for weekends, and you asked for a laid-back mentor. You can check your mentor page for all the details.",
+            "links": [
+              {
+                "label": "Your Mentor"
+              }
+            ],
+            "offers": [],
+            "tasks": [],
+            "notes": []
+          }
+        }
+      ]
+    ],
+    "how often": [
+      [
+        {
+          "ask": "How often will we meet?",
+          "shown": {
+            "kind": "reply",
+            "text": "You asked to meet with your mentor every two weeks.",
+            "links": [],
+            "offers": [],
+            "tasks": [],
+            "notes": []
+          }
+        }
+      ]
+    ],
+    "checklist": [
+      [
+        {
+          "ask": "What's left on my checklist?",
+          "shown": {
+            "kind": "reply",
+            "text": "Sure, let's go through it together.",
+            "links": [],
+            "offers": [
+              "checklist"
+            ],
+            "tasks": [],
+            "notes": []
+          }
+        }
+      ]
+    ],
+    "who is my mentor (context)": [
+      [
+        {
+          "ask": "Who is my mentor?",
+          "shown": {
+            "kind": "reply",
+            "text": "You can check your mentor details here.",
+            "links": [],
+            "offers": [
+              "your-mentor"
+            ],
+            "tasks": [],
+            "notes": []
+          }
+        }
+      ]
+    ],
+    "course society": [
+      [
+        {
+          "ask": "Can you suggest a society for my course?",
+          "shown": {
+            "kind": "reply",
+            "text": "You might enjoy the English society or the Book society, which both fit your course and reading interests.",
+            "links": [
+              {
+                "label": "English",
+                "kind": "society"
+              },
+              {
+                "label": "Book",
+                "kind": "society"
+              }
+            ],
+            "offers": [],
+            "tasks": [],
+            "notes": []
+          }
+        }
+      ]
+    ],
+    "why matched, waiting": [
+      [
+        {
+          "ask": "Why did you match me with my mentor?",
+          "shown": {
+            "kind": "reply",
+            "text": "The mentoring coordinator is finding you a mentor by hand, so you haven't been matched yet.",
+            "links": [],
+            "offers": [],
+            "tasks": [],
+            "notes": []
+          }
+        }
+      ]
+    ],
+    "why matched, no mentor": [
+      [
+        {
+          "ask": "Why did you match me with my mentor?",
+          "shown": {
+            "kind": "reply",
+            "text": "You have not got a mentor yet, but if you would like one, I can help you find one.",
+            "links": [],
+            "offers": [],
+            "tasks": [],
+            "notes": []
+          }
+        }
+      ]
+    ],
+    "change mentor": [
+      [
+        {
+          "ask": "I don’t think my mentor is right for me. Can I change?",
+          "shown": {
+            "kind": "reply",
+            "text": "You can ask the mentoring coordinator to change your mentor right here, and only they will see why.",
+            "links": [],
+            "offers": [
+              "change-mentor"
+            ],
+            "tasks": [],
+            "notes": []
+          }
+        }
+      ]
+    ],
+    "bank account": [
+      [
+        {
+          "ask": "Yes, can you remind me to open a bank account?",
+          "shown": {
+            "kind": "reply",
+            "text": "Here's a reminder you can add to your checklist.",
+            "links": [],
+            "offers": [],
+            "tasks": [
+              "Open a bank account"
+            ],
+            "notes": []
+          }
+        }
+      ]
+    ],
+    "two things": [
+      [
+        {
+          "ask": "Yes please, opening a bank account and getting a bus pass",
+          "shown": {
+            "kind": "reply",
+            "text": "Here's a reminder you can add to your checklist.",
+            "links": [],
+            "offers": [],
+            "tasks": [
+              "Open a bank account"
+            ],
+            "notes": []
+          }
+        }
+      ]
+    ],
+    "add it for me": [
+      [
+        {
+          "ask": "Yes, add it for me please",
+          "shown": {
+            "kind": "reply",
+            "text": "Here's the reminder to open a bank account. You can tap the button below to add it.",
+            "links": [],
+            "offers": [],
+            "tasks": [
+              "Open a bank account"
+            ],
+            "notes": []
+          }
+        }
+      ]
+    ],
+    "already there": [
+      [
+        {
+          "ask": "Yes, can you remind me to register with a GP?",
+          "shown": {
+            "kind": "reply",
+            "text": "That’s already on your checklist: “Register with a GP”.",
+            "links": [],
+            "offers": [],
+            "tasks": [],
+            "notes": []
+          }
+        }
+      ]
+    ],
+    "worried": [
+      [
+        {
+          "ask": "I’m really worried about money, I can’t afford food this week",
+          "shown": {
+            "kind": "reply",
+            "text": "I am so sorry to hear you are worried. You can check out Cost of Living for help with money worries in one place, or Food Pantry if you need food.",
+            "links": [
+              {
+                "label": "Cost of Living",
+                "kind": "service"
+              },
+              {
+                "label": "Food Pantry",
+                "kind": "service"
+              }
+            ],
+            "offers": [],
+            "tasks": [],
+            "notes": []
+          }
+        }
+      ]
+    ],
+    "swimmer, just matched": [
+      [
+        {
+          "ask": "(just found a mentor: matched)",
+          "shown": {
+            "kind": "reply",
+            "text": "That is wonderful news about your mentor. Since you mentioned enjoying swimming and salsa dancing, you might like looking into Swimming or Salsa and Bachata. How are you feeling about starting your course?",
+            "links": [
+              {
+                "label": "Swimming",
+                "kind": "club"
+              },
+              {
+                "label": "Salsa and Bachata",
+                "kind": "society"
+              }
+            ],
+            "offers": [],
+            "tasks": [],
+            "notes": []
+          }
+        }
+      ]
+    ],
+    "board games, with the coordinator": [
+      [
+        {
+          "ask": "(just found a mentor: coordinator)",
+          "shown": {
+            "kind": "reply",
+            "text": "Since you enjoy board games and reading, you might really like the Gaming and Roleplay, Book, or History societies. What kind of books or games do you usually enjoy in your down time?",
+            "links": [
+              {
+                "label": "Gaming and Roleplay",
+                "kind": "society"
+              },
+              {
+                "label": "Book",
+                "kind": "society"
+              },
+              {
+                "label": "History",
+                "kind": "society"
+              }
+            ],
+            "offers": [],
+            "tasks": [],
+            "notes": []
+          }
+        }
+      ]
+    ],
+    "upset earlier in the chat": [
+      [
+        {
+          "ask": "(just found a mentor: matched)",
+          "shown": {
+            "kind": "skip",
+            "text": "",
+            "links": [],
+            "offers": [],
+            "tasks": [],
+            "notes": []
+          }
+        }
+      ]
+    ],
+    "their first name over six turns": [
+      [
+        {
+          "ask": "Hi!",
+          "shown": {
+            "kind": "reply",
+            "text": "Hi Sam, how is your day going so far?",
+            "links": [],
+            "offers": [],
+            "tasks": [],
+            "notes": []
+          }
+        },
+        {
+          "ask": "Pretty good, I’ve just got back from a lecture",
+          "shown": {
+            "kind": "reply",
+            "text": "It sounds like a productive start. Since you are studying computer science, you might enjoy checking out Computing or Tech Connect.",
+            "links": [
+              {
+                "label": "Computing",
+                "kind": "society"
+              },
+              {
+                "label": "Tech Connect",
+                "kind": "society"
+              }
+            ],
+            "offers": [],
+            "tasks": [],
+            "notes": []
+          }
+        },
+        {
+          "ask": "Are there any chess societies?",
+          "shown": {
+            "kind": "reply",
+            "text": "Yes, Chess is a great Students' Union society if you want to play games and meet others with the same interest.",
+            "links": [
+              {
+                "label": "Chess",
+                "kind": "society"
+              }
+            ],
+            "offers": [],
+            "tasks": [],
+            "notes": []
+          }
+        },
+        {
+          "ask": "Nice, thanks",
+          "shown": {
+            "kind": "reply",
+            "text": "You can take a look at the Chess card for details on how to join. Is there anything you would like reminding about while you settle in?",
+            "links": [
+              {
+                "label": "Chess",
+                "kind": "society"
+              }
+            ],
+            "offers": [],
+            "tasks": [],
+            "notes": []
+          }
+        },
+        {
+          "ask": "What could I do this weekend?",
+          "shown": {
+            "kind": "reply",
+            "text": "You could check out the Chess society or Computing if you fancy meeting people this weekend.",
+            "links": [
+              {
+                "label": "Chess",
+                "kind": "society"
+              },
+              {
+                "label": "Computing",
+                "kind": "society"
+              }
+            ],
+            "offers": [],
+            "tasks": [],
+            "notes": []
+          }
+        },
+        {
+          "ask": "Thanks, have a good evening",
+          "shown": {
+            "kind": "reply",
+            "text": "Have a lovely evening, Sam.",
+            "links": [],
+            "offers": [],
+            "tasks": [],
+            "notes": []
+          }
+        }
+      ]
+    ],
+    "the reminder question exactly once": [
+      [
+        {
+          "ask": "Pretty good thanks, still unpacking",
+          "shown": {
+            "kind": "reply",
+            "text": "Unpacking can definitely take a little while. Is there anything you would like reminding about while you settle in?",
+            "links": [],
+            "offers": [],
+            "tasks": [],
+            "notes": []
+          }
+        },
+        {
+          "ask": "No thanks, nothing for now",
+          "shown": {
+            "kind": "reply",
+            "text": "No worries at all. Take your time with the boxes, and just let me know if you need a hand with anything else later.",
+            "links": [],
+            "offers": [],
+            "tasks": [],
+            "notes": []
+          }
+        },
+        {
+          "ask": "Are there any chess societies?",
+          "shown": {
+            "kind": "reply",
+            "text": "Yes, there is the Chess society, which is a great match for your interest in the game.",
+            "links": [
+              {
+                "label": "Chess",
+                "kind": "society"
+              }
+            ],
+            "offers": [],
+            "tasks": [],
+            "notes": []
+          }
+        },
+        {
+          "ask": "Nice. Anything for gigs?",
+          "shown": {
+            "kind": "reply",
+            "text": "There are some great options for live music, including Gigs at the Students' Union, local Events, and the Music society, which all fit your interest in gigs.",
+            "links": [
+              {
+                "label": "Gigs",
+                "kind": "service"
+              },
+              {
+                "label": "Events",
+                "kind": "service"
+              },
+              {
+                "label": "Music",
+                "kind": "society"
+              }
+            ],
+            "offers": [],
+            "tasks": [],
+            "notes": []
+          }
+        },
+        {
+          "ask": "Thanks, that’s really helpful",
+          "shown": {
+            "kind": "reply",
+            "text": "You are very welcome. Let me know if you want to look at anything else.",
+            "links": [],
+            "offers": [],
+            "tasks": [],
+            "notes": []
+          }
+        },
+        {
+          "ask": "Have a good evening",
+          "shown": {
+            "kind": "reply",
+            "text": "Have a lovely evening, and let me know if you need anything else tomorrow.",
+            "links": [],
+            "offers": [],
+            "tasks": [],
+            "notes": []
+          }
+        }
+      ]
+    ]
+  }
+}

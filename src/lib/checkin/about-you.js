@@ -187,7 +187,7 @@ export function aboutYouForGemini(about, today = null) {
   }
   lines.push(
     about.notes.length
-      ? `Things they asked you to remember (they chose these, and can see and delete them on [[What the chat knows]]):\n${about.notes.map((note) => `- ${note}`).join('\n')}`
+      ? `Things they asked you to remember (they chose these, and can see and delete them on the What the chat knows page):\n${about.notes.map((note) => `- ${note}`).join('\n')}`
       : 'Things they asked you to remember: nothing yet.'
   );
   return lines;
