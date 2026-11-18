@@ -22,7 +22,7 @@ import { dirname, join } from 'node:path';
 const SPACING_MS = 5_000;
 /** How many Gemini requests the scripts may send in a day, together. */
 export const DAILY_BUDGET = 300;
-const BUDGET_FILE = join(homedir(), '.cache', 'ag2-student-app', 'gemini-requests.json');
+export const BUDGET_FILE = join(homedir(), '.cache', 'ag2-student-app', 'gemini-requests.json');
 /** How long one request may take before it counts as no answer and is tried again. */
 const TIMEOUT_MS = 60_000;
 const NEEDED = ['VITE_FIREBASE_API_KEY', 'VITE_FIREBASE_PROJECT_ID', 'VITE_FIREBASE_APP_ID', 'VITE_APPCHECK_DEBUG_TOKEN'];
