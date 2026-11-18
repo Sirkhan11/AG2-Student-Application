@@ -493,7 +493,7 @@ async function inTheBrowser(AUTH, FIRESTORE, PROJECT) {
           await send('Runtime.runIfWaitingForDebugger', {}, worker).catch(() => {});
         })();
       } else if (message.method === 'Network.requestWillBeSent' && MODEL_HOSTS.test(p.request.url) && !model.has(key)) {
-        model.set(key, { at: Date.now(), bytes: 0, blocked: false, from: message.sessionId ? 'worker' : 'page' });
+        model.set(key, { at: Date.now(), bytes: 0, blocked: false, from: message.sessionId ? 'worker' : 'page', url: p.request.url, cache: p.request.headers?.['Cache-Control'] ?? '' });
       } else if (message.method === 'Network.loadingFinished' && model.has(key)) {
         /** @type {any} */ (model.get(key)).bytes = p.encodedDataLength;
       } else if (message.method === 'Network.loadingFailed' && model.has(key)) {
@@ -623,7 +623,7 @@ async function inTheBrowser(AUTH, FIRESTORE, PROJECT) {
     const statuses = await chrome.findMyMentor();
     report('The next visit in the same browser downloads nothing (the browser kept it), and Find my mentor says just "Finding your mentor…"',
       chrome.modelRequests().length === 0 && statuses.includes(FINDING_MESSAGE) && !statuses.some((text) => text.includes(FIRST_TIME_NOTE)),
-      `${chrome.modelRequests().length} model requests; said ${JSON.stringify(statuses)}`);
+      `${chrome.modelRequests().length} model requests${chrome.modelRequests().length ? ` (${chrome.modelRequests().map((r) => /** @type {any} */ (r).url.replace(/^https:\/\//, '').slice(0, 120)).join(', ')})` : ''}; said ${JSON.stringify(statuses)}`);
     // What matching uses: the page's embed.js, so the worker, with the model the browser kept.
     const similar = await chrome.evaluate(`import('/src/lib/matching/embed.js').then(async ({ embed }) => {
       const [gigs, music, tax] = await Promise.all([embed('going to gigs'), embed('live music'), embed('filing tax returns')]);
