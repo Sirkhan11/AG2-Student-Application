@@ -57,6 +57,7 @@ function flowWith(made = {}) {
   return { flow, calls, posts, finished, saved, last, state: () => state };
 }
 const tick = () => new Promise((done) => setTimeout(done, 0));
+const source = (/** @type {string} */ file) => readFileSync(file, 'utf8');
 /** Runs a flow to its answers, ready for Find my mentor. @param {ReturnType<typeof flowWith>} t */
 async function toReview(t) {
   t.flow.start();
@@ -317,8 +318,9 @@ const checks = [
   // ---------- The chat page, and the Find a mentor page ----------
   ['The chat page sends what’s typed during it to the flow, never to Gemini; Stop is there; questions move focus to the box; it’s a live region', () => {
     const page = readFileSync('src/routes/check-in/+page.svelte', 'utf8');
-    const send = page.slice(page.indexOf('async function sendMessage()'), page.indexOf('const chat = geminiChat();', page.indexOf('async function sendMessage()')));
-    assert.match(send, /if \(text && flowActive && flow\) \{[\s\S]*flow\.reply\(text\);[\s\S]*return;\s*\}/, 'the flow takes it and returns before Gemini');
+    const send = page.slice(page.indexOf('async function sendMessage('), page.indexOf('const chat = geminiChat();', page.indexOf('async function sendMessage(')));
+    assert.match(send, /if \(text && flowActive && flow\?\.takes\(text\)\) \{[\s\S]*flow\.reply\(text\);[\s\S]*return;\s*\}/, 'the flow takes it and returns before Gemini');
+    assert.match(source('src/lib/checkin/mentor-flow.js'), /const takes = \(_text\) => state\.active;/, 'finding a mentor takes everything typed while it runs');
     assert.doesNotMatch(send, /chat\.send/);
     assert.match(page, /onclick=\{\(\) => chatFlow\(\)\?\.stop\(\)\}>Stop<\/button>/);
     assert.match(page, /if \(question\) \/\*\* @type \{HTMLInputElement \| null\} \*\/ \(document\.getElementById\('chat-message'\)\)\?\.focus\(\);/);

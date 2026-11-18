@@ -41,9 +41,9 @@ import {
  */
 
 /**
- * Where the flow is, for the page: active while it's running; step; live is the card whose buttons
- * work now (null for none).
- * @typedef {{ active: boolean, step: 'checking' | 'question' | 'frequency' | 'availability' | 'review' | 'busy'
+ * Where the flow is, for the page: kind (which of the chat's actions); active while it's running;
+ * step; live is the card whose buttons work now (null for none).
+ * @typedef {{ kind: 'mentor', active: boolean, step: 'checking' | 'question' | 'frequency' | 'availability' | 'review' | 'busy'
  *   | 'gemini-failed' | 'gemini-unavailable' | 'error' | 'done', live: number | null }} FlowState
  */
 
@@ -71,7 +71,7 @@ const STOP = /^\s*stop\s*[.!]?\s*$/i;
 export function createMentorFlow({ check, steps, post, changed, finished }) {
   const finder = createFinder(steps);
   /** @type {FlowState} */
-  let state = { active: false, step: 'done', live: null };
+  let state = { kind: 'mentor', active: false, step: 'done', live: null };
   let answers = questions.map(() => '');
   let meetingFrequency = '';
   let availability = '';
@@ -315,5 +315,8 @@ export function createMentorFlow({ check, steps, post, changed, finished }) {
     return true;
   }
 
-  return { state: () => state, start, reply, choose, change, confirm, tryAgain, coordinator: askCoordinator, stop };
+  /** Whether it takes what they typed: everything, while it's running (it's never sent to Gemini). @param {string} _text */
+  const takes = (_text) => state.active;
+
+  return { state: () => state, start, takes, reply, choose, change, confirm, tryAgain, coordinator: askCoordinator, stop };
 }

@@ -24,7 +24,8 @@ import { describeForGemini } from '#lib/checkin/opener.js';
  * @typedef {{ role: 'assistant' | 'user', text: string, kind?: 'safety' | 'error' | 'unavailable',
  *   links?: { label: string, href: string, external?: boolean, kind?: 'society' | 'club' | 'service',
  *     nsuId?: number, slug?: string, serviceId?: string, action?: string }[],
- *   task?: SuggestedTask, offer?: Offer, note?: OfferedNote, flow?: import('#lib/checkin/mentor-flow.js').FlowCard & { id: number } }} Message
+ *   task?: SuggestedTask, offer?: Offer, note?: OfferedNote,
+ *   flow?: (import('#lib/checkin/mentor-flow.js').FlowCard | import('#lib/checkin/checklist-flow.js').ChecklistCard) & { id: number } }} Message
  */
 
 /** @typedef {{ action: string, state: 'offered' | 'started' | 'declined' }} Offer */
@@ -42,7 +43,7 @@ import { describeForGemini } from '#lib/checkin/opener.js';
 /**
  * @typedef {{ uid: string | null, messages: Message[], draft: string, waiting: boolean,
  *   started: boolean, unavailable: boolean, conversation: number,
- *   flow: import('#lib/checkin/mentor-flow.js').FlowState | null }} ChatSession
+ *   flow: import('#lib/checkin/mentor-flow.js').FlowState | import('#lib/checkin/checklist-flow.js').ChecklistState | null }} ChatSession
  */
 
 /**
@@ -52,7 +53,8 @@ import { describeForGemini } from '#lib/checkin/opener.js';
  * - started: true once the first messages are in, so coming back shows them instead of starting again
  * - unavailable: true once Gemini has said its credit has run out, so the message box is switched off
  * - conversation: goes up each time it's cleared, so a reply for a conversation that's gone is dropped
- * - flow: where an action the app is running in the chat is (finding a mentor), or null
+ * - flow: where an action the app is running in the chat is (finding a mentor, or going through the
+ *   checklist), or null
  */
 export const chatSession = $state(
   /** @type {ChatSession} */ ({ uid: null, messages: [], draft: '', waiting: false, started: false, unavailable: false, conversation: 0, flow: null })
@@ -71,15 +73,34 @@ export function setGeminiChat(chat) {
   gemini = chat;
 }
 
-/** The action the app is running in the chat (finding a mentor), made when it's first started. */
-/** @type {ReturnType<typeof import('#lib/checkin/mentor-flow.js').createMentorFlow> | null} */
-let flow = null;
+/**
+ * The actions the app runs in the chat (finding a mentor, going through the checklist), each made the
+ * first time it's started in this conversation, and which one is running (one at a time).
+ * @type {{ mentor?: ReturnType<typeof import('#lib/checkin/mentor-flow.js').createMentorFlow>,
+ *   checklist?: ReturnType<typeof import('#lib/checkin/checklist-flow.js').createChecklistFlow> }}
+ */
+let flows = {};
+/** @type {'mentor' | 'checklist' | null} */
+let running = null;
 
-export const chatFlow = () => flow;
+/** The action running now (or last run), whose cards and Stop the page uses. */
+export const chatFlow = () => (running ? flows[running] ?? null : null);
 
-/** @param {ReturnType<typeof import('#lib/checkin/mentor-flow.js').createMentorFlow> | null} next */
-export function setChatFlow(next) {
-  flow = next;
+/** @template {'mentor' | 'checklist'} K @param {K} kind @returns {(typeof flows)[K] | null} */
+export const chatFlowFor = (kind) => flows[kind] ?? null;
+
+/**
+ * Keeps an action for this conversation, and makes it the one running.
+ * @template {'mentor' | 'checklist'} K @param {K} kind @param {NonNullable<(typeof flows)[K]>} flow
+ */
+export function setChatFlow(kind, flow) {
+  flows[kind] = flow;
+  running = kind;
+}
+
+/** Makes an action kept earlier the one running again. @param {'mentor' | 'checklist'} kind */
+export function runChatFlow(kind) {
+  running = kind;
 }
 
 /**
@@ -131,7 +152,8 @@ export function clearChat(uid = null) {
   chatSession.conversation++;
   chatSession.flow = null;
   gemini = null;
-  flow = null;
+  flows = {};
+  running = null;
   facts = null;
 }
 

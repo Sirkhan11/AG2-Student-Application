@@ -1,14 +1,17 @@
 <script>
   import { SAYS } from '#lib/matching/find-mentor-steps.js';
+  import ChecklistTaskCard from '#lib/components/ChecklistTaskCard.svelte';
 
   /**
-   * A card from an action the app is running in the chat (mentor-flow.js): the meeting choices, the
-   * answers to check (each with Change, then Find my mentor), what to do when Gemini can't help, Try
-   * again, or a link. Its buttons only work while it's the live card, so an old card can't restart a step.
-   * @type {{ card: import('#lib/checkin/mentor-flow.js').FlowCard & { id: number }, live: boolean,
-   *   flow: ReturnType<typeof import('#lib/checkin/mentor-flow.js').createMentorFlow> | null }}
+   * A card from an action the app is running in the chat: finding a mentor (mentor-flow.js: the
+   * meeting choices, the answers to check with Change and Find my mentor, what to do when Gemini
+   * can't help) or going through the checklist (checklist-flow.js: a task), and Try again or a link
+   * for either. Its buttons only work while it's the live card, so an old card can't restart a step.
+   * flow is the action running; onask asks the chat something for a task (its in-chat action).
+   * @type {{ card: (import('#lib/checkin/mentor-flow.js').FlowCard | import('#lib/checkin/checklist-flow.js').ChecklistCard) & { id: number },
+   *   live: boolean, flow: any, onask?: (text: string) => void }}
    */
-  let { card, live, flow } = $props();
+  let { card, live, flow, onask } = $props();
 </script>
 
 {#if card.kind === 'choices'}
@@ -41,6 +44,8 @@
   <div class="actions">
     <button class="primary-button" type="button" disabled={!live} onclick={() => flow?.tryAgain()}>Try again</button>
   </div>
+{:else if card.kind === 'checklist-task'}
+  <ChecklistTaskCard {card} {live} {flow} {onask} />
 {:else if card.kind === 'link'}
   <div class="actions">
     <a class="secondary-button" href={card.href}>{card.label}</a>

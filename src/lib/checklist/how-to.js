@@ -8,8 +8,9 @@
 /** @typedef {{ label: string, href: string }} Link */
 /**
  * steps: what to do, in order; link: where to do it (a page in the app, or an outside page);
- * sources: the official pages the steps come from.
- * @typedef {{ steps: string[], link: Link, sources: Link[] }} HowTo
+ * sources: the official pages the steps come from; chat: something the chat itself can do for it,
+ * as a button that asks it (going through the checklist in the chat, checklist-flow.js).
+ * @typedef {{ steps: string[], link: Link, sources: Link[], chat?: { label: string, ask: string } }} HowTo
  */
 
 /**
@@ -108,6 +109,7 @@ export const HOW_TO = Object.freeze({
       'To join, go to its page on the Students’ Union website, choose the Student membership and add it to your basket. (Associate membership is for alumni, staff and students elsewhere.)'
     ],
     link: { label: 'Browse societies', href: '/societies' },
+    chat: { label: 'Suggest some for me', ask: 'Could you suggest a society that would suit me?' },
     sources: [SOURCES.society, SOURCES.associate]
   },
   dentist: {

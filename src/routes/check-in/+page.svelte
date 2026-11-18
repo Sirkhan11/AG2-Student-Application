@@ -5,13 +5,18 @@
   import { replaceState } from '$app/navigation';
   import BottomNav from '#lib/components/BottomNav.svelte';
   import { currentUid, watchSignedIn } from '#lib/firebase/auth.js';
-  import { loadMyRecord } from '#lib/checklist/store.js';
+  import { loadChecklist, loadMyRecord, saveChange } from '#lib/checklist/store.js';
+  import { applyChange, makeTick } from '#lib/checklist/tasks.js';
+  import { howToFor } from '#lib/checklist/how-to.js';
+  import { createChecklistFlow } from '#lib/checkin/checklist-flow.js';
   import { loadMyMatch } from '#lib/matching/matches.js';
   import { buildOpener, describeForGemini } from '#lib/checkin/opener.js';
   import { startCheckinChat } from '#lib/checkin/chat.js';
   import { afterMentorNote } from '#lib/checkin/chat-prompt.js';
   import {
     chatFlow,
+    chatFlowFor,
+    runChatFlow,
     chatSession,
     clearChat,
     clearChatOnSignOut,
@@ -125,7 +130,7 @@
 
   /** The mentor flow for this conversation, made the first time it's started. */
   function mentorFlow() {
-    let flow = chatFlow();
+    let flow = chatFlowFor('mentor');
     if (!flow) {
       const conversation = chatSession.conversation;
       flow = createMentorFlow({
@@ -161,14 +166,64 @@
           }
         }
       });
-      setChatFlow(flow);
+      setChatFlow('mentor', flow);
     }
+    runChatFlow('mentor');
+    return flow;
+  }
+
+  /**
+   * Going through their checklist here (checklist-flow.js), made the first time it's started. Done
+   * ticks a task through the checklist's own change, as the checklist page does. While a task is on
+   * screen, Gemini is told it and its how-to, to answer only from that; never the words of one of
+   * their own tasks.
+   */
+  function checklistFlow() {
+    let flow = chatFlowFor('checklist');
+    if (!flow) {
+      const conversation = chatSession.conversation;
+      flow = createChecklistFlow({
+        load: loadChecklist,
+        tick: async (id, list) => {
+          const change = makeTick(id, true);
+          const onScreen = applyChange(list, change);
+          const result = await saveChange(change, onScreen);
+          return result.status === 'saved' ? result.list : onScreen;
+        },
+        post: (message) => {
+          if (chatSession.conversation !== conversation) return;
+          chatSession.messages.push({ role: message.role, text: message.text, flow: message.card });
+          showLatest();
+        },
+        changed: (state) => {
+          if (chatSession.conversation === conversation) chatSession.flow = state;
+        },
+        onTask: (task) => {
+          if (chatSession.conversation !== conversation) return;
+          const howTo = task ? howToFor(task.id) : null;
+          tellGemini({ walkthrough: !task ? null : howTo ? { title: task.title, steps: howTo.steps, chatHelps: Boolean(howTo.chat) } : { own: true } });
+        },
+        finished: (result) => {
+          if (chatSession.conversation !== conversation) return;
+          // Gemini's told the checklist as it is now, and doesn't offer this again after Stop.
+          tellGemini({
+            walkthrough: null,
+            ...(result.tasks ? { tasks: result.tasks, checklistSaved: true } : {}),
+            ...(result.outcome === 'stopped' ? { checklistNote: 'stopped' } : {})
+          });
+        }
+      });
+      setChatFlow('checklist', flow);
+    }
+    runChatFlow('checklist');
     return flow;
   }
 
   /** Starts one of the chat's own actions: from an offer card's Start, or a first-message button. @param {string} action */
   function startAction(action) {
-    if (action === 'mentor' && !chatSession.flow?.active) mentorFlow().start();
+    if (chatSession.flow?.active) return;
+    if (action === 'mentor') mentorFlow().start();
+    else if (action === 'checklist') checklistFlow().start();
   }
 
   /** A note was saved from a Remember card: Gemini is told what it now remembers. */
@@ -181,20 +236,24 @@
   /** They tapped Not now on an offer: Gemini is told, so it doesn't offer again unless they ask. @param {string} action */
   function declineAction(action) {
     if (action === 'mentor') tellGemini({ mentorNote: 'declined' });
+    else if (action === 'checklist') tellGemini({ checklistNote: 'declined' });
   }
 
-  /** True while the app is running an action in the chat: what they type goes to it, not to Gemini. */
+  /** True while the app is running an action in the chat. */
   let flowActive = $derived(chatSession.flow?.active === true);
   let flowBusy = $derived(chatSession.flow?.step === 'busy' || chatSession.flow?.step === 'checking');
+  /** Finding a mentor takes everything they type; going through the checklist only "stop". */
+  let flowTakesAll = $derived(flowActive && chatSession.flow?.kind === 'mentor');
 
-  async function sendMessage() {
-    const text = chatSession.draft.trim();
-    // While the app is running an action (finding a mentor), what they type is its answer: it goes to
-    // the action, never to Gemini.
+  /** @param {string} [typed] what to send: what's in the message box, or a card's question */
+  async function sendMessage(typed) {
+    const text = (typed ?? chatSession.draft).trim();
+    // While finding a mentor, what they type is its answer: it goes to the action, never to Gemini.
+    // While going through the checklist, only "stop" does; anything else is a question for Gemini.
     const flow = chatFlow();
-    if (text && flowActive && flow) {
+    if (text && flowActive && flow?.takes(text)) {
       chatSession.messages.push({ role: 'user', text });
-      chatSession.draft = '';
+      if (typed === undefined) chatSession.draft = '';
       flow.reply(text);
       await showLatest();
       return;
@@ -204,7 +263,7 @@
 
     const conversation = chatSession.conversation;
     chatSession.messages.push({ role: 'user', text });
-    chatSession.draft = '';
+    if (typed === undefined) chatSession.draft = '';
     chatSession.waiting = true;
     await showLatest();
 
@@ -388,7 +447,7 @@
         {/if}
         {#if item.flow}
           <div class="cards">
-            <ChatFlowCard card={item.flow} live={flowActive && chatSession.flow?.live === item.flow.id && !flowBusy} flow={chatFlow()} />
+            <ChatFlowCard card={item.flow} live={flowActive && chatSession.flow?.live === item.flow.id && !flowBusy} flow={chatFlow()} onask={(text) => sendMessage(text)} />
           </div>
         {/if}
       {/each}
@@ -406,17 +465,17 @@
       <input
         id="chat-message"
         class="field"
-        placeholder={flowActive ? 'Type your answer, or stop to stop' : chatSession.unavailable ? 'The chat isn’t available right now' : 'Type your message...'}
+        placeholder={flowTakesAll ? 'Type your answer, or stop to stop' : flowActive ? 'Ask about this task, or type stop to stop' : chatSession.unavailable ? 'The chat isn’t available right now' : 'Type your message...'}
         autocomplete="off"
-        disabled={flowActive ? flowBusy : chatSession.waiting || chatSession.unavailable}
+        disabled={flowTakesAll ? flowBusy : flowBusy || chatSession.waiting || chatSession.unavailable}
         bind:value={chatSession.draft}
       />
 
-      <button class="primary-button" type="submit" disabled={flowActive ? flowBusy : chatSession.waiting || chatSession.unavailable}>
-        {flowActive ? 'Send answer' : chatSession.waiting ? 'Waiting for a reply…' : chatSession.unavailable ? 'Chat unavailable' : 'Send'}
+      <button class="primary-button" type="submit" disabled={flowTakesAll ? flowBusy : flowBusy || chatSession.waiting || chatSession.unavailable}>
+        {flowTakesAll ? 'Send answer' : chatSession.waiting ? 'Waiting for a reply…' : chatSession.unavailable ? 'Chat unavailable' : 'Send'}
       </button>
       {#if flowActive && !flowBusy}
-        <!-- Ends finding a mentor at any point before Find my mentor, with nothing saved. -->
+        <!-- Ends finding a mentor before Find my mentor (nothing saved), or going through the checklist. -->
         <button class="secondary-button" type="button" onclick={() => chatFlow()?.stop()}>Stop</button>
       {/if}
     </form>

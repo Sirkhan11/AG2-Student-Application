@@ -39,6 +39,18 @@ export const CHAT_ACTIONS = Object.freeze([
     card: { title: 'Find a mentor here?', text: 'I’ll ask six short questions here in the chat. Nothing is saved until you choose Find my mentor.' }
   },
   {
+    id: 'checklist',
+    title: 'Going through their checklist',
+    marker: '{{checklist}}',
+    rules: [
+      'Offer it when they ask what to do next, ask about their checklist or what’s left on it, or once after they’ve found a mentor (in a later reply, not your message straight after): one short sentence saying you can go through it here, one task at a time, then {{checklist}}, for example "I can go through your checklist with you here, one task at a time. {{checklist}}". The app shows each task with how to do it.',
+      'When you offer it, don’t link to the [[Checklist]] page or list their tasks yourself.',
+      'Don’t offer it if their checklist is all done, or again in this chat after they’ve said not now or stopped, unless they ask (see what the app knows about them below).',
+      'Never tick a task or say one is done: only they can, with the card’s Done button.'
+    ],
+    card: { title: 'Go through your checklist here?', text: 'I’ll show one task at a time, with how to do it. Tap Done when you’ve done it, or Not yet to leave it for now.' }
+  },
+  {
     id: 'remember',
     title: 'Remembering something for later chats',
     marker: '{{remember: Planning to join a running club}}',

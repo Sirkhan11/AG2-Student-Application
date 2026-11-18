@@ -116,6 +116,24 @@ export function buildOpener({ match, tasks, checklistSaved = true, justSignedUp,
   return { messages, links };
 }
 
+/**
+ * The task on screen while they go through their checklist in the chat: a standard task's title and
+ * how-to (and whether the chat can help with it itself), or own: true for one of theirs.
+ * @typedef {{ own: true } | { own?: false, title: string, steps: string[], chatHelps?: boolean }} Walkthrough
+ */
+
+/** What Gemini is told while a task is on screen: to answer only from its how-to. @param {Walkthrough} walkthrough */
+function walkthroughLines(walkthrough) {
+  const going = 'Going through their checklist: they’re going through it here, one task at a time, with the app’s cards (Done and Not yet).';
+  const rules = 'Don’t bring up other tasks, pages or offers, and never tick anything or say it’s done: only their Done does that.';
+  if (walkthrough.own) {
+    return `${going} The task on screen now is one of their own, which you aren’t told. If they ask about it, say you can’t help with the details and that Ask4Help can (Stuck? on the card). ${rules}`;
+  }
+  const steps = walkthrough.steps.map((step, i) => `${i + 1}. ${step}`).join('\n');
+  const suggest = walkthrough.chatHelps ? ' If they ask for suggestions, you may suggest up to 3 societies that fit them, as usual.' : '';
+  return `${going} The task on screen now is "${walkthrough.title}". Its how-to:\n${steps}\nWhile it’s on screen, answer their questions about it only from this how-to. If it doesn’t say, tell them you don’t know and that Ask4Help can help (Stuck? on the card).${suggest} ${rules}`;
+}
+
 /** How long each saved reason for their match can be, as Gemini is told it. */
 const MAX_REASON_LENGTH = 160;
 
@@ -130,11 +148,15 @@ const MAX_REASON_LENGTH = 160;
  * finding a mentor in this chat, so Gemini doesn't offer it again ('declined': they said not now;
  * 'stopped': they stopped part way; 'no-mentors': there were none available). today, as the sign-up
  * form writes dates (2026-11-17), tells Gemini whether they've arrived yet.
+ * walkthrough: the task on screen while they go through their checklist in the chat
+ * (checklist-flow.js): a standard task's title and how-to, or own: true for one of their own, whose
+ * words aren't shared. checklistNote: they said not now to that, or stopped it, so it isn't offered again.
  * @param {{ match: Match | null | undefined, tasks: Task[] | null, checklistSaved?: boolean,
  *   profile?: Parameters<typeof aboutYou>[0], isMentor?: boolean,
- *   mentorNote?: 'declined' | 'stopped' | 'no-mentors' | null, today?: string | null }} input
+ *   mentorNote?: 'declined' | 'stopped' | 'no-mentors' | null, today?: string | null,
+ *   walkthrough?: Walkthrough | null, checklistNote?: 'declined' | 'stopped' | null }} input
  */
-export function describeForGemini({ match, tasks, checklistSaved = true, profile = null, isMentor = false, mentorNote = null, today = null }) {
+export function describeForGemini({ match, tasks, checklistSaved = true, profile = null, isMentor = false, mentorNote = null, today = null, walkthrough = null, checklistNote = null }) {
   const about = aboutYou(profile);
   const lines = [];
   if (isMentor) {
@@ -174,5 +196,8 @@ export function describeForGemini({ match, tasks, checklistSaved = true, profile
     lines.push('Checklist: not known.');
   }
 
+  if (checklistNote === 'declined') lines.push('They said not now to going through their checklist here: don’t offer it again unless they ask.');
+  if (checklistNote === 'stopped') lines.push('They went through some of their checklist here and stopped: don’t offer it again unless they ask.');
+  if (walkthrough) lines.push(walkthroughLines(walkthrough));
   return [...aboutYouForGemini(about, today), ...lines].join('\n');
 }
