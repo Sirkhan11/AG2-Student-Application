@@ -7,11 +7,12 @@
 // It makes a throwaway Northumbria account that's already verified (the live app only lets verified
 // Northumbria accounts in): a made-up address, imported with firebase-tools (auth:import, through the
 // same login as the deploys), so no email is sent. It logs in on the live site in headless Chrome,
-// ends the checklist walkthrough if it's asking, sends one ordinary message, and checks Gemini
-// answered (HTTP 200) and the chat showed a reply rather than its error message. Then the account
+// waits for Gemini's first message, sends one ordinary message, and checks Gemini answered every
+// request (HTTP 200) and the chat showed a reply rather than its error message. Then the account
 // deletes itself.
 //
-// One Gemini request, counted in the scripts' daily budget. App Check: the debug token stands in for
+// About three Gemini requests (the first message, then the message and a search), counted in the
+// scripts' daily budget. App Check: the debug token stands in for
 // reCAPTCHA, which doesn't score headless Chrome as a person; it's set before the site's own code runs
 // and never printed.
 //
@@ -95,13 +96,10 @@ try {
   report('A verified Northumbria account logs in on the live site', loggedIn);
   await page.go('/check-in');
   const ready = await page.waitFor(`document.querySelector('[data-chat-ready]') !== null`, 30000);
-  // If the chat opened by asking about the checklist, end that (the app does it: no Gemini).
-  if (await page.evaluate(`[...document.querySelectorAll('button')].some((b) => b.textContent.trim() === 'Stop')`)) {
-    await page.press('Stop');
-    await sleep(800);
-  }
+  // Gemini writes the first message when the chat opens: wait for it (a message sent meanwhile waits).
+  const opened = await page.waitFor(`document.querySelectorAll('.bubble:not(.user)').length > 0 && !document.querySelector('.bubble.typing')`, 45000);
+  report('Opening the chat: Gemini’s first message comes back', opened, `“${(await page.evaluate(`[...document.querySelectorAll('.bubble:not(.user)')].at(-1)?.innerText.trim() ?? ''`)).slice(0, 120)}”`);
   const before = await page.evaluate(`document.querySelectorAll('.bubble').length`);
-  countRequest(budgetFile, today());
   await page.answer(MESSAGE);
   const answered = await page.waitFor(
     `document.querySelectorAll('.bubble').length > ${before} + 1 && !document.querySelector('.bubble.typing') && !document.querySelector('.bubble:last-of-type.user')`,
@@ -116,6 +114,8 @@ try {
     ready && answered && !failed && statuses.length > 0 && statuses.every((status) => status === 200),
     `Gemini HTTP ${statuses.join(', ') || 'none'}; reply: "${reply.slice(0, 140)}"${cards ? `; ${cards} card parts` : ''}`
   );
+  // Every request Gemini answered counts in the scripts' daily budget.
+  for (let i = 0; i < statuses.length; i++) countRequest(budgetFile, today());
   const geminiErrors = errors.filter((error) => /AI:|generateContent|Gemini/.test(error));
   report('No Gemini errors in the page', geminiErrors.length === 0, geminiErrors.join(' | ').slice(0, 400));
 } finally {

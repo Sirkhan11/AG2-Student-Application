@@ -29,6 +29,7 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { createServer } from 'node:net';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { standInGemini } from './lib/stand-in-gemini.mjs';
 
 const AUTH = process.env.FIREBASE_AUTH_EMULATOR_HOST;
 const FIRESTORE = process.env.FIRESTORE_EMULATOR_HOST;
@@ -155,8 +156,11 @@ try {
   const requests = [];
   /** @type {string[]} errors on the page, shown when a check fails */
   const problems = [];
+  /** @type {((message: any) => void)[]} others listening to the page (the stand-in Gemini) */
+  const handlers = [];
   socket.addEventListener('message', (event) => {
     const message = JSON.parse(String(event.data));
+    if (!message.id) for (const handler of handlers) handler(message);
     if (message.id && pending.has(message.id)) {
       pending.get(message.id)(message);
       pending.delete(message.id);
@@ -372,24 +376,38 @@ try {
   await sleep(800);
   report('Details lost: Home says "Hi there" and asks; the sign-up page saves them to the account, and Home then says "Hi Alex"', asked && form && saved && !(await evaluate(has('Finish your details'))));
 
-  // 6. Finding a mentor in the chat.
+  // 6. Finding a mentor in the chat: Gemini (a stand-in from here on) offers it, and the app asks the
+  //    questions itself, with no Gemini.
+  const gemini = await standInGemini(send, (handler) => handlers.push(handler));
+  const room = (/** @type {number} */ taken) => ({ displayName: 'Alex', approved: true, maxStudents: 2, studentCount: taken, itemVectors: { q1: Array.from({ length: 384 }, (_, i) => (i === 0 ? 1 : 0)), q2: [], q3: [], q4: [], q5: [], q6: [] } });
+  const offerButton = `[...document.querySelectorAll('button')].some((b) => b.textContent.trim() === 'Start' && !b.disabled)`;
   await clickText('Log out');
   await waitFor(`location.pathname === '/'`);
   await logIn(nia);
   await waitFor(`location.pathname === '/home'`);
-  await go('/check-in');
-  await waitFor(`[...document.querySelectorAll('button')].some((b) => b.textContent.trim() === 'Find a mentor')`);
   // No mentor with a free place: Alex is full for now.
-  await seedAs('mentors/mentor-alex', { displayName: 'Alex', approved: true, maxStudents: 2, studentCount: 2, itemVectors: { q1: Array.from({ length: 384 }, (_, i) => (i === 0 ? 1 : 0)), q2: [], q3: [], q4: [], q5: [], q6: [] } });
+  await seedAs('mentors/mentor-alex', room(2));
+  gemini.replyWith({ calls: [{ name: 'mentor', args: { action: 'offer' } }] }, 'Hi! I can find you a student mentor here, if you like.');
+  await go('/check-in');
+  await waitFor(offerButton, 30000);
   const noMentors = await another('There are no mentors available yet');
-  await press('Find a mentor');
+  await press('Start');
   report('In the chat, with no mentors yet: Find a mentor says so, and nothing is saved', (await (await noMentors)()) && (await savedNothing()));
 
-  // Alex has room again, so the questions come.
-  await seedAs('mentors/mentor-alex', { displayName: 'Alex', approved: true, maxStudents: 2, studentCount: 0, itemVectors: { q1: Array.from({ length: 384 }, (_, i) => (i === 0 ? 1 : 0)), q2: [], q3: [], q4: [], q5: [], q6: [] } });
+  // Alex has room again: in a new conversation (after logging in again) the offer comes back, and the questions come.
+  await seedAs('mentors/mentor-alex', room(0));
+  await go('/home');
+  await waitFor(has('How can we help you today?'));
+  await clickText('Log out');
+  await waitFor(`location.pathname === '/'`);
+  await logIn(nia);
+  await waitFor(`location.pathname === '/home'`);
+  gemini.replyWith({ calls: [{ name: 'mentor', args: { action: 'offer' } }] }, 'Hi again. Fancy finding a mentor?');
+  await go('/check-in');
+  await waitFor(offerButton, 30000);
   requests.length = 0;
   let next = await another('Question 1 of 6');
-  await press('Find a mentor');
+  await press('Start');
   const asked1 = await (await next)();
   const focused = await evaluate(`document.activeElement?.id === 'chat-message'`);
   next = await another('Question 2 of 6');
@@ -405,11 +423,13 @@ try {
   report('In the chat: the questions one at a time, focus in the message box, no Gemini; "stop" ends it, saving nothing, and the chat carries on',
     asked1 && focused && stopped && carriesOn && (await savedNothing()) && geminiCalls().length === 0, `${asked1} ${focused} ${stopped} ${carriesOn} ${geminiCalls().length} Gemini calls`);
 
-  // A full run: the answers, Change, Find my mentor, then the coordinator (Gemini can't run here).
-  requests.length = 0;
+  // A full run: they ask for one now (Gemini's mentor tool with "find" starts it), then the answers,
+  // Change, Find my mentor, then the coordinator (the stand-in can't summarise).
+  gemini.replyWith({ calls: [{ name: 'mentor', args: { action: 'find' } }] }, 'Sure, six quick questions.');
   next = await another('Question 1 of 6');
-  await press('Find a mentor');
+  await answer('actually can you find me a mentor now');
   await (await next)();
+  requests.length = 0;
   for (const [i, reply] of ['Settling in', 'Climbing and films', 'A long walk', 'Planning ahead, with others', 'Making friends', 'Someone patient'].entries()) {
     next = i < 5 ? await another(`Question ${i + 2} of 6`) : await another('How often would you like to meet?');
     await answer(reply);
@@ -449,10 +469,12 @@ try {
   await waitFor(`location.pathname === '/'`);
   await logIn(mo);
   await waitFor(`location.pathname === '/home'`);
+  gemini.replyWith({ calls: [{ name: 'mentor', args: { action: 'offer' } }] }, 'Hi! How’s your day been?');
   await go('/check-in');
-  await waitFor(has('How’s your day been?'));
+  await waitFor(has('How’s your day been?'), 30000);
   await sleep(1000);
-  report('A mentor account: the chat doesn’t offer to find them a mentor', !(await evaluate(`[...document.querySelectorAll('button')].some((b) => b.textContent.trim() === 'Find a mentor')`)) && !(await evaluate(has('If you’d like a student mentor'))));
+  const offered = gemini.requests.at(-1)?.body?.tools?.[0]?.functionDeclarations?.find((/** @type {any} */ tool) => tool.name === 'mentor')?.parameters?.properties?.action?.enum ?? [];
+  report('A mentor account: the chat doesn’t offer to find them a mentor, even if Gemini asks for the card', !(await evaluate(offerButton)) && !offered.includes('offer') && !(await evaluate(has('If you’d like a student mentor'))));
 } finally {
   ws?.close();
   chrome.kill();

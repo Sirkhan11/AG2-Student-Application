@@ -6,14 +6,14 @@
 // 3. Reading a message: the longest phrase wins ("ice hockey" isn't "hockey"), "not" and "don't like"
 //    rule things out to the end of the sentence or a "but", an answer like "No, I like football"
 //    rules nothing out, and a worry ("I don't have money for food") is never ruled out.
-// 4. The short list for each case measure-chat.mjs asks Gemini about: something we'd expect is on it,
+// 4. The short list for each suggestion case (suggestion-cases.mjs): something we'd expect is on it,
 //    and nothing that's wrong for that student is. Gemini can only suggest from this list, so this is
 //    the ceiling on how well suggestions can fit.
 // Run from the project folder: node scripts/check-shortlist.mjs
 
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { APP_PAGES } from '#lib/checkin/app-pages.js';
+import { CHAT_PAGES } from '#lib/checkin/chat-tools.js';
 import { NOT_IN_CHAT, serviceById } from '#lib/nsu/services.js';
 import { AUDIENCE, societyById } from '#lib/societies/societies.js';
 import { CLUBS } from '#lib/sport/clubs.js';
@@ -37,7 +37,7 @@ function check(name, test) {
 const names = (/** @type {string} */ message, extra = {}) => shortlist({ message, ...extra }).map(({ suggestion }) => suggestion.name);
 
 check('every name in the catalogue is unique, and none is also an app page', () => {
-  const all = [...SUGGESTIONS.map((s) => s.name.toLowerCase()), ...APP_PAGES.map((page) => page.name.toLowerCase())];
+  const all = [...SUGGESTIONS.map((s) => s.name.toLowerCase()), ...Object.keys(CHAT_PAGES).map((page) => page.toLowerCase())];
   assert.deepEqual(all.filter((name, i) => all.indexOf(name) !== i), []);
 });
 
@@ -119,7 +119,7 @@ check(`at most ${SHORTLIST_SIZE}, with why each is there`, () => {
   assert.deepEqual(readText('Not sport.')[0], { names: ['Sport'], said: 'sport', ruledOut: true, weak: false, rulesOutClubs: true });
 });
 
-// 4. measure-chat.mjs's suggestion cases (scripts/lib/suggestion-cases.mjs): what we'd expect is on
+// 4. The suggestion cases (scripts/lib/suggestion-cases.mjs, from the old measurements): what we'd expect is on
 // the list, and nothing wrong is.
 const fixtures = JSON.parse(readFileSync('scripts/fixtures/matching-cases.json', 'utf8'));
 for (const [group, expect] of Object.entries(EXPECT)) {

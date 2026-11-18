@@ -50,7 +50,7 @@ function sdkModel(gemini) {
     const address = /** @type {import('node:net').AddressInfo} */ (server.address());
     const { initializeApp } = await import('firebase/app');
     const { getAI, getGenerativeModel, GoogleAIBackend } = await import('firebase/ai');
-    const app = initializeApp(gemini.config, `measure-chat-${address.port}`);
+    const app = initializeApp(gemini.config, `chat-over-sdk-${address.port}`);
     const ai = getAI(app, { backend: new GoogleAIBackend() });
     return getGenerativeModel(ai, { model: CHAT_MODEL }, { baseUrl: `http://127.0.0.1:${address.port}` });
   })();

@@ -1,4 +1,4 @@
-// What the check-in chat should suggest for each made-up student in measure-chat.mjs's suggestion
+// What the check-in chat should suggest for each made-up student in the suggestion
 // cases, kept here so check-shortlist.mjs can check the app's short list against the same
 // expectations: one student from each fixture group (scripts/fixtures/matching-cases.json) saying
 // what they're into, and a few more asking about community societies, a worry, a sport, getting fit

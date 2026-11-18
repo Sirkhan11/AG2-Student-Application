@@ -12,8 +12,8 @@ import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
 import costs from '#lib/nhs/nhs-costs.json' with { type: 'json' };
 import { COSTS_CHECKED_ON, REGISTERING, SECTIONS, SOURCES, withFigures } from '#lib/nhs/guide.js';
-import { findPage } from '#lib/checkin/app-pages.js';
-import { chatRequest, CHAT_PAGES } from '#lib/checkin/chat-prompt.js';
+import { chatInstructions } from '#lib/checkin/chat-prompt.js';
+import { CHAT_PAGES, chatTools } from '#lib/checkin/chat-tools.js';
 
 /**
  * Where official sources live: GOV.UK, the NHS website, the NHSBSA, Northumbria University, and the
@@ -74,12 +74,11 @@ const checks = [
     assert.match(PAGE, /COSTS_CHECKED_ON/);
   }],
   ['The chat can link the guide, and is told to answer NHS questions briefly with no prices', () => {
-    assert.equal(findPage('NHS Guide')?.href, '/nhs-guide');
-    const instructions = chatRequest({ about: '(about)', opener: ['(opener)'], shortlist: [], options: { mentor: 'no', checklist: 'no', hasMentor: false } }).systemInstruction;
-    assert.match(instructions, /"NHS Guide" when they ask how the NHS works or whether they pay to see a doctor \(answer in one short sentence, without prices or other figures\)/);
-    assert.match(instructions, /"gp-finder": they ask where the nearest GP or doctor is, or how to find or register with one/, 'registering with a GP: the finder, in the chat');
-    assert.ok(CHAT_PAGES.includes('NHS Guide'));
-    assert.doesNotMatch(instructions, /£/, 'the chat is never given the figures');
+    assert.equal(CHAT_PAGES['NHS guide'].href, '/nhs-guide');
+    const tools = Object.fromEntries(chatTools({ match: null, tasks: null })[0].functionDeclarations.map((/** @type {any} */ tool) => [tool.name, tool.description]));
+    assert.match(tools.show_page, /the NHS guide when they ask how the NHS works or whether they pay to see a doctor \(answer in one short sentence yourself, without prices or other figures: the guide has them\)/);
+    assert.match(tools.show_finder, /Shows the GP finder \(surgeries near where they live\)/, 'registering with a GP: the finder, in the chat');
+    assert.doesNotMatch(chatInstructions('(about)') + JSON.stringify(tools), /£/, 'the chat is never given the figures');
   }]
 ];
 

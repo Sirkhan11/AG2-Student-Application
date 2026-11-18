@@ -3,7 +3,7 @@
   import { GpSearch } from '#lib/gp/search.svelte.js';
 
   /**
-   * The GP finder inside the check-in chat, while going through the checklist (checklist-talk.js):
+   * The GP finder inside the check-in chat, when Gemini shows it (its show_finder tool, chat-tools.js):
    * the student types a postcode, district or place here, in the app's own card, so it never goes to
    * Gemini (the chat's messages blank postcodes too). For a GP, the nearest surgeries, the same search
    * as the GP finder page (search.svelte.js: "Use my location" stays on the phone); for a dentist,

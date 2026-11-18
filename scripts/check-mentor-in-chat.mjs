@@ -19,12 +19,12 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { chatAction } from '#lib/checkin/chat-actions.js';
-import { chatRequest, coreInstructions } from '#lib/checkin/chat-prompt.js';
-import { readChatReply } from '#lib/checkin/chat-replies.js';
+import { chatInstructions } from '#lib/checkin/chat-prompt.js';
+import { chatTools } from '#lib/checkin/chat-tools.js';
+import { scriptedGemini } from './lib/scripted-gemini.mjs';
 import { chatWith } from '#lib/checkin/chat-turns.js';
 import { createMentorFlow } from '#lib/checkin/mentor-flow.js';
-import { buildOpener, chatOptions, describeForGemini } from '#lib/checkin/opener.js';
-import { APP_PAGES, findPage } from '#lib/checkin/app-pages.js';
+import { chatOptions, describeForGemini, matchLine } from '#lib/checkin/opener.js';
 import { ANSWERS_NOTE, checkAnswers, createFinder, findingMessage, MAX_AVAILABILITY_LENGTH, outcomeText, questions, SAYS } from '#lib/matching/find-mentor-steps.js';
 import { SUMMARISE_FAILED } from '#lib/matching/errors.js';
 
@@ -60,6 +60,7 @@ function flowWith(made = {}) {
 }
 const tick = () => new Promise((done) => setTimeout(done, 0));
 const source = (/** @type {string} */ file) => readFileSync(file, 'utf8');
+const oneLine = (/** @type {string} */ text) => text.replace(/\s+/g, ' ');
 /** Runs a flow to its answers, ready for Find my mentor. @param {ReturnType<typeof flowWith>} t */
 async function toReview(t) {
   t.flow.start();
@@ -252,10 +253,11 @@ const checks = [
   }],
 
   // ---------- Gemini only offers it ----------
-  ['The mentor action in a reply becomes an offer card, only when the app allows it this turn', () => {
-    const reply = (/** @type {string[]} */ actions) => readChatReply(JSON.stringify({ action: 'mentor', page: 'none', say: 'I can find you one here.' }), { shortlist: [], actions });
-    assert.deepEqual(reply(['mentor', 'reminder'])?.action, { id: 'mentor' });
-    assert.equal(reply(['reminder'])?.action, null, 'not allowed now: no card');
+  ['Gemini\'s mentor tool with "offer" becomes an offer card (Start, Not now), only when the app allows it', async () => {
+    const offered = async (/** @type {any} */ facts) =>
+      (await chatWith(scriptedGemini([{ calls: [{ name: 'mentor', args: { action: 'offer' } }] }, { text: 'I can find you one here.' }]).model, { facts }).send('I need a mentor')).offers;
+    assert.deepEqual(await offered({ match: null, tasks: null }), ['mentor']);
+    assert.equal(await offered({ match: { status: 'matched', reasons: [] }, tasks: null }), undefined, 'not allowed now: no card');
     assert.equal(chatAction('mentor')?.card?.title, 'Find a mentor here?');
   }],
   ['When the app allows it: no mentor and not a mentor; after Not now or Stop only if they ask; never with one, as a mentor, or with none available', () => {
@@ -267,39 +269,24 @@ const checks = [
     assert.equal(chatOptions({ match: { status: 'coordinator', meetingFrequency: 'weekly', availability: null }, tasks: null }).mentor, 'no');
     assert.equal(chatOptions({ match: undefined, tasks: null }).mentor, 'no', 'not known: not offered');
   }],
-  ['chatWith returns the offer for the card; Gemini sees only what it said; nothing from the flow is ever in its history', async () => {
-    /** @type {any[]} */
-    const sent = [];
-    const chat = chatWith(
-      {
-        generateContent: async (/** @type {any} */ request) => {
-          sent.push(structuredClone(request));
-          return /** @type {any} */ ({ response: { text: () => JSON.stringify({ action: 'mentor', page: 'none', say: 'I can find you one here.' }), candidates: [{ finishReason: 'STOP' }] } });
-        }
-      },
-      { facts: { match: null, tasks: null }, opener: ['Hi!'] }
-    );
-    const reply = await chat.send('I need a mentor to help me organise my work');
-    assert.deepEqual([reply.text, reply.offers], ['I can find you one here.', ['mentor']]);
+  ['"find" starts the questions after the reply; Gemini sees only what was said to it; nothing from the flow is ever in its history', async () => {
+    const gemini = scriptedGemini([{ calls: [{ name: 'mentor', args: { action: 'find' } }] }, { text: 'Let’s find you one. Six quick questions.' }, { text: 'Good luck.' }]);
+    const chat = chatWith(gemini.model, { facts: { match: null, tasks: null } });
+    const reply = await chat.send('i need a mentor to help me focus and orginise work');
+    assert.deepEqual([reply.text, reply.start], ['Let’s find you one. Six quick questions.', 'mentor']);
     await chat.send('Thanks');
-    assert.equal(sent[1].contents[1].parts[0].text, 'I can find you one here.');
-    assert.equal(sent[1].contents.length, 3, 'only what was sent to Gemini: no flow answers');
+    assert.equal(gemini.requests[2].contents.length, 5, 'their message, the call, its result, the reply, then theirs: no flow answers');
   }],
-  ['The chat’s instructions: the app does the actions and confirms them; the mentor rule; no Find a mentor page; every safety rule', () => {
-    const t = chatRequest({ about: '(about)', opener: ['(opener)'], shortlist: [], options: { mentor: 'yes', checklist: 'yes', hasMentor: false } }).systemInstruction;
-    assert.match(t, /You only write words: the app carries out any action you choose and shows any cards and links\. Never claim to have done something yourself, and never say you can't do something the app can do\./);
-    assert.match(t, /Choose an action only when it's what they asked for, and never instead of helping with what they asked\./);
-    assert.match(t, /"mentor": they ask for a mentor or for someone to help them settle in or organise their work, or say yes to the mentor offer in the first messages\. In say, one short sentence saying you can find them one here\. The app then asks its own questions: never ask them yourself\. Don't offer it when they ask about something else\./);
+  ['The chat’s instructions and tools: the app does the actions and Gemini says how they went; the mentor tool only as allowed; no Find a mentor page; every safety rule', () => {
+    const t = oneLine(chatInstructions('(about)'));
+    assert.match(t, /Call the tool, then tell them in your own words how it went\. Never say you've done something unless the tool said it's done\./);
     assert.doesNotMatch(t, /Find a mentor/);
-    assert.equal(findPage('Find a mentor'), null);
-    assert.deepEqual(APP_PAGES.map((page) => page.name), ['Checklist', 'NHS Guide', 'GP Finder', 'Your Mentor', 'Need Help Now', 'What the chat knows']);
-    const matched = chatRequest({ about: '', opener: [], shortlist: [], options: { mentor: 'no', checklist: 'no', hasMentor: true } }).systemInstruction;
-    assert.match(matched, /"change-mentor": they want a different mentor/, 'changing mentor happens here too');
-    assert.doesNotMatch(matched, /"mentor":/, 'never offered to someone who has one');
-    const core = coreInstructions('(about)', ['(opener)']);
-    assert.match(core, /call 999 if they're in danger now, NHS 111 for urgent help, and Samaritans free on 116 123 at any time, and show the Need Help Now page/, 'every safety rule');
-    assert.match(core, /one to three short sentences, plain text, no markdown, lists or emoji\. Ask at most one question\./);
-    assert.match(t, /If they haven't got a mentor yet, say so plainly\./);
+    const mentor = (/** @type {any} */ facts) => chatTools(facts)[0].functionDeclarations.find((/** @type {any} */ tool) => tool.name === 'mentor');
+    assert.match(mentor({ match: null, tasks: null }).description, /"find" starts the six short questions that find them one, here in the chat, when they ask for one/);
+    assert.deepEqual(mentor({ match: { status: 'matched', reasons: [] }, tasks: null }).parameters.properties.action.enum, ['show', 'change'], 'never offered to someone who has one; changing happens here too');
+    assert.match(t, /call 999 if they're in danger now, NHS 111 for urgent help, and Samaritans free on 116 123 at any time, and show the Need help now page/, 'every safety rule');
+    assert.match(t, /Nothing they say is reported to anyone, and you can't contact anyone for them\. Never say you will\./);
+    assert.match(t, /Plain text: no markdown, lists or emoji\. Ask at most one question\./);
   }],
   ['What Gemini is told: a mentor account isn’t offered one; no mentor yet: it can offer here; Not now, Stop and the outcome stop it offering again', () => {
     const base = { tasks: null };
@@ -314,12 +301,10 @@ const checks = [
     assert.ok(!matched.includes('Alex'), 'never the mentor’s name');
     assert.match(describeForGemini({ ...base, match: { status: 'coordinator', meetingFrequency: 'weekly', availability: null } }), /coordinator is finding them a mentor/);
   }],
-  ['The first message’s Find a mentor button starts it in the chat; a mentor account isn’t offered one', () => {
-    const { links } = buildOpener({ match: null, tasks: null, justSignedUp: false });
-    assert.deepEqual(links[0], { label: 'Find a mentor', href: '/find-mentor', action: 'mentor' });
-    const mentor = buildOpener({ match: null, tasks: null, justSignedUp: false, isMentor: true });
-    assert.equal(mentor.messages[0], 'Hi! How’s your day been?');
-    assert.deepEqual(mentor.links, []);
+  ['Straight after finding a mentor on the page, the app’s own line has the mentor’s name (never Gemini’s); otherwise Gemini writes the first message', () => {
+    assert.equal(matchLine({ status: 'matched', mentorId: 'm', mentorName: 'Alex', reasons: [], meetingFrequency: null, availability: null }), 'Thanks for answering those questions. You’ve been matched with Alex, and your coordinator will introduce you.');
+    assert.match(String(matchLine({ status: 'coordinator', meetingFrequency: null, availability: null })), /We’re finding you a mentor/);
+    assert.equal(matchLine(null), null);
   }],
 
   // ---------- The chat page, and the Find a mentor page ----------
@@ -333,7 +318,7 @@ const checks = [
     assert.match(page, /if \(question\) \/\*\* @type \{HTMLInputElement \| null\} \*\/ \(document\.getElementById\('chat-message'\)\)\?\.focus\(\);/);
     assert.match(page, /<div class="messages" aria-live="polite"/);
     assert.match(page.replace(/\s+/g, ' '), /If you find a mentor here, your answers are saved when you choose Find my mentor, as on the Find a mentor page; they’re never sent to Gemini as chat messages, though it’s told the short summary, and straight after, it suggests a few things that might suit you\./, 'the note at the top stays true');
-    assert.match(page, /\{#if link\.action\}[\s\S]*onclick=\{\(\) => startAction\(/, 'the first message’s button starts it here');
+    assert.match(page, /onstart=\{\(\) => startAction\(/, 'the offer card’s Start starts it here');
     assert.match(page, /offer: action && action\.shows !== 'card' \? \{ action: action\.id, state: 'offered' \} : undefined/);
     for (const file of ['src/lib/checkin/mentor-flow.js', 'src/lib/matching/find-mentor-steps.js']) {
       assert.doesNotMatch(readFileSync(file, 'utf8'), /from ['"](?:firebase\/ai|#lib\/firebase\/ai\.js|#lib\/checkin\/chat(?:-turns)?\.js)['"]/, `${file} has no way to reach Gemini’s chat`);

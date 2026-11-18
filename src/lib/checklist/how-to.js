@@ -141,7 +141,7 @@ export const isOutside = (link) => /^https?:\/\//.test(link.href);
 
 /**
  * What the check-in chat may say about each standard task when it goes through the checklist as a
- * conversation (checklist-talk.js), from the same official pages as HOW_TO (see SOURCES, and the NHS
+ * conversation (its how_to tool, chat-tools.js), from the same official pages as HOW_TO (see SOURCES, and the NHS
  * guide's REGISTERING for a GP). Gemini is given only this, and the task's steps, to help with it.
  * - question: how the chat asks about the task, answered Yes or Not yet
  * - needsFirst: a task that has to be done before it, and how the chat asks about that first

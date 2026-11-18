@@ -1,22 +1,21 @@
 import { talkFor } from '#lib/checklist/how-to.js';
-import { applyChange, ChecklistError, makeAdd, makeDelete, makeEdit, makeTick, MAX_TASKS, MAX_TITLE_LENGTH } from '#lib/checklist/tasks.js';
+import { makeAdd, makeDelete, makeEdit, makeTick, MAX_TASKS, MAX_TITLE_LENGTH } from '#lib/checklist/tasks.js';
 import { existingTask } from '#lib/checkin/task-suggestions.js';
 
-// Changing a student's checklist from any chat message: tick, untick, add, remove and rename, as
-// they ask ("I've joined that, tick it off", "add open a bank account", "take the dentist one off").
-// Gemini only says what they asked for and which task (a standard one by its title, "one of their
-// own", or "not sure"); the app works out the task, checks the change is to one really on their list,
-// makes it straight away through the checklist's own change, and confirms it in one line with Undo.
-// When it isn't clear which task, the app asks with quick replies. A tick needs them to have said
-// they've done it (DONE_WORDS); otherwise the app asks first. The words of their own tasks never go
-// to Gemini: the app matches those itself, against what the student typed.
+// Planning a change to a student's checklist that the chat was asked for: tick, untick, add, remove
+// and rename ("I've joined that, tick it off", "add open a bank account", "take the dentist one off").
+// Gemini says what they asked for and which task (a standard one by its title, "one of their own", or
+// "not sure"); the app works out the task, checks the change is to one really on their list, and plans
+// it (chat-do.js makes it, with Undo). When it isn't clear which task, the plan is to ask. A tick needs
+// them to have said they've done it; otherwise the plan is to ask first. The words of their own tasks
+// never go to Gemini: the app matches those itself, against what the student typed.
 // No Firebase here (the page passes the checklist store in), so the checks can run it in Node.
 
 /** @typedef {import('#lib/checklist/tasks.js').Task} Task */
 /** @typedef {import('#lib/checklist/tasks.js').Change} Change */
 
 /**
- * What Gemini asked for, as the app read it (chat-replies.js): the edit, and the task as one of
+ * What Gemini asked for (its change_checklist tool, chat-tools.js): the edit, and the task as one of
  * their standard tasks (id), one of their own (own), or not clear; title is a new task's name (add)
  * or a new name (rename).
  * @typedef {{ edit: 'tick' | 'untick' | 'add' | 'remove' | 'rename', taskId?: string, own?: boolean, title?: string }} EditRequest
@@ -117,9 +116,12 @@ const ownTask = (task) => talkFor(task.id) === null;
  * @param {Task[]} list
  * @param {EditRequest} request
  * @param {string} said what they typed (for their own tasks' words, and whether they've said they've done it)
+ * @param {{ saidDone?: boolean }} [known] saidDone: the app has checked they said they've done it (the
+ *   chat quoted their words, and the app found them in what they typed), so a tick needs no "done"
+ *   word: "yes" to "have you joined one?" is enough
  * @returns {Plan}
  */
-export function planEdit(list, request, said) {
+export function planEdit(list, request, said, { saidDone } = {}) {
   if (request.edit === 'add') return planAdd(list, request.title ?? '');
   const candidates = list.filter((task) =>
     request.edit === 'tick' ? !task.done : request.edit === 'untick' ? task.done : request.edit === 'rename' ? ownTask(task) : true
@@ -148,7 +150,7 @@ export function planEdit(list, request, said) {
   }
 
   if (request.edit === 'tick') {
-    if (!DONE_WORDS.test(said)) return { kind: 'sure', task, question: EDIT_SAYS.sure(task.title) };
+    if (!(saidDone ?? DONE_WORDS.test(said))) return { kind: 'sure', task, question: EDIT_SAYS.sure(task.title) };
     return planned(makeTick(task.id, true), makeTick(task.id, false), EDIT_SAYS.ticked(task.title), ownTask(task) ? FOR_GEMINI.ticked : EDIT_SAYS.ticked(task.title));
   }
   if (request.edit === 'untick') {
@@ -192,153 +194,3 @@ function planAdd(list, raw) {
   if (change.type !== 'add') throw new Error('makeAdd made something else');
   return planned(change, makeDelete(change.task.id), EDIT_SAYS.added(title), FOR_GEMINI.added(title));
 }
-
-/**
- * A quick reply under the chat's question: what the button says, and what it sends.
- * @typedef {{ label: string, value: string }} QuickReply
- */
-
-/**
- * A message the edits post. undo: the change that puts it back, for the Undo button; quick: the task
- * names to choose from, or Yes and Not yet.
- * @typedef {{ text: string, undo?: Change, quick?: QuickReply[] }} EditMessage
- */
-
-/**
- * The chat's checklist edits, for one chat: makes a change, asks which task or whether they've done
- * it, and undoes. A question it asks waits for their answer (takes/reply); anything else they say
- * goes on to the chat as usual.
- * @param {{
- *   load: () => Promise<Task[]>,
- *   save: (change: Change, list: Task[]) => Promise<Task[]>,
- *   post: (message: EditMessage) => void,
- *   record: (student: string | null, chat: string) => void
- * }} parts
- *   load: their checklist now; save: makes one change through the checklist's own change and returns
- *   the list as it is now; post: shows something in the chat; record: adds what the chat said to
- *   Gemini's side of the conversation (null: to the chat's last message)
- */
-export function createChecklistEdits({ load, save, post, record }) {
-  /**
-   * A question waiting for their answer: which task (choose), whether they've done it (sure), or a
-   * task the chat said it would tick off when they've done it (awaiting: tell me when you've done it).
-   * @type {{ kind: 'choose', edit: EditRequest['edit'], options: Task[], title?: string } | { kind: 'sure' | 'awaiting', task: Task } | null}
-   */
-  let pending = null;
-
-  /** Makes a planned change, and confirms it with Undo. @param {Planned} plan @param {string | null} student */
-  async function make(plan, student) {
-    try {
-      await save(plan.change, await load());
-    } catch (err) {
-      const message = err instanceof ChecklistError ? err.message : EDIT_SAYS.couldNotSave;
-      if (!(err instanceof ChecklistError)) console.error('Changing the checklist from the chat failed:', err);
-      post({ text: message });
-      record(student, message);
-      return false;
-    }
-    post({ text: plan.confirm, undo: plan.undo });
-    record(student, plan.forGemini);
-    return true;
-  }
-
-  /** Acts on a plan: a change, a question, or why not. @param {Plan} plan @param {string | null} student */
-  async function act(plan, student) {
-    pending = null;
-    if (plan.kind === 'change') return make(plan, student);
-    if (plan.kind === 'say') {
-      post({ text: plan.text });
-      record(student, plan.text);
-      return false;
-    }
-    if (plan.kind === 'sure') {
-      pending = { kind: 'sure', task: plan.task };
-      post({ text: plan.question, quick: [{ label: 'Yes', value: 'Yes' }, { label: 'Not yet', value: 'Not yet' }] });
-      record(student, ownTask(plan.task) ? 'Asked whether they’ve done one of their own tasks.' : plan.question);
-      return false;
-    }
-    pending = { kind: 'choose', edit: plan.edit, options: plan.options, title: plan.title };
-    post({ text: plan.question, quick: plan.options.slice(0, 8).map((task) => ({ label: task.title, value: task.title })) });
-    record(student, `${plan.question} (The app showed their tasks to choose from.)`);
-    return false;
-  }
-
-  return {
-    /**
-     * Gemini read their message as a change to their checklist: the app makes it, or asks.
-     * @param {EditRequest} request @param {string} said what they typed
-     */
-    async request(request, said) {
-      return act(planEdit(await load(), request, said), null);
-    },
-
-    /**
-     * After telling them how to do a task outside the app ("tell me when you've done it and I'll
-     * tick it off"): their next "done" or "yes" ticks it.
-     * @param {Task} task
-     */
-    awaitDone(task) {
-      pending = { kind: 'awaiting', task };
-    },
-
-    /** Whether what they've just typed answers the chat's question (otherwise it's for the chat). @param {string} text */
-    takes(text) {
-      if (!pending) return false;
-      const said = text.trim().toLowerCase().replace(/[.!]+$/, '');
-      if (pending.kind === 'choose') return pending.options.some((task) => task.title.toLowerCase() === said);
-      if (pending.kind === 'sure') return /^(yes|yeah|yep|not yet|no|nope)$/.test(said);
-      return /^(yes|yeah|yep|done|i have|ive done it|i've done it|all done|sorted)$/.test(said);
-    },
-
-    /** Their answer to the chat's question. @param {string} text */
-    async reply(text) {
-      const now = pending;
-      pending = null;
-      if (!now) return;
-      const said = text.trim().toLowerCase().replace(/[.!]+$/, '');
-      const list = await load();
-      if (now.kind === 'choose') {
-        const chosen = now.options.find((task) => task.title.toLowerCase() === said);
-        const task = chosen ? list.find((item) => item.id === chosen.id) : null;
-        if (!task) return;
-        // They chose it themselves, so it counts as saying so.
-        const plan = planEdit(list, { edit: now.edit, taskId: task.id, title: now.title }, 'done');
-        return act(plan, text);
-      }
-      const task = list.find((item) => item.id === now.task.id);
-      if (!task || /^(not yet|no|nope)$/.test(said)) {
-        const line = 'Okay, it’s still on your checklist.';
-        post({ text: line });
-        record(text, line);
-        return;
-      }
-      return act(planEdit(list, { edit: 'tick', taskId: task.id }, 'done'), text);
-    },
-
-    /**
-     * Undo on a confirmation: makes the change that puts it back.
-     * @param {Change} undo
-     */
-    async undo(undo) {
-      pending = null;
-      try {
-        const list = await load();
-        await save(undo, list);
-      } catch (err) {
-        console.error('Undoing a checklist change from the chat failed:', err);
-        post({ text: EDIT_SAYS.couldNotSave });
-        return;
-      }
-      post({ text: EDIT_SAYS.undone });
-      record('Undo', EDIT_SAYS.undone);
-    },
-
-    /** Forgets any question waiting (they've moved on). */
-    clear() {
-      pending = null;
-    }
-  };
-}
-
-/** Applies a change to a list as the checklist does (for stand-in stores in the checks). @param {Task[]} list @param {Change} change */
-export const applied = (list, change) => applyChange(list, change);

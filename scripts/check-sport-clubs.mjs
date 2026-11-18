@@ -18,21 +18,25 @@ import { CLUBS, CLUBS_COLLECTED_AT, CLUBS_SOURCE, clubBySlug, findClub, searchCl
 import { findSociety, SOCIETIES } from '#lib/societies/societies.js';
 import { SERVICES } from '#lib/nsu/services.js';
 import { contactGroups, membershipBlocks } from '#lib/sport/display.js';
-import { chatRequest } from '#lib/checkin/chat-prompt.js';
-import { buildOpener, describeForGemini } from '#lib/checkin/opener.js';
+import { chatInstructions } from '#lib/checkin/chat-prompt.js';
+import { chatTools, searchCatalogue } from '#lib/checkin/chat-tools.js';
+import { describeForGemini } from '#lib/checkin/opener.js';
 import { SUGGESTIONS } from '#lib/suggestions/catalogue.js';
 import { homedir } from 'node:os';
 import { MIN_CLUBS } from './lib/sport-collect.mjs';
 
 /** Every club as the chat can be told about it, on one turn's short list. */
 const CLUB_SUGGESTIONS = SUGGESTIONS.filter((suggestion) => suggestion.kind === 'club');
-/** The chat's full instructions for a made-up student, as Gemini would receive them with every club on the short list. */
-const INSTRUCTIONS = chatRequest({
-  about: describeForGemini({ match: null, tasks: null }),
-  opener: buildOpener({ match: null, tasks: null, justSignedUp: false }).messages,
-  shortlist: CLUB_SUGGESTIONS.map((suggestion) => ({ suggestion, why: ['they said "sport"'] })),
-  options: { mentor: 'yes', checklist: 'no', hasMentor: false }
-}).systemInstruction;
+/**
+ * Everything Gemini could be told about the clubs for a made-up student: the instructions, the tools,
+ * and the results of searching for every club (by name, and "sport clubs").
+ */
+const INSTRUCTIONS = [
+  chatInstructions(describeForGemini({ match: null, tasks: null })),
+  JSON.stringify(chatTools({ match: null, tasks: null })),
+  JSON.stringify(searchCatalogue('sport clubs')),
+  ...CLUB_SUGGESTIONS.map((suggestion) => JSON.stringify(searchCatalogue(suggestion.name)))
+].join('\n');
 
 const key = (/** @type {string} */ name) => name.toLowerCase().replace(/\s+/g, ' ').trim();
 
@@ -105,12 +109,12 @@ const checks = [
       { text: 'Includes BUCS entry', items: [] }
     ]);
   }],
-  ['The chat is told only a club\'s name and that it\'s a club (the card has the rest), with no "@"', () => {
+  ['The chat is told only a club\'s name and that it\'s a club (the card has the rest), with no "@", whatever it searches for', () => {
     assert.ok(!INSTRUCTIONS.includes('@'));
     assert.deepEqual(CLUB_SUGGESTIONS.map((suggestion) => suggestion.name), CLUBS.map((club) => club.name));
     const about = new Set(CLUB_SUGGESTIONS.map((suggestion) => suggestion.about));
     assert.deepEqual([...about], ['a Northumbria Sport club (joining needs a paid membership; its card has the prices, training times and who to contact)']);
-    for (const club of CLUBS) assert.ok(INSTRUCTIONS.includes(`- ${club.name}: a Northumbria Sport club (`), club.name);
+    for (const club of CLUBS) assert.ok(INSTRUCTIONS.includes(`{"name":${JSON.stringify(club.name)},"what":"Northumbria Sport club: a Northumbria Sport club (`), club.name);
   }],
   ['Hockey is the club and Ice Hockey the society, never the other way round', () => {
     assert.equal(findClub('Hockey')?.slug, 'hockey');
@@ -123,7 +127,7 @@ const checks = [
 // With the private pages file: nothing from it reaches Gemini. Prints counts only, never the text.
 const pagesPath = process.env.SPORT_CLUB_PAGES?.replace(/^~(?=\/)/, homedir());
 if (pagesPath) {
-  checks.push(['Nothing from the private pages file (about text, notes, contacts\' names and emails) is in the chat\'s instructions', () => {
+  checks.push(['Nothing from the private pages file (about text, notes, contacts\' names and emails) is in anything the chat is told', () => {
     const pages = Object.values(JSON.parse(readFileSync(pagesPath, 'utf8')).clubs);
     /** @type {string[]} */
     const pieces = [];

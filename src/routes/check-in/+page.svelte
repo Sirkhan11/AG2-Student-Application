@@ -6,9 +6,7 @@
   import BottomNav from '#lib/components/BottomNav.svelte';
   import { currentUid, signedInUid, watchSignedIn } from '#lib/firebase/auth.js';
   import { loadChecklist, loadMyRecord, saveChange } from '#lib/checklist/store.js';
-  import { applyChange, makeTick } from '#lib/checklist/tasks.js';
-  import { createChecklistTalk, QUICK } from '#lib/checkin/checklist-talk.js';
-  import { firstDoneNote } from '#lib/checkin/chat-turns.js';
+  import { applyChange } from '#lib/checklist/tasks.js';
   import Ask4HelpLink from '#lib/components/Ask4HelpLink.svelte';
   import GpFinderCard from '#lib/components/GpFinderCard.svelte';
   import KeyContactsCard from '#lib/components/KeyContactsCard.svelte';
@@ -17,10 +15,10 @@
   import Icon from '#lib/components/Icon.svelte';
   import { arrive, buzz, playedOnce } from '#lib/motion.js';
   import { onMount } from 'svelte';
-  import { createChecklistEdits } from '#lib/checkin/checklist-edits.js';
-  import { afterReply, createNoteActions } from '#lib/checkin/run-actions.js';
+  import { createChatDo } from '#lib/checkin/chat-do.js';
+  import { afterMentorNote, openNote } from '#lib/checkin/chat-prompt.js';
   import { loadMyMatch } from '#lib/matching/matches.js';
-  import { buildOpener } from '#lib/checkin/opener.js';
+  import { matchLine } from '#lib/checkin/opener.js';
   import { startCheckinChat } from '#lib/checkin/chat.js';
   import {
     chatChanges,
@@ -72,11 +70,14 @@
   const ready = () => appeared;
 
   /**
-   * Whether this message ticked a task off (going through the checklist, or asked for from any
-   * message), so it can celebrate. Undo's own change for a tick is the untick.
+   * Whether this line confirms a task ticked off, so it can celebrate. Undo's own change for a tick
+   * is the untick.
    * @param {import('#lib/checkin/chat-session.svelte.js').Message} item
    */
-  const tickedOff = (item) => Boolean(item.ticked) || (item.undo?.checklist?.type === 'tick' && item.undo.checklist.done === false);
+  const tickedOff = (item) => {
+    const change = item.undo?.change;
+    return Boolean(change && 'checklist' in change && change.checklist.type === 'tick' && change.checklist.done === false);
+  };
 
   // Logged-out visitors go to login, which brings them back here afterwards. Logging out on any
   // page clears the conversation.
@@ -90,11 +91,12 @@
   });
 
   /**
-   * Shows the conversation kept from earlier, if it's theirs. Otherwise builds the first messages
-   * from the student's match and checklist, and starts a new conversation, telling Gemini about
-   * them: the about-you record (their first name, course, interests, arrival date, the summary from
-   * finding a mentor and what they asked it to remember), their match and their checklist (see
-   * describeForGemini in opener.js).
+   * Shows the conversation kept from earlier, if it's theirs. Otherwise starts a new conversation,
+   * telling Gemini about them: the about-you record (their first name, course, interests, arrival
+   * date, the summary from finding a mentor and what they asked it to remember), their match and
+   * their checklist (see describeForGemini in opener.js), and Gemini writes the first message.
+   * Straight from finding a mentor on the Find a mentor page, the app says first how it went (with
+   * the mentor's name, which Gemini is never told), then Gemini writes the next message itself.
    */
   async function start() {
     const uid = currentUid();
@@ -124,39 +126,30 @@
     // Logged out, or started again, while those were loading.
     if (chatSession.conversation !== conversation) return;
 
-    const opener = buildOpener({ match, tasks, checklistSaved, justSignedUp, isMentor });
-    chatSession.messages = opener.messages.map((text, i) => ({
-      role: 'assistant',
-      text,
-      // The buttons go under the first message; Yes and Not yet under the checklist question (the last).
-      links: i === 0 ? opener.links : undefined,
-      // Straight from being matched on the Find a mentor page: the first message celebrates.
-      celebrate: i === 0 && justSignedUp && match?.status === 'matched' ? true : undefined,
-      // Closed until the checklist talk has loaded, so a tap can't arrive before it's listening.
-      quick: opener.asks && i === opener.messages.length - 1 ? { options: QUICK.yesNo, open: false } : undefined
-    }));
-
-    // Gemini is told the same facts and first messages, but without the mentor's name. The facts are
-    // kept, so Gemini can be told again when they change here (a mentor found in the chat, say).
+    // Gemini is told what the app knows, but never the mentor's name.
     const withoutName = match?.status === 'matched' ? { ...match, mentorName: null } : match;
-    const facts = { match, tasks, checklistSaved, profile, isMentor, today };
+    const facts = { match: withoutName, tasks, checklistSaved, profile, isMentor, today };
     setChatFacts(facts);
-    setGeminiChat(startCheckinChat(facts, buildOpener({ match: withoutName, tasks, checklistSaved, justSignedUp, isMentor, forGemini: true }).messages));
+    setGeminiChat(startCheckinChat(facts, changes()));
     chatSession.started = true;
-    // The first message asked about the first task still to do: the checklist talk waits for the answer.
-    if (opener.asks) {
-      await checklistTalk().start({ asked: true });
-      const question = chatSession.messages[opener.messages.length - 1];
-      if (chatSession.conversation === conversation && question?.quick && chatSession.flow?.kind === 'checklist' && chatSession.flow.step === 'asking') question.quick.open = true;
-    }
 
-    // Straight from finding a mentor on the Find a mentor page: Gemini writes the next message itself.
     const outcome = match?.status;
-    if (justSignedUp && record?.matchingSummary && (outcome === 'matched' || outcome === 'coordinator')) await followUpAfterMentor(outcome);
+    if (justSignedUp && (outcome === 'matched' || outcome === 'coordinator')) {
+      // How finding a mentor went, in the app's words, with the mentor's name.
+      chatSession.messages.push({
+        role: 'assistant',
+        text: /** @type {string} */ (matchLine(match)),
+        // Matched: the first message celebrates.
+        celebrate: outcome === 'matched' ? true : undefined
+      });
+      // Straight from finding a mentor on the Find a mentor page: Gemini writes the next message itself.
+      if (justSignedUp && record?.matchingSummary && (outcome === 'matched' || outcome === 'coordinator')) await followUpAfterMentor(outcome);
+      return;
+    }
+    await askGemini(null);
   }
 
-  // ---------- The chat's own actions (chat-actions.js): for now, finding a mentor ----------
-
+  // ---------- The chat's own action: finding a mentor (mentor-flow.js) ----------
 
   /** The mentor flow for this conversation, made the first time it's started. */
   function mentorFlow() {
@@ -189,8 +182,9 @@
           else if (result.outcome === 'is-mentor') tellGemini({ isMentor: true });
           else {
             // Matched, or with the coordinator: Gemini is told, with the summary of their answers, and
-            // then writes the next message itself (followUpAfterMentor).
-            const match = result.match ?? (await loadMyMatch().catch(() => undefined));
+            // then writes the next message itself (followUpAfterMentor). Never the mentor's name.
+            const found = result.match ?? (await loadMyMatch().catch(() => undefined));
+            const match = found?.status === 'matched' ? { ...found, mentorName: null } : found;
             const profile = chatFacts()?.profile;
             tellGemini({ match, mentorNote: null, ...(result.summary ? { profile: { ...profile, matchingSummary: result.summary } } : {}) });
             if (result.summary && (result.outcome === 'matched' || result.outcome === 'coordinator')) await followUpAfterMentor(result.outcome);
@@ -204,146 +198,48 @@
   }
 
   /**
-   * Going through their checklist here as a conversation (checklist-talk.js), made the first time it's
-   * needed. Yes ticks a task through the checklist's own change, as the checklist page does, and
-   * Gemini is told the checklist as it is now; what's said is kept on Gemini's side of the
-   * conversation too (note), so the ordinary chat knows. Gemini reads typed answers and helps with a
-   * task only in the checklist's own modes, and is never told the words of one of their own tasks.
-   */
-  function checklistTalk() {
-    let talk = chatFlowFor('checklist');
-    if (!talk) {
-      const conversation = chatSession.conversation;
-      const chat = () => /** @type {NonNullable<ReturnType<typeof geminiChat>>} */ (geminiChat());
-      /** Asks Gemini something for the talk, with Typing… meanwhile. @template T @param {() => Promise<T>} asking */
-      const withTyping = async (asking) => {
-        chatSession.waiting = true;
-        await showLatest();
-        try {
-          return await asking();
-        } finally {
-          if (chatSession.conversation === conversation) chatSession.waiting = false;
-        }
-      };
-      talk = createChecklistTalk({
-        load: loadChecklist,
-        tick: async (id, done, list) => {
-          const change = makeTick(id, done);
-          const onScreen = applyChange(list, change);
-          const result = await saveChange(change, onScreen);
-          const now = result.status === 'saved' ? result.list : onScreen;
-          if (chatSession.conversation === conversation) tellGemini({ tasks: now, checklistSaved: true });
-          return now;
-        },
-        post: (message) => {
-          if (chatSession.conversation !== conversation) return;
-          if (message.quick) closeQuickReplies();
-          if (message.ticked) buzz();
-          chatSession.messages.push({
-            role: 'assistant',
-            text: message.text,
-            kind: message.kind,
-            links: message.links?.length ? message.links : undefined,
-            quick: message.quick ? { options: message.quick, open: true } : undefined,
-            ticked: message.ticked ? { ...message.ticked, undone: false } : undefined,
-            tool: message.tool,
-            ask4help: message.ask4help
-          });
-          if (message.kind === 'unavailable') chatSession.unavailable = true;
-          showLatest();
-        },
-        record: (student, text) => {
-          if (chatSession.conversation === conversation) geminiChat()?.note(student, text);
-        },
-        answer: (text, task, question) => withTyping(() => chat().checklistAnswer(text, task, question)),
-        help: (text, task, first, fromApp) => withTyping(() => chat().checklistHelp(text, task, first, fromApp)),
-        firstDone: (first, then) => firstDoneNote(first.title, then.title),
-        changed: (state) => {
-          if (chatSession.conversation !== conversation) return;
-          chatSession.flow = { ...state, kind: 'checklist' };
-          // Once it's over, its quick replies go (Stop, or a change of subject).
-          if (!state.active) closeQuickReplies();
-        },
-        finished: async (result) => {
-          if (chatSession.conversation !== conversation) return;
-          // Gemini's told the checklist as it is now, and not to start it again unless asked.
-          tellGemini({
-            tasks: result.tasks,
-            checklistSaved: true,
-            ...(result.outcome === 'stopped' || result.outcome === 'declined' ? { checklistNote: result.outcome } : {})
-          });
-          // They changed the subject: the ordinary chat answers what they typed.
-          if (result.outcome === 'other' && result.text) await askGemini(result.text);
-        }
-      });
-      setChatFlow('checklist', talk);
-    }
-    runChatFlow('checklist');
-    return talk;
-  }
-
-  /**
-   * The changes the chat makes when asked, from any message: checklist edits (checklist-edits.js:
-   * tick, untick, add, remove, rename, through the checklist's own change, as the checklist page
-   * does) and remembering or forgetting (run-actions.js, through the same notes as the Remember card
-   * and the About you page), each confirmed in one line with Undo, and Gemini told what changed.
-   * Made the first time they're needed in this conversation.
+   * The changes the chat makes for Gemini's tools (chat-do.js): their checklist, through the
+   * checklist's own change (as the checklist page does), and what it remembers (as the Remember card
+   * and the About you page do). Made the first time they're needed in this conversation.
    */
   function changes() {
     let made = chatChanges();
     if (!made) {
-      const conversation = chatSession.conversation;
-      /** @param {import('#lib/checkin/run-actions.js').ActionMessage} message */
-      const post = (message) => {
-        if (chatSession.conversation !== conversation) return;
-        if (message.quick) closeQuickReplies();
-        if (message.undo?.type === 'tick' && message.undo.done === false) buzz();
-        chatSession.messages.push({
-          role: 'assistant',
-          text: message.text,
-          quick: message.quick ? { options: message.quick, open: true } : undefined,
-          undo: message.undo || message.noteUndo ? { checklist: message.undo, notes: message.noteUndo, done: false } : undefined
-        });
-        showLatest();
-      };
-      /** @param {string | null} student @param {string} text */
-      const record = (student, text) => {
-        if (chatSession.conversation === conversation) geminiChat()?.note(student, text);
-      };
-      const edits = createChecklistEdits({
-        load: loadChecklist,
-        save: async (change, list) => {
+      made = createChatDo({
+        loadTasks: loadChecklist,
+        saveChange: async (change, list) => {
           const onScreen = applyChange(list, change);
           const result = await saveChange(change, onScreen);
-          const now = result.status === 'saved' ? result.list : onScreen;
-          if (chatSession.conversation === conversation) tellGemini({ tasks: now, checklistSaved: true });
-          return now;
+          return result.status === 'saved' ? result.list : onScreen;
         },
-        post,
-        record
-      });
-      const notes = createNoteActions({
-        load: () => loadMyNotes(db, signedInUid()),
+        loadNotes: () => loadMyNotes(db, signedInUid()),
         remember: (text) => rememberNote(db, signedInUid(), text),
         forget: (note) => forgetNote(db, signedInUid(), note),
-        forgetAll: () => forgetAllNotes(db, signedInUid()),
-        changed: noteSaved,
-        post,
-        record
+        forgetAll: () => forgetAllNotes(db, signedInUid())
       });
-      made = { edits, notes };
       setChatChanges(made);
     }
     return made;
   }
 
-  /** Undo on a line confirming a change the chat made. @param {import('#lib/checkin/chat-session.svelte.js').Message} message */
-  function undoChange(message) {
+  /** Undo on a line confirming a change the chat made: put back, and Gemini told with the next message. @param {import('#lib/checkin/chat-session.svelte.js').Message} message */
+  async function undoChange(message) {
     if (!message.undo || message.undo.done) return;
     message.undo.done = true;
     closeQuickReplies();
-    if (message.undo.checklist) void changes().edits.undo(message.undo.checklist);
-    else if (message.undo.notes) void changes().notes.undo(message.undo.notes);
+    const conversation = chatSession.conversation;
+    const result = await changes().undo(message.undo.change);
+    if (chatSession.conversation !== conversation) return;
+    if (!result) {
+      message.undo.done = false;
+      chatSession.messages.push({ role: 'assistant', text: 'Sorry, I couldn’t put that back just now. Please try again in a minute.', kind: 'error' });
+    } else {
+      chatSession.messages.push({ role: 'assistant', text: result.text });
+      if (result.tasks) tellGemini({ tasks: result.tasks, checklistSaved: true });
+      if (result.notes) notesChanged(result.notes);
+      geminiChat()?.tell(result.forGemini);
+    }
+    await showLatest();
   }
 
   /** Quick replies only work under the newest question: older ones close. */
@@ -351,25 +247,15 @@
     for (const message of chatSession.messages) if (message.quick?.open) message.quick.open = false;
   }
 
-  /** Undo on a "Ticked" line. @param {import('#lib/checkin/chat-session.svelte.js').Message} message */
-  function undoTick(message) {
-    if (!message.ticked || message.ticked.undone) return;
-    message.ticked.undone = true;
-    closeQuickReplies();
-    void checklistTalk().undo(message.ticked.id);
-  }
-
   /**
-   * Starts one of the chat's own actions: from an offer card's Start, or a first-message button.
-   * Finding a mentor while going through the checklist ends the checklist quietly (a change of subject).
+   * Starts one of the chat's own actions: from an offer card's Start, or straight after a reply
+   * (Gemini's mentor tool with "find").
    * @param {string} action
    */
   function startAction(action) {
-    if (chatSession.flow?.active && chatSession.flow.kind === 'checklist') chatFlowFor('checklist')?.stop({ quietly: true });
     if (chatSession.flow?.active) return;
     closeQuickReplies();
     if (action === 'mentor') mentorFlow().start();
-    else if (action === 'checklist') void checklistTalk().start();
   }
 
   /** A note was saved from a Remember card: Gemini is told what it now remembers. */
@@ -389,16 +275,12 @@
   let flowBusy = $derived(chatSession.flow?.step === 'busy' || chatSession.flow?.step === 'checking');
   /** Finding a mentor takes everything they type, as its answers. */
   let flowTakesAll = $derived(flowActive && chatSession.flow?.kind === 'mentor');
-  /** Going through the checklist: what they type is an answer, read by the talk (which passes a change of subject on). */
-  let talking = $derived(flowActive && chatSession.flow?.kind === 'checklist');
 
   /** @param {string} [typed] what to send: what's in the message box, a quick reply, or a card's question */
   async function sendMessage(typed) {
     const text = (typed ?? chatSession.draft).trim();
     if (!text) return;
     // While finding a mentor, what they type is its answer: it goes to the action, never to Gemini.
-    // While going through the checklist, it's an answer for the talk, which reads it (and passes a
-    // change of subject on to the ordinary chat).
     const flow = chatFlow();
     if (flowActive && flow?.takes(text)) {
       chatSession.messages.push({ role: 'user', text });
@@ -409,19 +291,6 @@
       await showLatest();
       return;
     }
-    // The answer to the chat's own question about a change ("Which one?", "Have you done it?", or
-    // "done" after "tell me when you've done it"): read here, without Gemini.
-    const edits = chatChanges()?.edits;
-    if (edits?.takes(text)) {
-      chatSession.messages.push({ role: 'user', text });
-      if (typed === undefined) chatSession.draft = '';
-      closeQuickReplies();
-      await showLatest();
-      await edits.reply(text);
-      await showLatest();
-      return;
-    }
-    edits?.clear();
     if (chatSession.waiting || chatSession.unavailable || !geminiChat()) return;
     chatSession.messages.push({ role: 'user', text });
     if (typed === undefined) chatSession.draft = '';
@@ -430,8 +299,9 @@
   }
 
   /**
-   * Sends what they said (already shown) to the ordinary chat, and shows the reply.
-   * @param {string} text
+   * Sends what they said (already shown) to Gemini, or with null asks Gemini for the first message,
+   * and shows the reply, with Typing… meanwhile.
+   * @param {string | null} text
    */
   async function askGemini(text) {
     const chat = geminiChat();
@@ -441,43 +311,46 @@
     await showLatest();
 
     // Carries on if they move to another page meanwhile: the reply is there when they come back.
-    const reply = await chat.send(text);
+    const reply = text === null ? await chat.prompt(openNote()) : await chat.send(text);
     // Logged out while waiting: the reply belongs to a conversation that's gone.
     if (chatSession.conversation !== conversation) return;
-    showReply(reply);
+    // The first message: if Gemini can't write it, a plain hello rather than an error.
+    if (text === null && reply.kind === 'error') showReply({ kind: 'reply', text: 'Hi, how’s it going? Ask me anything, or tell me how you’re settling in.' });
+    else showReply(reply);
     // Gemini's credit has run out: the message box is switched off, as trying again won't help.
     if (reply.kind === 'unavailable') chatSession.unavailable = true;
     chatSession.waiting = false;
     await showLatest();
-    // What they asked for, done straight away (a checklist edit, remembering or forgetting), and
-    // waiting for "done" after how to do a task outside the app.
-    if (reply.kind === 'reply') await afterReply(reply, { ...changes(), tasks: loadChecklist });
-    // Going through the checklist: straight away when they asked, or a one-line offer.
-    if (reply.offers?.[0] === 'checklist') await checklistTalk().start({ from: reply.startAt });
-    else if (reply.offers?.[0] === 'checklist-offer') checklistTalk().offer();
+    // Gemini asked to start finding a mentor: the six questions start here, after its reply.
+    if (reply.start === 'mentor') startAction('mentor');
   }
 
   /**
-   * Shows one of Gemini's replies (or the fixed support, error or unavailable message) with its cards.
+   * Shows one of Gemini's replies (or the fixed support, error or unavailable message): first the
+   * lines confirming the changes the app made, each with Undo, then the reply with its cards.
    * @param {import('#lib/checkin/chat-turns.js').ChatReply} reply
    */
   function showReply(reply) {
+    for (const change of reply.changes ?? []) {
+      chatSession.messages.push({ role: 'assistant', text: change.text, undo: { change: change.undo, done: false } });
+      if ('checklist' in change.undo && change.undo.checklist.type === 'tick' && change.undo.checklist.done === false) buzz();
+    }
     // One of the chat's own actions it chose: an offer with Start and Not now, or (shows: 'card') a
-    // card shown straight away, such as their mentor. Going through the checklist has no card: it
-    // starts, or is offered in one line, after this reply (askGemini).
+    // card shown straight away, such as their mentor.
     const action = reply.offers?.[0] ? chatAction(reply.offers[0]) : null;
     // Gemini's first reply in this conversation gets a little sparkle.
     const first = reply.kind === 'reply' && reply.text.trim() !== '' && !chatSession.replied;
     if (first) chatSession.replied = true;
+    if (reply.quick?.length) closeQuickReplies();
     chatSession.messages.push({
       role: 'assistant',
       text: reply.text,
       first: first || undefined,
-      kind: reply.kind === 'reply' || reply.kind === 'skip' ? undefined : reply.kind,
+      kind: reply.kind === 'reply' ? undefined : reply.kind,
       links:
         reply.kind === 'safety' || reply.kind === 'unavailable'
           ? [{ label: 'Need help now', href: '/need-help' }]
-          : // Suggested societies and NSU services, shown as cards under the reply.
+          : // The societies, clubs and services it named, as cards, and any buttons.
             reply.links,
       // A reminder it suggested (they didn't ask for it): a card with Add and No thanks.
       task: reply.tasks?.[0] ? { title: reply.tasks[0], state: 'offered' } : undefined,
@@ -487,33 +360,34 @@
       appCard: action?.shows === 'card' ? /** @type {'your-mentor' | 'change-mentor'} */ (action.id) : undefined,
       // Something it offered to remember (they didn't ask): a card with Remember and Not now.
       note: reply.notes?.[0] ? { text: reply.notes[0], state: 'offered' } : undefined,
-      // What the app shows for what they asked, from any message: the GP finder, a dentist search,
-      // the key contacts, Ask4Help, or a calendar card.
+      // What the app shows with the reply: the GP finder, a dentist search, the key contacts, Ask4Help, or a calendar card.
       tool: reply.tool,
       ask4help: reply.ask4help,
-      calendar: reply.calendar
+      calendar: reply.calendar,
+      // Quick replies under it, open until one is used.
+      quick: reply.quick?.length ? { options: reply.quick, open: true } : undefined
     });
   }
 
   /**
    * Straight after they find a mentor (here in the chat, or on the Find a mentor page), Gemini writes
-   * the next message itself: up to 3 clubs, societies or services from the summary of their answers,
-   * and one gentle question (afterMatchRequest in chat-prompt.js). Not after the support message has
-   * been shown in this conversation, or when the chat isn't available; and Gemini says nothing (skip)
-   * if they've seemed worried or upset. If it fails, nothing is shown: it's extra.
+   * the next message itself, from the summary of their answers (afterMentorNote in chat-prompt.js).
+   * Not after the support message has been shown in this conversation, if they've seemed worried or
+   * upset, or when the chat isn't available. If it fails, nothing is shown: it's extra.
    * @param {'matched' | 'coordinator'} outcome
    */
   async function followUpAfterMentor(outcome) {
     const chat = geminiChat();
-    if (!chat || chatSession.unavailable || chatSession.messages.some((message) => message.kind === 'safety')) return;
+    if (!chat || chatSession.unavailable || chatSession.messages.some((message) => message.kind === 'safety') || chat.seemedWorried()) return;
     const conversation = chatSession.conversation;
     chatSession.waiting = true;
     await showLatest();
-    const reply = await chat.afterMatch(outcome);
+    const reply = await chat.prompt(afterMentorNote(outcome));
     if (chatSession.conversation !== conversation) return;
     if (reply.kind === 'reply' || reply.kind === 'safety') showReply(reply);
     chatSession.waiting = false;
     await showLatest();
+    if (reply.start === 'mentor') startAction('mentor');
   }
 
   /**
@@ -545,7 +419,7 @@
     </div>
   </header>
 
-  {#if !signedIn || chatSession.messages.length === 0}
+  {#if !signedIn || !chatSession.started}
     <p class="muted" role="status">Loading…</p>
   {:else}
     <!-- What Gemini is told and what's kept: one tap away, the same words. -->
@@ -560,8 +434,8 @@
       </p>
       <p class="muted">
         This chat isn’t saved: it stays while the app is open in this tab, until you log out, and nothing
-        you say is passed on to the university or your mentor. If you go through your checklist here,
-        answering yes ticks that task on it (Undo unticks it). If it suggests a reminder and you tap Add,
+        you say is passed on to the university or your mentor. When you ask it to change your checklist,
+        or to remember or forget something, the app does it and shows a line with Undo. If it suggests a reminder and you tap Add,
         that task is saved to your checklist, and if it offers to remember something and you tap
         Remember, that’s kept for later chats until you delete it. If you find a mentor here, your answers
         are saved when you choose Find my mentor, as on the Find a mentor page; they’re never sent to
@@ -610,11 +484,7 @@
           {#if buttons.length}
             <div class="links">
               {#each buttons as link (link.href + link.label)}
-                {#if link.action}
-                  <!-- One of the chat's own actions: it starts right here, rather than opening a page. -->
-                  <!-- Works while going through the checklist too: starting it ends that quietly. -->
-                  <button class="secondary-button" type="button" disabled={flowTakesAll || flowBusy} onclick={() => startAction(/** @type {string} */ (link.action))}>{link.label}</button>
-                {:else if link.external}
+                {#if link.external}
                   <a
                     class="secondary-button"
                     href={link.href}
@@ -678,15 +548,6 @@
             <ChatFlowCard card={item.flow} live={flowActive && chatSession.flow?.kind === 'mentor' && chatSession.flow.live === item.flow.id && !flowBusy} flow={chatFlow()} />
           </div>
         {/if}
-        {#if item.ticked}
-          <div class="ticked" use:arrive={{ ready }}>
-            {#if item.ticked.undone}
-              <span class="muted">Unticked.</span>
-            {:else}
-              <button class="secondary-button undo" type="button" disabled={flowBusy || chatSession.waiting} onclick={() => undoTick(item)} aria-label={`Undo: untick ${item.ticked.title}`}><Icon name="undo" size={16} /> Undo</button>
-            {/if}
-          </div>
-        {/if}
         {#if item.tool === 'gp-finder' || item.tool === 'dentist-finder'}
           <div class="cards" use:arrive={{ ready }}>
             <GpFinderCard kind={item.tool === 'gp-finder' ? 'gp' : 'dentist'} />
@@ -743,7 +604,7 @@
       <input
         id="chat-message"
         class="field"
-        placeholder={flowTakesAll || talking ? 'Your answer, or “stop”' : chatSession.unavailable ? 'The chat isn’t available right now' : 'Type your message...'}
+        placeholder={flowTakesAll ? 'Your answer, or “stop”' : chatSession.unavailable ? 'The chat isn’t available right now' : 'Type your message...'}
         autocomplete="off"
         disabled={flowTakesAll ? flowBusy : flowBusy || chatSession.waiting || chatSession.unavailable}
         bind:value={chatSession.draft}

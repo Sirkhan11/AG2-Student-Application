@@ -29,9 +29,10 @@ import { initializeApp } from 'firebase/app';
 import { connectFirestoreEmulator, deleteDoc, doc, getDoc, getFirestore, setDoc, setLogLevel, Timestamp } from 'firebase/firestore';
 import { aboutYou, aboutYouForGemini, MAX_NOTE_LENGTH, MAX_NOTES, summaryForChat } from '#lib/checkin/about-you.js';
 import { forgetAllNotes, forgetNote, loadMyNotes, rememberNote } from '#lib/checkin/chat-notes.js';
-import { chatRequest } from '#lib/checkin/chat-prompt.js';
-import { readChatReply } from '#lib/checkin/chat-replies.js';
+import { chatInstructions } from '#lib/checkin/chat-prompt.js';
+import { chatTools } from '#lib/checkin/chat-tools.js';
 import { chatWith } from '#lib/checkin/chat-turns.js';
+import { scriptedGemini } from './lib/scripted-gemini.mjs';
 import { describeForGemini } from '#lib/checkin/opener.js';
 import { screenNote, withNote, withoutNote } from '#lib/checkin/remember-notes.js';
 import { ANSWERS_NOTE } from '#lib/matching/find-mentor-steps.js';
@@ -78,27 +79,25 @@ const offline = [
     assert.match(describeForGemini({ match: null, tasks: null, profile: null }), /Their first name: not known, so don't use a name or ask for one\.\nThings they asked you to remember: nothing yet\./);
     assert.deepEqual(aboutYouForGemini(aboutYou({ name: 'Sam' })).length, 2, 'only what there is');
   }],
-  ['A reply offering to remember something: the student sees Gemini’s words with the card (which asks), and Gemini sees only its words', async () => {
-    /** @type {any[]} */
-    const sent = [];
-    const answer = JSON.stringify({ action: 'offer-to-remember', page: 'none', note: 'Planning to join a running club', say: 'Good plan! Shall I remember that?' });
-    const model = { generateContent: async (/** @type {any} */ request) => (sent.push(request), { response: { text: () => answer, candidates: [{ finishReason: 'STOP' }] } }) };
-    const chat = chatWith(model, { facts: { match: null, tasks: null }, opener: ['Hi!'] });
+  ['A reply offering to remember something (Gemini\'s offer_to_remember): the student sees Gemini\'s words with the card, which asks; Gemini sees what the student saw', async () => {
+    const gemini = scriptedGemini([{ calls: [{ name: 'offer_to_remember', args: { note: 'Planning to join a running club' } }] }, { text: 'Good plan.' }, { text: 'Any time.' }]);
+    const chat = chatWith(gemini.model, { facts: { match: null, tasks: null } });
     const reply = await chat.send('I want to join a running club');
-    assert.equal(reply.text, 'Good plan!', 'the card asks, so the question goes');
+    assert.equal(reply.text, 'Good plan.');
     assert.deepEqual(reply.notes, ['Planning to join a running club']);
     await chat.send('Thanks');
-    assert.equal(sent[1].contents[1].parts[0].text, 'Good plan!', 'Gemini sees what the student saw');
+    assert.equal(gemini.requests[2].contents.at(-2).parts[0].text, 'Good plan.', 'Gemini sees what the student saw');
   }],
-  ['Never offered, whatever Gemini writes: health, money, worries, safety, other people, contact details, or too long; the question about it goes too', () => {
+  ['Never offered, whatever Gemini asks: health, money, worries, safety, other people, contact details, or too long', async () => {
     for (const [note, reason] of [
       ['Has asthma', 'health'], ['Seeing a counsellor', 'health'], ['Struggling with rent', 'money'], ['Stressed about exams', 'worries'],
       ['Feels homesick', 'worries'], ['Feels unsafe walking home', 'safety'], ['Visiting my mum in Leeds', 'other people'],
       ['Email is sam@example.com', 'contact details'], ['Number is 07123 456789', 'contact details'], ['Instagram @samdances', 'contact details'],
       ['Lives at 12 Park Road', 'contact details'], ['x'.repeat(MAX_NOTE_LENGTH + 1), 'too long']
     ]) assert.equal(screenNote(note), reason, note);
-    const worry = readChatReply(JSON.stringify({ action: 'offer-to-remember', page: 'none', note: 'Stressed about exams', say: 'Exams can be a lot. Want me to remember that for later?' }), { shortlist: [], actions: ['offer-to-remember'] });
-    assert.deepEqual([worry?.say, worry?.action], ['Exams can be a lot.', null]);
+    const gemini = scriptedGemini([{ calls: [{ name: 'offer_to_remember', args: { note: 'Stressed about exams' } }] }, { text: 'Exams can be a lot.' }]);
+    const worry = await chatWith(gemini.model, { facts: { match: null, tasks: null } }).send('exams are stressing me out');
+    assert.deepEqual([worry.text, worry.notes], ['Exams can be a lot.', undefined]);
   }],
   ['Ordinary things can be: a plan, something they’re into, how they like to do things', () => {
     for (const note of ['Planning to join a running club in January', 'Prefers studying in the mornings', 'Into climbing and films', 'Likes working with others']) assert.equal(screenNote(note), null, note);
@@ -115,14 +114,12 @@ const offline = [
     assert.deepEqual(withoutNote(ten, { text: 'Note 3', savedAt: at(3) }).map((note) => note.text), ten.filter((_, i) => i !== 3).map((note) => note.text));
     assert.equal(withoutNote(ten, { text: 'Note 3', savedAt: at(4) }).length, MAX_NOTES, 'only the one saved then');
   }],
-  ['The chat’s instructions: when to offer, never health, money, worries, safety, other people or contact details, never say it’s remembered, and where to see and delete them', () => {
-    const instructions = oneLine(chatRequest({ about: '(about)', opener: ['(opener)'], shortlist: [], options: { mentor: 'no', checklist: 'no', hasMentor: false } }).systemInstruction);
-    assert.match(instructions, /"remember": they ask you to remember something about them: the app saves it straight away\./);
-    assert.match(instructions, /"offer-to-remember": they've told you about a plan, a goal or how they like to do things that would help in later chats, without asking you to remember it \(and not when they're asking for suggestions or help\): the app asks them with a card/);
-    assert.match(instructions, /Never anything about their health, money, worries or feelings, their safety, other people, or contact details\./);
-    assert.match(instructions, /Never claim to have done something yourself/);
-    const forgetting = oneLine(chatRequest({ about: '', opener: [], shortlist: [], options: { mentor: 'no', checklist: 'no', hasMentor: false, notes: ['Likes salsa'] } }).systemInstruction);
-    assert.match(forgetting, /"forget": they ask you to forget something you remember about them, or everything: the app deletes it straight away\./);
+  ['The chat’s tools and instructions: remember when asked, offer only for plans and how they like to do things, never health, money, worries, safety, other people or contact details, never say it’s done unless it is', () => {
+    const tools = Object.fromEntries(chatTools({ match: null, tasks: null })[0].functionDeclarations.map((/** @type {any} */ tool) => [tool.name, tool.description]));
+    assert.match(tools.remember, /Remembers something they asked you to remember, for later chats \(they can see and delete it\)\. Never health, money, worries, safety, other people or contact details\./);
+    assert.match(tools.offer_to_remember, /mentioned but didn't ask you to remember \(such as a plan\)\. They tap to say yes\./);
+    assert.match(tools.forget, /Forgets something you remember for them, or everything if they ask\./);
+    assert.match(oneLine(chatInstructions('(about)')), /Never say you've done something unless the tool said it's done\./);
   }],
   ['Nothing says Gemini is never told their name any more; the chat’s note says it’s told their first name, never the full name or email, and links to the page', () => {
     const files = ['src/routes/check-in/+page.svelte', 'src/lib/checkin/opener.js', 'src/lib/checkin/chat-prompt.js', 'src/lib/checklist/store.js', 'src/lib/checkin/about-you.js', 'src/routes/about-you/+page.svelte'];
@@ -432,9 +429,11 @@ async function inTheBrowser() {
     await waitFor(`location.pathname === '/home'`);
     await go('/check-in');
     await waitFor(`document.querySelector('[data-chat-ready]')`, 30000);
+    // Gemini's first message (the stand-in's "Thanks for telling me."), before anything is queued.
+    await waitFor(`document.querySelectorAll('.bubble:not(.user)').length > 0 && !document.querySelector('.bubble.typing')`, 30000);
 
     // 1. What the app sends Gemini.
-    gemini.replyWith({ action: 'offer-to-remember', note: 'Planning to join a running club in January', say: 'That sounds great, Sam. Shall I remember that for next time?' });
+    gemini.replyWith({ calls: [{ name: 'offer_to_remember', args: { note: 'Planning to join a running club in January' } }] }, 'That sounds great, Sam.');
     await say('Hi, my number is 07123 456789. I’m planning to join a running club in January.');
     const told = gemini.lastInstructions();
     const everything = JSON.stringify(gemini.requests.at(-1)?.body ?? {});
@@ -455,20 +454,20 @@ async function inTheBrowser() {
     const pressed = await press('Remember');
     const saved = await waitFor(has('Remembered: Planning to join a running club in January'));
     const stored = await ownerRead(`chatNotes/${uid}`);
-    gemini.replyWith({ say: 'Any time.' });
+    gemini.replyWith('Any time.');
     await say('Thanks!');
     report('A reply offering to remember shows Gemini’s words and the card, which asks; Remember saves it, and Gemini is then told it',
-      cardShown && !/\{\{|remember:/i.test(bubble) && bubble === 'That sounds great, Sam.' && pressed && saved
+      cardShown && bubble === 'That sounds great, Sam.' && pressed && saved
         && stored?.fields?.notes?.arrayValue?.values?.[0]?.mapValue?.fields?.text?.stringValue === 'Planning to join a running club in January'
         && gemini.lastInstructions().includes('- Planning to join a running club in January'),
       `card ${cardShown}, saved ${saved}, told ${gemini.lastInstructions().includes('- Planning to join a running club in January')}`);
 
     // 3. A worry is never offered.
-    gemini.replyWith({ action: 'offer-to-remember', note: 'Stressed about exams', say: 'Exams can be a lot. Want me to remember that for later?' });
+    gemini.replyWith({ calls: [{ name: 'offer_to_remember', args: { note: 'Stressed about exams' } }] }, 'Exams can be a lot.');
     const cards = await evaluate(`document.querySelectorAll('[aria-label="Remember this for later chats"]').length`);
     await say('Exams are stressing me out a bit');
     const worry = await lastBubble();
-    report('A reply offering to remember a worry shows no card, and no question about it',
+    report('Gemini offering to remember a worry: the app shows no card',
       worry === 'Exams can be a lot.' && (await evaluate(`document.querySelectorAll('[aria-label="Remember this for later chats"]').length`)) === cards, JSON.stringify(worry));
 
     // 4. The page, from the chat's note: the record and the note; Delete, then Delete all.

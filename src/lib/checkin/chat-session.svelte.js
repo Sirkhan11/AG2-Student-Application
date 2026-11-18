@@ -22,13 +22,12 @@ import { watchSignedIn } from '#lib/firebase/auth.js';
  * shows: 'card': their mentor, or asking for a different one). flow is a card from an action the app is
  * running in the chat (mentor-flow.js), such as the meeting choices or the answers to check. A link with
  * an action starts that action in the chat.
- * While going through the checklist (checklist-talk.js): quick is the replies under the chat's question
- * (open until one is used, or a newer message has its own); ticked is the task just ticked, with Undo
- * (undone once used); tool is what the chat can do for the task there and then (the GP finder, a
- * dentist search, the key contacts); ask4help shows the Ask4Help card.
- * From any message: undo is how to put back a change the chat made when asked (a checklist edit, or
- * something remembered or forgotten), for its Undo button; calendar is a calendar card (Outlook on the
- * web, or a file) for something they'd rather keep in their own calendar. celebrate: the message
+ * quick is the replies under the chat's question (open until one is used, or a newer message has its
+ * own); tool is a card the app shows under a reply (the GP finder, a dentist search, the key
+ * contacts); ask4help shows the Ask4Help card; calendar is a calendar card (Outlook on the web, or a
+ * file) for something they'd rather keep in their own calendar.
+ * undo is how to put back a change the chat made (a checklist change, or something remembered or
+ * forgotten: chat-do.js), for the Undo button on the line confirming it (done once used). celebrate: the message
  * telling them they've just been matched, for confetti; cleared once it has played, so it never replays.
  * first: Gemini's first reply in this conversation, for a little sparkle.
  * @typedef {{ role: 'assistant' | 'user', text: string, kind?: 'safety' | 'error' | 'unavailable',
@@ -36,9 +35,9 @@ import { watchSignedIn } from '#lib/firebase/auth.js';
  *     nsuId?: number, slug?: string, serviceId?: string, action?: string }[],
  *   task?: SuggestedTask, offer?: Offer, note?: OfferedNote, appCard?: 'your-mentor' | 'change-mentor',
  *   flow?: import('#lib/checkin/mentor-flow.js').FlowCard & { id: number },
- *   quick?: { options: import('#lib/checkin/checklist-talk.js').QuickReply[], open: boolean },
- *   ticked?: { id: string, title: string, undone: boolean }, tool?: 'gp-finder' | 'dentist-finder' | 'contacts', ask4help?: boolean,
- *   undo?: { checklist?: import('#lib/checklist/tasks.js').Change, notes?: import('#lib/checkin/run-actions.js').NoteUndo, done: boolean },
+ *   quick?: { options: { label: string, value: string }[], open: boolean },
+ *   tool?: 'gp-finder' | 'dentist-finder' | 'contacts', ask4help?: boolean,
+ *   undo?: { change: import('#lib/checkin/chat-do.js').Undo, done: boolean },
  *   calendar?: { title: string }, celebrate?: boolean, first?: boolean }} Message
  */
 
@@ -55,14 +54,9 @@ import { watchSignedIn } from '#lib/firebase/auth.js';
  */
 
 /**
- * The checklist talk's state, as the page reads it alongside the mentor flow's.
- * @typedef {import('#lib/checkin/checklist-talk.js').TalkState & { kind: 'checklist' }} TalkFlowState
- */
-
-/**
  * @typedef {{ uid: string | null, messages: Message[], draft: string, waiting: boolean,
  *   started: boolean, unavailable: boolean, conversation: number, replied: boolean,
- *   flow: import('#lib/checkin/mentor-flow.js').FlowState | TalkFlowState | null }} ChatSession
+ *   flow: import('#lib/checkin/mentor-flow.js').FlowState | null }} ChatSession
  */
 
 /**
@@ -73,8 +67,7 @@ import { watchSignedIn } from '#lib/firebase/auth.js';
  * - unavailable: true once Gemini has said its credit has run out, so the message box is switched off
  * - conversation: goes up each time it's cleared, so a reply for a conversation that's gone is dropped
  * - replied: true once Gemini's first reply has shown, which gets a little sparkle
- * - flow: where an action the app is running in the chat is (finding a mentor, or going through the
- *   checklist), or null
+ * - flow: where an action the app is running in the chat is (finding a mentor), or null
  */
 export const chatSession = $state(
   /** @type {ChatSession} */ ({ uid: null, messages: [], draft: '', waiting: false, started: false, unavailable: false, conversation: 0, replied: false, flow: null })
@@ -94,47 +87,44 @@ export function setGeminiChat(chat) {
 }
 
 /**
- * The actions the app runs in the chat (finding a mentor, going through the checklist), each made the
- * first time it's started in this conversation, and which one is running (one at a time).
- * @type {{ mentor?: ReturnType<typeof import('#lib/checkin/mentor-flow.js').createMentorFlow>,
- *   checklist?: ReturnType<typeof import('#lib/checkin/checklist-talk.js').createChecklistTalk> }}
+ * The action the app runs in the chat (finding a mentor), made the first time it's started in this
+ * conversation.
+ * @type {{ mentor?: ReturnType<typeof import('#lib/checkin/mentor-flow.js').createMentorFlow> }}
  */
 let flows = {};
-/** @type {'mentor' | 'checklist' | null} */
+/** @type {'mentor' | null} */
 let running = null;
 
 /** The action running now (or last run), whose cards and Stop the page uses. */
 export const chatFlow = () => (running ? flows[running] ?? null : null);
 
-/** @template {'mentor' | 'checklist'} K @param {K} kind @returns {(typeof flows)[K] | null} */
+/** @template {'mentor'} K @param {K} kind @returns {(typeof flows)[K] | null} */
 export const chatFlowFor = (kind) => flows[kind] ?? null;
 
 /**
  * Keeps an action for this conversation, and makes it the one running.
- * @template {'mentor' | 'checklist'} K @param {K} kind @param {NonNullable<(typeof flows)[K]>} flow
+ * @template {'mentor'} K @param {K} kind @param {NonNullable<(typeof flows)[K]>} flow
  */
 export function setChatFlow(kind, flow) {
   flows[kind] = flow;
   running = kind;
 }
 
-/** Makes an action kept earlier the one running again. @param {'mentor' | 'checklist'} kind */
+/** Makes an action kept earlier the one running again. @param {'mentor'} kind */
 export function runChatFlow(kind) {
   running = kind;
 }
 
 /**
- * The chat's changes made when asked, from any message (checklist-edits.js and run-actions.js).
- * @typedef {{ edits: ReturnType<typeof import('#lib/checkin/checklist-edits.js').createChecklistEdits>,
- *   notes: ReturnType<typeof import('#lib/checkin/run-actions.js').createNoteActions> }} ChatChanges
+ * The changes the chat makes for Gemini's tools (chat-do.js), with the page's stores. Made the first
+ * time they're needed in this conversation. Not $state: the page never shows them.
+ * @type {ReturnType<typeof import('#lib/checkin/chat-do.js').createChatDo> | null}
  */
-
-/** Made the first time they're needed in this conversation. Not $state: the page never shows them. @type {ChatChanges | null} */
 let changes = null;
 
 export const chatChanges = () => changes;
 
-/** @param {ChatChanges} next */
+/** @param {ReturnType<typeof import('#lib/checkin/chat-do.js').createChatDo>} next */
 export function setChatChanges(next) {
   changes = next;
 }
@@ -146,7 +136,8 @@ export function setChatChanges(next) {
  */
 let facts = null;
 
-export const chatFacts = () => facts;
+/** What the app knows now: the running chat's (it keeps the checklist and notes up to date itself). */
+export const chatFacts = () => gemini?.facts() ?? facts;
 
 /** @param {Parameters<typeof import('#lib/checkin/opener.js').describeForGemini>[0] | null} next */
 export function setChatFacts(next) {
@@ -161,8 +152,9 @@ export function setChatFacts(next) {
  * @param {Partial<Parameters<typeof import('#lib/checkin/opener.js').describeForGemini>[0]>} change
  */
 export function tellGemini(change) {
-  if (!facts) return;
-  facts = { ...facts, ...change };
+  const now = chatFacts();
+  if (!now) return;
+  facts = { ...now, ...change };
   gemini?.retell(facts);
 }
 
@@ -171,7 +163,8 @@ export function tellGemini(change) {
  * @param {string[]} notes their words, oldest first
  */
 export function notesChanged(notes) {
-  if (facts) tellGemini({ profile: { ...facts.profile, notes } });
+  const now = chatFacts();
+  if (now) tellGemini({ profile: { ...now.profile, notes } });
 }
 
 /**

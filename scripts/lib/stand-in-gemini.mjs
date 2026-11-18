@@ -45,13 +45,14 @@ const CORS = [
 ];
 
 /**
- * Starts answering the page's Gemini requests. Replies are used in the order they're queued; with
- * none queued, it says "Thanks for telling me." (as a check-in chat reply: JSON, see chat-prompt.js).
+ * Starts answering the page's Gemini requests. Replies are used in the order they're queued: text, or
+ * tool calls (function calling, as the chat's tools in chat-tools.js), one per request; with none
+ * queued, it says "Thanks for telling me.".
  * @param {(method: string, params?: object) => Promise<any>} send the page's DevTools session
  * @param {(handler: (message: any) => void) => void} listen adds a handler for every DevTools message
  */
 export async function standInGemini(send, listen) {
-  /** @type {string[]} */
+  /** @type {({ text: string } | { calls: { name: string, args?: Record<string, unknown> }[] })[]} */
   const replies = [];
   /** @type {{ url: string, body: any }[]} */
   const requests = [];
@@ -87,9 +88,10 @@ export async function standInGemini(send, listen) {
       }).catch(() => {});
       return;
     }
-    const text = replies.shift() ?? JSON.stringify({ action: 'none', page: 'none', say: 'Thanks for telling me.' });
+    const next = replies.shift() ?? { text: 'Thanks for telling me.' };
+    const parts = 'calls' in next ? next.calls.map((call) => ({ functionCall: { name: call.name, args: call.args ?? {} } })) : [{ text: next.text }];
     const answer = {
-      candidates: [{ content: { role: 'model', parts: [{ text }] }, finishReason: 'STOP', index: 0 }],
+      candidates: [{ content: { role: 'model', parts }, finishReason: 'STOP', index: 0 }],
       usageMetadata: { promptTokenCount: 1, candidatesTokenCount: 1, totalTokenCount: 2 }
     };
     void send('Fetch.fulfillRequest', {
@@ -102,11 +104,11 @@ export async function standInGemini(send, listen) {
   await send('Fetch.enable', { patterns: GEMINI_HOSTS.map((host) => ({ urlPattern: `*${host}*` })) });
   return {
     /**
-     * Queues a reply: text as it is (such as a summary's JSON), or a check-in chat reply's fields,
-     * sent as the JSON the chat asks for (no action or page unless given).
-     * @param {string | Record<string, unknown>} reply
+     * Queues answers, one per request, in order: text as it is (a chat reply, or a summary's JSON), or
+     * { calls: [{ name, args }] } for tool calls.
+     * @param {...(string | { calls: { name: string, args?: Record<string, unknown> }[] })} answers
      */
-    replyWith: (reply) => void replies.push(typeof reply === 'string' ? reply : JSON.stringify({ action: 'none', page: 'none', ...reply })),
+    replyWith: (...answers) => void replies.push(...answers.map((answer) => (typeof answer === 'string' ? { text: answer } : answer))),
     /** Every request the app has sent to Gemini (refused: the fields Gemini wouldn't accept, if any). */
     requests,
     /** The requests Gemini would have refused for fields it doesn't accept, with those fields. */
@@ -116,7 +118,10 @@ export async function standInGemini(send, listen) {
       const body = requests.at(-1)?.body;
       return (body?.systemInstruction?.parts ?? []).map((/** @type {{ text?: string }} */ part) => part.text ?? '').join('\n');
     },
-    /** The student's messages in the last request, as sent. */
-    lastMessages: () => (requests.at(-1)?.body?.contents ?? []).filter((/** @type {any} */ c) => c.role === 'user').map((/** @type {any} */ c) => c.parts.map((/** @type {any} */ p) => p.text).join(''))
+    /** The student's messages (and the app's notes) in the last request, as sent: not the tools' results. */
+    lastMessages: () =>
+      (requests.at(-1)?.body?.contents ?? [])
+        .filter((/** @type {any} */ c) => c.role === 'user' && c.parts.some((/** @type {any} */ p) => typeof p.text === 'string'))
+        .map((/** @type {any} */ c) => c.parts.map((/** @type {any} */ p) => p.text ?? '').join(''))
   };
 }
