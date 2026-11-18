@@ -185,7 +185,8 @@ const checks = [
   }],
   ['The page never stores or sends a location: typed searches go to postcodes.io, and the England file is the same request for everyone', () => {
     assert.doesNotMatch(PAGE, /localStorage|sessionStorage|indexedDB|document\.cookie/);
-    for (const line of (SCRIPT + SEARCH).match(/^\s*import [^;]+;/gm) ?? []) assert.doesNotMatch(line, /firebase|firestore|gemini|checkin|ai\.js/i, line.trim());
+    // Nothing of Firebase, Gemini or the chat's, apart from the crisis check (safety.js: no network).
+    for (const line of (SCRIPT + SEARCH).match(/^\s*import [^;]+;/gm) ?? []) assert.doesNotMatch(line.replace("'#lib/checkin/safety.js'", ''), /firebase|firestore|gemini|checkin|ai\.js/i, line.trim());
     assert.deepEqual([...(SCRIPT + SEARCH).matchAll(/fetch\((`[^`]*`|'[^']*'|[^)]*)/g)].map((m) => m[1]), ['`https://api.postcodes.io${path}`']);
     assert.doesNotMatch(SEARCH, /localStorage|sessionStorage|indexedDB|document\.cookie/);
     assert.match(SEARCH, /showNearest\(position\.coords\.latitude, position\.coords\.longitude, 'you', null\)/);

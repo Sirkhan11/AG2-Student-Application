@@ -1,3 +1,4 @@
+import { crisisIn } from '#lib/checkin/safety.js';
 import { findBlankAnswer } from '#lib/matching/answers.js';
 import { SUMMARISE_FAILED } from '#lib/matching/errors.js';
 import { MAX_AVAILABILITY_LENGTH, MEETING_FREQUENCIES } from '#lib/matching/meeting.js';
@@ -102,17 +103,20 @@ export function outcomeText(outcome) {
 /**
  * How a step went: saved (with the outcome, and Gemini's summary of their answers if there is one,
  * for the chat's message straight after), Gemini failed (try again or ask the coordinator), Gemini's
- * credit has run out (the coordinator only), or something else failed (try that step again).
+ * credit has run out (the coordinator only), something else failed (try that step again), or safety:
+ * an answer suggests they may be at risk, so nothing was sent or saved (show SAFETY_MESSAGE).
  * @typedef {{ status: 'saved', outcome: import('#lib/matching/find-match.js').SaveOutcome,
  *     summary: import('#lib/matching/summary-prompt.js').Summary | null }
- *   | { status: 'gemini-failed' } | { status: 'gemini-unavailable' }
+ *   | { status: 'gemini-failed' } | { status: 'gemini-unavailable' } | { status: 'safety' }
  *   | { status: 'error', step: 'prepare' | 'save' | 'coordinator', message: string, error: unknown }} FindResult
  */
 
 /**
  * Finds a mentor and saves the result, as the page and the chat both do. What Gemini prepared is kept,
  * so trying again after a failed save never asks Gemini again. Nothing is saved until find() or
- * askCoordinator() is called, which only happens when the student confirms.
+ * askCoordinator() is called, which only happens when the student confirms. Neither sends anything if
+ * an answer, or when they're free, suggests they may be at risk (safety.js): the screens check as it's
+ * typed, and this is the last stop before Gemini and the coordinator (agent1.md A13).
  * @param {MatchingSteps} steps
  */
 export function createFinder(steps) {
@@ -136,6 +140,7 @@ export function createFinder(steps) {
      * @returns {Promise<FindResult>}
      */
     async find(answers, preferences) {
+      if (crisisIn(...answers, preferences.availability)) return { status: 'safety' };
       if (!prepared) {
         try {
           prepared = await steps.prepareStudent(answers.map((answer) => answer.trim()));
@@ -157,6 +162,7 @@ export function createFinder(steps) {
      * @returns {Promise<FindResult>}
      */
     async askCoordinator(answers, preferences) {
+      if (crisisIn(...answers, preferences.availability)) return { status: 'safety' };
       try {
         return { status: 'saved', outcome: await steps.askCoordinator(answers.map((answer) => answer.trim()), preferences), summary: null };
       } catch (error) {

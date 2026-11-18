@@ -1,3 +1,4 @@
+import { isCrisis, SAFETY_MESSAGE } from '#lib/checkin/safety.js';
 import { findBlankAnswer } from '#lib/matching/answers.js';
 import {
   alreadyHasText,
@@ -22,6 +23,9 @@ import {
 // saved. The answers stay in the chat session: the page sends what they type here to this flow, never
 // to Gemini. The steps it shares with the page (checks, matching, saving, what each outcome says) are
 // in find-mentor-steps.js. No Firebase here (the steps are passed in), so the checks run it in Node.
+// A message that suggests they may be at risk (safety.js) is never one of the answers: the chat page
+// answers it with the support message before the flow sees it, and the questions stop there, with
+// nothing saved (setAside); the flow refuses one itself too, and so does the finder (agent1.md A13).
 //
 // It's the first of the chat's actions; later ones (changing mentor, the checklist, the GP finder)
 // follow the same shape: start, reply(text), the card's buttons, stop, and finished(result).
@@ -37,7 +41,8 @@ import {
 /**
  * What the flow adds to the chat: a bubble (from the app, or echoing the student's choice), maybe with
  * a card. question: it asks for a typed answer, so the page announces it and moves focus to the box.
- * @typedef {{ role: 'assistant' | 'user', text: string, card?: FlowCard & { id: number }, question?: boolean, celebrate?: boolean }} FlowMessage
+ * kind 'safety': the support message (SAFETY_MESSAGE), shown as the chat shows it.
+ * @typedef {{ role: 'assistant' | 'user', text: string, card?: FlowCard & { id: number }, question?: boolean, celebrate?: boolean, kind?: 'safety' }} FlowMessage
  */
 
 /**
@@ -58,6 +63,9 @@ import {
 
 /** What the student types to stop. */
 const STOP = /^\s*stop\s*[.!]?\s*$/i;
+
+/** After the support message, when the questions stop for it: what's happened to them, and that they can come back. */
+export const SET_ASIDE = 'I’ve stopped the mentor questions, and nothing from them has been saved. We can come back to them whenever you like.';
 
 /**
  * @param {{ check: () => Promise<{ view: 'is-mentor' | 'no-mentors' | 'form' } | { view: 'has-record', match: import('#lib/matching/matches.js').Match }>,
@@ -89,8 +97,8 @@ export function createMentorFlow({ check, steps, post, changed, finished }) {
   };
   /**
    * Posts a bubble (from the app unless role says otherwise); one with a card makes that card the live one.
-   * celebrate: the moment they're matched, for the page to celebrate.
-   * @param {{ role?: 'assistant' | 'user', text: string, card?: FlowCard, question?: boolean, celebrate?: boolean }} message
+   * celebrate: the moment they're matched, for the page to celebrate. kind 'safety': the support message.
+   * @param {{ role?: 'assistant' | 'user', text: string, card?: FlowCard, question?: boolean, celebrate?: boolean, kind?: 'safety' }} message
    */
   const say = (message) => {
     if (message.card) {
@@ -98,7 +106,7 @@ export function createMentorFlow({ check, steps, post, changed, finished }) {
       post({ role: message.role ?? 'assistant', text: message.text, card: { ...message.card, id }, question: message.question, ...(message.celebrate ? { celebrate: true } : {}) });
       set({ live: id });
     } else {
-      post({ role: message.role ?? 'assistant', text: message.text, question: message.question });
+      post({ role: message.role ?? 'assistant', text: message.text, question: message.question, ...(message.kind ? { kind: message.kind } : {}) });
     }
   };
   const preferences = () => ({ meetingFrequency, availability });
@@ -152,6 +160,11 @@ export function createMentorFlow({ check, steps, post, changed, finished }) {
     } else if (result.status === 'gemini-unavailable') {
       set({ step: 'gemini-unavailable' });
       say({ text: `${SAYS.geminiUnavailable} ${SAYS.geminiUnavailableNote}`, card: { kind: 'gemini-unavailable' } });
+    } else if (result.status === 'safety') {
+      // An answer suggests they may be at risk, so nothing was sent (the finder checks too).
+      say({ text: SAFETY_MESSAGE, kind: 'safety' });
+      say({ text: SET_ASIDE });
+      end({ outcome: 'stopped' });
     } else {
       console.error('Finding a mentor in the chat failed:', /** @type {{ code?: string }} */ (result.error)?.code ?? result.step);
       again = result.step === 'prepare' ? find : result.step === 'save' ? saveAgain : coordinator;
@@ -231,6 +244,12 @@ export function createMentorFlow({ check, steps, post, changed, finished }) {
    */
   function reply(text) {
     if (!state.active) return false;
+    // Never kept as an answer: the support message, and the questions stop (the page checks first).
+    if (isCrisis(text)) {
+      say({ text: SAFETY_MESSAGE, kind: 'safety' });
+      setAside();
+      return true;
+    }
     if (STOP.test(text)) {
       stop();
       return true;
@@ -308,6 +327,19 @@ export function createMentorFlow({ check, steps, post, changed, finished }) {
     await coordinator();
   }
 
+  /**
+   * A message that suggests they may be at risk (safety.js), which the chat page has answered with the
+   * support message and kept out of the flow: the questions stop there, with nothing saved, rather than
+   * carry on over it, so nothing they typed in them goes anywhere. Not while it's saving (they'd already
+   * chosen Find my mentor, before that message). Returns true if it stopped.
+   */
+  function setAside() {
+    if (!state.active || state.step === 'busy') return false;
+    say({ text: SET_ASIDE });
+    end({ outcome: 'stopped' });
+    return true;
+  }
+
   /** Stops it, saving nothing. Not while it's saving (they've already chosen Find my mentor). */
   function stop() {
     if (!state.active || state.step === 'busy') return false;
@@ -319,5 +351,5 @@ export function createMentorFlow({ check, steps, post, changed, finished }) {
   /** Whether it takes what they typed: everything, while it's running (it's never sent to Gemini). @param {string} _text */
   const takes = (_text) => state.active;
 
-  return { state: () => state, start, takes, reply, choose, change, confirm, tryAgain, coordinator: askCoordinator, stop };
+  return { state: () => state, start, takes, reply, choose, change, confirm, tryAgain, coordinator: askCoordinator, stop, setAside };
 }

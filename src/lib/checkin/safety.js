@@ -48,6 +48,17 @@ export function isCrisis(text) {
 }
 
 /**
+ * True if any of these, typed by the student, suggests they may be at risk. For the boxes whose words
+ * go on to Gemini or a person (the mentor questions, mentor sign-up and the rest), checked before
+ * anything is sent: one that does gets SAFETY_MESSAGE, and nothing is sent (agent1.md A13).
+ * @param {...(string | null | undefined)} texts
+ */
+export const crisisIn = (...texts) => texts.some((text) => typeof text === 'string' && isCrisis(text));
+
+/** The error code for something typed that suggests they may be at risk, so nothing was sent (mentor sign-up). */
+export const AT_RISK = 'safety/at-risk';
+
+/**
  * Words that suggest someone is worried or upset (short of a crisis): straight after finding a mentor,
  * the chat then says nothing rather than suggest things (afterMatch in chat-turns.js). Erring on the
  * side of quiet: a message that isn't sent costs nothing.

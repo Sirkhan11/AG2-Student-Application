@@ -12,6 +12,9 @@
 //   told covers mentors, Not now and the outcome.
 // - The chat page sends what's typed during it to the flow, never to Gemini; the Find a mentor page
 //   uses the same shared steps.
+// - A message that suggests they may be at risk (safety.js), at any point in the questions: the support
+//   message, the questions stop with nothing saved, and it's never kept or sent (agent1.md A13); the
+//   chat page checks every message first, and the finder refuses too.
 // The same flow runs in Chrome against the emulators in scripts/check-signed-in.mjs.
 // Run from the project folder:
 //   node scripts/check-mentor-in-chat.mjs
@@ -23,7 +26,8 @@ import { chatInstructions } from '#lib/checkin/chat-prompt.js';
 import { chatTools } from '#lib/checkin/chat-tools.js';
 import { scriptedGemini } from './lib/scripted-gemini.mjs';
 import { chatWith } from '#lib/checkin/chat-turns.js';
-import { createMentorFlow } from '#lib/checkin/mentor-flow.js';
+import { createMentorFlow, SET_ASIDE } from '#lib/checkin/mentor-flow.js';
+import { isCrisis, SAFETY_MESSAGE } from '#lib/checkin/safety.js';
 import { chatOptions, describeForGemini, matchLine } from '#lib/checkin/opener.js';
 import { ANSWERS_NOTE, checkAnswers, createFinder, findingMessage, MAX_AVAILABILITY_LENGTH, outcomeText, questions, SAYS } from '#lib/matching/find-mentor-steps.js';
 import { SUMMARISE_FAILED } from '#lib/matching/errors.js';
@@ -70,8 +74,79 @@ async function toReview(t) {
   t.flow.reply('Weekday afternoons');
 }
 
+/** Phrases the chat's own crisis check catches (safety.js), as students might type them. */
+const AT_RISK = ['I want to kill myself', 'I want to die', 'I’ve been self-harming again', 'I don’t want to be here anymore', 'I keep thinking about suicide', 'I feel like ending it all', 'I can’t go on', 'I don\'t feel safe at home'];
+/** Every point in the questions where they can type. */
+const TYPED_AT = ['question 1', 'question 4', 'question 6', 'frequency', 'availability', 'review', 'changing an answer', 'after Gemini failed'];
+/**
+ * Runs a flow to one of those points.
+ * @param {ReturnType<typeof flowWith>} t @param {string} point
+ */
+async function runTo(t, point) {
+  t.flow.start();
+  await tick();
+  const answer = (/** @type {number} */ count) => ANSWERS.slice(0, count).forEach((reply) => t.flow.reply(reply));
+  if (point.startsWith('question ')) return answer(Number(point.slice(9)) - 1);
+  answer(6);
+  if (point === 'frequency') return;
+  t.flow.choose('weekly');
+  if (point === 'availability') return;
+  t.flow.reply('Weekday afternoons');
+  if (point === 'changing an answer') t.flow.change(2);
+  if (point === 'after Gemini failed') await t.flow.confirm();
+}
+
 /** @type {[string, () => void | Promise<void>][]} */
 const checks = [
+  // ---------- A message that suggests they may be at risk (agent1.md A13) ----------
+  ['"I want to kill myself" at question 4: the support message, not question 5; it isn’t kept as an answer, the questions stop, and nothing is saved or sent (A13’s probe, which failed before)', async () => {
+    const t = flowWith();
+    await runTo(t, 'question 4');
+    t.flow.reply('I want to kill myself');
+    assert.ok(t.posts.some((post) => post.text === SAFETY_MESSAGE && post.kind === 'safety'), 'the support message');
+    assert.ok(!t.posts.some((post) => post.text.startsWith('Question 5 of 6')), 'not on to question 5');
+    assert.equal(t.last().text, SET_ASIDE);
+    assert.equal(t.state()?.active, false, 'the questions have stopped');
+    assert.deepEqual(t.finished.map((result) => result.outcome), ['stopped']);
+    assert.equal(t.saved(), 0, 'nothing prepared, saved or sent to the coordinator');
+  }],
+  [`Each of the chat’s crisis phrases (${AT_RISK.length}), at every point they can type (${TYPED_AT.length}): the support message, the questions stop, and the phrase is never kept or sent`, async () => {
+    for (const phrase of AT_RISK) {
+      assert.ok(isCrisis(phrase), `${phrase}: the chat’s own check catches it`);
+      for (const point of TYPED_AT) {
+        const t = flowWith(point === 'after Gemini failed' ? { prepare: async () => Promise.reject(geminiDown()) } : {});
+        await runTo(t, point);
+        const before = { posts: t.posts.length, saved: t.saved() };
+        t.flow.reply(phrase);
+        const after = t.posts.slice(before.posts);
+        const where = `${phrase} at ${point}`;
+        assert.ok(after.some((post) => post.text === SAFETY_MESSAGE && post.kind === 'safety'), `${where}: the support message`);
+        assert.equal(after.at(-1)?.text, SET_ASIDE, `${where}: then that the questions have stopped`);
+        assert.ok(!after.some((post) => /^Question \d of 6|^How often|^When are you usually free|^Here are your answers/.test(post.text)), `${where}: nothing asked after it`);
+        assert.equal(t.state()?.active, false, `${where}: stopped`);
+        assert.equal(t.saved(), before.saved, `${where}: nothing new prepared, saved or sent`);
+        assert.ok(!JSON.stringify([t.calls.prepared, t.calls.preferences]).includes(phrase), `${where}: never passed on`);
+      }
+    }
+  }],
+  ['The finder refuses too: an answer or when they’re free that suggests they may be at risk is never prepared (Gemini), saved or sent to the coordinator', async () => {
+    const steps = { prepareStudent: async () => assert.fail('sent to Gemini'), matchAndSave: async () => assert.fail('saved'), askCoordinator: async () => assert.fail('sent to the coordinator') };
+    const finder = createFinder(/** @type {any} */ (steps));
+    const answers = [...ANSWERS];
+    answers[3] = 'honestly I want to die';
+    assert.deepEqual(await finder.find(answers, { meetingFrequency: 'weekly', availability: 'Evenings' }), { status: 'safety' });
+    assert.deepEqual(await finder.askCoordinator(answers, { meetingFrequency: 'weekly', availability: 'Evenings' }), { status: 'safety' });
+    assert.deepEqual(await finder.find(ANSWERS, { meetingFrequency: 'weekly', availability: 'whenever, I can’t go on' }), { status: 'safety' });
+  }],
+  ['The chat page checks every message first, whatever the chat is doing: before a running action, before Gemini, even while Gemini is busy or unavailable', () => {
+    const page = readFileSync('src/routes/check-in/+page.svelte', 'utf8');
+    const send = page.slice(page.indexOf('async function sendMessage('), page.indexOf('async function askGemini('));
+    const at = (/** @type {string} */ words) => send.indexOf(words);
+    assert.ok(at('if (isCrisis(text)) {') > 0, 'the check');
+    for (const later of ['flow?.takes(text)', 'chatSession.waiting', 'askGemini(text)']) assert.ok(at('if (isCrisis(text)) {') < at(later), `before ${later}`);
+    assert.match(send, /if \(isCrisis\(text\)\) \{\s*chatSession\.messages\.push\(\{ role: 'user', text \}\);[\s\S]*?showReply\(\{ kind: 'safety', text: SAFETY_MESSAGE \}\);\s*if \(flowActive\) chatFlow\(\)\?\.setAside\(\);\s*await showLatest\(\);\s*return;\s*\}/, 'the support message; the questions set aside; nothing else');
+    assert.match(page, /\.\.\.\(message\.kind === 'safety' \? \{ kind: 'safety', links: \[\{ label: 'Need help now', href: '\/need-help' \}\] \} : \{\}\)/, 'the flow’s own support message looks the same');
+  }],
   // ---------- The flow ----------
   ['Start: the page’s check, the note about the answers, then question 1 of 6 (asked, so focus goes to the message box)', async () => {
     const t = flowWith();

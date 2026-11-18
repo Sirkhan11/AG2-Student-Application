@@ -38,6 +38,7 @@
     tellGemini
   } from '#lib/checkin/chat-session.svelte.js';
   import { createMentorFlow } from '#lib/checkin/mentor-flow.js';
+  import { isCrisis, SAFETY_MESSAGE } from '#lib/checkin/safety.js';
   import { hasMentorProfile } from '#lib/matching/mentor-account.js';
   import { getReadyForMatching, modelReady } from '#lib/matching/model-download-browser.js';
   import ChatFlowCard from '#lib/components/ChatFlowCard.svelte';
@@ -168,7 +169,14 @@
         },
         post: (message) => {
           if (chatSession.conversation !== conversation) return;
-          chatSession.messages.push({ role: message.role, text: message.text, flow: message.card, celebrate: message.celebrate });
+          chatSession.messages.push({
+            role: message.role,
+            text: message.text,
+            flow: message.card,
+            celebrate: message.celebrate,
+            // The support message, as the chat shows it (with Need help now), if the flow ever posts it.
+            ...(message.kind === 'safety' ? { kind: 'safety', links: [{ label: 'Need help now', href: '/need-help' }] } : {})
+          });
           if (message.celebrate) buzz([14, 70, 24]);
           showLatest(message.question);
         },
@@ -280,6 +288,20 @@
   async function sendMessage(typed) {
     const text = (typed ?? chatSession.draft).trim();
     if (!text) return;
+    // Every message is checked first, whatever the chat is doing (safety.js; agent1.md A13). One that
+    // suggests they may be at risk gets the support message straight away, here in the app, even
+    // while Gemini is busy or unavailable, and goes nowhere else: not to Gemini, and not to an action
+    // that's running, so it's never kept as one of the mentor answers (which would go to Gemini, and
+    // maybe the coordinator, with the rest). The questions stop there, with nothing saved.
+    if (isCrisis(text)) {
+      chatSession.messages.push({ role: 'user', text });
+      if (typed === undefined) chatSession.draft = '';
+      closeQuickReplies();
+      showReply({ kind: 'safety', text: SAFETY_MESSAGE });
+      if (flowActive) chatFlow()?.setAside();
+      await showLatest();
+      return;
+    }
     // While finding a mentor, what they type is its answer: it goes to the action, never to Gemini.
     const flow = chatFlow();
     if (flowActive && flow?.takes(text)) {

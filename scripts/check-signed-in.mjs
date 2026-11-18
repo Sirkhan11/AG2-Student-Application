@@ -16,6 +16,8 @@
 //   carries on; a full run with Change and Find my mentor (Gemini can't run against the emulators, so
 //   it goes to the coordinator) shows the result in the chat; a mentor account isn't offered it; and
 //   the Find a mentor page still works through the same shared steps;
+// - in the chat, a message that suggests they may be at risk, during the mentor questions: the support
+//   message, the questions stop with nothing saved, and it never reaches Gemini (agent1.md A13);
 // - the GP finder keeps "Use my location" on the phone: scripts/check-gp-finder-privacy.mjs, logged in.
 // Nothing real is touched (project demo-ag2). Typed GP searches ask postcodes.io, as the page does.
 // Run from the project folder (the emulators need Java 21 or newer):
@@ -431,6 +433,29 @@ try {
   report('In the chat: the questions one at a time, focus in the message box, no Gemini; "stop" ends it, saving nothing, and the chat carries on',
     asked1 && focused && stopped && carriesOn && (await savedNothing()) && geminiCalls().length === 0, `${asked1} ${focused} ${stopped} ${carriesOn} ${geminiCalls().length} Gemini calls`);
 
+  // agent1.md A13: a message that suggests they may be at risk, typed at question 4. The support
+  // message straight away (not question 5); the questions stop with nothing saved; and the words go
+  // nowhere: not kept as an answer, and never in a request to Gemini, then or later.
+  gemini.replyWith({ calls: [{ name: 'mentor', args: { action: 'find' } }] }, 'Sure, six quick questions.');
+  next = await another('Question 1 of 6');
+  await answer('could you find me a mentor');
+  await (await next)();
+  for (const [i, reply] of ['Settling in', 'Climbing and films', 'A long walk'].entries()) {
+    next = await another(`Question ${i + 2} of 6`);
+    await answer(reply);
+    await (await next)();
+  }
+  requests.length = 0;
+  next = await another('I’ve stopped the mentor questions');
+  await answer('I want to kill myself');
+  const setAside = await (await next)();
+  const support = await evaluate(`[...document.querySelectorAll('.bubble.safety')].some((b) => b.innerText.includes('call 999 now') && b.innerText.includes('Need help now'))`);
+  const noQuestion5 = !(await evaluate(has('Question 5 of 6')));
+  const backToChat = await evaluate(`document.getElementById('chat-message').placeholder === 'Type your message...'`);
+  report('A13: "I want to kill myself" at question 4: the support message straight away, not question 5; the questions stop, nothing saved, and nothing sent to Gemini',
+    setAside && support && noQuestion5 && backToChat && (await savedNothing()) && geminiCalls().length === 0,
+    `${setAside} ${support} ${noQuestion5} ${backToChat} ${geminiCalls().length} Gemini calls`);
+
   // A full run: they ask for one now (Gemini's mentor tool with "find" starts it), then the answers,
   // Change, Find my mentor, then the coordinator (the stand-in can't summarise).
   gemini.replyWith({ calls: [{ name: 'mentor', args: { action: 'find' } }] }, 'Sure, six quick questions.');
@@ -469,6 +494,7 @@ try {
   report('In the chat: all the answers, how often, when free, Change; nothing saved or sent to Gemini until Find my mentor; then the coordinator, and the result in the chat',
     reviewAgain && nothingBefore && quietBefore && geminiFailed && result && match?.fields?.status?.stringValue === 'coordinator' && answers[2] === 'A quiet day in' && answers.length === 6,
     `${reviewAgain} ${nothingBefore} ${quietBefore} ${geminiFailed} ${result} ${match?.fields?.status?.stringValue} ${answers.length}`);
+  report('A13: the message that suggested they were at risk was never in a request to Gemini, even later in the conversation', !JSON.stringify(gemini.requests).includes('kill myself'));
 
   // A mentor account isn't offered a mentor.
   await go('/more');

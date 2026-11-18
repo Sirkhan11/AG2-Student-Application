@@ -4,6 +4,7 @@
   import { DENTIST_NATIONS, DENTIST_WORDS, nearestDentists } from '#lib/dentists/finder.js';
   import { distanceText, findADentistUrl, findAGpUrl, OTHER_NATIONS, practicePageUrl } from '#lib/gp/finder.js';
   import { GpSearch } from '#lib/gp/search.svelte.js';
+  import SafetyNote from '#lib/components/SafetyNote.svelte';
 
   /**
    * The GP or dentist finder inside the check-in chat, when Gemini shows it (its show_finder tool,
@@ -50,6 +51,9 @@
   <p class="muted small">This stays in the app: it’s never sent to Gemini. Your location stays on your phone, and a postcode or place is looked up on postcodes.io.</p>
 
   <div aria-live="polite">
+    {#if finder.crisis}
+      <SafetyNote note="What you typed wasn’t looked up or sent anywhere." />
+    {/if}
     {#if finder.note}
       <p role="alert">{finder.note}</p>
     {/if}

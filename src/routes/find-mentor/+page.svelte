@@ -2,6 +2,8 @@
   import { goto } from '$app/navigation';
   import { watchSignedIn } from '#lib/firebase/auth.js';
   import BottomNav from '#lib/components/BottomNav.svelte';
+  import SafetyNote from '#lib/components/SafetyNote.svelte';
+  import { crisisIn } from '#lib/checkin/safety.js';
   import { askCoordinator, checkBeforeMatching, matchAndSave, prepareStudent } from '#lib/matching/find-match.js';
   import { getReadyForMatching, modelReady } from '#lib/matching/model-download-browser.js';
   import {
@@ -39,6 +41,9 @@
   let meetingFrequency = $state('every two weeks');
   let availability = $state('');
   let formError = $state('');
+  // An answer, or when they're free, suggests they may be at risk: the support message, and nothing is
+  // sent to Gemini or the coordinator (safety.js; agent1.md A13). The finder refuses too.
+  let safety = $state(false);
 
   // What 'busy' says; what 'error' says, and what its Try again button does.
   let busyMessage = $state('');
@@ -94,7 +99,8 @@
   /** Gemini and embedding (once), then matching and saving. */
   async function findMentor() {
     formError = checkAnswers(answers, availability) ?? '';
-    if (formError) return;
+    safety = crisisIn(...answers, availability);
+    if (formError || safety) return;
     busyMessage = findingMessage(modelReady());
     view = 'busy';
     handle(await finder.find(answers, preferences()));
@@ -115,6 +121,11 @@
 
   /** @param {import('#lib/matching/find-mentor-steps.js').FindResult} result */
   function handle(result) {
+    if (result.status === 'safety') {
+      safety = true;
+      view = 'form';
+      return;
+    }
     if (result.status === 'saved') showOutcome(result.outcome);
     else if (result.status === 'error') showError(result.message, result.step === 'prepare' ? findMentor : result.step === 'save' ? saveAgain : askCoordinatorNow, result.error);
     else view = result.status;
@@ -210,6 +221,9 @@
           required
         />
 
+        {#if safety}
+          <SafetyNote note="Nothing you typed here has been sent or saved." />
+        {/if}
         {#if formError}
           <p class="error" role="alert">{formError}</p>
         {/if}

@@ -3,6 +3,8 @@
   import { db, getFirebaseAuth } from '#lib/firebase/client.js';
   import { CHANGE_REASONS, MAX_DETAILS_LENGTH, URGENT_REASONS } from '#lib/matching/change-reasons.js';
   import { cancelChangeRequest, loadChangeRequest, sendChangeRequest } from '#lib/matching/change-request.js';
+  import SafetyNote from '#lib/components/SafetyNote.svelte';
+  import { isCrisis } from '#lib/checkin/safety.js';
 
   /**
    * For a student with a mentor, on the Your Mentor page and in the check-in chat (YourMentorCard):
@@ -22,6 +24,10 @@
   let details = $state('');
   let busy = $state(false);
   let problem = $state('');
+  // Their words suggest they may be at risk (safety.js): the support message with the request. It's
+  // still sent, unlike everywhere else: they're choosing to tell the coordinator, perhaps about their
+  // mentor, and stopping that would silence them (agent1.md A13).
+  let safety = $state(false);
 
   const uid = () => getFirebaseAuth().currentUser?.uid ?? null;
 
@@ -44,6 +50,7 @@
     if (!id) return;
     busy = true;
     problem = '';
+    safety = isCrisis(details);
     try {
       await sendChangeRequest(db, id, reason, details);
       reason = '';
@@ -98,6 +105,9 @@
     <p class="error" role="alert">We couldn’t check for a request just now.</p>
     <button class="secondary-button" type="button" onclick={load}>Try again</button>
   {:else if view === 'sent' && request}
+    {#if safety}
+      <SafetyNote note="Your request has gone to the mentoring coordinator, but they won’t see it straight away, so if you’re in danger now, please don’t wait for them." />
+    {/if}
     <p role="status">
       You’ve asked the mentoring coordinator for a different mentor{sentOn(request.sentAt)}. They’ll be in
       touch. Only the coordinator can see your reason.

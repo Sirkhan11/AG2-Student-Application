@@ -1,3 +1,4 @@
+import { isCrisis } from '#lib/checkin/safety.js';
 import { classifySearch, nearestAnywhere, OTHER_NATIONS, placeChoices, RESULTS } from '#lib/gp/finder.js';
 
 // One search for the nearest GP surgeries, as the GP finder page and the check-in chat's GP finder
@@ -11,6 +12,8 @@ import { classifySearch, nearestAnywhere, OTHER_NATIONS, placeChoices, RESULTS }
 //   Gemini or anyone else). Searches outside the North East load the all-England list, and that
 //   request is the same for everyone.
 // - Outside England, it points to that country's own GP finder.
+// - Words that suggest someone may be at risk (safety.js) are never looked up: the page shows the
+//   support message instead, so they don't go to postcodes.io as a place (agent1.md A13).
 // Every new search, valid or not, replaces the last result and message.
 
 /**
@@ -61,6 +64,8 @@ export class GpSearch {
   results = $state(null);
   /** How many results are showing ("Show more" adds RESULTS more). */
   shown = $state(RESULTS);
+  /** What they typed suggests they may be at risk: the page shows the support message, and nothing was looked up. */
+  crisis = $state(false);
 
   /**
    * needsTyping: the location couldn't be used, so they should type instead. nearest and words: what to
@@ -76,6 +81,7 @@ export class GpSearch {
 
   /** Clears the last search's results and messages: every new search starts from nothing. */
   startOver() {
+    this.crisis = false;
     this.results = null;
     this.choices = null;
     this.nation = null;
@@ -100,6 +106,10 @@ export class GpSearch {
   /** Searches for what they typed. @param {string} query */
   async search(query) {
     this.startOver();
+    if (isCrisis(query)) {
+      this.crisis = true;
+      return;
+    }
     const wanted = classifySearch(query);
     if (wanted.kind === 'empty') {
       this.note = 'Type a postcode (NE1 8ST), a postcode district (NE6) or a place (Heaton).';

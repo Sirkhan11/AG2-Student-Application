@@ -57,8 +57,9 @@ const offline = [
     const chatFiles = [...filesIn('src/lib/checkin'), ...filesIn('src/routes/check-in')];
     for (const file of chatFiles) assert.doesNotMatch(readFileSync(file, 'utf8'), /change-request|change-reasons|mentorChangeRequests|ChangeMentorRequest/, file);
     assert.doesNotMatch(readFileSync('src/lib/components/YourMentorCard.svelte', 'utf8'), /from ['"](?:firebase\/ai|#lib\/firebase\/ai\.js|#lib\/checkin\/[^'"]+|#lib\/matching\/change-request\.js)['"]/, 'the card in the chat only shows the form');
+    // Nothing of Gemini's or the chat's, apart from the crisis check (safety.js: no network; agent1.md A13).
     for (const file of ['src/lib/matching/change-request.js', 'src/lib/matching/change-reasons.js', 'src/lib/components/ChangeMentorRequest.svelte']) {
-      assert.doesNotMatch(readFileSync(file, 'utf8'), /from ['"](?:firebase\/ai|#lib\/firebase\/ai\.js|#lib\/matching\/summarise\.js|#lib\/checkin\/[^'"]+)['"]/, file);
+      assert.doesNotMatch(readFileSync(file, 'utf8').replace("from '#lib/checkin/safety.js'", ''), /from ['"](?:firebase\/ai|#lib\/firebase\/ai\.js|#lib\/matching\/summarise\.js|#lib\/checkin\/[^'"]+)['"]/, file);
     }
     for (const call of COMPONENT.match(/console\.error\([^;]*\);/g) ?? []) assert.doesNotMatch(call, /\b(reason|details|request)\b(?!['’ ])/, call);
     assert.doesNotMatch(filesIn('scripts/fixtures').map((file) => readFileSync(file, 'utf8')).join('\n'), /mentorChangeRequests/, 'never in the repo');

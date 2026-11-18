@@ -18,6 +18,8 @@
   import { isAllowedEmail, wordingFor } from '#lib/access.js';
   import { access, loadAccess } from '#lib/access.svelte.js';
   import { NOT_UNI_EMAIL, UNI_EMAIL_MESSAGE } from '#lib/uni-email.js';
+  import SafetyNote from '#lib/components/SafetyNote.svelte';
+  import { crisisIn } from '#lib/checkin/safety.js';
 
   // Signing up in two steps, as the group's wireframe: step 1, the account (email, password and
   // confirm password); step 2, about you (name, home or international, arrival date, course,
@@ -45,6 +47,9 @@
   let wantsMentor = $state(false);
 
   let error = $state('');
+  // Their name, course or an interest of their own suggests they may be at risk: the support message,
+  // and it isn't kept or saved, as the chat would tell Gemini them (safety.js; agent1.md A13).
+  let safety = $state(false);
   let loading = $state(false);
   // The email box's label and placeholder, and the testing line, follow the access switch (access.js),
   // read as the page opens.
@@ -87,7 +92,8 @@
   function addOwnInterest() {
     const word = ownInterest.trim().slice(0, MAX_INTEREST_LENGTH).trim();
     ownInterest = '';
-    if (!word || full || interests.some((known) => known.toLowerCase() === word.toLowerCase())) return;
+    safety = crisisIn(word);
+    if (safety || !word || full || interests.some((known) => known.toLowerCase() === word.toLowerCase())) return;
     interests = [...interests, word];
   }
 
@@ -112,6 +118,8 @@
   /** Step 2's Finish (or Save, when logged in). */
   async function finish() {
     error = '';
+    safety = crisisIn(name, course, ...interests);
+    if (safety) return;
     const problem = aboutYouProblem({ name, studentType, course, interests });
     if (problem) {
       error = problem;
@@ -249,6 +257,9 @@
         Match me with a second- or third-year mentor (optional)
       </label>
 
+      {#if safety}
+        <SafetyNote note="Nothing you typed here has been saved or sent." />
+      {/if}
       {#if error}
         <p class="error" role="alert">{error}</p>
       {/if}

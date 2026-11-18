@@ -8,6 +8,8 @@
   import { isAllowedEmail, wordingFor } from '#lib/access.js';
   import { access, loadAccess } from '#lib/access.svelte.js';
   import { NOT_UNI_EMAIL, UNI_EMAIL_MESSAGE } from '#lib/uni-email.js';
+  import SafetyNote from '#lib/components/SafetyNote.svelte';
+  import { AT_RISK, crisisIn } from '#lib/checkin/safety.js';
 
   let name = $state('');
   let displayName = $state('');
@@ -24,6 +26,9 @@
 
   let status = $state('');
   let error = $state('');
+  // Something typed suggests they may be at risk: the support message, and nothing is made or sent
+  // (safety.js; agent1.md A13). registerMentor refuses too.
+  let safety = $state(false);
   let done = $state(false);
   // The email box's label and placeholder follow the access switch (access.js), read as the page opens.
   let words = $derived(wordingFor(access.uniOnly));
@@ -37,6 +42,8 @@
 
   async function register() {
     error = '';
+    safety = crisisIn(name, displayName, course, ...answers, availability);
+    if (safety) return;
     // Checked before anything slow happens, so the mentor finds out straight away.
     const blank = findBlankAnswer(answers);
     if (blank !== -1) {
@@ -71,7 +78,9 @@
     } catch (err) {
       const code = /** @type {{ code?: string }} */ (err).code;
       // Gemini runs before the account is made, so for its errors nothing has been saved yet.
-      if (code === NOT_UNI_EMAIL) {
+      if (code === AT_RISK) {
+        safety = true;
+      } else if (code === NOT_UNI_EMAIL) {
         error = UNI_EMAIL_MESSAGE;
       } else if (code === 'auth/email-already-in-use') {
         error = "We couldn't create an account with that email. If you already have one, log in instead.";
@@ -163,6 +172,9 @@
         I'm 18 or over
       </label>
 
+      {#if safety}
+        <SafetyNote note="Nothing you typed here has been sent or saved, and no account has been made." />
+      {/if}
       {#if error}
         <p class="error" role="alert">{error}</p>
       {/if}

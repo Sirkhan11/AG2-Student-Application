@@ -2,6 +2,7 @@
   import { page } from '$app/state';
   import BackLink from '#lib/components/BackLink.svelte';
   import BottomNav from '#lib/components/BottomNav.svelte';
+  import SafetyNote from '#lib/components/SafetyNote.svelte';
   import { HOW_TO } from '#lib/checklist/how-to.js';
   import { REGISTERING } from '#lib/nhs/guide.js';
   import { newPatientsUrl } from '#lib/dentists/england.js';
@@ -86,6 +87,9 @@
     </p>
 
     <div aria-live="polite">
+      {#if finder.crisis}
+        <SafetyNote note="What you typed wasn’t looked up or sent anywhere." />
+      {/if}
       {#if finder.note}
         <p class="note" role="alert">{finder.note}</p>
       {/if}
@@ -243,6 +247,9 @@
     </p>
 
     <div aria-live="polite">
+      {#if dentists.crisis}
+        <SafetyNote note="What you typed wasn’t looked up or sent anywhere." />
+      {/if}
       {#if dentists.note}
         <p class="note" role="alert">{dentists.note}</p>
       {/if}

@@ -10,6 +10,7 @@ import { questions } from '#lib/matching/questions.js';
 import { findBlankAnswer } from '#lib/matching/answers.js';
 import { hasMentorProfile } from '#lib/matching/mentor-account.js';
 import { withContact } from '#lib/matching/mentor-contact.js';
+import { AT_RISK, crisisIn } from '#lib/checkin/safety.js';
 import { MAX_WANTS, summariseAnswers } from '#lib/matching/summarise.js';
 import { summaryToSave } from '#lib/matching/summary-prompt.js';
 import { embedSummaries } from '#lib/matching/compare-items.js';
@@ -158,6 +159,10 @@ export async function registerMentor(profile, login, waiting = waitingSignUp()) 
   // Safety nets: the page checks these first, but bad values must never be saved, whoever calls this.
   if (findBlankAnswer(answers) !== -1) throw new Error('Every answer needs some text.');
   if (!isValidMaxStudents(profile.maxStudents)) throw new Error('maxStudents must be a whole number from 1 to 5.');
+  // Words that suggest they may be at risk go nowhere: not to Gemini, and not to the coordinator (safety.js).
+  if (crisisIn(profile.name, profile.displayName, profile.course, ...answers, profile.availability)) {
+    throw Object.assign(new Error('Something typed suggests they may be at risk, so nothing was sent.'), { code: AT_RISK });
+  }
 
   const summary = await summariseAnswers(answers);
   // Every question would be skipped, so this mentor could never be matched with anyone.
