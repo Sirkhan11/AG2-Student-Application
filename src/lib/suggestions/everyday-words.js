@@ -250,7 +250,12 @@ export const NOTHING = Object.freeze([
   'dont know', 'no idea', 'not yet', 'not now', 'no worries', 'no problem', 'not bad', 'not much', 'no thanks', 'no thank you',
   'dont mind', 'not at all', 'work out how', 'working out how', 'work out what', 'working out what', 'work out where',
   'good food', 'nice food', 'no plans yet', 'not long', 'no rush', 'meal plan', 'party popper', 'book a', 'book an',
-  'book in', 'book my', 'book the', 'book onto', 'book on', 'book it', 'book one', 'book ticket', 'book tickets'
+  'book in', 'book my', 'book the', 'book onto', 'book on', 'book it', 'book one', 'book ticket', 'book tickets',
+  // Asking, not ruling out (British English): "can you not check if there's a gym society?", "is
+  // there not a chess club?". "Can you not suggest sport" still rules sport out: that's "please don't".
+  'can you not check', 'can you not find', 'can you not look', 'can you not see', 'can you not search',
+  'could you not check', 'could you not find', 'could you not look', 'could you not see', 'could you not search',
+  'is there not', 'are there not', 'is there no', 'are there no', 'why not', 'or not', 'whether or not'
 ]);
 
 /**

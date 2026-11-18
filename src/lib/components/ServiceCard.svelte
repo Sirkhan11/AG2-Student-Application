@@ -29,10 +29,11 @@
     flex-direction: column;
     gap: 6px;
     padding: 12px;
-    border: 1px solid var(--border);
-    border-radius: 14px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-m);
+    box-shadow: var(--shadow-1);
     background: #fff;
-    color: #172630;
+    color: var(--ink);
   }
 
   h3 {
@@ -51,8 +52,8 @@
     justify-content: center;
     min-height: 44px;
     padding: 8px 12px;
-    border: 1px solid var(--border);
-    border-radius: 10px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-s);
     background: #fff;
     font-size: 14px;
   }

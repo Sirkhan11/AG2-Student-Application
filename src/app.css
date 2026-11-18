@@ -1,14 +1,87 @@
+/* AG2's look: calm and clear. Neutral surfaces, one indigo accent used sparingly, hairline borders
+   and the phone's own font, so it feels like a proper app; the life is in the motion, which springs.
+   Every page uses these tokens and classes, so they change together.
+   Motion: transform and opacity only, so it stays smooth on a phone. Anything that moves is inside
+   prefers-reduced-motion: no-preference; with Reduce Motion on, things fade or appear instead. */
 
 :root {
-  font-family: Arial, Helvetica, sans-serif;
-  color: #172630;
-  background: #f5f8f7;
+  /* Neutrals */
+  --ink: #15151c;
+  --ink-2: #3f3f4b;
+  --ink-3: #6b6b78;
+  --paper: #f6f6f8;
+  --paper-2: #efeff3;
+  --card: #ffffff;
+  --line: #e5e5eb;
+  --panel: #f6f6f9;
 
-  --primary: #1764a1;
-  --background: #f5f8f7;
+  /* The accent (still called violet in the code), used sparingly: actions, links, the active tab. */
+  --violet: #4f46e5;
+  --violet-press: #4338ca;
+  --violet-soft: #eef0ff;
+  --violet-ink: #3b33c4;
+
+  /* Colours with a meaning: done, a warning, danger. Coral, sun and sky also colour the confetti. */
+  --mint: #16a34a;
+  --mint-press: #15803d;
+  --mint-soft: #ecfdf3;
+  --mint-ink: #166534;
+  --sun: #f59e0b;
+  --sun-soft: #fff7e8;
+  --sun-ink: #92400e;
+  --coral: #f97362;
+  --coral-press: #dc4a37;
+  --coral-soft: #fff1ef;
+  --sky: #38bdf8;
+  --danger: #dc2626;
+  --danger-soft: #fef2f2;
+  --danger-line: #f6caca;
+  --danger-ink: #991b1b;
+
+  /* The first names for these, still used by some components. */
+  --primary: var(--violet);
+  --background: var(--paper);
   --white: #ffffff;
-  --border: #dce5e9;
-  --danger: #c93d35;
+  --border: var(--line);
+
+  /* Depth: barely there. */
+  --shadow-1: 0 1px 2px rgb(16 16 24 / 0.04);
+  --shadow-2: 0 1px 2px rgb(16 16 24 / 0.04), 0 4px 14px rgb(16 16 24 / 0.05);
+  --shadow-3: 0 8px 28px rgb(16 16 24 / 0.12);
+
+  /* Shape */
+  --radius-s: 10px;
+  --radius-m: 14px;
+  --radius-l: 18px;
+  --radius-pill: 999px;
+
+  /* Type: the phone's own font (San Francisco on an iPhone, Roboto on Android), so nothing downloads. */
+  --font-display: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-body: var(--font-display);
+
+  /* The bottom bar's height, above the phone's home bar: pages leave room for it. */
+  --nav-height: 58px;
+
+  /* Motion. Springs as CSS easing curves (a damped spring's path, sampled): spring overshoots a
+     little (8%), bounce more (20%), for taps and celebrations. */
+  --ease-spring: linear(0, 0.028, 0.099, 0.198, 0.314, 0.435, 0.553, 0.664, 0.763, 0.848, 0.919, 0.975, 1.018, 1.048, 1.068, 1.079, 1.083, 1.082, 1.077, 1.069, 1.059, 1.049, 1.039, 1.03, 1.021, 1.014, 1.008, 1.003, 0.999, 0.996, 1);
+  --ease-bounce: linear(0, 0.052, 0.184, 0.362, 0.556, 0.743, 0.906, 1.035, 1.127, 1.182, 1.204, 1.2, 1.178, 1.143, 1.104, 1.065, 1.029, 1.001, 0.979, 0.966, 0.959, 0.958, 0.962, 0.968, 0.976, 0.984, 0.992, 0.998, 1.003, 1.006, 1);
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --dur-tap: 110ms;
+  --dur-1: 180ms;
+  --dur-2: 320ms;
+  --dur-3: 480ms;
+  --dur-4: 640ms;
+
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--ink);
+  background: var(--paper);
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+  /* Radio buttons, checkboxes and sliders in the accent. */
+  accent-color: var(--violet);
 }
 
 * {
@@ -18,6 +91,7 @@
 body {
   margin: 0;
   min-width: 320px;
+  background: var(--paper);
 }
 
 button,
@@ -25,6 +99,7 @@ input,
 textarea,
 select {
   font: inherit;
+  color: inherit;
 }
 
 button {
@@ -32,8 +107,27 @@ button {
 }
 
 a {
-  color: var(--primary);
+  color: var(--violet-ink);
   text-decoration: none;
+  font-weight: 600;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+:focus-visible {
+  outline: 2px solid var(--violet);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+::selection {
+  background: var(--violet-soft);
 }
 
 .page {
@@ -41,59 +135,120 @@ a {
   max-width: 480px;
   min-height: 100dvh;
   margin: 0 auto;
-  padding: 24px 20px 100px;
-  background: var(--white);
+  padding: 20px 16px calc(var(--nav-height) + 48px + env(safe-area-inset-bottom));
 }
 
 .page h1 {
-  font-size: 26px;
-  margin: 0 0 12px;
+  font-size: 28px;
+  font-weight: 700;
+  margin: 0 0 8px;
 }
 
 .page h2 {
   font-size: 19px;
+  font-weight: 650;
 }
 
 .muted {
-  color: #647780;
+  color: var(--ink-3);
   font-size: 14px;
 }
 
 .card {
-  background: #fff;
-  border: 1px solid var(--border);
-  border-radius: 14px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-l);
+  box-shadow: var(--shadow-1);
   padding: 16px;
   margin: 12px 0;
+}
+
+/* Buttons: flat, with a quick springy press. */
+.primary-button,
+.secondary-button {
+  -webkit-user-select: none;
+  user-select: none;
+  touch-action: manipulation;
+  text-align: center;
+  font-weight: 600;
+  transition:
+    transform var(--dur-2) var(--ease-spring),
+    background-color var(--dur-1) ease,
+    border-color var(--dur-1) ease;
 }
 
 .primary-button {
   display: block;
   width: 100%;
-  padding: 13px;
+  padding: 13px 18px;
   border: 0;
-  border-radius: 10px;
-  background: var(--primary);
+  border-radius: var(--radius-m);
+  background: var(--violet);
   color: white;
-  font-weight: bold;
-  text-align: center;
+  font-size: 16px;
 }
 
 .secondary-button {
-  padding: 10px 14px;
-  border: 1px solid var(--border);
-  border-radius: 9px;
+  display: inline-block;
+  padding: 9px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-s);
   background: white;
-  color: var(--primary);
+  color: var(--violet-ink);
+  font-size: 15px;
+}
+
+.primary-button:active:not(:disabled),
+.secondary-button:active:not(:disabled) {
+  transform: scale(0.97);
+  transition-duration: var(--dur-tap);
+}
+
+.primary-button:active:not(:disabled) {
+  background: var(--violet-press);
+}
+
+.secondary-button:active:not(:disabled) {
+  background: var(--panel);
+}
+
+@media (hover: hover) {
+  .primary-button:hover:not(:disabled) {
+    background: var(--violet-press);
+  }
+
+  .secondary-button:hover:not(:disabled) {
+    border-color: #d4d4dc;
+  }
+}
+
+.primary-button:disabled,
+.secondary-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
 }
 
 .field {
   display: block;
   width: 100%;
-  padding: 12px;
-  margin: 8px 0 16px;
-  border: 1px solid #cbd7dd;
-  border-radius: 9px;
+  padding: 12px 14px;
+  margin: 6px 0 16px;
+  border: 1px solid #d9d9e0;
+  border-radius: var(--radius-m);
+  background: white;
+  transition:
+    border-color var(--dur-1) ease,
+    box-shadow var(--dur-1) ease;
+}
+
+.field:focus {
+  outline: none;
+  border-color: var(--violet);
+  box-shadow: 0 0 0 3px rgb(79 70 229 / 0.15);
+}
+
+label {
+  font-weight: 600;
 }
 
 .error {
@@ -101,7 +256,18 @@ a {
 }
 
 .success {
-  color: #137c50;
+  color: var(--mint-press);
+}
+
+/* The shared Log out button (LogoutButton.svelte) wherever it's placed: a quiet secondary button. */
+.logout-slot button {
+  padding: 9px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-s);
+  background: white;
+  color: var(--ink-2);
+  font-weight: 600;
+  font-size: 15px;
 }
 
 /* Read out by screen readers but not shown, such as "(opens in a new tab)" on links. */
@@ -118,44 +284,174 @@ a {
 }
 
 @media (min-width: 600px) {
-  body {
-    background: #e8f0ee;
-  }
-
   .page {
-    box-shadow: 0 0 30px #00000010;
+    padding-top: 36px;
   }
 }
 
-/* Opening the chat from Home (see src/lib/page-transitions.js): Home fades away almost at once,
-   leaving a plain white screen, and the chat is pulled down over it, slowly and smoothly. The bottom
-   bar has its own view-transition-name (BottomNav.svelte), so it stays still while the page moves.
-   Nothing moves when the phone is set to reduce motion. */
+/* Each page's parts arrive one after another, rising a little and settling with a spring. Only on
+   arrival: nothing loops, and the bottom bar stays put. */
 @media (prefers-reduced-motion: no-preference) {
-  :root[data-page-transition='chat-open']::view-transition {
-    background: #ffffff;
+  .page > :not(.bottom-nav):not(script):not(style) {
+    animation: ag2-rise var(--dur-3) var(--ease-spring) both;
   }
 
-  :root[data-page-transition='chat-open']::view-transition-old(root) {
+  .page > :nth-child(2) {
+    animation-delay: 40ms;
+  }
+
+  .page > :nth-child(3) {
+    animation-delay: 80ms;
+  }
+
+  .page > :nth-child(4) {
+    animation-delay: 120ms;
+  }
+
+  .page > :nth-child(5) {
+    animation-delay: 160ms;
+  }
+
+  .page > :nth-child(n + 6) {
+    animation-delay: 200ms;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page > :not(.bottom-nav) {
+    animation: ag2-appear var(--dur-1) ease both;
+  }
+
+  .primary-button,
+  .secondary-button {
+    transition: background-color var(--dur-1) ease;
+  }
+
+  .primary-button:active:not(:disabled),
+  .secondary-button:active:not(:disabled) {
+    transform: none;
+  }
+}
+
+@keyframes ag2-rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.985);
+  }
+}
+
+@keyframes ag2-appear {
+  from {
+    opacity: 0;
+  }
+}
+
+/* Page changes (src/lib/page-transitions.js starts them, with data-page-transition on the root).
+   The bottom bar has its own view-transition-name, so it stays still; its highlight (nav-pill)
+   glides to the new tab on a spring. */
+::view-transition-group(nav-pill) {
+  animation-duration: var(--dur-3);
+  animation-timing-function: var(--ease-spring);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  /* The chat grows out of where they tapped, in a circle, over the page they were on. */
+  :root[data-page-transition='chat']::view-transition-old(root) {
+    animation: none;
+  }
+
+  :root[data-page-transition='chat']::view-transition-new(root) {
+    animation: ag2-reveal 620ms var(--ease-out) both;
+  }
+
+  /* Between the bar's pages: a quick crossfade, the new page rising a touch. */
+  :root[data-page-transition='tab']::view-transition-old(root) {
+    animation: 140ms ease-out both ag2-fade-away;
+  }
+
+  :root[data-page-transition='tab']::view-transition-new(root) {
+    animation: var(--dur-2) var(--ease-out) 40ms both ag2-fade-rise;
+  }
+
+  /* Deeper: in from the right on a spring; back: the other way. */
+  :root[data-page-transition='forward']::view-transition-old(root) {
+    animation: var(--dur-2) var(--ease-out) both ag2-out-left;
+  }
+
+  :root[data-page-transition='forward']::view-transition-new(root) {
+    animation: var(--dur-3) var(--ease-spring) both ag2-in-right;
+  }
+
+  :root[data-page-transition='back']::view-transition-old(root) {
+    animation: var(--dur-2) var(--ease-out) both ag2-out-right;
+  }
+
+  :root[data-page-transition='back']::view-transition-new(root) {
+    animation: var(--dur-3) var(--ease-spring) both ag2-in-left;
+  }
+}
+
+/* With Reduce Motion on: every page change is a short fade, and nothing moves. */
+@media (prefers-reduced-motion: reduce) {
+  :root[data-page-transition]::view-transition-old(root) {
     animation: 120ms ease-out both ag2-fade-away;
   }
 
-  :root[data-page-transition='chat-open']::view-transition-new(root) {
-    animation: 800ms cubic-bezier(0.32, 0.72, 0, 1) 60ms both ag2-slide-down;
+  :root[data-page-transition]::view-transition-new(root) {
+    animation: 160ms ease-out both ag2-appear;
+  }
+
+  ::view-transition-group(nav-pill) {
+    animation-duration: 1ms;
   }
 }
 
-@keyframes ag2-slide-down {
+@keyframes ag2-reveal {
   from {
-    transform: translateY(-100%);
+    clip-path: circle(0 at var(--reveal-x, 50%) var(--reveal-y, 90%));
   }
   to {
-    transform: translateY(0);
+    clip-path: circle(150vmax at var(--reveal-x, 50%) var(--reveal-y, 90%));
   }
 }
 
 @keyframes ag2-fade-away {
   to {
     opacity: 0;
+  }
+}
+
+@keyframes ag2-fade-rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+
+@keyframes ag2-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(28%);
+  }
+}
+
+@keyframes ag2-out-left {
+  to {
+    opacity: 0;
+    transform: translateX(-12%);
+  }
+}
+
+@keyframes ag2-in-left {
+  from {
+    opacity: 0;
+    transform: translateX(-28%);
+  }
+}
+
+@keyframes ag2-out-right {
+  to {
+    opacity: 0;
+    transform: translateX(12%);
   }
 }

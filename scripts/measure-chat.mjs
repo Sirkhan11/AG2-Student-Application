@@ -2,7 +2,9 @@
 // every time, so each case is asked several times and counts as passing when at least 80% of its runs
 // do what we'd expect (4 of 5, or 3 of 3). Every request goes through the chat's own code (chat-turns.js:
 // the modes, the app's short list, the instructions, the reply shapes and the checks on each reply),
-// with Gemini over REST, so what's measured is what a student would see.
+// and on to Gemini through the Firebase SDK, exactly as the app sends it (chat-over-rest.mjs), so
+// what's measured is what a student would see. (Until 18 November the requests were rebuilt from two
+// fields instead, so the replies saved before then were asked a little differently from the app.)
 //
 // The groups (made-up students only, no real people):
 // - suggestions: one student from each fixture group (scripts/fixtures/matching-cases.json) says what
@@ -548,8 +550,24 @@ const neverJustALink = (turns) => [
 /** The question about a task, with Yes and Not yet, somewhere in these turns. @param {Turn[]} turns @param {string} question */
 const asksAbout = (turns, question) => talkLines(turns).some((line) => line.text.trim().endsWith(question) && line.quick?.map((reply) => reply.label).join() === 'Yes,Not yet');
 
+/** Gym and fitness suggestions, for a gym society that doesn't exist as one. */
+const GYM = ['Sport', 'Olympic Weightlifting', 'Powerlifting', 'Pilates', 'Yoga'];
+
 /** @type {{ id: string, why: string, student: string, talk: NonNullable<Case['talk']>, judge: (turns: Turn[]) => string[] }[]} */
 const CHECKLIST = [
+  {
+    id: 'checklist: is there a gym society',
+    why: 'Thomas on the live site: "Not yet" to joining a society, then "can you not check if there is a gym society?" shows gym cards, never "I don’t know"',
+    student: 'checklist, nothing done',
+    talk: [{ from: 'society' }, { say: 'not yet' }, { say: 'can you not check if there is a gym society?' }],
+    judge: (turns) => {
+      const after = turns.slice(turns.findIndex((turn) => turn.ask === 'can you not check if there is a gym society?'));
+      return [
+        after.some((turn) => turn.shown.links.some((link) => link.kind && GYM.includes(link.label))) ? '' : 'showed no gym cards',
+        after.some((turn) => /\b(?:don(?:'|’)?t|do not) know\b/i.test(turn.shown.text)) ? 'said it doesn’t know' : ''
+      ];
+    }
+  },
   {
     id: 'checklist: one by one',
     why: '"can you help me do them one by one?" starts with the first question, not a page link or a card',

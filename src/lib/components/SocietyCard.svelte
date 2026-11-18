@@ -115,10 +115,11 @@
     flex-direction: column;
     gap: 8px;
     padding: 12px;
-    border: 1px solid var(--border);
-    border-radius: 14px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-m);
+    box-shadow: var(--shadow-1);
     background: #fff;
-    color: #172630;
+    color: var(--ink);
   }
 
   .top {
@@ -131,9 +132,9 @@
     flex: none;
     width: 48px;
     height: 48px;
-    border-radius: 10px;
+    border-radius: var(--radius-s);
     object-fit: cover;
-    background: #eaf2f8;
+    background: var(--violet-soft);
   }
 
   .initials {
@@ -193,9 +194,9 @@
     align-items: center;
     min-height: 40px;
     padding: 6px 12px;
-    border: 1px solid var(--border);
-    border-radius: 20px;
-    background: #f1f6f9;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-l);
+    background: var(--panel);
     font-size: 14px;
   }
 
@@ -213,7 +214,7 @@
     justify-content: center;
     min-height: 44px;
     padding: 8px 12px;
-    border-radius: 10px;
+    border-radius: var(--radius-s);
     font-size: 14px;
     text-align: center;
   }
@@ -225,7 +226,7 @@
   }
 
   .more {
-    border: 1px solid var(--border);
+    border: 1px solid var(--line);
     background: #fff;
   }
 </style>

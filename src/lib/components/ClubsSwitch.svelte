@@ -19,8 +19,8 @@
     gap: 4px;
     margin: 0 0 16px;
     padding: 4px;
-    border-radius: 12px;
-    background: #eaf2f8;
+    border-radius: var(--radius-s);
+    background: var(--violet-soft);
   }
 
   .switch a {
@@ -34,7 +34,7 @@
 
   .switch a.active {
     background: #fff;
-    box-shadow: 0 1px 3px #00000022;
-    color: #172630;
+    box-shadow: var(--shadow-1);
+    color: var(--ink);
   }
 </style>

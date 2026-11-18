@@ -26,10 +26,11 @@
 <style>
   .contacts-card {
     padding: 12px;
-    border: 1px solid var(--border);
-    border-radius: 14px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-m);
+    box-shadow: var(--shadow-1);
     background: #fff;
-    color: #172630;
+    color: var(--ink);
   }
 
   .label {

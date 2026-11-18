@@ -438,13 +438,14 @@ async function inTheBrowser(where) {
       confirmed && saved && !said.some((text) => /I have ticked/.test(text)) && !(await page.evaluate(`Boolean(document.querySelector('.messages a[href="/checklist"]'))`))
         && (await page.evaluate(`[...document.querySelectorAll('.ticked button')].some((b) => b.textContent.trim() === 'Undo' && !b.disabled)`)),
       `confirmed ${confirmed}, saved ${saved}`);
-    await page.evaluate(`([...document.querySelectorAll('.ticked button')].filter((b) => b.textContent.trim() === 'Undo').at(-1).click(), true)`);
+    await page.evaluate(`([...document.querySelectorAll('.ticked button')].filter((b) => b.textContent.trim() === 'Undo').at(-1)?.click(), true)`);
     let undone = false;
     for (let i = 0; i < 40 && !undone; i++) {
       undone = (await societyDone()) === false;
       if (!undone) await sleep(250);
     }
     report('Undo puts it back in Firestore', undone && (await page.waitFor(has('Okay, I’ve put that back as it was.'))));
+    report('Gemini would accept every request the app sent: no field it doesn’t know (on 18 November two extra fields made it refuse every ordinary message)', gemini.refused().length === 0, JSON.stringify(gemini.refused()));
   } finally {
     await page.close();
     app.stop();

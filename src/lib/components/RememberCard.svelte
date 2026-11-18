@@ -64,10 +64,11 @@
 <style>
   .note-card {
     padding: 12px;
-    border: 1px solid var(--border);
-    border-radius: 14px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-m);
+    box-shadow: var(--shadow-1);
     background: #fff;
-    color: #172630;
+    color: var(--ink);
   }
 
   .note-card p {
@@ -76,7 +77,7 @@
 
   .label,
   .small {
-    color: #647780;
+    color: var(--ink-3);
     font-size: 14px;
   }
 
@@ -85,7 +86,7 @@
   }
 
   .problem {
-    color: #8a1c13;
+    color: var(--danger-ink);
   }
 
   .actions {

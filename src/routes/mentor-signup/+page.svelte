@@ -157,5 +157,6 @@
         {status || 'Sign up as a mentor'}
       </button>
     </form>
+    <p class="muted">What AG2 keeps about you, and what Google’s Gemini AI is told: <a href="/privacy">Privacy</a>.</p>
   {/if}
 </main>

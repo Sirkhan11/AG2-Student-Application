@@ -22,7 +22,7 @@ import { dirname, join } from 'node:path';
 const SPACING_MS = 5_000;
 /** How many Gemini requests the scripts may send in a day, together. */
 export const DAILY_BUDGET = 300;
-const BUDGET_FILE = join(homedir(), '.cache', 'ag2-student-app', 'gemini-requests.json');
+export const BUDGET_FILE = join(homedir(), '.cache', 'ag2-student-app', 'gemini-requests.json');
 /** How long one request may take before it counts as no answer and is tried again. */
 const TIMEOUT_MS = 60_000;
 const NEEDED = ['VITE_FIREBASE_API_KEY', 'VITE_FIREBASE_PROJECT_ID', 'VITE_FIREBASE_APP_ID', 'VITE_APPCHECK_DEBUG_TOKEN'];
@@ -114,9 +114,82 @@ export function geminiFromEnv(env) {
     return /** @type {string} */ (token);
   }
 
+  /**
+   * Sends one generateContent request body, exactly as given, and returns Gemini's answer as it came
+   * (its HTTP status and body), after the waits and retries below. A refused request (such as a 400
+   * for a field Gemini doesn't accept) comes back as it is, so the caller sees what the app would.
+   * @param {string} model
+   * @param {string} body the request's JSON, as the Firebase SDK made it
+   * @returns {Promise<{ status: number, text: string }>}
+   */
+  async function send(model, body) {
+    for (let attempt = 1; ; attempt++) {
+      if (requestsOn(budgetFile, today()) >= budget) {
+        console.log(`\nStopped: the scripts have sent ${budget} Gemini requests today, the daily budget, so nothing more is sent.`);
+        console.log('It starts again tomorrow. To go over it on purpose for one run, set GEMINI_SCRIPT_BUDGET=<n>.');
+        process.exit(1);
+      }
+      await wait(Math.max(0, last + SPACING_MS - Date.now()));
+      last = Date.now();
+      countRequest(budgetFile, today());
+      let status;
+      let text;
+      try {
+        const response = await fetch(`https://firebasevertexai.googleapis.com/v1beta/projects/${projectId}/models/${model}:generateContent`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-goog-api-key': apiKey,
+            'X-Firebase-AppCheck': await appCheckToken(),
+            'X-Firebase-Appid': appId
+          },
+          body,
+          // Covers reading the reply too, so a reply that stops halfway also counts as no answer.
+          signal: AbortSignal.timeout(TIMEOUT_MS)
+        });
+        status = response.status;
+        text = await response.text();
+      } catch (err) {
+        // No answer in time, or no connection: try again like a busy answer. Anything else (such
+        // as App Check refusing the debug token) is a real problem, so it's thrown straight away.
+        const name = /** @type {Error} */ (err).name;
+        if ((name === 'TimeoutError' || name === 'TypeError') && attempt <= 4) {
+          const why = name === 'TimeoutError' ? `didn't answer within ${TIMEOUT_MS / 1000} seconds` : "couldn't be reached";
+          console.log(`      Gemini ${why}: waiting ${20 * attempt} seconds, then trying again.`);
+          await wait(20_000 * attempt);
+          continue;
+        }
+        throw err;
+      }
+      if (status === 402) {
+        console.log("\nStopped: Gemini's prepaid credit has run out (HTTP 402), so nothing more is sent and nothing is tried again.");
+        console.log('Top up the credit, then run this again.');
+        process.exit(1);
+      }
+      if (status === 429 && attempt <= 3) {
+        console.log('      Too many requests: waiting a minute, then trying again.');
+        await wait(65_000);
+        continue;
+      }
+      if ((status === 500 || status === 503) && attempt <= 4) {
+        console.log(`      Gemini is busy (HTTP ${status}): waiting ${20 * attempt} seconds, then trying again.`);
+        await wait(20_000 * attempt);
+        continue;
+      }
+      if (status >= 200 && status < 300) {
+        const usageMetadata = JSON.parse(text).usageMetadata;
+        if (usageMetadata) usage.push(usageMetadata);
+      }
+      return { status, text };
+    }
+  }
+
   return {
+    /** The project's public Firebase settings, for a Firebase SDK pointed at Gemini through send(). */
+    config: { apiKey, projectId, appId },
     /** The token counts of every reply so far (usageMetadata), oldest first. */
     usage,
+    send,
     /**
      * Sends one generateContent request, shaped as the Firebase SDK sends it, and returns the reply text.
      * @param {string} model
@@ -124,64 +197,10 @@ export function geminiFromEnv(env) {
      * @returns {Promise<string>}
      */
     async generate(model, body) {
-      for (let attempt = 1; ; attempt++) {
-        if (requestsOn(budgetFile, today()) >= budget) {
-          console.log(`\nStopped: the scripts have sent ${budget} Gemini requests today, the daily budget, so nothing more is sent.`);
-          console.log('It starts again tomorrow. To go over it on purpose for one run, set GEMINI_SCRIPT_BUDGET=<n>.');
-          process.exit(1);
-        }
-        await wait(Math.max(0, last + SPACING_MS - Date.now()));
-        last = Date.now();
-        countRequest(budgetFile, today());
-        let status;
-        let text;
-        try {
-          const response = await fetch(`https://firebasevertexai.googleapis.com/v1beta/projects/${projectId}/models/${model}:generateContent`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'x-goog-api-key': apiKey,
-              'X-Firebase-AppCheck': await appCheckToken(),
-              'X-Firebase-Appid': appId
-            },
-            body: JSON.stringify(body),
-            // Covers reading the reply too, so a reply that stops halfway also counts as no answer.
-            signal: AbortSignal.timeout(TIMEOUT_MS)
-          });
-          status = response.status;
-          text = await response.text();
-        } catch (err) {
-          // No answer in time, or no connection: try again like a busy answer. Anything else (such
-          // as App Check refusing the debug token) is a real problem, so it's thrown straight away.
-          const name = /** @type {Error} */ (err).name;
-          if ((name === 'TimeoutError' || name === 'TypeError') && attempt <= 4) {
-            const why = name === 'TimeoutError' ? `didn't answer within ${TIMEOUT_MS / 1000} seconds` : "couldn't be reached";
-            console.log(`      Gemini ${why}: waiting ${20 * attempt} seconds, then trying again.`);
-            await wait(20_000 * attempt);
-            continue;
-          }
-          throw err;
-        }
-        if (status === 402) {
-          console.log("\nStopped: Gemini's prepaid credit has run out (HTTP 402), so nothing more is sent and nothing is tried again.");
-          console.log('Top up the credit, then run this again.');
-          process.exit(1);
-        }
-        if (status === 429 && attempt <= 3) {
-          console.log('      Too many requests: waiting a minute, then trying again.');
-          await wait(65_000);
-          continue;
-        }
-        if ((status === 500 || status === 503) && attempt <= 4) {
-          console.log(`      Gemini is busy (HTTP ${status}): waiting ${20 * attempt} seconds, then trying again.`);
-          await wait(20_000 * attempt);
-          continue;
-        }
-        if (status < 200 || status >= 300) throw new Error(`Gemini returned HTTP ${status}: ${text.slice(0, 200)}`);
-        const reply = JSON.parse(text);
-        if (reply.usageMetadata) usage.push(reply.usageMetadata);
-        return reply.candidates?.[0]?.content?.parts?.map((/** @type {{ text?: string }} */ part) => part.text ?? '').join('') ?? '';
-      }
+      const { status, text } = await send(model, JSON.stringify(body));
+      if (status < 200 || status >= 300) throw new Error(`Gemini returned HTTP ${status}: ${text.slice(0, 200)}`);
+      const reply = JSON.parse(text);
+      return reply.candidates?.[0]?.content?.parts?.map((/** @type {{ text?: string }} */ part) => part.text ?? '').join('') ?? '';
     }
   };
 }

@@ -93,9 +93,9 @@
     align-items: center;
     min-height: 40px;
     padding: 6px 12px;
-    border: 1px solid var(--border);
-    border-radius: 20px;
-    background: #f1f6f9;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-l);
+    background: var(--panel);
     font-size: 14px;
   }
 
@@ -129,9 +129,9 @@
     display: inline-block;
     margin-left: 4px;
     padding: 1px 8px;
-    border-radius: 10px;
-    background: #fff3cd;
-    color: #6b4e00;
+    border-radius: var(--radius-s);
+    background: var(--sun-soft);
+    color: var(--sun-ink);
     font-size: 12px;
     font-weight: bold;
   }

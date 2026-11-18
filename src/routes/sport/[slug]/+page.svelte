@@ -120,9 +120,9 @@
     flex: none;
     width: 88px;
     height: 88px;
-    border-radius: 14px;
+    border-radius: var(--radius-m);
     object-fit: cover;
-    background: #eaf2f8;
+    background: var(--violet-soft);
   }
 
   .initials {

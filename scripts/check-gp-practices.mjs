@@ -24,6 +24,8 @@ import {
 
 const PAGE = readFileSync('src/routes/gp-finder/+page.svelte', 'utf8');
 const SCRIPT = PAGE.slice(PAGE.indexOf('<script>'), PAGE.indexOf('</script>'));
+/** The search itself, shared by the page and the chat's GP card. */
+const SEARCH = readFileSync('src/lib/gp/search.svelte.js', 'utf8');
 const ENGLAND_TEXT = readFileSync('static/gp/england.tsv', 'utf8');
 const ENGLAND = parseEnglandFile(ENGLAND_TEXT);
 
@@ -183,16 +185,17 @@ const checks = [
   }],
   ['The page never stores or sends a location: typed searches go to postcodes.io, and the England file is the same request for everyone', () => {
     assert.doesNotMatch(PAGE, /localStorage|sessionStorage|indexedDB|document\.cookie/);
-    for (const line of SCRIPT.match(/^\s*import [^;]+;/gm) ?? []) assert.doesNotMatch(line, /firebase|firestore|gemini|checkin|ai\.js/i, line.trim());
-    assert.deepEqual([...SCRIPT.matchAll(/fetch\((`[^`]*`|'[^']*'|[^)]*)/g)].map((m) => m[1]), ['`https://api.postcodes.io${path}`']);
-    assert.match(SCRIPT, /showNearest\(position\.coords\.latitude, position\.coords\.longitude, 'you', null\)/);
-    assert.equal([...SCRIPT.matchAll(/coords/g)].length, 2, 'the location goes only into the sums');
-    for (const call of SCRIPT.match(/console\.\w+\([^)]*\)/g) ?? []) assert.doesNotMatch(call, /coords|position|lat|lng/i, call);
+    for (const line of (SCRIPT + SEARCH).match(/^\s*import [^;]+;/gm) ?? []) assert.doesNotMatch(line, /firebase|firestore|gemini|checkin|ai\.js/i, line.trim());
+    assert.deepEqual([...(SCRIPT + SEARCH).matchAll(/fetch\((`[^`]*`|'[^']*'|[^)]*)/g)].map((m) => m[1]), ['`https://api.postcodes.io${path}`']);
+    assert.doesNotMatch(SEARCH, /localStorage|sessionStorage|indexedDB|document\.cookie/);
+    assert.match(SEARCH, /showNearest\(position\.coords\.latitude, position\.coords\.longitude, 'you', null\)/);
+    assert.equal([...(SCRIPT + SEARCH).matchAll(/coords/g)].length, 2, 'the location goes only into the sums');
+    for (const call of (SCRIPT + SEARCH).match(/console\.\w+\([^)]*\)/g) ?? []) assert.doesNotMatch(call, /coords|position|lat|lng/i, call);
     const finder = readFileSync('src/lib/gp/finder.js', 'utf8');
     assert.match(finder, /fetchImpl\(ENGLAND_FILE\)/);
     assert.match(PAGE, /Your location stays on your phone: it isn’t saved or sent anywhere. A postcode or place you type is\s+looked up on postcodes\.io\./);
-    assert.match(SCRIPT, /async function search\(event\) \{\s*event\.preventDefault\(\);\s*startOver\(\);/, 'every new search clears the last');
-    assert.match(SCRIPT, /function useMyLocation\(\) \{\s*startOver\(\);/);
+    assert.match(SEARCH, /async search\(query\) \{\s*this\.startOver\(\);/, 'every new search clears the last');
+    assert.match(SEARCH, /useMyLocation\(\) \{\s*this\.startOver\(\);/);
   }]
 ];
 

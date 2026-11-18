@@ -3,7 +3,7 @@
   import { onMount } from 'svelte';
   import { afterNavigate, goto, onNavigate } from '$app/navigation';
   import { page } from '$app/state';
-  import { chatShown, opensChatFromHome } from '#lib/page-transitions.js';
+  import { chatShown, revealOrigin, transitionFor, watchTouches } from '#lib/page-transitions.js';
   import { gateFor } from '#lib/account-gate.js';
   import { watchAccount } from '#lib/firebase/auth.js';
   import { db, getFirebaseAuth } from '#lib/firebase/client.js';
@@ -46,7 +46,7 @@
   );
 
   /** Each page's tab title; every other page is just "AG2". */
-  const TITLES = /** @type {Record<string, string>} */ ({ '/nhs-guide': 'NHS Guide', '/gp-finder': 'Find a GP', '/late-arrivals': 'Arriving late', '/about-you': 'What the chat knows' });
+  const TITLES = /** @type {Record<string, string>} */ ({ '/privacy': 'Privacy', '/nhs-guide': 'NHS Guide', '/gp-finder': 'Find a GP', '/late-arrivals': 'Arriving late', '/about-you': 'What the chat knows' });
   let title = $derived(TITLES[page.url.pathname] ? `${TITLES[page.url.pathname]} · AG2` : 'AG2');
 
   // The access switch, read once a page load: the gate and the forms' wording follow it.
@@ -90,18 +90,27 @@
     }
   }
 
-  // Opening the chat from Home slides the chat down over Home (see page-transitions.js and app.css),
-  // where the browser has View Transitions and the phone isn't set to reduce motion.
+  onMount(watchTouches);
+
+  // Every page change animates, where the browser has View Transitions (see page-transitions.js and
+  // app.css): the chat grows out of where they tapped, the bar's pages crossfade, deeper pages slide.
+  // With Reduce Motion on, each one is a short fade instead.
   onNavigate((navigation) => {
-    if (!opensChatFromHome(navigation.from?.url.pathname, navigation.to?.url.pathname)) return;
-    if (!document.startViewTransition || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const delta = navigation.type === 'popstate' ? navigation.delta : null;
+    const kind = transitionFor(navigation.from?.url.pathname, navigation.to?.url.pathname, navigation.type, delta);
+    if (!kind || !document.startViewTransition) return;
     const root = document.documentElement;
+    if (kind === 'chat') {
+      const { x, y } = revealOrigin();
+      root.style.setProperty('--reveal-x', `${Math.round(x)}px`);
+      root.style.setProperty('--reveal-y', `${Math.round(y)}px`);
+    }
     return new Promise((resolve) => {
-      root.dataset.pageTransition = 'chat-open';
+      root.dataset.pageTransition = kind;
       const transition = document.startViewTransition(async () => {
         resolve();
         await navigation.complete;
-        await chatShown();
+        if (kind === 'chat') await chatShown();
       });
       transition.finished.finally(() => delete root.dataset.pageTransition);
     });

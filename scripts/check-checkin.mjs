@@ -21,7 +21,7 @@ import { startsAfresh } from '#lib/checkin/keep-chat.js';
 import { chatWith, ERROR_MESSAGE, UNAVAILABLE_MESSAGE } from '#lib/checkin/chat-turns.js';
 import { isOutOfCredit } from '#lib/firebase/ai-errors.js';
 import { APP_PAGES, findPage } from '#lib/checkin/app-pages.js';
-import { opensChatFromHome, WAIT_FOR_CHAT_MS } from '#lib/page-transitions.js';
+import { transitionFor, WAIT_FOR_CHAT_MS } from '#lib/page-transitions.js';
 import { suggestionNamed } from '#lib/suggestions/catalogue.js';
 import { shortlist } from '#lib/suggestions/shortlist.js';
 import { addSuggestedTask, existingTask, sameTask, stateFor } from '#lib/checkin/task-suggestions.js';
@@ -278,21 +278,26 @@ const checks = [
     assert.equal(readChatReply(json({ say: '  ' }), { shortlist: [], actions: [] }), null);
     assert.deepEqual(readChatReply(json({ action: 'mentor', say: '' }), { shortlist: [], actions: ['mentor'] })?.action, { id: 'mentor' }, 'a card on its own is fine');
   }],
-  ['Opening the chat from Home slides it down (not with reduced motion); the bottom bar stays still; other pages just open', () => {
-    assert.equal(opensChatFromHome('/home', '/check-in'), true);
-    assert.equal(opensChatFromHome('/home', '/gp-finder'), false);
-    assert.equal(opensChatFromHome('/checklist', '/check-in'), false);
-    assert.equal(opensChatFromHome(undefined, '/check-in'), false);
-    assert.ok(WAIT_FOR_CHAT_MS <= 250, 'never waits long for the chat before sliding');
-    assert.match(readFileSync('src/app.css', 'utf8'), /chat-open'\]::view-transition \{\s*background: #ffffff;/, 'a plain white screen behind the slide');
-    assert.match(readFileSync('src/app.css', 'utf8'), /::view-transition-new\(root\) \{\s*animation: 800ms /, 'slow enough to look smooth');
+  ['Every page change animates: the chat grows out of where they tapped, the bar’s pages crossfade, deeper pages slide; with Reduce Motion, a short fade', () => {
+    assert.equal(transitionFor('/home', '/check-in'), 'chat');
+    assert.equal(transitionFor('/checklist', '/check-in'), 'chat', 'from any page, not only Home');
+    assert.equal(transitionFor('/home', '/checklist'), 'tab');
+    assert.equal(transitionFor('/more', '/nhs-guide'), 'forward');
+    assert.equal(transitionFor('/societies/91', '/societies'), 'back');
+    assert.equal(transitionFor('/nhs-guide', '/more', 'popstate', -1), 'back');
+    assert.equal(transitionFor(undefined, '/home'), null, 'not the first page');
+    assert.equal(transitionFor('/home', '/home'), null);
+    assert.ok(WAIT_FOR_CHAT_MS <= 250, 'never waits long for the chat before it grows');
     const css = readFileSync('src/app.css', 'utf8');
-    assert.match(css, /prefers-reduced-motion: no-preference\)[\s\S]*chat-open'\]::view-transition-new\(root\)[\s\S]*ag2-slide-down/);
-    assert.match(css, /@keyframes ag2-slide-down \{\s*from \{\s*transform: translateY\(-100%\);/);
-    assert.match(readFileSync('src/lib/components/BottomNav.svelte', 'utf8'), /view-transition-name: bottom-nav;/);
+    assert.match(css, /prefers-reduced-motion: no-preference\)[\s\S]*\[data-page-transition='chat'\]::view-transition-new\(root\) \{\s*animation: ag2-reveal /);
+    assert.match(css, /@keyframes ag2-reveal \{\s*from \{\s*clip-path: circle\(0 at var\(--reveal-x/);
+    assert.match(css, /prefers-reduced-motion: reduce\) \{\s*:root\[data-page-transition\]::view-transition-old\(root\) \{\s*animation: 120ms ease-out both ag2-fade-away;/, 'with Reduce Motion: a short fade, nothing moving');
+    const nav = readFileSync('src/lib/components/BottomNav.svelte', 'utf8');
+    assert.match(nav, /view-transition-name: bottom-nav;/, 'the bar stays still');
+    assert.match(nav, /view-transition-name: nav-pill;/, 'its highlight glides to the new tab');
     const layout = readFileSync('src/routes/+layout.svelte', 'utf8');
-    assert.match(layout, /opensChatFromHome\(navigation\.from\?\.url\.pathname, navigation\.to\?\.url\.pathname\)/);
-    assert.match(layout, /prefers-reduced-motion: reduce/);
+    assert.match(layout, /transitionFor\(navigation\.from\?\.url\.pathname, navigation\.to\?\.url\.pathname, navigation\.type, delta\)/);
+    assert.match(layout, /root\.style\.setProperty\('--reveal-x'/);
     assert.match(readFileSync('src/routes/check-in/+page.svelte', 'utf8'), /data-chat-ready/);
   }],
   ['Everyday phrases are not', () => {
@@ -482,6 +487,38 @@ const checks = [
     } finally {
       console.error = quiet;
     }
+  }],
+  ['The measurements ask Gemini through the Firebase SDK, so Gemini gets exactly the body the app sends: a field Gemini doesn’t accept reaches it and is refused, as on the live site on 18 November', async () => {
+    const { restModel } = await import('./lib/chat-over-rest.mjs');
+    const { unknownFields } = await import('./lib/stand-in-gemini.mjs');
+    /** @type {any[]} */
+    const bodies = [];
+    // A made-up Gemini that refuses unknown fields as the real one does.
+    const gemini = {
+      config: { apiKey: 'made-up-key', projectId: 'demo-ag2', appId: '1:1:web:1' },
+      /** @param {string} _model @param {string} body */
+      send: async (_model, body) => {
+        const sent = JSON.parse(body);
+        bodies.push(sent);
+        const unknown = unknownFields(sent);
+        return unknown.length
+          ? { status: 400, text: JSON.stringify({ error: { code: 400, message: `Invalid JSON payload received. Unknown name "${unknown[0]}": Cannot find field.`, status: 'INVALID_ARGUMENT' } }) }
+          : { status: 200, text: JSON.stringify({ candidates: [{ content: { role: 'model', parts: [{ text: '{"action":"none","page":"none","say":"Hello!"}' }] }, finishReason: 'STOP' }] }) };
+      }
+    };
+    const model = restModel(gemini);
+    const asked = { contents: [{ role: 'user', parts: [{ type: 'text', text: 'hi' }] }], systemInstruction: 'Be kind.', generationConfig: { responseMimeType: 'application/json' } };
+    const answer = await model.generateContent(/** @type {any} */ (asked));
+    assert.equal(answer.response.text(), '{"action":"none","page":"none","say":"Hello!"}');
+    assert.deepEqual(bodies[0].systemInstruction, { role: 'system', parts: [{ text: 'Be kind.' }] }, 'as the SDK shapes it');
+    assert.deepEqual(bodies[0].contents, [{ role: 'user', parts: [{ text: 'hi' }] }], 'as the SDK shapes it');
+    await assert.rejects(model.generateContent(/** @type {any} */ ({ ...asked, tasks: ['Enrol'] })), /400/);
+    assert.deepEqual(bodies[1].tasks, ['Enrol'], 'sent on, as the app’s SDK would');
+    // And the chat itself sends only what Gemini accepts.
+    const chat = chatWith(model, { facts: { match: null, tasks: defaultTasks(), checklistSaved: true, profile: null, isMentor: false, mentorNote: null, today: '2026-11-18' }, opener: ['Hi!'] });
+    const reply = await chat.send('hello');
+    assert.equal(reply.text, 'Hello!');
+    assert.deepEqual(unknownFields(bodies.at(-1)), []);
   }]
 ];
 

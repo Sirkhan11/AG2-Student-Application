@@ -23,6 +23,6 @@
   .ask4help {
     margin: 8px 0 0;
     font-size: 14px;
-    color: #647780;
+    color: var(--ink-3);
   }
 </style>

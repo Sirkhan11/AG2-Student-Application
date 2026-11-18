@@ -7,6 +7,7 @@
   import { isAllowedEmail, wordingFor } from '#lib/access.js';
   import { access, loadAccess } from '#lib/access.svelte.js';
   import { UNI_EMAIL_MESSAGE } from '#lib/uni-email.js';
+  import Icon from '#lib/components/Icon.svelte';
 
   let email = $state('');
   let password = $state('');
@@ -48,12 +49,15 @@
 </script>
 
 <main class="page">
-  <h1>Welcome back</h1>
-  <p class="muted">
-    Log in to your AG2 student support account.
-  </p>
+  <header class="hello">
+    <span class="mark" aria-hidden="true">AG2</span>
+    <h1>Welcome back</h1>
+    <p class="muted">
+      Log in to your AG2 student support account.
+    </p>
+  </header>
 
-  <form onsubmit={(event) => {
+  <form class="card" onsubmit={(event) => {
     event.preventDefault();
     handleLogin();
   }}>
@@ -88,14 +92,48 @@
     <a href="/signup">Create an account</a>
     <a href="/mentor-signup">Become a mentor</a>
     <a href="/forgot-password">Forgot password?</a>
+    <a href="/privacy">Privacy</a>
   </div>
 
   <a class="help-link" href="/need-help">
-    Need help now?
+    <Icon name="help" size={20} /> Need help now?
   </a>
 </main>
 
 <style>
+  .hello {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    margin: 8px 0 6px;
+  }
+
+  /* The app's mark, as on a phone's home screen. */
+  .mark {
+    display: grid;
+    place-items: center;
+    width: 64px;
+    height: 64px;
+    margin: 16px 0 14px;
+    border-radius: 16px;
+    color: white;
+    background: var(--violet);
+    font-weight: 700;
+    font-size: 20px;
+    letter-spacing: -0.02em;
+  }
+
+  .hello h1 {
+    font-size: 28px;
+    margin: 0 0 4px;
+  }
+
+  .hello p {
+    margin: 0;
+    font-size: 16px;
+  }
+
   .links {
     display: flex;
     flex-direction: column;
@@ -105,13 +143,17 @@
   }
 
   .help-link {
-    display: block;
-    margin-top: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 40px;
     padding: 14px;
-    border: 1px solid #e8b6b1;
-    border-radius: 10px;
-    color: #c93d35;
+    border: 1px solid var(--danger-line);
+    border-radius: var(--radius-m);
+    background: var(--danger-soft);
+    color: var(--danger-ink);
     text-align: center;
-    font-weight: bold;
+    font-weight: 600;
   }
 </style>

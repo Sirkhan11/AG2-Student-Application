@@ -54,12 +54,13 @@
 
     <input
       id="email"
+      class="field"
       type="email"
       bind:value={email}
       required
     />
 
-    <button type="submit" disabled={loading}>
+    <button class="primary-button" type="submit" disabled={loading}>
       {loading ? 'Sending...' : 'Send reset email'}
     </button>
   </form>
@@ -68,5 +69,12 @@
     <p role="status">{message}</p>
   {/if}
 
-  <p><a href="/">Back to login</a></p>
+  <p class="back"><a href="/">Back to login</a></p>
 </main>
+
+<style>
+  .back {
+    margin-top: 24px;
+    text-align: center;
+  }
+</style>

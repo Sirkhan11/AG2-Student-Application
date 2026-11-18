@@ -216,7 +216,7 @@ const checks = [
     const page = oneLine(source('src/routes/check-in/+page.svelte'));
     assert.match(page, /if \(reply\.kind === 'reply'\) await afterReply\(reply, \{ \.\.\.changes\(\), tasks: loadChecklist \}\);/);
     assert.match(page, /if \(edits\?\.takes\(text\)\) \{.*?await edits\.reply\(text\);/);
-    assert.match(page, /onclick=\{\(\) => undoChange\(item\)\}>Undo<\/button>/);
+    assert.match(page, /onclick=\{\(\) => undoChange\(item\)\}>(?:<Icon name="undo" size=\{16\} \/> )?Undo<\/button>/);
     assert.match(page, /<CalendarCard title=\{item\.calendar\.title\} \/>/);
     assert.match(page, /tool: reply\.tool, ask4help: reply\.ask4help, calendar: reply\.calendar/);
     const card = source('src/lib/components/CalendarCard.svelte');

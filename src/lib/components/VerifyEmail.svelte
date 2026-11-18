@@ -4,6 +4,7 @@
   import { checkVerified, sendVerification } from '#lib/firebase/verify.js';
   import { wordingFor } from '#lib/access.js';
   import LogoutButton from '#lib/components/LogoutButton.svelte';
+  import Icon from '#lib/components/Icon.svelte';
 
   /**
    * The check-your-inbox screen. The root layout shows it instead of the app while the signed-in
@@ -77,6 +78,7 @@
 </script>
 
 <main class="page">
+  <span class="mail"><Icon name="mail" size={28} /></span>
   <h1>{words.inboxHeading}</h1>
   <p>
     We’ve sent a link to <strong>{email}</strong>. Click it to verify your address, then come back here
@@ -97,11 +99,22 @@
   {/if}
 
   <p class="muted">{words.wrongAddress}</p>
-  <LogoutButton />
+  <div class="logout-slot"><LogoutButton /></div>
   <p><a href="/need-help">Need help now</a></p>
 </main>
 
 <style>
+  .mail {
+    display: grid;
+    place-items: center;
+    width: 60px;
+    height: 60px;
+    margin: 8px 0 12px;
+    border-radius: 50%;
+    color: var(--violet);
+    background: var(--violet-soft);
+  }
+
   .actions {
     display: flex;
     flex-wrap: wrap;

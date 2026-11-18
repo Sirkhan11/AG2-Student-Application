@@ -86,7 +86,7 @@ const offline = [
   }],
   ['The gate: logged out, only the five public pages (others go to log in, nothing shows while Firebase checks); not Northumbria, told why (unless the switch is off; nothing until it’s read); not verified, only check-your-inbox; Need help always opens', () => {
     const uni = { email: 'sam@northumbria.ac.uk', verified: true };
-    assert.deepEqual(PUBLIC_PAGES, ['/', '/signup', '/forgot-password', '/mentor-signup', '/need-help']);
+    assert.deepEqual(PUBLIC_PAGES, ['/', '/signup', '/forgot-password', '/mentor-signup', '/need-help', '/privacy']);
     for (const path of PUBLIC_PAGES) {
       assert.equal(gateFor(null, path), 'app', `${path} logged out`);
       assert.equal(gateFor(undefined, path), 'app', `${path} while checking`);

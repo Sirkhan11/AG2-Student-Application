@@ -300,7 +300,7 @@ try {
       );
       return transition;
     };
-    document.querySelector('a.chat-button').click();
+    document.querySelector('a.ask[href="/check-in"]').click();
     setTimeout(() => done({ problem: 'no slide within 30 seconds' }), 30000);
   })`);
   const chatOpened = await waitFor(`location.pathname === '/check-in' && document.querySelector('[data-chat-ready]')`);
@@ -310,7 +310,7 @@ try {
   // 3. Every page opens, logged in; none sends them to log in.
   /** @type {string[]} */
   const sentAway = [];
-  for (const path of ['/home', '/check-in', '/checklist', '/find-mentor', '/mentor', '/more', '/about-you', '/nhs-guide', '/gp-finder', '/late-arrivals', '/societies', '/sport', '/students-union', '/need-help', '/signup', '/forgot-password', '/mentor-signup']) {
+  for (const path of ['/home', '/check-in', '/checklist', '/find-mentor', '/mentor', '/more', '/about-you', '/nhs-guide', '/gp-finder', '/late-arrivals', '/societies', '/sport', '/students-union', '/need-help', '/privacy', '/signup', '/forgot-password', '/mentor-signup']) {
     await go(path);
     await sleep(700);
     if (!(await evaluate(`location.pathname === ${JSON.stringify(path)} && !${has('Welcome back')}`))) sentAway.push(path);
@@ -318,11 +318,20 @@ try {
   report('Logged in, every page opens and none sends them to log in', sentAway.length === 0, sentAway.join(', '));
   report('The tab says AG2, or the page’s name with AG2', (await evaluate('document.title')) === 'Find a GP · AG2' || (await evaluate('document.title')) === 'AG2', await evaluate('document.title'));
 
+  // 3b. An address the app doesn't have: a proper page with a way back, not a bare "404 Not Found".
+  await go('/no-such-page');
+  report('An address the app doesn’t have shows "We can’t find that page", with Go to Home and the bottom bar',
+    await waitFor(`${has('We can’t find that page')} && document.querySelector('a.primary-button[href="/home"]') !== null && document.querySelector('nav.bottom-nav') !== null`));
+
   // 4. "← Back": to the page they came from, or Home when opened directly.
-  /** @param {string} path */
+  /**
+   * Back, then waits for the page it goes to (Home or More, which have no "← Back") to be on screen:
+   * the address changes first, and the page a moment later, once the page change has started.
+   * @param {string} path
+   */
   const backTo = async (path) => {
     await clickText('← Back');
-    return waitFor(`location.pathname === ${JSON.stringify(path)}`, 8000);
+    return waitFor(`location.pathname === ${JSON.stringify(path)} && ![...document.querySelectorAll('button, a')].some((e) => e.textContent.trim().includes('← Back'))`, 8000);
   };
   /** @param {string} selector @param {string} path */
   const tap = async (selector, path) => {
@@ -333,7 +342,7 @@ try {
   await waitFor(has('How can we help you today?'));
   const fromHome = (await tap('a.feature-card[href="/gp-finder"]', '/gp-finder')) && (await backTo('/home'));
   await evaluate(`(document.querySelector('a.feature-card[href="/more"]').click(), true)`);
-  await waitFor(`location.pathname === '/more'`);
+  await waitFor(`location.pathname === '/more' && document.querySelector('a.menu-item') !== null`);
   const fromMore = (await tap('a.menu-item[href="/nhs-guide"]', '/nhs-guide')) && (await backTo('/more'));
   await go('/late-arrivals');
   await waitFor(has('← Back'));
