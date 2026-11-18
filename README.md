@@ -122,9 +122,9 @@ Gemini is never told it. Without it, those cards say the coordinator will introd
 - **Who can read it:** the mentor, and a student whose `matches/{student's uid}` names that mentor with
   status `matched`. So moving a student to someone else in the console (changing `mentorId`) takes the
   old mentor's address away from them at once, and shows the new mentor's, if they share one.
-- **When you remove a mentor, remove this too.** Deleting `mentors/{uid}` or `mentorDetails/{uid}` leaves
-  `mentorContacts/{uid}` behind, and the students still matched with that mentor can still read it. Delete
-  `mentorContacts/{uid}` as well, and move their students.
+- **When you remove a mentor, remove this too.** Deleting `mentors/{uid}` hides the address from their
+  students straight away (the rule only lets a student read it while the mentor's profile is there), but
+  `mentorContacts/{uid}` itself stays until you delete it. Delete it as well, and move their students.
 - **While the access switch is off,** "the students matched with you" means anyone with a verified email
   address who signs up and takes one of the mentor's places. Ask real mentors not to share their address
   until the switch is back to Northumbria only.

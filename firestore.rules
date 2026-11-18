@@ -126,10 +126,13 @@ service cloud.firestore {
     // A mentor's email address, shared with the students matched with them only if the mentor agreed
     // (when signing up, or later on Your mentor; src/lib/matching/mentor-contact.js). It holds their
     // own login address and nothing else, with when they agreed, and only for an account with a mentor
-    // profile. Only the mentor, and a student whose match names them (matchedWith), can read it, one
-    // document at a time: nobody can list them. Only the mentor can share it, or stop (delete it).
+    // profile. Only the mentor, and a student whose match names them (matchedWith) while the mentor's
+    // profile is still there, can read it, one document at a time: nobody can list them. So when the
+    // coordinator removes a mentor, their students stop seeing the address at once, even before the
+    // record itself is deleted. Only the mentor can share it, or stop (delete it).
     match /mentorContacts/{mentorId} {
-      allow get: if hasAccess() && (request.auth.uid == mentorId || matchedWith(mentorId));
+      allow get: if hasAccess() && (request.auth.uid == mentorId
+        || (matchedWith(mentorId) && exists(/databases/$(database)/documents/mentors/$(mentorId))));
       allow create, update: if hasAccess() && request.auth.uid == mentorId
         && request.resource.data.keys().hasOnly(['email', 'agreedAt'])
         && request.resource.data.email == request.auth.token.email

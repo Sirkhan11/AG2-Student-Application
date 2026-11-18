@@ -128,8 +128,10 @@ async function inTheBrowser(where) {
   const ivy = await db.verifiedAccount('ivy.mentor@northumbria.ac.uk', password);
   await db.seed(`students/${ivy}`, { name: 'Ivy Student', course: 'BSc Law', email: 'ivy.mentor@northumbria.ac.uk', arrivalDate: '', role: 'student', ...CHECKLIST_DONE });
   await db.seed(`matches/${ivy}`, { ...MATCH, createdAt: new Date() });
-  // Ivy's mentor chose to share their address (check-mentor-contact.mjs checks the sharing itself).
+  // Ivy's mentor chose to share their address (check-mentor-contact.mjs checks the sharing itself). A
+  // student reads it only while the mentor's profile is there (firestore.rules), as a real one always is.
   const ALEX = 'alex.mentor.shares@northumbria.ac.uk';
+  await db.seed(`mentors/${MATCH.mentorId}`, { displayName: 'Alex Mentor', approved: true, maxStudents: 2, studentCount: 1 });
   await db.seed(`mentorContacts/${MATCH.mentorId}`, { email: ALEX, agreedAt: new Date() });
   const jo = await db.verifiedAccount('jo.mentor@northumbria.ac.uk', password);
   await db.seed(`students/${jo}`, { name: 'Jo Student', course: 'BA History', email: 'jo.mentor@northumbria.ac.uk', arrivalDate: '', role: 'student', ...CHECKLIST_DONE });

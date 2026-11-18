@@ -12,7 +12,8 @@
 //    match, an unverified one, another mentor and a signed-out visitor can't, and nobody can list
 //    them; it follows the match when the coordinator moves a student; signing up with the box ticked
 //    saves it with the profile in one batch, and an address that isn't theirs saves nothing at all;
-//    with the Auth emulator, a mentor who typed their address with capitals still signs up.
+//    with the Auth emulator, a mentor who typed their address with capitals still signs up; once the
+//    coordinator removes a mentor's profile, their students can't read the address any more.
 // 3. In Chrome against the Auth and Firestore emulators (vite dev --mode emulators): a student whose
 //    mentor shared sees the address, as a link that opens their email app, on Home and Your mentor;
 //    a mentor shares it and stops on Your mentor, with the focus kept for the keyboard; the sign-up
@@ -67,7 +68,7 @@ const offline = [
   }],
   ['The rules: only the mentor’s own login address and when they agreed, for an account with a mentor profile; read one at a time by the mentor and a student whose match names them; never listed', () => {
     const block = RULES.match(/match \/mentorContacts\/\{mentorId\} \{[\s\S]*?\n    \}/)?.[0] ?? '';
-    assert.match(block, /allow get: if hasAccess\(\) && \(request\.auth\.uid == mentorId \|\| matchedWith\(mentorId\)\);/);
+    assert.match(block, /allow get: if hasAccess\(\) && \(request\.auth\.uid == mentorId\s*\|\| \(matchedWith\(mentorId\) && exists\(\/databases\/\$\(database\)\/documents\/mentors\/\$\(mentorId\)\)\)\);/, 'a student, only while the mentor’s profile is there');
     assert.doesNotMatch(block, /allow (read|list)\b/, 'never a list');
     assert.match(block, /request\.resource\.data\.keys\(\)\.hasOnly\(\['email', 'agreedAt'\]\)/);
     assert.match(block, /request\.resource\.data\.email == request\.auth\.token\.email/);
@@ -168,6 +169,12 @@ async function allowed(action) {
 /** A new mentor's two documents, as registerMentor makes them (empty answers: nothing to match yet). */
 const NEW_MENTOR = { profile: { displayName: 'Cal', itemVectors: { q1: [], q2: [], q3: [], q4: [], q5: [], q6: [] }, approved: false, maxStudents: 2, studentCount: 0 }, details: { name: 'Cal Mentor', course: 'Law', answers: [], summaries: {}, meetingFrequency: 'weekly', availability: 'evenings' } };
 
+/** Deletes a record as the emulator's owner, as the coordinator does in the console. @param {string} path */
+async function ownerDelete(path) {
+  const response = await fetch(`http://${FIRESTORE}/v1/projects/${PROJECT}/databases/(default)/documents/${path}`, { method: 'DELETE', headers: { authorization: 'Bearer owner' } });
+  assert.ok(response.ok, `deleting ${path}`);
+}
+
 /** Marks an account verified, as clicking the link in the email would (the Auth emulator's owner). @param {string} uid */
 async function markVerified(uid) {
   const response = await fetch(`http://${AUTH}/identitytoolkit.googleapis.com/v1/projects/${PROJECT}/accounts:update`, { method: 'POST', headers: { 'content-type': 'application/json', authorization: 'Bearer owner' }, body: JSON.stringify({ localId: uid, emailVerified: true }) });
@@ -245,6 +252,19 @@ const emulated = [
     assert.equal(await store.read('mentorContacts/mentor-d'), null, 'unticked: nothing shared');
     await assert.rejects(saveMentor(as('mentor-e'), 'mentor-e', { ...mentor, contact: { email: 'not.theirs@northumbria.ac.uk' } }), { code: 'permission-denied' });
     assert.equal(await store.read('mentors/mentor-e'), null, 'nothing at all: the profile goes with it');
+  }],
+  // agent1.md A11 (17:51): an address left behind when the coordinator removes a mentor isn't read by anyone.
+  ['When the coordinator removes a mentor’s profile, their students stop seeing the address at once, before the record itself goes; the mentor can still see it and delete it', async () => {
+    await store.seed('mentors/mentor-f', { displayName: 'Fen', approved: true, maxStudents: 2, studentCount: 1 });
+    await store.seed('mentorContacts/mentor-f', { email: emailOf('mentor-f'), agreedAt: new Date() });
+    await store.seed('matches/student-f', matchRecord('mentor-f'));
+    assert.deepEqual(await loadMentorContact(as('student-f'), matchWith('mentor-f')), { email: emailOf('mentor-f') }, 'while the profile is there');
+    await ownerDelete('mentors/mentor-f');
+    assert.equal(await allowed(() => getDoc(doc(as('student-f'), MENTOR_CONTACTS, 'mentor-f'))), false, 'their student, once the profile has gone');
+    assert.equal(await loadMentorContact(as('student-f'), matchWith('mentor-f')), null, 'so the card says the coordinator will introduce them');
+    assert.equal((await loadMySharing(as('mentor-f'), 'mentor-f'))?.email, emailOf('mentor-f'), 'the mentor still sees what they shared');
+    await stopSharing(as('mentor-f'), 'mentor-f');
+    assert.equal(await store.read('mentorContacts/mentor-f'), null, 'and can delete it');
   }],
   // agent1.md A6 (16:36): the rule compares the saved address with the sign-in's exactly, and the address
   // goes in the same batch as the profile, so a difference in case would refuse the whole sign-up.
