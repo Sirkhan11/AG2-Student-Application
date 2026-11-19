@@ -131,6 +131,8 @@ nothing else (most don't say which module); the full Blackboard connection still
   test account; and from the AG2 app (App Check, enforced as it is for Gemini). Anyone else is
   refused (unauthenticated or permission denied) before anything is fetched. In emulators mode the app
   sends a pretend App Check token, which the Functions emulator accepts (`src/lib/firebase/app-check.js`).
+  **Before a real release,** the three test accounts come out, and they're now listed in two places:
+  `isTestAccount` in `firestore.rules` and the list in `functions/shared/access-gate.js`.
 - **What it fetches:** only a link of exactly Blackboard's shape,
   `https://elp.northumbria.ac.uk/webapps/calendar/calendarFeed/<32 hex characters>/learn.ics`
   (`functions/shared/calendar-link.js`, used by the app too), over HTTPS, following no redirects, with
