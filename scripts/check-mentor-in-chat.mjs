@@ -14,7 +14,9 @@
 //   uses the same shared steps.
 // - What's typed during the questions is understood on the phone (mentor-replies.js; agent1.md A13,
 //   part 2): Thomas's own messages one by one, short and long answers, an answer with a question
-//   mark, a question for the chat (checked first), changing their mind twice; Stop and Change as before.
+//   mark, a question for the chat (checked first), changing their mind twice; Stop and Change as before;
+//   real answers that mention stopping, going back or starting again stay answers, and only the plain
+//   instruction stops or starts again at once: in other words, it asks first (A14).
 // - A message that suggests they may be at risk (safety.js), at any point in the questions: the support
 //   message, the questions stop with nothing saved, and it's never kept or sent (agent1.md A13); the
 //   chat page checks every message first, and the finder refuses too.
@@ -29,7 +31,7 @@ import { chatInstructions } from '#lib/checkin/chat-prompt.js';
 import { chatTools } from '#lib/checkin/chat-tools.js';
 import { scriptedGemini } from './lib/scripted-gemini.mjs';
 import { chatWith } from '#lib/checkin/chat-turns.js';
-import { ABOUT_SAVING, createMentorFlow, NOT_KEPT, SET_ASIDE, STARTING_AGAIN } from '#lib/checkin/mentor-flow.js';
+import { ABOUT_SAVING, createMentorFlow, NOT_KEPT, RESTART_SURE, SET_ASIDE, STARTING_AGAIN, STOP_SURE } from '#lib/checkin/mentor-flow.js';
 import { understandReply } from '#lib/checkin/mentor-replies.js';
 import { isCrisis, SAFETY_MESSAGE } from '#lib/checkin/safety.js';
 import { chatOptions, describeForGemini, matchLine } from '#lib/checkin/opener.js';
@@ -180,13 +182,17 @@ const checks = [
     t.flow.reply('Weekday afternoons');
     assert.deepEqual(t.last().card.items.slice(0, 2).map((/** @type {any} */ item) => item.answer), ['Settling in', 'Climbing']);
   }],
-  ['Stop still works ("stop", "can I stop?"), the review keeps Change, and a message that suggests they may be at risk still stops everything at the new step (Part 1 holds)', async () => {
+  ['Stop still works ("stop" at once; "can I stop?" asks first, then stops), the review keeps Change, and a message that suggests they may be at risk still stops everything at the new step (Part 1 holds)', async () => {
     for (const words of ['stop', 'can I stop?']) {
       const t = flowWith();
       t.flow.start();
       await tick();
       t.flow.reply('Settling in');
       t.flow.reply(words);
+      if (words !== 'stop') {
+        assert.equal(t.last().text, STOP_SURE, 'asked first');
+        t.flow.choose('stop');
+      }
       assert.equal(t.state()?.active, false, words);
       assert.equal(t.saved(), 0, words);
     }
@@ -206,6 +212,67 @@ const checks = [
     assert.ok(asked.posts.some((post) => post.kind === 'safety'));
     assert.equal(asked.saved(), 0);
   }],
+  // ---------- Real answers that mention stopping, going back or starting again (agent1.md A14) ----------
+  ['A14’s table: real answers that mention stopping, going back or starting again are kept as answers, and the questions carry on (on 36aac5b they stopped, went back or started again)', async () => {
+    for (const answer of ['I want to stop being so shy', 'I want to stop procrastinating', 'I’d like to quit smoking and get fit', 'please stop me overthinking',
+      'I go back home most weekends', 'go back to the gym', 'start again with football', 'restart my fitness']) {
+      const t = flowWith();
+      t.flow.start();
+      await tick();
+      t.flow.reply('Settling in');
+      t.flow.reply('Climbing');
+      t.flow.reply('A long walk');
+      t.flow.reply('Planning ahead');
+      t.flow.reply(answer);
+      assert.equal(asking(t), `Question 6 of 6: ${questions[5]}`, `${answer}: kept, on to question 6`);
+      assert.equal(t.state()?.active, true, `${answer}: still going`);
+      for (const reply of ['Someone patient']) t.flow.reply(reply);
+      t.flow.choose('weekly');
+      t.flow.reply('Weekday afternoons');
+      assert.deepEqual(t.last().card.items.slice(0, 6).map((/** @type {any} */ item) => item.answer), ['Settling in', 'Climbing', 'A long walk', 'Planning ahead', answer, 'Someone patient'], `${answer}: nothing lost`);
+    }
+  }],
+  ['The plain instructions still act at once ("stop", "start again", "go back", "can I try again?"); asked in other words, stopping and starting again ask first, and Carry on keeps every answer', async () => {
+    const started = async () => {
+      const t = flowWith();
+      t.flow.start();
+      await tick();
+      t.flow.reply('Settling in');
+      t.flow.reply('Climbing');
+      return t;
+    };
+    let t = await started();
+    t.flow.reply('stop');
+    assert.equal(t.state()?.active, false, 'stop: at once');
+    t = await started();
+    t.flow.reply('start again');
+    assert.equal(asking(t), `Question 1 of 6: ${questions[0]}`, 'start again: at once');
+    for (const words of ['go back', 'can I try again?']) {
+      t = await started();
+      t.flow.reply(words);
+      assert.equal(asking(t), `Question 2 of 6: ${questions[1]}`, `${words}: at once`);
+    }
+    t = await started();
+    t.flow.reply('can we start again?');
+    assert.equal(t.last().text, RESTART_SURE);
+    assert.deepEqual(t.last().card.choices.map((/** @type {any} */ choice) => choice.label), ['Start again', 'Carry on']);
+    t.flow.choose('carry-on');
+    assert.equal(asking(t), `Question 3 of 6: ${questions[2]}`, 'Carry on: the same question');
+    for (const reply of ANSWERS.slice(2)) t.flow.reply(reply);
+    t.flow.choose('weekly');
+    t.flow.reply('Weekday afternoons');
+    assert.deepEqual(t.last().card.items.slice(0, 2).map((/** @type {any} */ item) => item.answer), ['Settling in', 'Climbing'], 'nothing lost');
+    t = await started();
+    t.flow.reply('I want to stop');
+    assert.equal(t.last().text, STOP_SURE);
+    assert.deepEqual(t.last().card.choices.map((/** @type {any} */ choice) => choice.label), ['Stop the questions', 'Carry on']);
+    t.flow.reply('no');
+    assert.equal(asking(t), `Question 3 of 6: ${questions[2]}`, 'typed no: carry on');
+    assert.equal(t.state()?.active, true);
+    t.flow.reply('can we start again?');
+    t.flow.reply('yes');
+    assert.equal(t.posts.at(-2)?.text, STARTING_AGAIN, 'typed yes: starts again');
+  }],
   ['What a message means, on the phone (no Gemini): Thomas’s five, and answers that stay answers', () => {
     const expect = {
       'will that last message be saved as a answer': 'about-saving', 'is this saved?': 'about-saving', 'who can see my answers?': 'about-saving',
@@ -213,10 +280,17 @@ const checks = [
       'ooo poop': 'not-an-answer', 'lol': 'not-an-answer',
       'start again?': 'restart', 'start over': 'restart',
       'please?': 'nudge', 'ok': 'nudge', 'hi': 'nudge',
-      'stop': 'stop', 'can I stop?': 'stop',
+      'stop': 'stop', 'can I stop?': 'ask-stop',
       'What societies are there?': 'check', 'How do I join a society?': 'check',
       Football: 'answer', nothing: 'answer', idk: 'answer', no: 'answer', 'Climbing? I think': 'answer', 'evenings?': 'answer',
-      'I’d like help saving money': 'answer', 'I’d like to try climbing again': 'answer', 'I want to start again at the gym': 'answer', '': 'answer'
+      'I’d like help saving money': 'answer', 'I’d like to try climbing again': 'answer', 'I want to start again at the gym': 'answer', '': 'answer',
+      // agent1.md A14: each pattern, against everyday sentences that use its words.
+      'I want to stop': 'ask-stop', 'can we stop now?': 'ask-stop', 'can we start again?': 'ask-restart', 'I want to start over': 'ask-restart', 'please stop': 'stop', 'start again please': 'restart',
+      'try again': 'redo', 'i didnt mean that': 'redo', 'wrong answer': 'redo',
+      'Stop worrying so much': 'answer', 'I try to stop and plan': 'answer', 'I like to stop for coffee breaks with others': 'answer', 'Planning ahead, but I quit things easily': 'answer',
+      'I want to finish my degree with friends': 'answer', 'I want to end up with good friends': 'answer', 'A fresh start': 'answer', 'Starting over in a new city': 'answer',
+      'Getting back into running': 'answer', 'last minute, then I go back and fix it': 'answer', 'I’d like to try again at the swimming team': 'answer', 'someone who won’t give up on me': 'answer',
+      'I keep it simple': 'answer', 'Keeping fit': 'answer', 'Saving money': 'answer', 'Is it OK if I keep to myself?': 'check', 'Yes to everything new': 'answer', 'OK honestly just making friends': 'answer'
     };
     for (const [text, kind] of Object.entries(expect)) assert.equal(understandReply(text), kind, text);
     assert.doesNotMatch(source('src/lib/checkin/mentor-replies.js'), /from ['"](?:firebase|#lib\/firebase)/, 'no Gemini or Firebase: worked out on the phone');

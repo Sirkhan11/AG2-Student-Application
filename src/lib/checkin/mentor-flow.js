@@ -51,7 +51,8 @@ import {
 /**
  * Where the flow is, for the page: kind (which of the chat's actions); active while it's running;
  * step; live is the card whose buttons work now (null for none).
- * confirm: a question for the chat was typed instead of an answer, so it asks whether to keep it.
+ * confirm: it's asking first, before keeping a question for the chat as their answer, or before
+ * stopping or starting again when they asked in their own words (agent1.md A14).
  * @typedef {{ kind: 'mentor', active: boolean, step: 'checking' | 'question' | 'confirm' | 'frequency' | 'availability' | 'review' | 'busy'
  *   | 'gemini-failed' | 'gemini-unavailable' | 'error' | 'done', live: number | null }} FlowState
  */
@@ -71,8 +72,17 @@ export const ABOUT_SAVING = 'Nothing’s saved yet: your answers are only saved 
 export const STARTING_AGAIN = 'Starting again, with nothing kept.';
 /** An exclamation, not an answer ("ooo poop"). */
 export const NOT_KEPT = 'I won’t keep that as your answer.';
-/** The buttons for a question typed instead of an answer. */
+/** Asked before stopping, when they asked in their own words: stopping throws their answers away. */
+export const STOP_SURE = 'Do you want to stop the questions? Nothing’s been saved, so your answers so far won’t be kept.';
+/** Asked before starting again, when they asked in their own words. */
+export const RESTART_SURE = 'Start again from question 1? Your answers so far won’t be kept.';
+/** The buttons for asking first: a question typed instead of an answer; stopping; starting again. */
 const KEEP_OR_AGAIN = [{ id: 'keep', label: 'Keep it as my answer' }, { id: 'again', label: 'Answer again' }];
+const STOP_OR_CARRY_ON = [{ id: 'stop', label: 'Stop the questions' }, { id: 'carry-on', label: 'Carry on' }];
+const RESTART_OR_CARRY_ON = [{ id: 'restart', label: 'Start again' }, { id: 'carry-on', label: 'Carry on' }];
+/** Typed answers to those: yes, or no. */
+const YES = /^(yes|yeah|yep|y|sure|keep( it)?|keep it as my answer)[.!]*$/i;
+const NO = /^(no|nope|n|no thanks|answer again|carry on|keep going)[.!]*$/i;
 
 /** After the support message, when the questions stop for it: what's happened to them, and that they can come back. */
 export const SET_ASIDE = 'I’ve stopped the mentor questions, and nothing from them has been saved. We can come back to them whenever you like.';
@@ -96,8 +106,14 @@ export function createMentorFlow({ check, steps, post, changed, finished }) {
   let question = 0;
   /** Changing one answer from the review: go back to the review after it, not on through the rest. */
   let changing = false;
-  /** A question for the chat, typed instead of an answer, kept only if they say so (step 'confirm'). */
-  let pending = '';
+  /**
+   * What it's asking first, while that card is live (step 'confirm'): whether to keep a question for the
+   * chat as their answer, or whether they meant to stop or start again (both throw their answers away).
+   * @type {{ kind: 'answer', text: string } | { kind: 'stop' } | { kind: 'restart' } | null}
+   */
+  let pending = null;
+  /** The step it asked from, to carry on from. @type {FlowState['step']} */
+  let askedFrom = 'question';
   /** What Try again repeats after an error. @type {() => Promise<void>} */
   let again = async () => {};
   let cards = 0;
@@ -258,6 +274,21 @@ export function createMentorFlow({ check, steps, post, changed, finished }) {
     else askFrequency();
   }
 
+  /**
+   * Asks before acting: keep a question for the chat as their answer, or stop, or start again.
+   * @param {{ kind: 'answer', text: string } | { kind: 'stop' } | { kind: 'restart' }} next
+   */
+  function askFirst(next) {
+    pending = next;
+    askedFrom = state.step;
+    set({ step: 'confirm' });
+    if (next.kind === 'answer') {
+      say({ text: `Is that your answer to question ${question + 1}? I can answer other questions once we’ve finished these.`, card: { kind: 'choices', choices: KEEP_OR_AGAIN } });
+    } else {
+      say({ text: next.kind === 'stop' ? STOP_SURE : RESTART_SURE, card: { kind: 'choices', choices: next.kind === 'stop' ? STOP_OR_CARRY_ON : RESTART_OR_CARRY_ON } });
+    }
+  }
+
   /** Whatever's being asked now, again: after a nudge, a note, or a question about saving. */
   function askAgain() {
     if (state.step === 'question' || state.step === 'confirm') ask(question);
@@ -289,7 +320,7 @@ export function createMentorFlow({ check, steps, post, changed, finished }) {
     meetingFrequency = '';
     availability = '';
     changing = false;
-    pending = '';
+    pending = null;
     finder.forget();
     say({ text: STARTING_AGAIN });
     ask(0);
@@ -310,17 +341,18 @@ export function createMentorFlow({ check, steps, post, changed, finished }) {
       return true;
     }
     const typed = text.trim();
-    // Asked whether to keep a question as their answer: yes, no, or something else entirely.
-    if (state.step === 'confirm') {
-      if (/^(yes|yeah|yep|y|keep( it)?|keep it as my answer)[.!]*$/i.test(typed)) {
-        choose('keep');
+    // It asked first (keep it, stop, start again): yes, no, or something else entirely, which drops it.
+    if (state.step === 'confirm' && pending) {
+      if (YES.test(typed)) {
+        choose(pending.kind === 'answer' ? 'keep' : pending.kind);
         return true;
       }
-      if (/^(no|nope|n|answer again)[.!]*$/i.test(typed)) {
-        choose('again');
+      if (NO.test(typed)) {
+        choose(pending.kind === 'answer' ? 'again' : 'carry-on');
         return true;
       }
-      set({ step: 'question', live: null });
+      pending = null;
+      set({ step: askedFrom, live: null });
     }
     const meant = understandReply(typed);
     if (meant === 'stop') {
@@ -330,6 +362,11 @@ export function createMentorFlow({ check, steps, post, changed, finished }) {
     if (state.step === 'busy') return true;
     if (!['question', 'frequency', 'availability', 'review'].includes(state.step)) {
       say({ text: 'Please use the buttons above, or type stop to stop.' });
+      return true;
+    }
+    // Stopping or starting again asked in their own words: asked first, as both throw answers away.
+    if (meant === 'ask-stop' || meant === 'ask-restart') {
+      askFirst({ kind: meant === 'ask-stop' ? 'stop' : 'restart' });
       return true;
     }
     if (meant === 'restart') {
@@ -361,9 +398,7 @@ export function createMentorFlow({ check, steps, post, changed, finished }) {
       }
       // A question for the chat, not an answer: kept only if they say so.
       if (meant === 'check') {
-        pending = typed;
-        set({ step: 'confirm' });
-        say({ text: `Is that your answer to question ${question + 1}? I can answer other questions once we’ve finished these.`, card: { kind: 'choices', choices: KEEP_OR_AGAIN } });
+        askFirst({ kind: 'answer', text: typed });
         return true;
       }
       keep(typed);
@@ -387,21 +422,35 @@ export function createMentorFlow({ check, steps, post, changed, finished }) {
   }
 
   /**
-   * A button on the live choices card: how often they'd like to meet, or (for a question typed instead
-   * of an answer) keep it, or answer again.
+   * A button on the live choices card: how often they'd like to meet, or, where it asked first, keep it
+   * or answer again, or stop or start again, or carry on.
    * @param {string} frequency
    */
   function choose(frequency) {
     if (state.active && state.step === 'confirm') {
-      if (frequency === 'keep') {
+      const asked = pending;
+      pending = null;
+      if (frequency === 'keep' && asked?.kind === 'answer') {
         say({ role: 'user', text: 'Keep it as my answer' });
         set({ step: 'question', live: null });
-        keep(pending);
-      } else if (frequency === 'again') {
+        keep(asked.text);
+      } else if (frequency === 'again' && asked?.kind === 'answer') {
         say({ role: 'user', text: 'Answer again' });
         ask(question);
+      } else if (frequency === 'stop' && asked?.kind === 'stop') {
+        say({ role: 'user', text: 'Stop the questions' });
+        stop();
+      } else if (frequency === 'restart' && asked?.kind === 'restart') {
+        say({ role: 'user', text: 'Start again' });
+        restart();
+      } else if (frequency === 'carry-on' && asked && asked.kind !== 'answer') {
+        say({ role: 'user', text: 'Carry on' });
+        set({ step: askedFrom, live: null });
+        askAgain();
+      } else {
+        // Not one of this card's buttons: still asking.
+        pending = asked;
       }
-      pending = '';
       return;
     }
     if (!state.active || state.step !== 'frequency' || !MEETING_FREQUENCIES.includes(frequency)) return;
