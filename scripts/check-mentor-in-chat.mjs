@@ -16,7 +16,9 @@
 //   part 2): Thomas's own messages one by one, short and long answers, an answer with a question
 //   mark, a question for the chat (checked first), changing their mind twice; Stop and Change as before;
 //   real answers that mention stopping, going back or starting again stay answers, and only the plain
-//   instruction stops or starts again at once: in other words, it asks first (A14).
+//   instruction stops or starts again at once: in other words, it asks first (A14); a typed yes or
+//   no to those cards, however worded, is taken as that, and questions about the questions with no
+//   question mark are answered there and then, while real answers that look like them are kept (A15).
 // - A message that suggests they may be at risk (safety.js), at any point in the questions: the support
 //   message, the questions stop with nothing saved, and it's never kept or sent (agent1.md A13); the
 //   chat page checks every message first, and the finder refuses too.
@@ -31,8 +33,8 @@ import { chatInstructions } from '#lib/checkin/chat-prompt.js';
 import { chatTools } from '#lib/checkin/chat-tools.js';
 import { scriptedGemini } from './lib/scripted-gemini.mjs';
 import { chatWith } from '#lib/checkin/chat-turns.js';
-import { ABOUT_SAVING, createMentorFlow, NOT_KEPT, RESTART_SURE, SET_ASIDE, STARTING_AGAIN, STOP_SURE } from '#lib/checkin/mentor-flow.js';
-import { understandReply } from '#lib/checkin/mentor-replies.js';
+import { ABOUT_SAVING, createMentorFlow, FAQ_ANSWERS, NOT_KEPT, RESTART_SURE, SET_ASIDE, STARTING_AGAIN, STOP_SURE, YES_OR_NO } from '#lib/checkin/mentor-flow.js';
+import { cardReply, understandReply } from '#lib/checkin/mentor-replies.js';
 import { isCrisis, SAFETY_MESSAGE } from '#lib/checkin/safety.js';
 import { chatOptions, describeForGemini, matchLine } from '#lib/checkin/opener.js';
 import { ANSWERS_NOTE, checkAnswers, createFinder, findingMessage, MAX_AVAILABILITY_LENGTH, outcomeText, questions, SAYS } from '#lib/matching/find-mentor-steps.js';
@@ -272,6 +274,101 @@ const checks = [
     t.flow.reply('can we start again?');
     t.flow.reply('yes');
     assert.equal(t.posts.at(-2)?.text, STARTING_AGAIN, 'typed yes: starts again');
+  }],
+  // ---------- Typed replies to the cards, and questions with no question mark (agent1.md A15) ----------
+  ['A15’s first table: on question 3 with two answers held, a typed yes or no to each card is taken as that however it’s worded, never kept as an answer; "ok" asks again; a real answer typed instead is kept', async () => {
+    /** Question 3, with a card up: stop, start again, or keep it. @param {'stop' | 'restart' | 'answer'} card */
+    const withCard = async (card) => {
+      const t = flowWith();
+      t.flow.start();
+      await tick();
+      t.flow.reply('Settling in');
+      t.flow.reply('Climbing');
+      t.flow.reply(card === 'stop' ? 'can I stop?' : card === 'restart' ? 'can we start again?' : 'What societies are there?');
+      assert.equal(t.state()?.step, 'confirm', `${card}: the card is up`);
+      return t;
+    };
+    /** What the review shows for the first three answers, after finishing. @param {ReturnType<typeof flowWith>} t */
+    const heldAnswers = (t) => {
+      for (const reply of ANSWERS.slice(t.posts.some((post) => post.text === `Question 3 of 6: ${questions[2]}`) ? 2 : 0)) t.flow.reply(reply);
+      t.flow.choose('weekly');
+      t.flow.reply('Weekday afternoons');
+      return t.last().card?.items?.slice(0, 3).map((/** @type {any} */ item) => item.answer);
+    };
+    for (const words of ['yes please', 'yes stop', 'yeah go on', 'yep please', 'please do', 'yes i do']) {
+      const t = await withCard('stop');
+      t.flow.reply(words);
+      assert.equal(t.state()?.active, false, `stop card, "${words}": stopped`);
+    }
+    for (const words of ['nah', 'not yet', 'no carry on']) {
+      const t = await withCard('stop');
+      t.flow.reply(words);
+      assert.equal(asking(t), `Question 3 of 6: ${questions[2]}`, `stop card, "${words}": carry on, question 3`);
+      assert.deepEqual(heldAnswers(t), ['Settling in', 'Climbing', ANSWERS[2]], `stop card, "${words}": not kept, nothing lost`);
+    }
+    for (const words of ['ok', 'okay']) {
+      const t = await withCard('stop');
+      t.flow.reply(words);
+      assert.equal(t.state()?.step, 'confirm', `stop card, "${words}": the card stays`);
+      assert.ok(t.last().text.startsWith(YES_OR_NO), `stop card, "${words}": asked again`);
+      assert.equal(t.state()?.active, true);
+    }
+    for (const words of ['yes please', 'go on then']) {
+      const t = await withCard('restart');
+      t.flow.reply(words);
+      assert.equal(asking(t), `Question 1 of 6: ${questions[0]}`, `start again card, "${words}": started again`);
+    }
+    for (const words of ['nah', 'actually no']) {
+      const t = await withCard('restart');
+      t.flow.reply(words);
+      assert.equal(asking(t), `Question 3 of 6: ${questions[2]}`, `start again card, "${words}": carry on`);
+      assert.deepEqual(heldAnswers(t), ['Settling in', 'Climbing', ANSWERS[2]], `start again card, "${words}": not kept, nothing lost`);
+    }
+    const unsure = await withCard('answer');
+    unsure.flow.reply('carry on');
+    assert.equal(unsure.state()?.step, 'confirm', 'keep it card, "carry on": could be either, so the card stays');
+    for (const card of /** @type {const} */ (['stop', 'restart', 'answer'])) {
+      const t = await withCard(card);
+      t.flow.reply('A long walk on Sunday');
+      assert.equal(asking(t), `Question 4 of 6: ${questions[3]}`, `${card} card, a real answer typed instead: kept`);
+    }
+  }],
+  ['A15’s second table: questions typed with no question mark are answered there and then (then the same question), never kept; the eight real answers that look like them are kept', async () => {
+    const asked = {
+      'how many questions are there': 'how-many', 'what do you mean': 'why', 'why do you need this': 'why', 'how long will this take': 'how-many', 'what happens next': 'what-next',
+      'can you repeat that': 'repeat', 'do i have to answer': 'optional', 'what is a mentor': 'mentor', 'is this compulsory': 'optional'
+    };
+    for (const [words, topic] of Object.entries(asked)) {
+      const t = flowWith();
+      t.flow.start();
+      await tick();
+      t.flow.reply('Settling in');
+      t.flow.reply('Climbing');
+      const from = t.posts.length;
+      t.flow.reply(words);
+      const said = t.posts.slice(from).map((post) => post.text);
+      const expected = [...(FAQ_ANSWERS[/** @type {keyof typeof FAQ_ANSWERS} */ (topic)] ? [FAQ_ANSWERS[/** @type {keyof typeof FAQ_ANSWERS} */ (topic)]] : []), `Question 3 of 6: ${questions[2]}`];
+      assert.deepEqual(said, expected, `"${words}": answered, then question 3 again`);
+    }
+    const real = ['When I have time I like hiking', 'What I enjoy most is football', 'Can’t say really', 'Do sports mostly', 'How about a bit of both', 'Where I can, with others', 'Is hard to say but friends', 'Who knows, maybe climbing'];
+    for (const answer of real) {
+      assert.equal(understandReply(answer), 'answer', answer);
+      const t = flowWith();
+      t.flow.start();
+      await tick();
+      t.flow.reply(answer);
+      assert.equal(asking(t), `Question 2 of 6: ${questions[1]}`, `${answer}: kept`);
+    }
+  }],
+  ['A typed reply to a card, on the phone: yes and no however worded, unsure when it could be either, and anything else is no reply to it', () => {
+    const expect = /** @type {[string, 'stop' | 'restart' | 'answer', string | null][]} */ ([
+      ['yes please', 'stop', 'yes'], ['yes stop', 'stop', 'yes'], ['yeah go on', 'stop', 'yes'], ['yep please', 'stop', 'yes'], ['please do', 'stop', 'yes'], ['yes i do', 'stop', 'yes'], ['stop', 'stop', 'yes'],
+      ['nah', 'stop', 'no'], ['not yet', 'stop', 'no'], ['no carry on', 'stop', 'no'], ['carry on', 'stop', 'no'], ['ok', 'stop', 'unsure'], ['okay', 'stop', 'unsure'], ['yes no', 'stop', 'unsure'],
+      ['yes please', 'restart', 'yes'], ['go on then', 'restart', 'yes'], ['start again', 'restart', 'yes'], ['nah', 'restart', 'no'], ['actually no', 'restart', 'no'],
+      ['yes', 'answer', 'yes'], ['keep it', 'answer', 'yes'], ['no', 'answer', 'no'], ['answer again', 'answer', 'no'], ['carry on', 'answer', 'unsure'],
+      ['A long walk on Sunday', 'stop', null], ['A long walk on Sunday', 'answer', null], ['yes I love football', 'answer', null]
+    ]);
+    for (const [words, card, want] of expect) assert.equal(cardReply(words, card), want, `${card}: ${words}`);
   }],
   ['What a message means, on the phone (no Gemini): Thomas’s five, and answers that stay answers', () => {
     const expect = {

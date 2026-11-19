@@ -1,4 +1,4 @@
-import { understandReply } from '#lib/checkin/mentor-replies.js';
+import { cardReply, faqTopic, understandReply } from '#lib/checkin/mentor-replies.js';
 import { isCrisis, SAFETY_MESSAGE } from '#lib/checkin/safety.js';
 import { findBlankAnswer } from '#lib/matching/answers.js';
 import {
@@ -80,9 +80,21 @@ export const RESTART_SURE = 'Start again from question 1? Your answers so far wo
 const KEEP_OR_AGAIN = [{ id: 'keep', label: 'Keep it as my answer' }, { id: 'again', label: 'Answer again' }];
 const STOP_OR_CARRY_ON = [{ id: 'stop', label: 'Stop the questions' }, { id: 'carry-on', label: 'Carry on' }];
 const RESTART_OR_CARRY_ON = [{ id: 'restart', label: 'Start again' }, { id: 'carry-on', label: 'Carry on' }];
-/** Typed answers to those: yes, or no. */
-const YES = /^(yes|yeah|yep|y|sure|keep( it)?|keep it as my answer)[.!]*$/i;
-const NO = /^(no|nope|n|no thanks|answer again|carry on|keep going)[.!]*$/i;
+/** A reply to one of those that could be either (agent1.md A15): the card stays. */
+export const YES_OR_NO = 'Sorry, was that a yes or a no?';
+/**
+ * Answers to questions about the questions, asked while answering them (agent1.md A15); then the same
+ * question again. "repeat" needs no words: the question comes again.
+ * @type {Record<import('#lib/checkin/mentor-replies.js').Faq, string>}
+ */
+export const FAQ_ANSWERS = {
+  'how-many': 'There are six questions, then how often you’d like to meet and when you’re usually free, and then you can check your answers.',
+  'what-next': 'After the six questions, I’ll ask how often you’d like to meet and when you’re usually free, then show you your answers to check. Nothing’s saved until you choose Find my mentor.',
+  optional: 'No, it’s up to you. Answer in as few words as you like, or type stop to stop: nothing’s saved until you choose Find my mentor.',
+  mentor: 'A second- or third-year student who can show you the ropes. Your answers help find one who shares your interests and the way you like to do things.',
+  why: 'It helps find a mentor who shares your interests and the way you like to do things. Answer in your own words, as much or as little as you like.',
+  repeat: ''
+};
 
 /** After the support message, when the questions stop for it: what's happened to them, and that they can come back. */
 export const SET_ASIDE = 'I’ve stopped the mentor questions, and nothing from them has been saved. We can come back to them whenever you like.';
@@ -275,18 +287,18 @@ export function createMentorFlow({ check, steps, post, changed, finished }) {
   }
 
   /**
-   * Asks before acting: keep a question for the chat as their answer, or stop, or start again.
+   * Asks before acting: keep a question for the chat as their answer, or stop, or start again. Asked
+   * again (lead) when a typed reply could be either, from the step it first asked from.
    * @param {{ kind: 'answer', text: string } | { kind: 'stop' } | { kind: 'restart' }} next
+   * @param {string} [lead] said before the card's question, when asking again
    */
-  function askFirst(next) {
+  function askFirst(next, lead = '') {
     pending = next;
-    askedFrom = state.step;
+    if (state.step !== 'confirm') askedFrom = state.step;
     set({ step: 'confirm' });
-    if (next.kind === 'answer') {
-      say({ text: `Is that your answer to question ${question + 1}? I can answer other questions once we’ve finished these.`, card: { kind: 'choices', choices: KEEP_OR_AGAIN } });
-    } else {
-      say({ text: next.kind === 'stop' ? STOP_SURE : RESTART_SURE, card: { kind: 'choices', choices: next.kind === 'stop' ? STOP_OR_CARRY_ON : RESTART_OR_CARRY_ON } });
-    }
+    const words = next.kind === 'answer' ? `Is that your answer to question ${question + 1}? I can answer other questions once we’ve finished these.` : next.kind === 'stop' ? STOP_SURE : RESTART_SURE;
+    const choices = next.kind === 'answer' ? KEEP_OR_AGAIN : next.kind === 'stop' ? STOP_OR_CARRY_ON : RESTART_OR_CARRY_ON;
+    say({ text: lead ? `${lead} ${words}` : words, card: { kind: 'choices', choices } });
   }
 
   /** Whatever's being asked now, again: after a nudge, a note, or a question about saving. */
@@ -341,14 +353,20 @@ export function createMentorFlow({ check, steps, post, changed, finished }) {
       return true;
     }
     const typed = text.trim();
-    // It asked first (keep it, stop, start again): yes, no, or something else entirely, which drops it.
+    // It asked first (keep it, stop, start again): a yes or a no however it's worded, never kept as an
+    // answer; asked again when it could be either; anything else drops the card and is understood as usual.
     if (state.step === 'confirm' && pending) {
-      if (YES.test(typed)) {
+      const answer = cardReply(typed, pending.kind);
+      if (answer === 'yes') {
         choose(pending.kind === 'answer' ? 'keep' : pending.kind);
         return true;
       }
-      if (NO.test(typed)) {
+      if (answer === 'no') {
         choose(pending.kind === 'answer' ? 'again' : 'carry-on');
+        return true;
+      }
+      if (answer === 'unsure') {
+        askFirst(pending, YES_OR_NO);
         return true;
       }
       pending = null;
@@ -379,6 +397,13 @@ export function createMentorFlow({ check, steps, post, changed, finished }) {
     }
     if (meant === 'about-saving') {
       say({ text: ABOUT_SAVING });
+      askAgain();
+      return true;
+    }
+    // A question about the questions ("how many questions are there"): answered, then the question again.
+    if (meant === 'faq') {
+      const words = FAQ_ANSWERS[/** @type {import('#lib/checkin/mentor-replies.js').Faq} */ (faqTopic(typed))];
+      if (words) say({ text: words });
       askAgain();
       return true;
     }
