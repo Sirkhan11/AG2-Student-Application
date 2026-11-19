@@ -297,6 +297,18 @@ try {
   report('Logged out, the switch (config/access) answers the forms’ plain request with 200 (the document) or 404 (no document)', access.problem === '', access.problem ? `${access.problem}: deploy firestore.rules with the site, which lets anyone read it` : `HTTP ${answer.status}`);
   const written = await setDoc(doc(db, 'config', 'access'), { probe: 'check-live-site' }, { merge: true }).then(() => 'allowed', (err) => String(err.code));
   report('Logged out, the switch can’t be written', written === 'permission-denied', written);
+
+  // 6. The app's one function (functions/index.js, deadlines from Blackboard's calendar link), called
+  // as the app's SDK would but logged out and without App Check: it must be there and refuse as
+  // unauthenticated. Until it's deployed (firebase deploy --only functions), Google answers 404.
+  const FUNCTION_URL = `https://europe-west2-${PROJECT}.cloudfunctions.net/readDeadlines`;
+  const called = await fetch(FUNCTION_URL, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ data: {} }), signal: AbortSignal.timeout(20_000) }).then(
+    async (response) => ({ status: response.status, body: await response.json().catch(() => ({})) }),
+    (err) => ({ status: 0, body: { error: { message: String(err?.message ?? err) } } })
+  );
+  report('Logged out, the deadlines function (readDeadlines, europe-west2) is there and refuses a call with no sign-in and no App Check as unauthenticated',
+    called.status === 401 && called.body?.error?.status === 'UNAUTHENTICATED',
+    called.status === 404 ? 'HTTP 404: the function isn’t deployed yet (npx --engine-strict=false firebase-tools deploy --only functions)' : `HTTP ${called.status} ${JSON.stringify(called.body?.error ?? '')}`);
 } finally {
   await cleanUp();
 }

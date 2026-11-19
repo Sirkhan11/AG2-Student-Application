@@ -1,6 +1,7 @@
 <script>
   import { onMount } from 'svelte';
   import BottomNav from '#lib/components/BottomNav.svelte';
+  import DeadlinesCard from '#lib/components/DeadlinesCard.svelte';
   import FinishDetailsCard from '#lib/components/FinishDetailsCard.svelte';
   import Icon from '#lib/components/Icon.svelte';
   import MentorContact from '#lib/components/MentorContact.svelte';
@@ -105,6 +106,9 @@
       <p class="muted" role="status">Loading…</p>
     {/if}
   </section>
+
+  <!-- What's due, from their own Blackboard calendar (deadlines/read.js): kept on the phone, never sent to Gemini. -->
+  <DeadlinesCard />
 
   <section class="card dash" aria-labelledby="mentor-title">
     <h2 id="mentor-title"><a href="/mentor">Your mentor</a></h2>

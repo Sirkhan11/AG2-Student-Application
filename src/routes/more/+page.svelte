@@ -6,6 +6,7 @@
   /** Each place, with its icon. Your Mentor is here (and on Home) since Societies took its place in the bottom bar (nav-tabs.js). */
   const menu = /** @type {const} */ ([
     { name: 'Your Mentor', href: '/mentor', icon: 'mentor' },
+    { name: 'Your deadlines', href: '/deadlines', icon: 'calendar' },
     { name: 'NHS Guide', href: '/nhs-guide', icon: 'heart' },
     { name: 'Late Arrivals', href: '/late-arrivals', icon: 'clock' },
     { name: 'GP and Dentist Finder', href: '/gp-finder', icon: 'medical' },

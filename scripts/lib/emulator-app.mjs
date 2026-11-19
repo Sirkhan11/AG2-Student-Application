@@ -51,16 +51,22 @@ function asValue(value) {
 export function owner({ auth, firestore, project }) {
   const documents = `http://${firestore}/v1/projects/${project}/databases/(default)/documents`;
   return {
-    /** A verified account with this address; returns its uid. @param {string} email @param {string} password */
-    async verifiedAccount(email, password) {
+    /**
+     * A verified account with this address (or, with verified false, one that hasn't verified its
+     * address yet); returns its uid.
+     * @param {string} email @param {string} password @param {boolean} [verified]
+     */
+    async verifiedAccount(email, password, verified = true) {
       const made = await fetch(`http://${auth}/identitytoolkit.googleapis.com/v1/accounts:signUp?key=demo-key`, {
         method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ email, password, returnSecureToken: true })
       });
       const { localId } = /** @type {{ localId: string }} */ (await made.json());
-      const verified = await fetch(`http://${auth}/identitytoolkit.googleapis.com/v1/projects/${project}/accounts:update`, {
+      assert.ok(made.ok, `making ${email}`);
+      if (!verified) return localId;
+      const marked = await fetch(`http://${auth}/identitytoolkit.googleapis.com/v1/projects/${project}/accounts:update`, {
         method: 'POST', headers: { 'content-type': 'application/json', authorization: 'Bearer owner' }, body: JSON.stringify({ localId, emailVerified: true })
       });
-      assert.ok(made.ok && verified.ok, `making ${email}`);
+      assert.ok(marked.ok, `verifying ${email}`);
       return localId;
     },
     /** Writes a record (any shape: maps, lists, Dates as timestamps). @param {string} path @param {Record<string, unknown>} fields */
@@ -74,8 +80,44 @@ export function owner({ auth, firestore, project }) {
     async read(path) {
       const response = await fetch(`${documents}/${path}`, { headers: { authorization: 'Bearer owner' } });
       return response.status === 404 ? null : response.json();
+    },
+    /** Deletes a record (nothing happens if it isn't there). @param {string} path */
+    async delete(path) {
+      const response = await fetch(`${documents}/${path}`, { method: 'DELETE', headers: { authorization: 'Bearer owner' } });
+      assert.ok(response.ok || response.status === 404, `deleting ${path}`);
+    },
+    /**
+     * Signs in as an account the way the app does (Firebase Auth's REST API), for calling the
+     * emulated function directly: its ID token and uid.
+     * @param {string} email @param {string} password
+     * @returns {Promise<{ idToken: string, uid: string }>}
+     */
+    async signIn(email, password) {
+      const response = await fetch(`http://${auth}/identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=demo-key`, {
+        method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ email, password, returnSecureToken: true })
+      });
+      assert.ok(response.ok, `signing in as ${email}`);
+      const { idToken, localId } = /** @type {{ idToken: string, localId: string }} */ (await response.json());
+      return { idToken, uid: localId };
     }
   };
+}
+
+/**
+ * Where the other emulators are, from the Emulator Hub that emulators:exec points at: the Functions
+ * emulator's address, or null when it isn't running (the check then skips what needs it).
+ * @returns {Promise<{ functions: string | null }>}
+ */
+export async function emulatorHosts() {
+  const hub = process.env.FIREBASE_EMULATOR_HUB;
+  if (!hub) return { functions: null };
+  try {
+    const running = /** @type {Record<string, { host: string, port: number }>} */ (await (await fetch(`http://${hub}/emulators`)).json());
+    const functions = running.functions;
+    return { functions: functions ? `${functions.host === '0.0.0.0' || functions.host === '::' ? '127.0.0.1' : functions.host}:${functions.port}` : null };
+  } catch {
+    return { functions: null };
+  }
 }
 
 /**
@@ -121,12 +163,30 @@ export async function openChrome(base) {
   const pending = new Map();
   /** @type {((message: any) => void)[]} */
   const handlers = [];
+  /**
+   * Every request the page has made since Chrome opened: its address, method and, for a POST, what
+   * it sent (as far as DevTools hands it over), so a check can see where something went.
+   * @type {{ url: string, method: string, postData: string, headers: Record<string, string> }[]}
+   */
+  const requests = [];
+  /** Everything written to the console, at any level, and every uncaught error, as text. @type {string[]} */
+  const consoleLines = [];
   socket.addEventListener('message', (event) => {
     const message = JSON.parse(String(event.data));
     if (message.id && pending.has(message.id)) {
       pending.get(message.id)(message);
       pending.delete(message.id);
-    } else for (const handler of handlers) handler(message);
+      return;
+    }
+    if (message.method === 'Network.requestWillBeSent') {
+      const { url, method, postData, headers } = message.params.request;
+      requests.push({ url, method, postData: postData ?? '', headers: headers ?? {} });
+    } else if (message.method === 'Runtime.consoleAPICalled') {
+      consoleLines.push(`${message.params.type}: ${message.params.args.map((/** @type {any} */ arg) => arg.value ?? arg.description ?? '').join(' ')}`);
+    } else if (message.method === 'Runtime.exceptionThrown') {
+      consoleLines.push(`exception: ${message.params.exceptionDetails?.exception?.description ?? message.params.exceptionDetails?.text ?? ''}`);
+    }
+    for (const handler of handlers) handler(message);
   });
   /** @param {string} method @param {object} [params] @returns {Promise<any>} */
   const send = (method, params = {}) =>
@@ -137,6 +197,7 @@ export async function openChrome(base) {
     });
   await send('Page.enable');
   await send('Runtime.enable');
+  await send('Network.enable');
   await send('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 2, mobile: true });
 
   /** @param {string} expression @returns {Promise<any>} */
@@ -164,6 +225,8 @@ export async function openChrome(base) {
     waitFor,
     has,
     fill,
+    requests,
+    consoleLines,
     /** Adds a handler for every DevTools message that isn't an answer. @param {(message: any) => void} handler */
     listen: (handler) => void handlers.push(handler),
     /** Opens a page; vite dev hydrates a moment after loading, and a click before then is lost. @param {string} path */

@@ -1,14 +1,15 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { connectAuthEmulator, getAuth } from 'firebase/auth';
 import { connectFirestoreEmulator, getFirestore } from 'firebase/firestore';
+import { connectFunctionsEmulator, getFunctions } from 'firebase/functions';
 
 /**
  * True only in `vite dev --mode emulators`, for the browser checks (scripts/check-signed-in.mjs): the
- * app then talks to the local Auth and Firestore emulators (project demo-ag2) instead of the real
- * project, so the checks can sign in as verified test students without any real email. Every build
- * has another mode, so a build drops this.
+ * app then talks to the local Auth, Firestore and Functions emulators (project demo-ag2) instead of
+ * the real project, so the checks can sign in as verified test students without any real email, and
+ * App Check uses a pretend token (app-check.js). Every build has another mode, so a build drops this.
  */
-const EMULATORS = import.meta.env.MODE === 'emulators';
+export const EMULATORS = import.meta.env.MODE === 'emulators';
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -51,3 +52,24 @@ if (EMULATORS) connectFirestoreEmulator(db, '127.0.0.1', 8080);
 export const firestoreRest = EMULATORS
   ? { documentsUrl: 'http://127.0.0.1:8080/v1/projects/demo-ag2/databases/(default)/documents' }
   : { documentsUrl: `https://firestore.googleapis.com/v1/projects/${firebaseConfig.projectId}/databases/(default)/documents`, apiKey: firebaseConfig.apiKey };
+
+/** Where the app's one function runs (functions/index.js): London, with Firestore. */
+export const FUNCTIONS_REGION = 'europe-west2';
+
+let functionsConnected = false;
+
+/**
+ * Cloud Functions for this app, for calling readDeadlines (deadlines/read.js): the Functions
+ * emulator in emulators mode, Google's otherwise. Browser only.
+ */
+export function getFirebaseFunctions() {
+  if (typeof window === 'undefined') {
+    throw new Error('Firebase Functions must be called from the browser');
+  }
+  const functions = getFunctions(app, FUNCTIONS_REGION);
+  if (EMULATORS && !functionsConnected) {
+    connectFunctionsEmulator(functions, '127.0.0.1', 5001);
+    functionsConnected = true;
+  }
+  return functions;
+}

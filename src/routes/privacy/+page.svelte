@@ -55,6 +55,11 @@
       <li><strong>That you’re logged in,</strong> as Firebase does, so you don’t have to log in every time.</li>
       <li><strong>The matching model:</strong> the part of matching that turns words into numbers runs on your phone. It’s downloaded once, from Hugging Face (with its code from jsDelivr), and your browser keeps it.</li>
       <li><strong>Your location,</strong> if you use “Use my location” in the GP or dentist finder: it’s used on your phone to sort the surgeries or dentists, and never saved or sent anywhere.</li>
+      <li>
+        <strong>Your Blackboard calendar link,</strong> if you’ve pasted it on Your deadlines, and the deadlines it
+        gave (their titles and dates), until you forget the link there or log out. The link is never saved
+        to your account: it goes only to AG2’s own server function, below, each time your deadlines are read.
+      </li>
     </ul>
   </section>
 
@@ -83,6 +88,7 @@
       <li>Your contact details, postcode or location.</li>
       <li>When you’re free to meet your mentor.</li>
       <li>Your reason for asking for a different mentor.</li>
+      <li>Your Blackboard calendar link, and your deadlines.</li>
     </ul>
     <p>
       Each request also carries your account’s sign-in token and the app’s App Check token, which Google’s
@@ -105,6 +111,12 @@
     <h2>Other services</h2>
     <ul>
       <li><strong>Google Firebase</strong> runs the login, the database and the website.</li>
+      <li>
+        <strong>AG2’s own server function</strong> (Google Cloud, in London) reads your Blackboard calendar
+        when you’ve connected its link: your app sends it the link, it fetches your calendar from
+        Northumbria’s Blackboard with it, hands back the titles and dates, and keeps nothing: not the link,
+        not the deadlines, and no log of either. Only signed-in students, from the AG2 app, can use it.
+      </li>
       <li><strong>Google reCAPTCHA</strong> checks in the background that requests come from the real app.</li>
       <li><strong>postcodes.io</strong> looks up a postcode or place you type into the GP or dentist finder.</li>
       <li><strong>Hugging Face and jsDelivr</strong> supply the matching model and its code.</li>
@@ -145,6 +157,7 @@
       <li><strong>A request for a different mentor:</strong> Cancel, on Your Mentor.</li>
       <li><strong>Your email address, if you’re a mentor sharing it with your students:</strong> Stop sharing it, on Your mentor.</li>
       <li><strong>The chat:</strong> log out. It’s never saved.</li>
+      <li><strong>Your Blackboard calendar link and deadlines:</strong> Forget this link, on Your deadlines. Logging out forgets them too.</li>
       <li><strong>On your phone:</strong> clear this site’s data in your browser’s settings.</li>
       <li><strong>Your account and everything in it:</strong> there’s no button for this in the app yet. <span class="tbc">To confirm</span> who to ask, and how soon it’s done.</li>
     </ul>

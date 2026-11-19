@@ -22,6 +22,8 @@ Thumbs.db
 .env.*
 !.env.example
 !.env.test
+# The emulator's settings for the function (no secrets: where the checks' pretend Blackboard is)
+!functions/.env.demo-ag2
 
 # Vite
 vite.config.js.timestamp-*

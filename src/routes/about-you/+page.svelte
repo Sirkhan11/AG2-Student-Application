@@ -160,6 +160,8 @@
           {checklist} It’s told which of the standard tasks you’ve done, and how many of your own are left,
           but not what yours say.
         </dd>
+        <dt>Your deadlines</dt>
+        <dd>The chat isn’t told these, or your Blackboard calendar link. They stay on your phone.</dd>
       </dl>
       <p class="muted">Your name, course, interests, arrival date and the rest of what you gave at sign-up: <a href="/signup">change them</a>.</p>
     </section>

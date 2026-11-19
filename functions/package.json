@@ -1,0 +1,17 @@
+{
+  "name": "ag2-functions",
+  "private": true,
+  "description": "AG2's one Cloud Function: readDeadlines, which fetches a student's Blackboard calendar at the private link they paste (index.js). Deployed on its own with firebase deploy --only functions; checked by scripts/check-deadlines.mjs.",
+  "type": "module",
+  "main": "index.js",
+  "engines": {
+    "node": "22"
+  },
+  "scripts": {
+    "check": "node --check index.js && node --check lib/read-deadlines.js && node --check shared/calendar-link.js && node --check shared/calendar-feed.js && node --check shared/access-gate.js"
+  },
+  "dependencies": {
+    "firebase-admin": "^14.5.1",
+    "firebase-functions": "^7.4.0"
+  }
+}
